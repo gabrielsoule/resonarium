@@ -1,0 +1,35 @@
+name: Build
+on:
+  push:
+    branches:
+      - '**'
+    
+concurrency:
+  group: build-${{ github.ref || github.run_id }}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: "Run script"
+        run: |
+          ./ci/build.sh
+        shell: bash
+        env:
+          APPLICATION: ${{ secrets.APPLICATION }}
+          INSTALLER: ${{ secrets.INSTALLER }}
+          APPLE_PASS: ${{ secrets.APPLE_PASS }}
+          APPLE_USER: ${{ secrets.APPLE_USER }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Binaries
+          path: ci/bin/*.zip
+          retention-days: 30
