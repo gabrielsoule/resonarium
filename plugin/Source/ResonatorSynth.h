@@ -10,7 +10,7 @@
 
 class ResonariumProcessor;
 
-class ResonatorSynth : gin::Synthesiser {
+class ResonatorSynth : public gin::Synthesiser {
 public:
     explicit ResonatorSynth(ResonariumProcessor& p);
 private:

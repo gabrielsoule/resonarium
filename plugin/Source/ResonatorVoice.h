@@ -47,20 +47,17 @@ public:
     void noteTimbreChanged() override;
     void notePitchbendChanged() override;
     void noteKeyStateChanged() override;
-
     void setCurrentSampleRate(double newRate) override;
-
-    void renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
-
+    void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
     bool isVoiceActive() override;
 
-private:
     ResonariumProcessor& processor;
     float frequency;
     gin::AnalogADSR exciterAmpEnv;
     NoiseGenerator noise = NoiseGenerator();
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote;
+    int id;
 
 };
 

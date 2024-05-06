@@ -1,7 +1,7 @@
 #!/bin/bash -e
 set +x
 
-PLUGIN="Example"
+PLUGIN="Resonarium"
 
 # linux specific stiff
 if [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then

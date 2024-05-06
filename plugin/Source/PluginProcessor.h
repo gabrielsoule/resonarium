@@ -18,12 +18,15 @@ public:
     void reset() override;
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
+    // bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
     bool supportsMPE() const override {return true;}
+    void setupModMatrix();
+    gin::ProcessorOptions getOptions();
 
 
     struct ExciterParams
@@ -36,9 +39,9 @@ public:
 
     ResonatorSynth synth;
     gin::ModMatrix modMatrix;
-    gin::ModSrcId modSrcPressure, modSrcTimbre, modSrcPitchbend, modSrcLFO, modSrcNote, modSrcVelocity, modSrcMonoLFO;
+    gin::ModSrcId modSrcPressure, modSrcTimbre, modSrcPitchbend, modSrcNote, modSrcVelocity;
 
-    ExciterParams exciterParams;
+    ExciterParams exciterParams{};
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonariumProcessor)

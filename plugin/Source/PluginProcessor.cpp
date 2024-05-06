@@ -1,11 +1,35 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
-ResonariumProcessor::ResonariumProcessor() : gin::Processor(false), synth(*this)
+gin::ProcessorOptions ResonariumProcessor::getOptions()
 {
+    gin::ProcessorOptions options;
+    // options.wantsMidi = true;
+    // options.useNewsChecker = false;
+    // options.useUpdateChecker = false;
+    return options;
+}
+
+//==============================================================================
+ResonariumProcessor::ResonariumProcessor() : gin::Processor(
+                                                 false), synth(*this)
+{
+
     lf = std::make_unique<gin::CopperLookAndFeel>();
     exciterParams.setup(*this);
+
+    synth.enableLegacyMode();
+    synth.setVoiceStealingEnabled(true);
+    synth.setMPE(true);
+    for (int i = 0; i < 16; i++)
+    {
+        auto voice = new ResonatorVoice(*this);
+        modMatrix.addVoice(voice);
+        synth.addVoice(voice);
+        voice->id = i;
+    }
+
+    setupModMatrix();
     init();
 }
 
@@ -13,37 +37,77 @@ ResonariumProcessor::~ResonariumProcessor()
 {
 }
 
+void ResonariumProcessor::setupModMatrix()
+{
+    modSrcPressure = modMatrix.addPolyModSource("mpep", "MPE Pressure", false);
+    modSrcTimbre = modMatrix.addPolyModSource("mpet", "MPE Timbre", false);
+    modSrcPitchbend = modMatrix.addMonoModSource("pb", "Pitch Bend", true);
+    modSrcNote = modMatrix.addPolyModSource("note", "MIDI Note Number", false);
+    modSrcVelocity = modMatrix.addPolyModSource("vel", "MIDI Velocity", false);
+
+    for (auto pp : getPluginParameters())
+    {
+        if (! pp->isInternal())
+            DBG("Adding parameter " + pp->getName(40) + " to mod matrix as a poly parameter");
+            modMatrix.addParameter (pp, true);
+    }
+
+    modMatrix.build();
+}
+
 //==============================================================================
 void ResonariumProcessor::stateUpdated()
 {
+    modMatrix.stateUpdated(state);
 }
 
 void ResonariumProcessor::updateState()
 {
+    modMatrix.updateState(state);
 }
 
 void ResonariumProcessor::reset()
 {
+    Processor::reset();
+    synth.clearVoices();
 }
 
 void ResonariumProcessor::prepareToPlay (double newSampleRate, int newSamplesPerBlock)
 {
-    juce::ignoreUnused (newSampleRate, newSamplesPerBlock);
-    for(auto x : this->getParameters())
-    {
-        DBG(x->getName(40));
-        DBG(x->getCurrentValueAsText());
-    }
+    Processor::prepareToPlay(newSampleRate, newSamplesPerBlock);
+    synth.setCurrentPlaybackSampleRate(newSampleRate);
+    modMatrix.setSampleRate(newSampleRate);
+
+    DBG("Resonarium instance preparing to play:");
+    DBG("   Input channels: " + juce::String(getMainBusNumInputChannels()));
+    DBG("   Output channels: " + juce::String(getMainBusNumOutputChannels()));
+    DBG("   Sample rate: " + juce::String(newSampleRate));
+    DBG("   Samples per block: " + juce::String(newSamplesPerBlock));
 }
 
 void ResonariumProcessor::releaseResources()
 {
 }
 
+// bool ResonariumProcessor::isBusesLayoutSupported (const BusesLayout& layout) const
+// {
+//     if (layout.inputBuses.size() != 0 || layout.outputBuses.size() != 1)
+//         return false;
+//
+//     bool result =  layout.outputBuses[0].size() == 2;
+//     DBG("Buses layout supported: " + juce::String(result ? "yes" : "no") + "!)");
+//     return result;
+// }
+
 void ResonariumProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
-    juce::ignoreUnused (buffer, midi);
     juce::ScopedNoDenormals noDenormals;
+    synth.startBlock();
+    synth.renderNextBlock(buffer, midi, 0, buffer.getNumSamples());
+    modMatrix.finishBlock(buffer.getNumSamples());
+    synth.endBlock(buffer.getNumSamples());
+
+
 }
 
 //==============================================================================
@@ -61,6 +125,7 @@ juce::AudioProcessorEditor* ResonariumProcessor::createEditor()
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
+    DBG("Instantiating new ResonariumProcessor instance...");
     return new ResonariumProcessor();
 }
 

@@ -16,6 +16,7 @@ ResonatorVoice::~ResonatorVoice()
 
 void ResonatorVoice::noteStarted()
 {
+    DBG("Starting new note");
     startVoice();
     auto note = getCurrentlyPlayingNote();
     currentMidiNote = note.initialNote;
@@ -43,12 +44,19 @@ void ResonatorVoice::noteStarted()
 
 void ResonatorVoice::noteRetriggered()
 {
-
+    DBG("Retriggered note");
 }
 
 void ResonatorVoice::noteStopped(bool allowTailOff)
 {
+    DBG("Stopping note");
+    exciterAmpEnv.noteOff();
 
+    if (!allowTailOff)
+    {
+        clearCurrentNote();
+        stopVoice();
+    }
 }
 
 bool ResonatorVoice::isVoiceActive()
@@ -63,11 +71,13 @@ void ResonatorVoice::setCurrentSampleRate(double newRate)
     noteSmoother.setSampleRate(newRate);
 }
 
-void ResonatorVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
+void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
     if(exciterAmpEnv.getState() == gin::AnalogADSR::State::idle)
     {
+        DBG("Envelope idle, terminating note");
         stopVoice();
+        clearCurrentNote();
     }
 
     auto note = getCurrentlyPlayingNote();
@@ -82,17 +92,20 @@ void ResonatorVoice::renderNextBlock(AudioBuffer<float>& outputBuffer, int start
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     //TODO Implement manual tuning
 
-    DBG("Note value: " + String(currentMidiNote));
+    // DBG("Note value: " + juce::String(currentMidiNote));
     auto frequency = gin::getMidiNoteInHertz(currentMidiNote);
-    DBG("Frequency: " + String(frequency));
+    // DBG("Frequency: " + juce::String(frequency));
     //fill the buffer with noise
-    for (int sample = 0; sample < numSamples; sample++)
+    for (int i = 0; i < numSamples; i++)
     {
-        outputBuffer.setSample(0, startSample + sample, noise.nextValue());
+        auto sample = noise.nextValue();
+        outputBuffer.addSample(0, startSample + i, sample);
+        outputBuffer.addSample(1, startSample + i, sample);
     }
 
     //process the buffer with the envelope
     exciterAmpEnv.processMultiplying(outputBuffer, startSample, numSamples);
+    finishBlock(numSamples);
 
 
 }

@@ -10,15 +10,8 @@
 
 ResonatorSynth::ResonatorSynth(ResonariumProcessor& p) : processor(p)
 {
+    //call superclass constructor
+    // Synthesiser::Synthesiser();
 
-    this->enableLegacyMode();
-    this->setVoiceStealingEnabled(true);
-    for (int i = 0; i < NUM_VOICES; i++)
-    {
-        auto voice = new ResonatorVoice(processor);
-        this->addVoice(voice);
-        processor.modMatrix.addVoice(voice);
-    }
-
-
+    DBG("Creating Synthesiser");
 }

@@ -16,9 +16,9 @@ public:
     void resized() override;
 
 private:
-    ResonariumProcessor& ginProc;
+    ResonariumProcessor& proc;
 
-    std::unique_ptr<melatonin::Inspector> inspector;
+    // std::unique_ptr<melatonin::Inspector> inspector;
     juce::TextButton inspectButton { "Inspect the UI" };
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonariumEditor)
 };

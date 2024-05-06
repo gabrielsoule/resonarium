@@ -3,25 +3,30 @@
 
 //==============================================================================
 ResonariumEditor::ResonariumEditor (ResonariumProcessor& p)
-    : gin::ProcessorEditor (p), ginProc (p)
+    : gin::ProcessorEditor (p), proc (p)
 {
-    addAndMakeVisible (inspectButton);
+    // addAndMakeVisible (inspectButton);
 
     // this chunk of code instantiates and opens the melatonin inspector
-    inspectButton.onClick = [&] {
-        if (!inspector)
-        {
-            inspector = std::make_unique<melatonin::Inspector> (*this);
-            inspector->onClose = [this]() { inspector.reset(); };
-        }
-
-        inspector->setVisible (true);
-    };
+    // inspectButton.onClick = [&] {
+    //     if (!inspector)
+    //     {
+    //         inspector = std::make_unique<melatonin::Inspector> (*this);
+    //         inspector->onClose = [this]() { inspector.reset(); };
+    //     }
+    //
+    //     inspector->setVisible (true);
+    // };
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (400, 300);
     setGridSize (10, 3);
+
+    addControl(new gin::Knob(proc.exciterParams.attack), 1, 0);
+    addControl(new gin::Knob(proc.exciterParams.decay), 2, 0);
+    addControl(new gin::Knob(proc.exciterParams.sustain), 3, 0);
+    addControl(new gin::Knob(proc.exciterParams.release), 4, 0);
 }
 
 ResonariumEditor::~ResonariumEditor()
@@ -30,7 +35,7 @@ ResonariumEditor::~ResonariumEditor()
 
 void ResonariumEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    // g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
 
     auto area = getLocalBounds();
     g.setColour (juce::Colours::white);
