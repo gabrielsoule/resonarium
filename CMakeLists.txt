@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.24.0 FATAL_ERROR)
 #
 set(PLUGIN_NAME Resonarium)
 set(DEV_CODE Soul)
-set(PLUGIN_VERSION 0.0.1)
+set(PLUGIN_VERSION 0.0.3)
 set(BUNDLE_ID com.gabrielsoule.resonarium)
 set(AU_ID ResonariumAU)
 set(LV2_URI "https://example.com/example/")
@@ -89,7 +89,7 @@ endforeach ()
 juce_add_plugin(${PLUGIN_NAME}
         PRODUCT_NAME ${PLUGIN_NAME}
         VERSION ${PLUGIN_VERSION}
-        COMPANY_NAME Soule DSP
+        COMPANY_NAME "Soule DSP"
         COMPANY_WEBSITE ${WEBSITE}
         BUNDLE_ID ${BUNDLE_ID}
         FORMATS ${FORMATS}
@@ -97,10 +97,12 @@ juce_add_plugin(${PLUGIN_NAME}
         PLUGIN_CODE ${PLUGIN_CODE}
         IS_SYNTH ON
         NEEDS_MIDI_INPUT ON
+        NEEDS_MIDI_OUTPUT OFF
+        IS_MIDI_EFFECT OFF
         EDITOR_WANTS_KEYBOARD_FOCUS ON
-        VST2_CATEGORY kPlugCategEffect
+        VST2_CATEGORY "kPlugCategEffect"
         VST3_CATEGORIES Fx
-        AU_MAIN_TYPE kAudioUnitType_Effect
+        AU_MAIN_TYPE "kAudioUnitType_Effect"
         AU_EXPORT_PREFIX ${AU_ID}
         AU_SANDBOX_SAFE FALSE
         LV2URI ${LV2_URI}
@@ -144,17 +146,12 @@ juce_generate_juce_header(${PLUGIN_NAME})
 
 target_compile_definitions(${PLUGIN_NAME} PRIVATE
         JUCE_DISPLAY_SPLASH_SCREEN=0
-        JUCE_COREGRAPHICS_DRAW_ASYNC=1
         JUCE_MODAL_LOOPS_PERMITTED=0
-        JUCE_WEB_BROWSER=0
-        JUCE_USE_FLAC=1
-        JUCE_USE_CURL=1
-        JUCE_USE_MP3AUDIOFORMAT=0
+        JUCE_COREGRAPHICS_DRAW_ASYNC=1
         JUCE_VST3_CAN_REPLACE_VST2=0
-        JUCE_USE_LAME_AUDIO_FORMAT=0
-        JUCE_USE_WINDOWS_MEDIA_FORMAT=0
-        JucePlugin_PreferredChannelConfigurations={0,2}
-        _CRT_SECURE_NO_WARNINGS
+        JUCE_WEB_BROWSER=0
+        DONT_SET_USING_JUCE_NAMESPACE=1
+        JUCE_SILENCE_XCODE_15_LINKER_WARNING=1
 )
 
 if (APPLE)

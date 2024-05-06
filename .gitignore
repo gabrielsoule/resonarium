@@ -34,3 +34,4 @@
 .DS_Store
 
 Builds
+cmake-build-debug
