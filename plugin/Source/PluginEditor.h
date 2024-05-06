@@ -2,19 +2,23 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "melatonin_inspector/melatonin_inspector.h"
 
 //==============================================================================
-class Editor : public gin::ProcessorEditor
+class ResonariumEditor : public gin::ProcessorEditor
 {
 public:
-    Editor (Processor&);
-    ~Editor() override;
+    ResonariumEditor (ResonariumProcessor&);
+    ~ResonariumEditor() override;
 
     //==============================================================================
+    void paint(juce::Graphics& g) override;
     void resized() override;
 
 private:
-    Processor& ginProc;
+    ResonariumProcessor& ginProc;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Editor)
+    std::unique_ptr<melatonin::Inspector> inspector;
+    juce::TextButton inspectButton { "Inspect the UI" };
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonariumEditor)
 };

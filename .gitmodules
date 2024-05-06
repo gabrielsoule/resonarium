@@ -1,6 +1,11 @@
 [submodule "modules/juce"]
 	path = modules/juce
 	url = git@github.com:juce-framework/JUCE.git
+	branch = develop
 [submodule "modules/gin"]
 	path = modules/gin
 	url = https://github.com/FigBug/Gin.git
+[submodule "modules/melatonin_inspector"]
+	path = modules/melatonin_inspector
+	url = https://github.com/sudara/melatonin_inspector.git
+	branch = main
