@@ -10,16 +10,25 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p) : processor(p)
     noise.reset();
     frequency = 440.0f;
 }
+
 ResonatorVoice::~ResonatorVoice()
 = default;
 
+void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
+{
+    DBG("Preparing voice " + juce::String(id));
+    MPESynthesiserVoice::setCurrentSampleRate(spec.sampleRate);
+    exciterAmpEnv.setSampleRate(spec.sampleRate);
+    noteSmoother.setSampleRate(spec.sampleRate);
+    resonator.prepare(spec);
+    resonator.setMode(Resonator::Mode::Eks);
+}
 
 void ResonatorVoice::noteStarted()
 {
-    DBG("Starting new note");
+    DBG("Starting note on voice " + juce::String(id));
     startVoice();
     auto note = getCurrentlyPlayingNote();
-    currentMidiNote = note.initialNote;
     if (glideInfo.fromNote >= 0 && (glideInfo.glissando || glideInfo.portamento))
     {
         DBG("WARNING: Portamento and glissando are not yet implemented.");
@@ -31,15 +40,22 @@ void ResonatorVoice::noteStarted()
     }
     else
     {
-        noteSmoother.setValueUnsmoothed (note.initialNote / 127.0f);
+        noteSmoother.setValueUnsmoothed(note.initialNote / 127.0f);
     }
 
-    processor.modMatrix.setPolyValue (*this, processor.modSrcVelocity, note.noteOnVelocity.asUnsignedFloat());
-    processor.modMatrix.setPolyValue (*this, processor.modSrcTimbre, note.initialTimbre.asUnsignedFloat());
-    processor.modMatrix.setPolyValue (*this, processor.modSrcPressure, note.pressure.asUnsignedFloat());
+    processor.modMatrix.setPolyValue(*this, processor.modSrcVelocity, note.noteOnVelocity.asUnsignedFloat());
+    processor.modMatrix.setPolyValue(*this, processor.modSrcTimbre, note.initialTimbre.asUnsignedFloat());
+    processor.modMatrix.setPolyValue(*this, processor.modSrcPressure, note.pressure.asUnsignedFloat());
+
+    updateParameters();
+    snapParams();
 
     exciterAmpEnv.reset();
+    resonator.reset();
     exciterAmpEnv.noteOn();
+    silenceCount = 0;
+
+    // resonator.processSample(0.9f);
 }
 
 void ResonatorVoice::noteRetriggered()
@@ -49,13 +65,17 @@ void ResonatorVoice::noteRetriggered()
 
 void ResonatorVoice::noteStopped(bool allowTailOff)
 {
-    DBG("Stopping note");
     exciterAmpEnv.noteOff();
 
     if (!allowTailOff)
     {
+        DBG("Forcefully stopping note " + juce::String(id));
         clearCurrentNote();
         stopVoice();
+    }
+    else
+    {
+        DBG("Released note " + juce::String(id));
     }
 }
 
@@ -64,50 +84,104 @@ bool ResonatorVoice::isVoiceActive()
     return isActive();
 }
 
-void ResonatorVoice::setCurrentSampleRate(double newRate)
+void ResonatorVoice::updateParameters()
 {
-    MPESynthesiserVoice::setCurrentSampleRate(newRate);
-    exciterAmpEnv.setSampleRate(newRate);
-    noteSmoother.setSampleRate(newRate);
+    auto note = getCurrentlyPlayingNote();
+    processor.modMatrix.setPolyValue(*this, processor.modSrcNote, note.initialNote / 127.0f);
+
+    exciterAmpEnv.setAttack(getValue(processor.exciterParams.attack));
+    // DBG("Exciter Attack: " + juce::String(getValue(processor.exciterParams.attack)));
+    exciterAmpEnv.setDecay(getValue(processor.exciterParams.decay));
+    // DBG("Exciter Decay: " + juce::String(getValue(processor.exciterParams.decay)));
+    exciterAmpEnv.setSustainLevel(getValue(processor.exciterParams.sustain));
+    // DBG("Exciter Sustain: " + juce::String(getValue(processor.exciterParams.sustain)));
+    exciterAmpEnv.setRelease(getValue(processor.exciterParams.release));
+    // DBG("Exciter Release: " + juce::String(getValue(processor.exciterParams.release)));
+
+
+    currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
+    currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
+    frequency = gin::getMidiNoteInHertz(currentMidiNote);
+    resonator.setFrequency(frequency);
+    //TODO Implement manual tuning
+
 }
 
 void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
-    if(exciterAmpEnv.getState() == gin::AnalogADSR::State::idle)
-    {
-        DBG("Envelope idle, terminating note");
-        stopVoice();
-        clearCurrentNote();
-    }
+    updateParameters();
+    gin::ScratchBuffer buffer(2, numSamples);
 
-    auto note = getCurrentlyPlayingNote();
-    processor.modMatrix.setPolyValue (*this, processor.modSrcNote, note.initialNote / 127.0f);
-
-    exciterAmpEnv.setAttack(getValue(processor.exciterParams.attack));
-    exciterAmpEnv.setDecay(getValue(processor.exciterParams.decay));
-    exciterAmpEnv.setSustainLevel(getValue(processor.exciterParams.sustain));
-    exciterAmpEnv.setRelease(getValue(processor.exciterParams.release));
-
-    currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
-    currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
-    //TODO Implement manual tuning
-
-    // DBG("Note value: " + juce::String(currentMidiNote));
     auto frequency = gin::getMidiNoteInHertz(currentMidiNote);
-    // DBG("Frequency: " + juce::String(frequency));
-    //fill the buffer with noise
+    // resonator.setFrequency(frequency);
+    float maxAmplitude = 0.0f;
+
+    float lastEnvVal;
     for (int i = 0; i < numSamples; i++)
     {
-        auto sample = noise.nextValue();
+        lastEnvVal = exciterAmpEnv.process();
+        const auto exciterSample = noise.nextValue() * lastEnvVal;
+        const auto sample = resonator.processSample(exciterSample * 0.5f);
+        if (exciterAmpEnv.getState() == gin::ADSR::State::finished)
+            maxAmplitude = juce::jmax(maxAmplitude, std::abs(sample));
         outputBuffer.addSample(0, startSample + i, sample);
         outputBuffer.addSample(1, startSample + i, sample);
     }
 
-    //process the buffer with the envelope
-    exciterAmpEnv.processMultiplying(outputBuffer, startSample, numSamples);
+    // switch (exciterAmpEnv.getState())
+    // {
+    // case gin::ADSR::State::attack:
+    //     DBG("Attack");
+    //     break;
+    // case gin::ADSR::State::decay:
+    //     DBG("Decay");
+    //     break;
+    // case gin::ADSR::State::sustain:
+    //     DBG("Sustain");
+    //     break;
+    // case gin::ADSR::State::release:
+    //     DBG("Release");
+    //     break;
+    // case gin::ADSR::State::idle:
+    //     DBG("Idle");
+    //     DBG(lastEnvVal);
+    //     break;
+    // case gin::ADSR::finished:
+    //     DBG("Finished");
+    //     DBG(lastEnvVal);
+    //     break;
+    // }
+
+    // DBG("Max amplitude :: " + juce::String(maxAmplitude));
+
+    if (exciterAmpEnv.getState() == gin::ADSR::State::finished)
+    {
+        if (maxAmplitude < 0.009f)
+        {
+            silenceCount += 1;
+            if (silenceCount > silenceCountThreshold)
+            {
+                DBG("Silence detected, stopping note " + juce::String(id));
+                stopVoice();
+                clearCurrentNote();
+            }
+        }
+        else
+        {
+            silenceCount = 0;
+        }
+    }
+
     finishBlock(numSamples);
 
-
+    // for (int i = 0; i < numSamples; i++)
+    // {
+    //     auto sample = noise.nextValue() * exciterAmpEnv.process();
+    //     outputBuffer.addSample(0, startSample + i, sample);
+    //     outputBuffer.addSample(1, startSample + i, sample);
+    // }
+    //
+    // finishBlock(numSamples);
 }
 
 void ResonatorVoice::notePressureChanged()
@@ -137,7 +211,3 @@ float ResonatorVoice::getCurrentNote()
 {
     return noteSmoother.getCurrentValue() * 127.0f;
 }
-
-
-
-

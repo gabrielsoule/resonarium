@@ -13,6 +13,7 @@ class ResonariumProcessor;
 class ResonatorSynth : public gin::Synthesiser {
 public:
     explicit ResonatorSynth(ResonariumProcessor& p);
+    void prepare(const juce::dsp::ProcessSpec& spec);
 private:
     ResonariumProcessor& processor;
 };

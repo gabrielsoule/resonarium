@@ -8,34 +8,35 @@
 #pragma once
 
 #include <JuceHeader.h>
+
+#include "Resonator.h"
+
 class NoiseGenerator
 {
 public:
     void reset()
     {
         noiseSeed = 22222;
+        gain = 0.4f;
     }
 
     float nextValue()
     {
-        // Generate the next integer pseudorandom number.
         noiseSeed = noiseSeed * 196314165 + 907633515;
-
-        // Convert to a signed value.
         int temp = int(noiseSeed >> 7) - 16777216;
-
-        // Convert to a floating-point number between -1.0 and 1.0.
-        return float(temp) / 16777216.0f;
+        return (float(temp) / 16777216.0f);
     }
 
 private:
     unsigned int noiseSeed;
+    float gain;
 };
 
 class ResonariumProcessor;
 
 
-class ResonatorVoice : public gin::SynthesiserVoice, public gin::ModVoice{
+class ResonatorVoice : public gin::SynthesiserVoice, public gin::ModVoice
+{
 public:
     ResonatorVoice(ResonariumProcessor& p);
     ~ResonatorVoice() override;
@@ -47,20 +48,23 @@ public:
     void noteTimbreChanged() override;
     void notePitchbendChanged() override;
     void noteKeyStateChanged() override;
-    void setCurrentSampleRate(double newRate) override;
+    // void setCurrentSampleRate(double newRate) override;
+    void prepare(const juce::dsp::ProcessSpec& spec);
+    void updateParameters();
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
     bool isVoiceActive() override;
 
     ResonariumProcessor& processor;
     float frequency;
-    gin::AnalogADSR exciterAmpEnv;
+    gin::ADSR exciterAmpEnv;
     NoiseGenerator noise = NoiseGenerator();
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote;
     int id;
-
+    Resonator resonator;
+    int silenceCount = 0;
+    int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
 };
-
 
 
 #endif //RESONATORVOICE_H

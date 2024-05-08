@@ -15,3 +15,12 @@ ResonatorSynth::ResonatorSynth(ResonariumProcessor& p) : processor(p)
 
     DBG("Creating Synthesiser");
 }
+
+void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
+{
+    setCurrentPlaybackSampleRate(spec.sampleRate);
+    for(auto* v : voices)
+    {
+        dynamic_cast<ResonatorVoice*>(v)->prepare(spec);
+    }
+}

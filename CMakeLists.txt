@@ -5,10 +5,10 @@ cmake_minimum_required(VERSION 3.24.0 FATAL_ERROR)
 #
 set(PLUGIN_NAME Resonarium)
 set(DEV_CODE Soul)
-set(PLUGIN_VERSION 0.0.3)
+set(PLUGIN_VERSION 0.0.4)
 set(BUNDLE_ID com.gabrielsoule.resonarium)
 set(AU_ID ResonariumAU)
-set(LV2_URI "https://example.com/example/")
+set(LV2_URI "gabrielsoule.com/resonarium")
 set(WEBSITE "https://example.com")
 set(PLUGIN_CODE Res0)
 

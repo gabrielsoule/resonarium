@@ -36,6 +36,13 @@ public:
         void setup(ResonariumProcessor& p);
     };
 
+    struct ResonatorParams
+    {
+        gin::Parameter::Ptr harmonic, decayFilterCutoff, firstOrderDecay, dispersion;
+
+        void setup(ResonariumProcessor& p);
+    };
+
 
     ResonatorSynth synth;
     gin::ModMatrix modMatrix;
