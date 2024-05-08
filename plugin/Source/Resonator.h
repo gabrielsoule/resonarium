@@ -21,6 +21,13 @@ public:
         Eks
     };
 
+    struct HarmonicComponent
+    {
+        float harmonic;
+        float gain;
+        juce::dsp::IIR::Filter<float> dampingFilter;
+    };
+
     float processSample(float input);
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
@@ -31,7 +38,9 @@ public:
     juce::dsp::DelayLine<float> delayTop;
     juce::dsp::DelayLine<float> delayBtm;
     juce::dsp::IIR::Filter<float> dampingFilter;
+    juce::dsp::IIR::Filter<float> dampingFilter2;
     juce::dsp::IIR::Filter<float> dcBlocker;
+    std::vector<HarmonicComponent> harmonics;
     Mode mode;
     float frequency;
     float minFrequency;
@@ -40,6 +49,7 @@ public:
     float dampingCoefficient;
     float dampingFilterCutoff;
     float sampleRate;
+    bool testMultiTap = false;
 };
 
 
