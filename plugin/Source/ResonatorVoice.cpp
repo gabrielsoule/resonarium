@@ -21,7 +21,6 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     exciterAmpEnv.setSampleRate(spec.sampleRate);
     noteSmoother.setSampleRate(spec.sampleRate);
     resonator.prepare(spec);
-    resonator.setMode(Resonator::Mode::Eks);
 }
 
 void ResonatorVoice::noteStarted()

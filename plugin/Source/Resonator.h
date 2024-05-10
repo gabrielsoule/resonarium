@@ -11,9 +11,14 @@
 /**
  * A multi-purpose resonator with support for both waveguide models
  * and extended Karplus-Strong models.
+ *
+ * The Resonator object itself is designed to be used within
+ * a ResonatorBank; therefore some variables are defined which
+ * specifically apply to the enclosing ResonatorBank rather than the resonator itself.
  */
 class Resonator {
 public:
+
 
     enum Mode
     {
@@ -34,6 +39,8 @@ public:
     void setFrequency(float frequency);
     void setDampingFilterCutoff(float cutoff);
     void setMode(Mode newMode);
+    void setHarmonicMultiplier(float newHarmonicMultiplier);
+    void setHarmonicOffsetInSemitones(float semitones, float cents);
 
     juce::dsp::DelayLine<float> delayTop;
     juce::dsp::DelayLine<float> delayBtm;
@@ -41,15 +48,23 @@ public:
     juce::dsp::IIR::Filter<float> dampingFilter2;
     juce::dsp::IIR::Filter<float> dcBlocker;
     std::vector<HarmonicComponent> harmonics;
-    Mode mode;
-    float frequency;
-    float minFrequency;
-    float maxFrequency;
-    float delayLengthInSamples;
-    float dampingCoefficient;
-    float dampingFilterCutoff;
+    Mode mode = Eks;
+    float minFrequency; //the minimum frequency of the resonator
+    float maxFrequency; //the maximum frequency of the resonator
+    float delayLengthInSamples; //the length of the delay line in samples corresponding to frequency
+    float dampingCoefficient; //the first-order damping coefficient
+    float dampingFilterCutoff; //the cutoff frequency of the damping filter
     float sampleRate;
     bool testMultiTap = false;
+
+    //these parameters are managed by an enclosing ResonatorBank,
+    //but they're stored in Resonator for simplicity
+    float gain = 1.0f; //how loud should this resonator be?
+    float feedbackMix = 0.0f; //how much should this resonator feed back into the resonator bank?
+private:
+    float frequency; //the frequency of the resonator
+    float harmonicMultiplier = 1.0f; //by how much should we multiply the base frequency
+    void updateDelayLineLength();
 };
 
 

@@ -87,11 +87,8 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
 void Resonator::setFrequency(float newFrequency)
 {
     frequency = newFrequency;
-    //convert the frequency to the corresponding delay length
-    delayLengthInSamples = sampleRate / frequency;
-    // DBG("Setting delay length to " + juce::String(delayLengthInSamples) + " samples");
-    delayTop.setDelay(delayLengthInSamples);
-    delayBtm.setDelay(delayLengthInSamples);
+    updateDelayLineLength();
+
 }
 
 void Resonator::setDampingFilterCutoff(float cutoff)
@@ -107,4 +104,29 @@ void Resonator::setDampingFilterCutoff(float cutoff)
 void Resonator::setMode(Mode newMode)
 {
     mode = newMode;
+}
+
+void Resonator::setHarmonicMultiplier(float newHarmonicMultiplier)
+{
+    harmonicMultiplier = newHarmonicMultiplier;
+    updateDelayLineLength();
+}
+
+/**
+ * Applies a frequency offset to this resonator's frequency, based on a number of semitones and cents.
+ */
+void Resonator::setHarmonicOffsetInSemitones(float semitones, float cents)
+{
+    //convert the semitones and cents into a frequency offset, based on the current frequency
+    this->harmonicMultiplier =  std::pow(2.0, semitones / 12.0 + cents / 1200.0);
+    updateDelayLineLength();
+}
+
+void Resonator::updateDelayLineLength()
+{
+    delayLengthInSamples = sampleRate / (frequency * harmonicMultiplier);
+    delayTop.setDelay(delayLengthInSamples);
+    delayBtm.setDelay(delayLengthInSamples);
+    // DBG("Setting delay length to " + juce::String(delayLengthInSamples) + " samples corresponding to a harmonic multiplier of " + juce::String(harmonicMultiplier) + " and a frequency of " + juce::String(frequency) + " Hz.");
+
 }
