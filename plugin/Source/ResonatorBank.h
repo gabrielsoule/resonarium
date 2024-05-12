@@ -27,7 +27,7 @@ public:
     float processSample(float input);
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
-    void setFrequency(float frequency);
+    void setFrequency(float newFrequency);
     void setFeedbackMode(CouplingMode newMode);
 
     CouplingMode couplingMode;

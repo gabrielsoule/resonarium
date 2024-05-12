@@ -7,12 +7,13 @@
 ResonatorBank::ResonatorBank()
 {
     //add some resonators to the OwnedArray
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 8; i++)
     {
         resonators.add(new Resonator());
     }
 
-    resonators[1]->setHarmonicOffsetInSemitones(6, 0);
+    // resonators[2]->setHarmonicOffsetInSemitones(13, 0);
+    // resonators[2]->gain = 0.4f;
 }
 
 ResonatorBank::~ResonatorBank()
@@ -67,14 +68,17 @@ void ResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
     {
         r->prepare(spec);
     }
+
+    resonators[1]->setHarmonicOffsetInSemitones(9, 0);
+    resonators[2]->setHarmonicOffsetInSemitones(13, 0);
 }
 
-void ResonatorBank::setFrequency(float frequency)
+void ResonatorBank::setFrequency(float newFrequency)
 {
-    this->frequency = frequency;
+    this->frequency = newFrequency;
     for (auto* r : resonators)
     {
-        r->setFrequency(frequency);
+        r->setFrequency(newFrequency);
     }
 }
 

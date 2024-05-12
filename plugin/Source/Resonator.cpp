@@ -52,12 +52,12 @@ void Resonator::reset()
     dampingFilter2.reset();
     dcBlocker.reset();
     testMultiTap = false;
-    DBG("testMultiTap is now " + juce::String((testMultiTap ? "true" : "false")));
 }
 
 void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
 {
     this->reset();
+    this->frequency = 440.0f; //set the frequency to anything just to avoid dividing by zero when computing delay length
     sampleRate = spec.sampleRate;
     minFrequency = 15;
     maxFrequency = (sampleRate / 2.0f) - 1;
