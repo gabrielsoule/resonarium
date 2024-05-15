@@ -61,7 +61,7 @@ public:
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote;
     int id;
-    ResonatorBank resonator;
+    ResonatorBank resonatorBank;
     int silenceCount = 0;
     int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
 };

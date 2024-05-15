@@ -33,7 +33,19 @@ public:
         juce::dsp::IIR::Filter<float> dampingFilter;
     };
 
+    /**
+    *   Processes an entire sample through the resonator via computing the output sample after filtering and processing,
+    *   pushing (input + output) into the delay line, and returning just the output sample.
+    */
     float processSample(float input);
+
+    /**
+     * Pops a single sample from the resonator's delay line, applies waveguide filtering, and returns it.
+     * MUST be followed by a call to pushSample.
+     * This method allows more complex processing of the resonator's feedback input.
+     */
+    float popSample();
+    float pushSample(float input);
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
     void setFrequency(float frequency);
@@ -60,7 +72,7 @@ public:
     //these parameters are managed by an enclosing ResonatorBank,
     //but they're stored in Resonator for simplicity
     float gain = 1.0f; //how loud should this resonator be?
-    float feedbackMix = 0.0f; //how much should this resonator feed back into the resonator bank?
+    float feedbackGain = 1.0f; //how much should this resonator feed back into the resonator bank?
 private:
     float frequency; //the frequency of the resonator
     float harmonicMultiplier = 1.0f; //by how much should we multiply the base frequency

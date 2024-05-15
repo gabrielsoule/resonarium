@@ -6,6 +6,8 @@
 #define RESONATORBANK_H
 #include "Resonator.h"
 
+#define NUM_RESONATORS 3
+
 /**
  * A bank of several Resonators, with support for different intra-resonator feedback modes.
  */
@@ -34,6 +36,13 @@ public:
     float frequency;
     float sampleRate;
     juce::OwnedArray<Resonator> resonators;
+
+    // for use in intra-resonator feedback.
+    // stores each resonator's last output times its feedback gain.
+    // these will not equal the audible output samples,
+    // since the resonators have different gain for feedback vs DAW output.
+    // for example, a resonator can hav
+    float lastResonatorOutputs[NUM_RESONATORS];
 
 };
 

@@ -4,19 +4,26 @@
 
 #include "Resonator.h"
 //TODO Support multi-channel processing and do some interesting stuff in the stereo field
+/**
+ * WARNING: Since the enclosing ResonatorBank manages the feedback gain and output gain of each resonator,
+ * essentially duplicating the signal, the resonator does NOT apply its own gain to its own output signal.
+ * The gain must be applied by the caller of processSample.
+ * @param input
+ * @return
+ */
 float Resonator::processSample(float input)
 {
     if (mode == Eks)
     {
         float outSample = 0;
-        float outSample2 = 0;
-        if(testMultiTap)
-        {
-            outSample2 = delayTop.popSample(0, delayLengthInSamples / 1.9f, false);
-            outSample2 = outSample2 * dampingCoefficient;
-            outSample2 = dampingFilter2.processSample(outSample2);
-            outSample2 = outSample2 * 0.1f;
-        }
+        // float outSample2 = 0;
+        // if(testMultiTap)
+        // {
+        //     outSample2 = delayTop.popSample(0, delayLengthInSamples / 1.9f, false);
+        //     outSample2 = outSample2 * dampingCoefficient;
+        //     outSample2 = dampingFilter2.processSample(outSample2);
+        //     outSample2 = outSample2 * 0.1f;
+        // }
 
         // implement Karplus-Strong algorithm using only the top delay line
         // delayTop.setDelay(delayLengthInSamples);
@@ -24,11 +31,11 @@ float Resonator::processSample(float input)
         outSample = outSample * dampingCoefficient;
         outSample = dampingFilter.processSample(outSample);
 
-        if(testMultiTap)
-        {
-            outSample = outSample +  outSample2;
-            outSample = outSample / 1.1f;
-        }
+        // if(testMultiTap)
+        // {
+        //     outSample = outSample +  outSample2;
+        //     outSample = outSample / 1.1f;
+        // }
         delayTop.pushSample(0, outSample + input);
         return dcBlocker.processSample(outSample);
     }
@@ -43,6 +50,22 @@ float Resonator::processSample(float input)
         return -1;
     }
 }
+
+float Resonator::popSample()
+{
+    float outSample = 0;
+    outSample = outSample + delayTop.popSample(0, delayLengthInSamples, true);
+    outSample = outSample * dampingCoefficient;
+    outSample = dampingFilter.processSample(outSample);
+    return outSample;
+}
+
+float Resonator::pushSample(float input)
+{
+    delayTop.pushSample(0, input);
+    return dcBlocker.processSample(input);
+}
+
 
 void Resonator::reset()
 {

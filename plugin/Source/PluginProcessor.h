@@ -38,9 +38,21 @@ public:
 
     struct ResonatorParams
     {
-        gin::Parameter::Ptr harmonic, decayFilterCutoff, firstOrderDecay, dispersion;
+        gin::Parameter::Ptr
+        harmonic,
+        decayTime,
+        decayFilterCutoff,
+        dispersion,
+        brightness,
+        gain,
+        feedbackMix;
 
         void setup(ResonariumProcessor& p);
+    };
+
+    struct ResonatorBankParams
+    {
+        gin::Parameter::Ptr couplingMode, outputGain;
     };
 
 

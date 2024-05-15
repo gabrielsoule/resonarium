@@ -20,7 +20,8 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     MPESynthesiserVoice::setCurrentSampleRate(spec.sampleRate);
     exciterAmpEnv.setSampleRate(spec.sampleRate);
     noteSmoother.setSampleRate(spec.sampleRate);
-    resonator.prepare(spec);
+    resonatorBank.couplingMode = ResonatorBank::INTERLINKED;
+    resonatorBank.prepare(spec);
 }
 
 void ResonatorVoice::noteStarted()
@@ -50,7 +51,7 @@ void ResonatorVoice::noteStarted()
     snapParams();
 
     exciterAmpEnv.reset();
-    resonator.reset();
+    resonatorBank.reset();
     exciterAmpEnv.noteOn();
     silenceCount = 0;
 
@@ -101,7 +102,7 @@ void ResonatorVoice::updateParameters()
     currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
-    resonator.setFrequency(frequency);
+    resonatorBank.setFrequency(frequency);
     //TODO Implement manual tuning
 
 }
@@ -120,7 +121,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     {
         lastEnvVal = exciterAmpEnv.process();
         const auto exciterSample = noise.nextValue() * lastEnvVal;
-        const auto sample = resonator.processSample(exciterSample * 0.5f);
+        const auto sample = resonatorBank.processSample(exciterSample * 0.5f);
         if (exciterAmpEnv.getState() == gin::ADSR::State::finished)
             maxAmplitude = juce::jmax(maxAmplitude, std::abs(sample));
         outputBuffer.addSample(0, startSample + i, sample);
