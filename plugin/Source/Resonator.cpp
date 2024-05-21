@@ -13,50 +13,56 @@
  */
 float Resonator::processSample(float input)
 {
-    if (mode == Eks)
-    {
-        float outSample = 0;
-        // float outSample2 = 0;
-        // if(testMultiTap)
-        // {
-        //     outSample2 = delayTop.popSample(0, delayLengthInSamples / 1.9f, false);
-        //     outSample2 = outSample2 * dampingCoefficient;
-        //     outSample2 = dampingFilter2.processSample(outSample2);
-        //     outSample2 = outSample2 * 0.1f;
-        // }
-
-        // implement Karplus-Strong algorithm using only the top delay line
-        // delayTop.setDelay(delayLengthInSamples);
-        outSample = outSample + delayTop.popSample(0, delayLengthInSamples, true);
-        outSample = outSample * dampingCoefficient;
-        outSample = dampingFilter.processSample(outSample);
-
-        // if(testMultiTap)
-        // {
-        //     outSample = outSample +  outSample2;
-        //     outSample = outSample / 1.1f;
-        // }
-        delayTop.pushSample(0, outSample + input);
-        return dcBlocker.processSample(outSample);
-    }
-    else if (mode == WAVEGUIDE)
-    {
-        DBG("Waveguide not yet implemented!");
-        return -1;
-    }
-    else
-    {
-        DBG("Invalid resonator mode!");
-        return -1;
-    }
+    // if (mode == Eks)
+    // {
+    //     float outSample = 0;
+    //     // float outSample2 = 0;
+    //     // if(testMultiTap)
+    //     // {
+    //     //     outSample2 = delayTop.popSample(0, delayLengthInSamples / 1.9f, false);
+    //     //     outSample2 = outSample2 * dampingCoefficient;
+    //     //     outSample2 = dampingFilter2.processSample(outSample2);
+    //     //     outSample2 = outSample2 * 0.1f;
+    //     // }
+    //
+    //     // implement Karplus-Strong algorithm using only the top delay line
+    //     // delayTop.setDelay(delayLengthInSamples);
+    //     outSample = outSample + delayTop.popSample(0, delayLengthInSamples, true);
+    //     outSample = dampingFilter.processSample(outSample);
+    //     outSample = dispersionFilter.processSample(outSample);
+    //     outSample = outSample * decayCoefficient;
+    //
+    //
+    //     // if(testMultiTap)
+    //     // {
+    //     //     outSample = outSample +  outSample2;
+    //     //     outSample = outSample / 1.1f;
+    //     // }
+    //     delayTop.pushSample(0, outSample + input);
+    //     return dcBlocker.processSample(outSample);
+    // }
+    // else if (mode == WAVEGUIDE)
+    // {
+    //     DBG("Waveguide not yet implemented!");
+    //     return -1;
+    // }
+    // else
+    // {
+    //     DBG("Invalid resonator mode!");
+    //     return -1;
+    // }
+    float outSample = popSample();
+    pushSample(outSample + input);
+    return outSample;
 }
 
 float Resonator::popSample()
 {
     float outSample = 0;
     outSample = outSample + delayTop.popSample(0, delayLengthInSamples, true);
-    outSample = outSample * dampingCoefficient;
     outSample = dampingFilter.processSample(outSample);
+    outSample = dispersionFilter.processSample(outSample);
+    outSample = outSample * decayCoefficient;
     return outSample;
 }
 
@@ -74,6 +80,7 @@ void Resonator::reset()
     dampingFilter.reset();
     dampingFilter2.reset();
     dcBlocker.reset();
+    dispersionFilter.reset();
     testMultiTap = false;
 }
 
@@ -85,7 +92,7 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
     minFrequency = 15;
     maxFrequency = (sampleRate / 2.0f) - 1;
     dampingFilterCutoff = spec.sampleRate / 4.0f;
-    dampingCoefficient = 0.997f;
+    setDecayTime(5.0f);
     delayTop.setMaximumDelayInSamples(4096);
     delayBtm.setMaximumDelayInSamples(4096);
     delayTop.prepare(spec);
@@ -100,17 +107,21 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
         sampleRate, dampingFilterCutoff);
     dampingFilter2.prepare(spec);
 
+    dispersionFilter.setDispersionAmount(1.0f);
+    dispersionFilter.prepare(spec);
+
     //One pole DC blocker coefficients that are appropriate for a ~40-50hz sample rate
     juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients =
         new juce::dsp::IIR::Coefficients<float>(1, -1, 1, -0.995f);
     dcBlocker.coefficients = dcBlockerCoefficients;
     dcBlocker.prepare(spec);
+    updateParameters();
 }
 
 void Resonator::setFrequency(float newFrequency)
 {
     frequency = newFrequency;
-    updateDelayLineLength();
+    updateParameters();
 
 }
 
@@ -132,7 +143,7 @@ void Resonator::setMode(Mode newMode)
 void Resonator::setHarmonicMultiplier(float newHarmonicMultiplier)
 {
     harmonicMultiplier = newHarmonicMultiplier;
-    updateDelayLineLength();
+    updateParameters();
 }
 
 /**
@@ -142,14 +153,24 @@ void Resonator::setHarmonicOffsetInSemitones(float semitones, float cents)
 {
     //convert the semitones and cents into a frequency offset, based on the current frequency
     this->harmonicMultiplier =  std::pow(2.0, semitones / 12.0 + cents / 1200.0);
-    updateDelayLineLength();
+    updateParameters();
 }
 
-void Resonator::updateDelayLineLength()
+/**
+ * Updates all frequency-dependent parameters of the resonator.
+ * Called internally after, e.g. a frequency change.
+ */
+void Resonator::updateParameters()
 {
     delayLengthInSamples = sampleRate / (frequency * harmonicMultiplier);
     delayTop.setDelay(delayLengthInSamples);
     delayBtm.setDelay(delayLengthInSamples);
     // DBG("Setting delay length to " + juce::String(delayLengthInSamples) + " samples corresponding to a harmonic multiplier of " + juce::String(harmonicMultiplier) + " and a frequency of " + juce::String(frequency) + " Hz.");
+}
 
+void Resonator::setDecayTime(float timeInSeconds)
+{
+    decayTime = timeInSeconds;
+    decayCoefficient = std::pow(0.001, 1.0 / (timeInSeconds * frequency));
+    DBG("Setting decay coefficient to " + juce::String(decayCoefficient) + " for a decay time of " + juce::String(decayCoefficient));
 }

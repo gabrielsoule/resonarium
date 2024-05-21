@@ -8,6 +8,8 @@
 
 #include <JuceHeader.h>
 
+#include "Filters.h"
+
 /**
  * A multi-purpose resonator with support for both waveguide models
  * and extended Karplus-Strong models.
@@ -49,22 +51,26 @@ public:
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
     void setFrequency(float frequency);
-    void setDampingFilterCutoff(float cutoff);
+    void setDampingFilterCutoff(float ßcutoff);
+    void setDecayTime(float timeInSeconds);
     void setMode(Mode newMode);
     void setHarmonicMultiplier(float newHarmonicMultiplier);
     void setHarmonicOffsetInSemitones(float semitones, float cents);
+    void updateParameters();
 
     juce::dsp::DelayLine<float> delayTop;
     juce::dsp::DelayLine<float> delayBtm;
     juce::dsp::IIR::Filter<float> dampingFilter;
     juce::dsp::IIR::Filter<float> dampingFilter2;
+    DispersionFilter dispersionFilter;
     juce::dsp::IIR::Filter<float> dcBlocker;
     std::vector<HarmonicComponent> harmonics;
     Mode mode = Eks;
     float minFrequency; //the minimum frequency of the resonator
     float maxFrequency; //the maximum frequency of the resonator
     float delayLengthInSamples; //the length of the delay line in samples corresponding to frequency
-    float dampingCoefficient; //the first-order damping coefficient
+    float decayCoefficient; //the first-order damping coefficient
+    float decayTime;
     float dampingFilterCutoff; //the cutoff frequency of the damping filter
     float sampleRate;
     bool testMultiTap = false;
@@ -73,10 +79,9 @@ public:
     //but they're stored in Resonator for simplicity
     float gain = 1.0f; //how loud should this resonator be?
     float feedbackGain = 1.0f; //how much should this resonator feed back into the resonator bank?
-private:
     float frequency; //the frequency of the resonator
     float harmonicMultiplier = 1.0f; //by how much should we multiply the base frequency
-    void updateDelayLineLength();
+
 };
 
 

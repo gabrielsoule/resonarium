@@ -12,6 +12,8 @@ ResonatorBank::ResonatorBank()
         resonators.add(new Resonator());
     }
 
+    couplingMode = PARALLEL;
+
     // resonators[2]->setHarmonicOffsetInSemitones(13, 0);
     // resonators[2]->gain = 0.4f;
 }
@@ -30,9 +32,9 @@ float ResonatorBank::processSample(float input)
         float totalGain = 0.0f;
         for (auto* r : resonators)
         {
-            // outSample += r->processSample(input) * r->gain;
-            outSample += r->popSample();
-            r->pushSample(outSample + input);
+            const float sample = r->popSample();
+            outSample += sample;
+            r->pushSample(sample + input);
             totalGain += r->gain;
         }
         outSample = outSample / totalGain;
@@ -48,30 +50,6 @@ float ResonatorBank::processSample(float input)
     //Feed the combined output of all resonators into the input of each resonator
     else if (couplingMode == CouplingMode::INTERLINKED)
     {
-        // float outSample = 0.0f;
-        // float inputSample = input;
-        // float totalOutputGain = 0.0f;
-        // float totalFeedbackGain = 0.0f;
-        //
-        // //combine the last outputs of each resonator
-        // for(int i = 0; i < NUM_RESONATORS; i++)
-        // {
-        //     inputSample = inputSample + lastResonatorOutputs[i] * resonators[i]->feedbackGain;
-        //     totalFeedbackGain += resonators[i]->feedbackGain;
-        // }
-        //
-        // inputSample = inputSample / totalFeedbackGain;
-        //
-        // //process each resonator with the combined input sample
-        // for(int i = 0; i < NUM_RESONATORS; i++)
-        // {
-        //     lastResonatorOutputs[i] = resonators[i]->processSample(inputSample);
-        //     outSample += lastResonatorOutputs[i] * resonators[i]->gain;
-        //     totalOutputGain += resonators[i]->gain;
-        // }
-        //
-        // return outSample / totalOutputGain;
-
         float outSample = 0.0f;
         float feedbackSample =  0.0f;
         float feedbackGainSum = 0.0f;
@@ -133,11 +111,10 @@ void ResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
         r->prepare(spec);
     }
 
-    resonators[1]->setHarmonicOffsetInSemitones(7, 0);
-    // resonators[1]->gain = 0.9f;
-    resonators[2]->setHarmonicOffsetInSemitones(13, 0);
-    // resonators[3]->gain = 0.3f;
-    // resonators[3]->setHarmonicOffsetInSemitones(-5, 0);
+    if(resonators.size() > 1) resonators[1]->setHarmonicOffsetInSemitones(12, 0);
+    if(resonators.size() > 2) resonators[2]->setHarmonicOffsetInSemitones(24, 0);
+    if(resonators.size() > 3) resonators[3]->setHarmonicOffsetInSemitones(-12, 0);
+    sampleRate = spec.sampleRate;
     reset();
 
 }

@@ -20,7 +20,6 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     MPESynthesiserVoice::setCurrentSampleRate(spec.sampleRate);
     exciterAmpEnv.setSampleRate(spec.sampleRate);
     noteSmoother.setSampleRate(spec.sampleRate);
-    resonatorBank.couplingMode = ResonatorBank::INTERLINKED;
     resonatorBank.prepare(spec);
 }
 
@@ -156,7 +155,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 
     if (exciterAmpEnv.getState() == gin::ADSR::State::finished)
     {
-        if (maxAmplitude < 0.009f)
+        if (maxAmplitude < 0.002f)
         {
             silenceCount += 1;
             if (silenceCount > silenceCountThreshold)

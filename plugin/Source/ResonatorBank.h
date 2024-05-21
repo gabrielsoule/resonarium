@@ -6,7 +6,7 @@
 #define RESONATORBANK_H
 #include "Resonator.h"
 
-#define NUM_RESONATORS 3
+#define NUM_RESONATORS 1
 
 /**
  * A bank of several Resonators, with support for different intra-resonator feedback modes.
