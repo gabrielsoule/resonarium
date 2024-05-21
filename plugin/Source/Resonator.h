@@ -51,7 +51,7 @@ public:
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
     void setFrequency(float frequency);
-    void setDampingFilterCutoff(float ßcutoff);
+    void setDampingFilterCutoff(float cutoff);
     void setDecayTime(float timeInSeconds);
     void setMode(Mode newMode);
     void setHarmonicMultiplier(float newHarmonicMultiplier);

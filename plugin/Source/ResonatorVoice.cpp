@@ -197,8 +197,8 @@ void ResonatorVoice::noteTimbreChanged()
 
 void ResonatorVoice::notePitchbendChanged()
 {
-    auto note = getCurrentlyPlayingNote();
-    processor.modMatrix.setPolyValue(*this, processor.modSrcPitchbend, note.pitchbend.asUnsignedFloat());
+    // auto note = getCurrentlyPlayingNote();
+    // processor.modMatrix.setPolyValue(*this, processor.modSrcPitchbend, note.pitchbend.asUnsignedFloat());
 }
 
 void ResonatorVoice::noteKeyStateChanged()
