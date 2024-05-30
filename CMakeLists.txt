@@ -8,7 +8,7 @@ set(DEV_CODE Soul)
 set(PLUGIN_VERSION 0.0.4)
 set(BUNDLE_ID com.gabrielsoule.resonarium)
 set(AU_ID ResonariumAU)
-set(LV2_URI "gabrielsoule.com/resonarium")
+set(LV2_URI "https://gabrielsoule.com/resonarium")
 set(WEBSITE "https://example.com")
 set(PLUGIN_CODE Res0)
 
@@ -71,6 +71,7 @@ set(JUCE_BUILD_EXAMPLES OFF)
 
 add_subdirectory(modules/juce)
 add_subdirectory(modules/melatonin_inspector)
+add_subdirectory(modules/chowdsp_utils)
 
 set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/modules/juce" APPEND PROPERTY LABELS JUCE)
 
@@ -125,6 +126,11 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
 
         melatonin_inspector
 
+        chowdsp::chowdsp_dsp_utils
+        chowdsp::chowdsp_gui
+        chowdsp::chowdsp_plugin_base
+        chowdsp::chowdsp_filters
+
         juce::juce_audio_basics
         juce::juce_audio_devices
         juce::juce_audio_formats
@@ -138,7 +144,6 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
         juce::juce_graphics
         juce::juce_gui_basics
         juce::juce_gui_extra
-
         juce::juce_recommended_config_flags
 )
 
