@@ -68,8 +68,8 @@ float Resonator::popSample()
 
 float Resonator::pushSample(float input)
 {
-    delayTop.pushSample(0, input);
-    return dcBlocker.processSample(input);
+    delayTop.pushSample(0, dcBlocker.processSample(input));
+    return input;
 }
 
 
@@ -92,7 +92,7 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
     minFrequency = 15;
     maxFrequency = (sampleRate / 2.0f) - 1;
     dampingFilterCutoff = spec.sampleRate / 4.0f;
-    setDecayTime(5.0f);
+    setDecayTime(2.0f);
     delayTop.setMaximumDelayInSamples(4096);
     delayBtm.setMaximumDelayInSamples(4096);
     delayTop.prepare(spec);
@@ -107,7 +107,7 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
         sampleRate, dampingFilterCutoff);
     dampingFilter2.prepare(spec);
 
-    dispersionFilter.setDispersionAmount(1.0f);
+    dispersionFilter.setDispersionAmount(0.0f);
     dispersionFilter.prepare(spec);
 
     //One pole DC blocker coefficients that are appropriate for a ~40-50hz sample rate

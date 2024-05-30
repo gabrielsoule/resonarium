@@ -9,3 +9,6 @@
 	path = modules/melatonin_inspector
 	url = https://github.com/sudara/melatonin_inspector.git
 	branch = main
+[submodule "modules/chowdsp_utils"]
+	path = modules/chowdsp_utils
+	url = git@github.com:Chowdhury-DSP/chowdsp_utils.git

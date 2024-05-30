@@ -6,7 +6,7 @@
 #define RESONATORBANK_H
 #include "Resonator.h"
 
-#define NUM_RESONATORS 1
+#define NUM_RESONATORS 2
 
 /**
  * A bank of several Resonators, with support for different intra-resonator feedback modes.
@@ -20,6 +20,7 @@ public:
         PARALLEL,
         CASCADE,
         INTERLINKED,
+        INTERLINKED2,
         RANDOM
     };
 
@@ -43,6 +44,8 @@ public:
     // since the resonators have different gain for feedback vs DAW output.
     // for example, a resonator can hav
     float lastResonatorOutputs[NUM_RESONATORS];
+    float lastOutput = 0.0f;
+    juce::dsp::IIR::Filter<float> couplingFilter;
 
 };
 

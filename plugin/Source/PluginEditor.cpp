@@ -20,13 +20,13 @@ ResonariumEditor::ResonariumEditor (ResonariumProcessor& p)
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (400, 300);
-    setGridSize (10, 3);
+    setSize (1200, 800);
+    addAndMakeVisible(testBox);
 
-    addControl(new gin::Knob(proc.exciterParams.attack), 1, 0);
-    addControl(new gin::Knob(proc.exciterParams.decay), 2, 0);
-    addControl(new gin::Knob(proc.exciterParams.sustain), 3, 0);
-    addControl(new gin::Knob(proc.exciterParams.release), 4, 0);
+    // addControl(new gin::Knob(proc.exciterParams.attack), 1, 0);
+    // addControl(new gin::Knob(proc.exciterParams.decay), 2, 0);
+    // addControl(new gin::Knob(proc.exciterParams.sustain), 3, 0);
+    // addControl(new gin::Knob(proc.exciterParams.release), 4, 0);
 }
 
 ResonariumEditor::~ResonariumEditor()

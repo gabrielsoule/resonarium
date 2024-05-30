@@ -12,7 +12,7 @@ ResonatorBank::ResonatorBank()
         resonators.add(new Resonator());
     }
 
-    couplingMode = PARALLEL;
+    couplingMode = INTERLINKED2;
 
     // resonators[2]->setHarmonicOffsetInSemitones(13, 0);
     // resonators[2]->gain = 0.4f;
@@ -21,6 +21,44 @@ ResonatorBank::ResonatorBank()
 ResonatorBank::~ResonatorBank()
 {
     resonators.clear(true);
+}
+
+/**
+ * Resets the internal state of the resonator bank and its resonators.
+ * Use when playing a new note, for example.
+ */
+void ResonatorBank::reset()
+{
+    for (int i = 0; i < NUM_RESONATORS; i++)
+    {
+        lastResonatorOutputs[i] = 0.0f;
+        resonators[i]->reset();
+    }
+
+    jassert(NUM_RESONATORS == resonators.size());
+    DBG("Swap");
+    couplingFilter.reset();
+    lastOutput = 0.0f;
+    // if(couplingMode == PARALLEL) couplingMode = CouplingMode::INTERLINKED2;
+    // else if(couplingMode == INTERLINKED2) couplingMode = PARALLEL;
+
+}
+
+void ResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
+{
+    for (auto* r : resonators)
+    {
+        r->prepare(spec);
+    }
+
+    couplingFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(spec.sampleRate, 10000);
+
+    if(resonators.size() > 1) resonators[1]->setHarmonicOffsetInSemitones(11, 0);
+    if(resonators.size() > 2) resonators[2]->setHarmonicOffsetInSemitones(24, 0);
+    if(resonators.size() > 3) resonators[3]->setHarmonicOffsetInSemitones(-12, 0);
+    sampleRate = spec.sampleRate;
+    reset();
+
 }
 
 float ResonatorBank::processSample(float input)
@@ -32,10 +70,14 @@ float ResonatorBank::processSample(float input)
         float totalGain = 0.0f;
         for (auto* r : resonators)
         {
-            const float sample = r->popSample();
-            outSample += sample;
-            r->pushSample(sample + input);
+            // const float sample = r->popSample();
+            // outSample += sample;
+            // r->pushSample(sample + input);
+
+            outSample += r->processSample(input);
+
             totalGain += r->gain;
+            // break;
         }
         outSample = outSample / totalGain;
         return outSample;
@@ -77,46 +119,41 @@ float ResonatorBank::processSample(float input)
         return outSample / outputGainSum;
 
     }
+
+    else if (couplingMode == CouplingMode::INTERLINKED2)
+    {
+        float outSample = 0.0f;
+        lastOutput = 0.3f * (couplingFilter.processSample(lastOutput)) / static_cast<float>(NUM_RESONATORS);
+        DBG(lastOutput);
+
+        for(auto* r : resonators)
+        {
+            r->decayCoefficient = 0.8f;
+            auto temp = (input + lastOutput);
+            outSample += r->processSample(temp);
+        }
+        juce::dsp::StateVariableFilter
+
+        lastOutput = outSample;
+
+        return outSample / NUM_RESONATORS;
+    }
+
     else if (couplingMode == CouplingMode::RANDOM)
     {
-        return -1;
+        auto state0 = resonators[0]->popSample();
+        auto state1 = resonators[1]->popSample();
+
+        resonators[0]->pushSample(state1 + input);
+        resonators[1]->pushSample(state0 + input);
+
+        return state1;
     }
     else
     {
         DBG("Invalid feedback mode!");
         return -1;
     }
-}
-
-/**
- * Resets the internal state of the resonator bank and its resonators.
- * Use when playing a new note, for example.
- */
-void ResonatorBank::reset()
-{
-    for (int i = 0; i < NUM_RESONATORS; i++)
-    {
-        lastResonatorOutputs[i] = 0.0f;
-        resonators[i]->reset();
-    }
-
-    jassert(NUM_RESONATORS == resonators.size());
-
-}
-
-void ResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
-{
-    for (auto* r : resonators)
-    {
-        r->prepare(spec);
-    }
-
-    if(resonators.size() > 1) resonators[1]->setHarmonicOffsetInSemitones(12, 0);
-    if(resonators.size() > 2) resonators[2]->setHarmonicOffsetInSemitones(24, 0);
-    if(resonators.size() > 3) resonators[3]->setHarmonicOffsetInSemitones(-12, 0);
-    sampleRate = spec.sampleRate;
-    reset();
-
 }
 
 void ResonatorBank::setFrequency(float newFrequency)
