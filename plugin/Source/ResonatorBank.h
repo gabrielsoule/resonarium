@@ -5,8 +5,7 @@
 #ifndef RESONATORBANK_H
 #define RESONATORBANK_H
 #include "Resonator.h"
-
-#define NUM_RESONATORS 2
+#include "defines.h"
 
 /**
  * A bank of several Resonators, with support for different intra-resonator feedback modes.
@@ -46,7 +45,6 @@ public:
     float lastResonatorOutputs[NUM_RESONATORS];
     float lastOutput = 0.0f;
     juce::dsp::IIR::Filter<float> couplingFilter;
-
 };
 
 

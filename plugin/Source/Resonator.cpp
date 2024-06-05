@@ -1,7 +1,3 @@
-//
-// Created by Gabriel Soule on 5/1/24.
-//
-
 #include "Resonator.h"
 //TODO Support multi-channel processing and do some interesting stuff in the stereo field
 /**
@@ -60,7 +56,8 @@ float Resonator::popSample()
 {
     float outSample = 0;
     outSample = outSample + delayTop.popSample(0, delayLengthInSamples, true);
-    outSample = dampingFilter.processSample(outSample);
+    // outSample = dampingFilter.processSample(outSample);
+    outSample = svf.processSample(0, outSample);
     outSample = dispersionFilter.processSample(outSample);
     outSample = outSample * decayCoefficient;
     return outSample;
@@ -82,6 +79,7 @@ void Resonator::reset()
     dcBlocker.reset();
     dispersionFilter.reset();
     testMultiTap = false;
+    svf.reset();
 }
 
 void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
@@ -115,6 +113,10 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
         new juce::dsp::IIR::Coefficients<float>(1, -1, 1, -0.995f);
     dcBlocker.coefficients = dcBlockerCoefficients;
     dcBlocker.prepare(spec);
+    svf.setCutoffFrequency(spec.sampleRate / 4.0f);
+    svf.setMode(0);
+    svf.setQValue(0.707f);
+    svf.prepare(spec);
     updateParameters();
 }
 

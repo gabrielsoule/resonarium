@@ -1,0 +1,9 @@
+#ifndef DEFINES_H
+#define DEFINES_H
+
+#define NUM_RESONATORS 6
+#define NUM_RESONATOR_BANKS 1
+#define WINDOW_WIDTH 1200
+#define WINDOW_HEIGHT 800
+
+#endif //DEFINES_H

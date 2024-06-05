@@ -5,32 +5,45 @@
 ResonariumEditor::ResonariumEditor (ResonariumProcessor& p)
     : gin::ProcessorEditor (p), proc (p)
 {
-    // addAndMakeVisible (inspectButton);
-
-    // this chunk of code instantiates and opens the melatonin inspector
-    // inspectButton.onClick = [&] {
-    //     if (!inspector)
-    //     {
-    //         inspector = std::make_unique<melatonin::Inspector> (*this);
-    //         inspector->onClose = [this]() { inspector.reset(); };
-    //     }
-    //
-    //     inspector->setVisible (true);
-    // };
-
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
     setSize (1200, 800);
     addAndMakeVisible(testBox);
 
-    // addControl(new gin::Knob(proc.exciterParams.attack), 1, 0);
-    // addControl(new gin::Knob(proc.exciterParams.decay), 2, 0);
-    // addControl(new gin::Knob(proc.exciterParams.sustain), 3, 0);
-    // addControl(new gin::Knob(proc.exciterParams.release), 4, 0);
+
+    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    {
+        SafePointer<ResonatorBankParamBox> ptr = new ResonatorBankParamBox("Resonator Bank " + std::to_string(i), proc, i);;
+        resonatorBankParamBoxes.push_back(ptr);
+        addAndMakeVisible(*ptr);
+    }
+
+    addAndMakeVisible(inspectButton);
+
+    inspectButton.onClick = [&] {
+        if (!inspector)
+        {
+            inspector = std::make_unique<melatonin::Inspector> (*this);
+            inspector->onClose = [this]() { inspector.reset(); };
+        }
+
+        inspector->setVisible (true);
+    };
+
+    this->titleBar.programName.setLookAndFeel(nullptr);
+
+    addAndMakeVisible(myLabel);
+    myLabel.setBounds(400, 400, 100, 40);
+    myLabel.setText("My Label", juce::sendNotification);
+    myLabel.setColour(juce::Label::textColourId, juce::Colours::blue);
+    myLabel.setFont (juce::Font (4.0f, juce::Font::bold));
+
 }
 
 ResonariumEditor::~ResonariumEditor()
 {
+    for (SafePointer<ResonatorBankParamBox> ptr : resonatorBankParamBoxes)
+    {
+        ptr.deleteAndZero();
+    }
 }
 
 void ResonariumEditor::paint (juce::Graphics& g)
@@ -42,6 +55,8 @@ void ResonariumEditor::paint (juce::Graphics& g)
     g.setFont (16.0f);
     auto helloWorld = juce::String ("Hello!");
     g.drawText (helloWorld, area.removeFromTop (150), juce::Justification::centred, false);
+
+    this->titleBar.programName.setColour(juce::Label::textColourId, juce::Colours::purple);
 }
 
 //==============================================================================

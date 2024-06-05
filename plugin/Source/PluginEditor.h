@@ -7,7 +7,7 @@
 class ExciterParamBox : public gin::ParamBox
 {
 public:
-    ExciterParamBox(const juce::String& name, ResonariumProcessor& proc_) : gin::ParamBox (name), proc(proc_)
+    ExciterParamBox(const juce::String& name, ResonariumProcessor& proc_) : gin::ParamBox(name), proc(proc_)
     {
         setName("tst");
 
@@ -17,31 +17,33 @@ public:
         addControl(new gin::Knob(proc.exciterParams.sustain), 2, 0);
         addControl(new gin::Knob(proc.exciterParams.release), 3, 0);
         // this->getChildren()[0]->setBounds(0, 0, 30, 30);
-        setBounds(0, 40, 250, 200);
-;    }
+        setBounds(0, 40, 250, 200);;
+    }
 
     ResonariumProcessor& proc;
 
     int idx;
 };
 
-class TestResonatorParamBox : public gin::ParamBox
+
+class ResonatorBankParamBox : public gin::ParamBox
 {
 public:
-    TestResonatorParamBox(const juce::String& name, ResonariumProcessor& proc_) : gin::ParamBox (name), proc(proc_)
+    ResonatorBankParamBox(const juce::String& name, ResonariumProcessor& proc_, int resonatorNum_) :
+        gin::ParamBox(name), proc(proc_), resonatorNum(resonatorNum_)
     {
-        setName("testResonatorParams");
+        setName("resonatorBankParams");
+        setBounds(250, 40, WINDOW_WIDTH - 250, 200);
     }
 
     ResonariumProcessor& proc;
-
-
+    int resonatorNum;
 };
 
 class ResonariumEditor : public gin::ProcessorEditor
 {
 public:
-    ResonariumEditor (ResonariumProcessor&);
+    ResonariumEditor(ResonariumProcessor&);
     ~ResonariumEditor() override;
 
     //==============================================================================
@@ -50,10 +52,13 @@ public:
 
 private:
     ResonariumProcessor& proc;
-    ExciterParamBox testBox { "EXCITER", proc };
 
-    // std::unique_ptr<melatonin::Inspector> inspector;
-    juce::TextButton inspectButton { "Inspect the UI" };
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonariumEditor)
+    juce::Label myLabel;
+
+    ExciterParamBox testBox{"EXCITER", proc};
+    std::vector<SafePointer<ResonatorBankParamBox>> resonatorBankParamBoxes;
+
+    std::unique_ptr<melatonin::Inspector> inspector;
+    juce::TextButton inspectButton{"Inspect the UI"};
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ResonariumEditor)
 };
-

@@ -3,7 +3,8 @@
 #include <JuceHeader.h>
 
 #include "ResonatorSynth.h"
-#include "ResonatorVoice.h"
+#include "defines.h"
+#include "Parameters.h"
 
 //==============================================================================
 class ResonariumProcessor : public gin::Processor
@@ -28,39 +29,12 @@ public:
     void setupModMatrix();
     gin::ProcessorOptions getOptions();
 
-
-    struct ExciterParams
-    {
-        gin::Parameter::Ptr attack, decay, sustain, release, level;
-
-        void setup(ResonariumProcessor& p);
-    };
-
-    struct ResonatorParams
-    {
-        gin::Parameter::Ptr
-        harmonic,
-        decayTime,
-        decayFilterCutoff,
-        dispersion,
-        brightness,
-        gain,
-        feedbackMix;
-
-        void setup(ResonariumProcessor& p);
-    };
-
-    struct ResonatorBankParams
-    {
-        gin::Parameter::Ptr couplingMode, outputGain;
-    };
-
-
     ResonatorSynth synth;
     gin::ModMatrix modMatrix;
     gin::ModSrcId modSrcPressure, modSrcTimbre, modSrcPitchbend, modSrcNote, modSrcVelocity;
 
-    ExciterParams exciterParams{};
+    ExciterParams exciterParams;
+    ResonatorBankParams resonatorBanksParams[NUM_RESONATOR_BANKS];
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonariumProcessor)

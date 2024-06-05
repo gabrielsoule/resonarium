@@ -8,7 +8,8 @@
 
 #include <JuceHeader.h>
 
-#include "Filters.h"
+#include "dsp/Filters.h"
+#include "chowdsp_filters/LowerOrderFilters/chowdsp_StateVariableFilter.h"
 
 /**
  * A multi-purpose resonator with support for both waveguide models
@@ -74,6 +75,8 @@ public:
     float dampingFilterCutoff; //the cutoff frequency of the damping filter
     float sampleRate;
     bool testMultiTap = false;
+
+    chowdsp::StateVariableFilter<float, chowdsp::StateVariableFilterType::MultiMode, 2> svf;
 
     //these parameters are managed by an enclosing ResonatorBank,
     //but they're stored in Resonator for simplicity

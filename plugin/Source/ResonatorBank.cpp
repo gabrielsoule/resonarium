@@ -12,10 +12,7 @@ ResonatorBank::ResonatorBank()
         resonators.add(new Resonator());
     }
 
-    couplingMode = INTERLINKED2;
-
-    // resonators[2]->setHarmonicOffsetInSemitones(13, 0);
-    // resonators[2]->gain = 0.4f;
+    couplingMode = PARALLEL;
 }
 
 ResonatorBank::~ResonatorBank()
@@ -36,7 +33,6 @@ void ResonatorBank::reset()
     }
 
     jassert(NUM_RESONATORS == resonators.size());
-    DBG("Swap");
     couplingFilter.reset();
     lastOutput = 0.0f;
     // if(couplingMode == PARALLEL) couplingMode = CouplingMode::INTERLINKED2;
@@ -132,7 +128,6 @@ float ResonatorBank::processSample(float input)
             auto temp = (input + lastOutput);
             outSample += r->processSample(temp);
         }
-        juce::dsp::StateVariableFilter
 
         lastOutput = outSample;
 
