@@ -54,6 +54,7 @@ public:
      */
     void updateParameters(float frequency);
 
+    bool enabled;
     juce::dsp::DelayLine<float> delayTop;
     juce::dsp::DelayLine<float> delayBtm;
     juce::dsp::IIR::Filter<float> dampingFilter;
@@ -82,7 +83,6 @@ public:
 
     //Pointer to the voice that owns this Resonator; awkwardly required for polyphonic modulation via ModMatrix
     ResonatorVoice& voice;
-
 };
 
 

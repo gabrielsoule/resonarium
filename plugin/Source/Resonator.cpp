@@ -16,6 +16,7 @@ Resonator::Resonator(ResonatorVoice& parentVoice) : voice(parentVoice)
  */
 float Resonator::processSample(float input)
 {
+    if(!enabled) return 0.0f;
     float outSample = popSample();
     pushSample(outSample + input);
     return outSample;
@@ -23,6 +24,7 @@ float Resonator::processSample(float input)
 
 float Resonator::popSample()
 {
+    if(!enabled) return 0.0f;
     float outSample = 0;
     outSample = outSample + delayTop.popSample(0, delayLengthInSamples, true);
     outSample = dampingFilter.processSample(outSample);
@@ -34,6 +36,7 @@ float Resonator::popSample()
 
 float Resonator::pushSample(float input)
 {
+    if(!enabled) return 0.0f;
     delayTop.pushSample(0, dcBlocker.processSample(input));
     return input;
 }
@@ -117,6 +120,8 @@ void Resonator::setHarmonicOffsetInSemitones(float semitones, float cents)
 
 void Resonator::updateParameters(float frequency)
 {
+    this->enabled = params.enabled->isOn();
+
     this->harmonicMultiplier = std::pow(2.0f, voice.getValue(params.harmonic) / 12.0f);
     this->frequency = frequency;
 
