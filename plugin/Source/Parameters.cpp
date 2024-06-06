@@ -33,7 +33,6 @@ void ExciterParams::setup(ResonariumProcessor& p)
 ResonatorParams::ResonatorParams(int resonatorIndex, int bankIndex) : resonatorIndex(resonatorIndex),
                                                                       bankIndex(bankIndex)
 {
-
 }
 
 void ResonatorParams::setup(ResonariumProcessor& p)
@@ -48,7 +47,7 @@ void ResonatorParams::setup(ResonariumProcessor& p)
                             0.0f);
 
     harmonic = p.addExtParam("harmonic" + suffix, "Pitch Offset" + suffix, "Pitch", "semis",
-                             {-48.0f, 48.0f, 0.0f, 1.0f}, 0.0f,
+                             {-24.0f, 24.0f, 0.01f, 1.0f}, 0.0f,
                              0.0f);
 
     decayTime = p.addExtParam("decayTime" + suffix, "Level" + suffix, "Decay", "s",
@@ -61,7 +60,7 @@ void ResonatorParams::setup(ResonariumProcessor& p)
     dispersion->conversionFunction = [](const float x) { return x / 100.0f; };
 
     decayFilterCutoff = p.addExtParam("decayFilterCutoff" + suffix, "Filter Cutoff" + suffix, "Cutoff", "Hz",
-                                      {20.0, 20000.0, 0.0, 0.2f}, 1000.0f,
+                                      {20.0, 20000.0, 0.0, 1.0f}, 1000.0f,
                                       0.0f);
 
     // LP, BP, HP, SVF
@@ -85,14 +84,13 @@ void ResonatorParams::setup(ResonariumProcessor& p)
 
 ResonatorBankParams::ResonatorBankParams(int index) : index(index), resonatorParams{}
 {
-
 }
 
 
 void ResonatorBankParams::setup(ResonariumProcessor& p)
 {
     jassert(index >= 0 && index < NUM_RESONATOR_BANKS);
-    for(int i = 0; i < NUM_RESONATORS; i++)
+    for (int i = 0; i < NUM_RESONATORS; i++)
     {
         resonatorParams[i] = ResonatorParams(i, index);
         resonatorParams[i].setup(p);
@@ -112,5 +110,4 @@ void ResonatorBankParams::setup(ResonariumProcessor& p)
                                {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
                                gin::SmoothingType::linear);
     outputGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
-
 }

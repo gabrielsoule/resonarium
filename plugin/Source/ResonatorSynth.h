@@ -14,6 +14,12 @@ class ResonatorSynth : public gin::Synthesiser {
 public:
     explicit ResonatorSynth(ResonariumProcessor& p);
     void prepare(const juce::dsp::ProcessSpec& spec);
+
+    /**
+     * Called once during setup. Instructs the synth to access parameters from the processor
+     * and distribute them to the appropriate voices and resonators.
+     */
+    void distributeParameters();
 private:
     ResonariumProcessor& processor;
 };

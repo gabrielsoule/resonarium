@@ -9,18 +9,27 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p) : processor(p)
 {
     noise.reset();
     frequency = 440.0f;
+    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    {
+        resonatorBanks.add(new ResonatorBank(*this));
+    }
 }
 
 ResonatorVoice::~ResonatorVoice()
-= default;
+{
+    resonatorBanks.clear(true);
+}
 
 void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
 {
-    DBG("Preparing voice " + juce::String(id));
     MPESynthesiserVoice::setCurrentSampleRate(spec.sampleRate);
     exciterAmpEnv.setSampleRate(spec.sampleRate);
     noteSmoother.setSampleRate(spec.sampleRate);
-    resonatorBank.prepare(spec);
+    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    {
+        jassert(resonatorBanks[i]->params.index == i); //ensure that parameters have been correctly distributed
+        resonatorBanks[i]->prepare(spec);
+    }
 }
 
 void ResonatorVoice::noteStarted()
@@ -50,7 +59,7 @@ void ResonatorVoice::noteStarted()
     snapParams();
 
     exciterAmpEnv.reset();
-    resonatorBank.reset();
+    for(int i = 0; i < NUM_RESONATOR_BANKS; i++) resonatorBanks[i]->reset();
     exciterAmpEnv.noteOn();
     silenceCount = 0;
 
@@ -89,69 +98,38 @@ void ResonatorVoice::updateParameters()
     processor.modMatrix.setPolyValue(*this, processor.modSrcNote, note.initialNote / 127.0f);
 
     exciterAmpEnv.setAttack(getValue(processor.exciterParams.attack));
-    // DBG("Exciter Attack: " + juce::String(getValue(processor.exciterParams.attack)));
     exciterAmpEnv.setDecay(getValue(processor.exciterParams.decay));
-    // DBG("Exciter Decay: " + juce::String(getValue(processor.exciterParams.decay)));
     exciterAmpEnv.setSustainLevel(getValue(processor.exciterParams.sustain));
-    // DBG("Exciter Sustain: " + juce::String(getValue(processor.exciterParams.sustain)));
     exciterAmpEnv.setRelease(getValue(processor.exciterParams.release));
-    // DBG("Exciter Release: " + juce::String(getValue(processor.exciterParams.release)));
-
 
     currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
-    resonatorBank.setFrequency(frequency);
-    //TODO Implement manual tuning
+    for(int i = 0; i < NUM_RESONATOR_BANKS; i++) resonatorBanks[i]->updateParameters(frequency);
 
 }
 
 void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
-    updateParameters();
+    updateParameters(); //important!
     gin::ScratchBuffer buffer(2, numSamples);
 
-    auto frequency = gin::getMidiNoteInHertz(currentMidiNote);
-    // resonator.setFrequency(frequency);
     float maxAmplitude = 0.0f;
 
-    float lastEnvVal;
     for (int i = 0; i < numSamples; i++)
     {
-        lastEnvVal = exciterAmpEnv.process();
-        const auto exciterSample = noise.nextValue() * lastEnvVal;
-        const auto sample = resonatorBank.processSample(exciterSample * 0.5f);
+        float lastEnvVal = exciterAmpEnv.process();
+        const float exciterSample = noise.nextValue() * lastEnvVal;
+
+        //TODO Properly support resonator bank feedback routing; for now, just add everything together
+        float sample = 0.0f;
+        for(int j = 0; j < NUM_RESONATOR_BANKS; j++) sample += resonatorBanks[j]->processSample(exciterSample);
+
         if (exciterAmpEnv.getState() == gin::ADSR::State::finished)
             maxAmplitude = juce::jmax(maxAmplitude, std::abs(sample));
         outputBuffer.addSample(0, startSample + i, sample);
         outputBuffer.addSample(1, startSample + i, sample);
     }
-
-    // switch (exciterAmpEnv.getState())
-    // {
-    // case gin::ADSR::State::attack:
-    //     DBG("Attack");
-    //     break;
-    // case gin::ADSR::State::decay:
-    //     DBG("Decay");
-    //     break;
-    // case gin::ADSR::State::sustain:
-    //     DBG("Sustain");
-    //     break;
-    // case gin::ADSR::State::release:
-    //     DBG("Release");
-    //     break;
-    // case gin::ADSR::State::idle:
-    //     DBG("Idle");
-    //     DBG(lastEnvVal);
-    //     break;
-    // case gin::ADSR::finished:
-    //     DBG("Finished");
-    //     DBG(lastEnvVal);
-    //     break;
-    // }
-
-    // DBG("Max amplitude :: " + juce::String(maxAmplitude));
 
     if (exciterAmpEnv.getState() == gin::ADSR::State::finished)
     {
@@ -172,15 +150,6 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     }
 
     finishBlock(numSamples);
-
-    // for (int i = 0; i < numSamples; i++)
-    // {
-    //     auto sample = noise.nextValue() * exciterAmpEnv.process();
-    //     outputBuffer.addSample(0, startSample + i, sample);
-    //     outputBuffer.addSample(1, startSample + i, sample);
-    // }
-    //
-    // finishBlock(numSamples);
 }
 
 void ResonatorVoice::notePressureChanged()

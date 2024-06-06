@@ -24,3 +24,20 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
         dynamic_cast<ResonatorVoice*>(v)->prepare(spec);
     }
 }
+
+void ResonatorSynth::distributeParameters()
+{
+    for(auto* v : voices)
+    {
+        ResonatorVoice* voice = dynamic_cast<ResonatorVoice*>(v);
+        jassert(voice != nullptr);
+        for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+        {
+            voice->resonatorBanks[i]->params = processor.resonatorBanksParams[i];
+            for(int j = 0; j < NUM_RESONATORS; j++)
+            {
+                voice->resonatorBanks[i]->resonators[j]->params = voice->resonatorBanks[i]->params.resonatorParams[j];
+            }
+        }
+    }
+}

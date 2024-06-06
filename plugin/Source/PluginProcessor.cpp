@@ -9,16 +9,21 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
     return options;
 }
 
+void ResonariumProcessor::distributeParameters()
+{
+    synth.distributeParameters();
+    //maybe do more once we have more DSP components doing stuff?
+}
+
 //==============================================================================
 ResonariumProcessor::ResonariumProcessor() : gin::Processor(
                                                  false), synth(*this)
 {
     lf = std::make_unique<gin::CopperLookAndFeel>();
 
-
     // Parameter setup
     exciterParams.setup(*this);
-    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
         resonatorBanksParams[i] = ResonatorBankParams(i);
         resonatorBanksParams[i].setup(*this); // resonator bank handles individual resonator setup
@@ -38,7 +43,12 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
 
     //Mod Matrix setup
     setupModMatrix();
+
+    //Internal init, required by gin/JUCE, loads all presets into memory
     init();
+
+    //Finally, distribute parameter structs to their appropriate DSP components
+    distributeParameters();
 }
 
 ResonariumProcessor::~ResonariumProcessor()
@@ -59,6 +69,8 @@ void ResonariumProcessor::setupModMatrix()
             DBG("Adding parameter " + pp->getName(40) + " to mod matrix as a poly parameter");
         modMatrix.addParameter(pp, true);
     }
+
+    DBG("TOTAL PARAMETERS REGISTERED: " + juce::String(getPluginParameters().size()));
 
     modMatrix.build();
 }
@@ -82,7 +94,6 @@ void ResonariumProcessor::reset()
 
 void ResonariumProcessor::prepareToPlay(double newSampleRate, int newSamplesPerBlock)
 {
-
     Processor::prepareToPlay(newSampleRate, newSamplesPerBlock);
     synth.prepare({newSampleRate, static_cast<juce::uint32>(newSamplesPerBlock), 2});
     modMatrix.setSampleRate(newSampleRate);
@@ -124,5 +135,3 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     DBG("Instantiating new ResonariumProcessor instance!");
     return new ResonariumProcessor();
 }
-
-

@@ -3,13 +3,14 @@
 //
 
 #include "ResonatorBank.h"
+#include "ResonatorVoice.h"
 
-ResonatorBank::ResonatorBank()
+ResonatorBank::ResonatorBank(ResonatorVoice& parentVoice) : voice(parentVoice)
 {
     //add some resonators to the OwnedArray
     for (int i = 0; i < NUM_RESONATORS; i++)
     {
-        resonators.add(new Resonator());
+        resonators.add(new Resonator(parentVoice));
     }
 
     couplingMode = PARALLEL;
@@ -42,9 +43,10 @@ void ResonatorBank::reset()
 
 void ResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
 {
-    for (auto* r : resonators)
+    for (int i = 0; i < NUM_RESONATORS; i++)
     {
-        r->prepare(spec);
+        jassert(resonators[i]->params.resonatorIndex == i); //ensure that parameters have been correctly distributed
+        resonators[i]->prepare(spec);
     }
 
     couplingFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(spec.sampleRate, 10000);
@@ -57,6 +59,17 @@ void ResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
 
 }
 
+/**
+ * Updates all internal parameters based on the state of the VST parameters corresponding to this ResonatorBank.
+ * Child Resonators are also updated.
+ * Frequency is passed as an argument since frequency comes from the MIDI note, not the VST parameters.
+ */
+void ResonatorBank::updateParameters(float frequency)
+{
+    this->frequency = frequency;
+    for (auto* r: resonators) r->updateParameters(frequency);
+}
+
 float ResonatorBank::processSample(float input)
 {
     //Process the resonators in parallel with no intra-resonator feedback
@@ -66,14 +79,11 @@ float ResonatorBank::processSample(float input)
         float totalGain = 0.0f;
         for (auto* r : resonators)
         {
-            // const float sample = r->popSample();
-            // outSample += sample;
-            // r->pushSample(sample + input);
+
 
             outSample += r->processSample(input);
 
             totalGain += r->gain;
-            // break;
         }
         outSample = outSample / totalGain;
         return outSample;
@@ -148,15 +158,6 @@ float ResonatorBank::processSample(float input)
     {
         DBG("Invalid feedback mode!");
         return -1;
-    }
-}
-
-void ResonatorBank::setFrequency(float newFrequency)
-{
-    this->frequency = newFrequency;
-    for (auto* r : resonators)
-    {
-        r->setFrequency(newFrequency);
     }
 }
 

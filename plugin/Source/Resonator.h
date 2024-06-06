@@ -8,33 +8,23 @@
 
 #include <JuceHeader.h>
 
+#include "Parameters.h"
 #include "dsp/Filters.h"
 #include "chowdsp_filters/LowerOrderFilters/chowdsp_StateVariableFilter.h"
 
+class ResonatorVoice;
 /**
- * A multi-purpose resonator with support for both waveguide models
- * and extended Karplus-Strong models.
+ * A multi-purpose resonator based roughly on digital waveguide literature, including
+ * the extended Karplus-Strong algorithm, banded waveguide synthesis, and other techniques.
  *
  * The Resonator object itself is designed to be used within
  * a ResonatorBank; therefore some variables are defined which
  * specifically apply to the enclosing ResonatorBank rather than the resonator itself.
  */
-class Resonator {
+class Resonator
+{
 public:
-
-
-    enum Mode
-    {
-        WAVEGUIDE,
-        Eks
-    };
-
-    struct HarmonicComponent
-    {
-        float harmonic;
-        float gain;
-        juce::dsp::IIR::Filter<float> dampingFilter;
-    };
+    Resonator(ResonatorVoice& parentVoice);
 
     /**
     *   Processes an entire sample through the resonator via computing the output sample after filtering and processing,
@@ -51,22 +41,24 @@ public:
     float pushSample(float input);
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
-    void setFrequency(float frequency);
-    void setDampingFilterCutoff(float cutoff);
-    void setDecayTime(float timeInSeconds);
-    void setMode(Mode newMode);
-    void setHarmonicMultiplier(float newHarmonicMultiplier);
+    // void setFrequency(float frequency);
+    // void setDampingFilterCutoff(float cutoff);
+    // void setDecayTime(float timeInSeconds);
+    // void setHarmonicMultiplier(float newHarmonicMultiplier);
     void setHarmonicOffsetInSemitones(float semitones, float cents);
-    void updateParameters();
+
+    /**
+     * Computes and caches internal parameters based on the
+     * raw values of the VST3 parameter pointers. Called once
+     * per block for efficiency.
+     */
+    void updateParameters(float frequency);
 
     juce::dsp::DelayLine<float> delayTop;
     juce::dsp::DelayLine<float> delayBtm;
     juce::dsp::IIR::Filter<float> dampingFilter;
-    juce::dsp::IIR::Filter<float> dampingFilter2;
     DispersionFilter dispersionFilter;
     juce::dsp::IIR::Filter<float> dcBlocker;
-    std::vector<HarmonicComponent> harmonics;
-    Mode mode = Eks;
     float minFrequency; //the minimum frequency of the resonator
     float maxFrequency; //the maximum frequency of the resonator
     float delayLengthInSamples; //the length of the delay line in samples corresponding to frequency
@@ -80,14 +72,18 @@ public:
 
     //these parameters are managed by an enclosing ResonatorBank,
     //but they're stored in Resonator for simplicity
-    float gain = 1.0f; //how loud should this resonator be?
+    float gain = 1.0f; //how loud should this resonator be? this is a scalar in [0, 1] -- not a -dB value!
     float feedbackGain = 1.0f; //how much should this resonator feed back into the resonator bank?
     float frequency; //the frequency of the resonator
     float harmonicMultiplier = 1.0f; //by how much should we multiply the base frequency
 
+    //Pointers to the relevant parameters controlling this Resonator
+    ResonatorParams params;
+
+    //Pointer to the voice that owns this Resonator; awkwardly required for polyphonic modulation via ModMatrix
+    ResonatorVoice& voice;
+
 };
-
-
 
 
 #endif //RESONATOR_H

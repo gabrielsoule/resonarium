@@ -1,52 +1,21 @@
 #include "Resonator.h"
+
+#include "ResonatorVoice.h"
+
+Resonator::Resonator(ResonatorVoice& parentVoice) : voice(parentVoice)
+{
+}
+
 //TODO Support multi-channel processing and do some interesting stuff in the stereo field
 /**
  * WARNING: Since the enclosing ResonatorBank manages the feedback gain and output gain of each resonator,
  * essentially duplicating the signal, the resonator does NOT apply its own gain to its own output signal.
- * The gain must be applied by the caller of processSample.
+ * The gain (resonator.gain) must be applied by the caller of processSample.
  * @param input
  * @return
  */
 float Resonator::processSample(float input)
 {
-    // if (mode == Eks)
-    // {
-    //     float outSample = 0;
-    //     // float outSample2 = 0;
-    //     // if(testMultiTap)
-    //     // {
-    //     //     outSample2 = delayTop.popSample(0, delayLengthInSamples / 1.9f, false);
-    //     //     outSample2 = outSample2 * dampingCoefficient;
-    //     //     outSample2 = dampingFilter2.processSample(outSample2);
-    //     //     outSample2 = outSample2 * 0.1f;
-    //     // }
-    //
-    //     // implement Karplus-Strong algorithm using only the top delay line
-    //     // delayTop.setDelay(delayLengthInSamples);
-    //     outSample = outSample + delayTop.popSample(0, delayLengthInSamples, true);
-    //     outSample = dampingFilter.processSample(outSample);
-    //     outSample = dispersionFilter.processSample(outSample);
-    //     outSample = outSample * decayCoefficient;
-    //
-    //
-    //     // if(testMultiTap)
-    //     // {
-    //     //     outSample = outSample +  outSample2;
-    //     //     outSample = outSample / 1.1f;
-    //     // }
-    //     delayTop.pushSample(0, outSample + input);
-    //     return dcBlocker.processSample(outSample);
-    // }
-    // else if (mode == WAVEGUIDE)
-    // {
-    //     DBG("Waveguide not yet implemented!");
-    //     return -1;
-    // }
-    // else
-    // {
-    //     DBG("Invalid resonator mode!");
-    //     return -1;
-    // }
     float outSample = popSample();
     pushSample(outSample + input);
     return outSample;
@@ -56,8 +25,8 @@ float Resonator::popSample()
 {
     float outSample = 0;
     outSample = outSample + delayTop.popSample(0, delayLengthInSamples, true);
-    // outSample = dampingFilter.processSample(outSample);
-    outSample = svf.processSample(0, outSample);
+    outSample = dampingFilter.processSample(outSample);
+    // outSample = svf.processSample(0, outSample);
     outSample = dispersionFilter.processSample(outSample);
     outSample = outSample * decayCoefficient;
     return outSample;
@@ -69,13 +38,11 @@ float Resonator::pushSample(float input)
     return input;
 }
 
-
 void Resonator::reset()
 {
     delayTop.reset();
     delayBtm.reset();
     dampingFilter.reset();
-    dampingFilter2.reset();
     dcBlocker.reset();
     dispersionFilter.reset();
     testMultiTap = false;
@@ -90,7 +57,7 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
     minFrequency = 15;
     maxFrequency = (sampleRate / 2.0f) - 1;
     dampingFilterCutoff = spec.sampleRate / 4.0f;
-    setDecayTime(2.0f);
+    // setDecayTime(2.0f);
     delayTop.setMaximumDelayInSamples(4096);
     delayBtm.setMaximumDelayInSamples(4096);
     delayTop.prepare(spec);
@@ -98,12 +65,8 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
 
     dampingFilter.coefficients =
         juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(
-        sampleRate, dampingFilterCutoff);
+            sampleRate, dampingFilterCutoff);
     dampingFilter.prepare(spec);
-
-    dampingFilter2.coefficients = juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(
-        sampleRate, dampingFilterCutoff);
-    dampingFilter2.prepare(spec);
 
     dispersionFilter.setDispersionAmount(0.0f);
     dispersionFilter.prepare(spec);
@@ -117,36 +80,31 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
     svf.setMode(0);
     svf.setQValue(0.707f);
     svf.prepare(spec);
-    updateParameters();
+    updateParameters(frequency);
 }
 
-void Resonator::setFrequency(float newFrequency)
-{
-    frequency = newFrequency;
-    updateParameters();
+// void Resonator::setFrequency(float newFrequency)
+// {
+//     frequency = newFrequency;
+//     updateParameters();
+//
+// }
 
-}
+// void Resonator::setDampingFilterCutoff(float cutoff)
+// {
+//     if (cutoff != dampingFilterCutoff)
+//     {
+//         dampingFilterCutoff = cutoff;
+//         dampingFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(
+//             sampleRate, dampingFilterCutoff);
+//     }
+// }
 
-void Resonator::setDampingFilterCutoff(float cutoff)
-{
-    if (cutoff != dampingFilterCutoff)
-    {
-        dampingFilterCutoff = cutoff;
-        dampingFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(
-            sampleRate, dampingFilterCutoff);
-    }
-}
-
-void Resonator::setMode(Mode newMode)
-{
-    mode = newMode;
-}
-
-void Resonator::setHarmonicMultiplier(float newHarmonicMultiplier)
-{
-    harmonicMultiplier = newHarmonicMultiplier;
-    updateParameters();
-}
+// void Resonator::setHarmonicMultiplier(float newHarmonicMultiplier)
+// {
+//     harmonicMultiplier = newHarmonicMultiplier;
+//     updateParameters();
+// }
 
 /**
  * Applies a frequency offset to this resonator's frequency, based on a number of semitones and cents.
@@ -154,25 +112,33 @@ void Resonator::setHarmonicMultiplier(float newHarmonicMultiplier)
 void Resonator::setHarmonicOffsetInSemitones(float semitones, float cents)
 {
     //convert the semitones and cents into a frequency offset, based on the current frequency
-    this->harmonicMultiplier =  std::pow(2.0, semitones / 12.0 + cents / 1200.0);
-    updateParameters();
+    this->harmonicMultiplier = std::pow(2.0, semitones / 12.0 + cents / 1200.0);
 }
 
-/**
- * Updates all frequency-dependent parameters of the resonator.
- * Called internally after, e.g. a frequency change.
- */
-void Resonator::updateParameters()
+void Resonator::updateParameters(float frequency)
 {
+    this->harmonicMultiplier = std::pow(2.0f, voice.getValue(params.harmonic) / 12.0f);
+    this->frequency = frequency;
+
     delayLengthInSamples = sampleRate / (frequency * harmonicMultiplier);
     delayTop.setDelay(delayLengthInSamples);
     delayBtm.setDelay(delayLengthInSamples);
-    // DBG("Setting delay length to " + juce::String(delayLengthInSamples) + " samples corresponding to a harmonic multiplier of " + juce::String(harmonicMultiplier) + " and a frequency of " + juce::String(frequency) + " Hz.");
+
+    decayTime = voice.getValue(params.decayTime);
+    decayCoefficient = std::pow(0.001, 1.0 / (decayTime * frequency)); //simple t60 decay time calculation
+    dispersionFilter.setDispersionAmount(voice.getValue(params.dispersion));
+    dampingFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(
+        sampleRate, dampingFilterCutoff);
+    //TODO implement decayFilterType
+    //TODO implement decayFilterResonance
+    //TODO implement decayFilterKeytrack
+    gain = voice.getValue(params.gain);
 }
 
-void Resonator::setDecayTime(float timeInSeconds)
-{
-    decayTime = timeInSeconds;
-    decayCoefficient = std::pow(0.001, 1.0 / (timeInSeconds * frequency));
-    DBG("Setting decay coefficient to " + juce::String(decayCoefficient) + " for a decay time of " + juce::String(decayCoefficient));
-}
+// void Resonator::setDecayTime(float timeInSeconds)
+// {
+//     decayTime = timeInSeconds;
+//     decayCoefficient = std::pow(0.001, 1.0 / (timeInSeconds * frequency));
+//     DBG("Setting decay coefficient to " + juce::String(decayCoefficient) + " for a decay time of " + juce::String(
+//         decayCoefficient));
+// }

@@ -7,6 +7,7 @@
 #include "Resonator.h"
 #include "defines.h"
 
+class ResonatorVoice;
 /**
  * A bank of several Resonators, with support for different intra-resonator feedback modes.
  */
@@ -23,13 +24,13 @@ public:
         RANDOM
     };
 
-    ResonatorBank();
+    ResonatorBank(ResonatorVoice& parentVoice);
     ~ResonatorBank();
 
     float processSample(float input);
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
-    void setFrequency(float newFrequency);
+    void updateParameters(float frequency);
     void setFeedbackMode(CouplingMode newMode);
 
     CouplingMode couplingMode;
@@ -45,8 +46,12 @@ public:
     float lastResonatorOutputs[NUM_RESONATORS];
     float lastOutput = 0.0f;
     juce::dsp::IIR::Filter<float> couplingFilter;
+
+    //Pointers to the relevant parameters controlling this ResonatorBank
+    ResonatorBankParams params;
+
+    //Pointer to the voice that owns this ResonatorBank; awkwardly required for polyphonic modulation via ModMatrix
+    ResonatorVoice& voice;
 };
-
-
 
 #endif //RESONATORBANK_H

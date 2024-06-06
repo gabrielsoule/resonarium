@@ -8,7 +8,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-
+#include "defines.h"
 #include "ResonatorBank.h"
 
 class NoiseGenerator
@@ -61,7 +61,7 @@ public:
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote;
     int id;
-    ResonatorBank resonatorBank;
+    juce::OwnedArray<ResonatorBank> resonatorBanks;
     int silenceCount = 0;
     int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
 };
