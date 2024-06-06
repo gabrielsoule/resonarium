@@ -50,7 +50,7 @@ void ResonatorParams::setup(ResonariumProcessor& p)
                              {-24.0f, 24.0f, 0.01f, 1.0f}, 0.0f,
                              0.0f);
 
-    decayTime = p.addExtParam("decayTime" + suffix, "Level" + suffix, "Decay", "s",
+    decayTime = p.addExtParam("decayTime" + suffix, "Decay Time" + suffix, "Decay", "s",
                               {0.0, 60.0, 0.0, 0.2f}, 3.0f,
                               0.0f);
 

@@ -55,8 +55,7 @@ public:
     void updateParameters(float frequency);
 
     bool enabled;
-    juce::dsp::DelayLine<float> delayTop;
-    juce::dsp::DelayLine<float> delayBtm;
+    juce::dsp::DelayLine<float> delayLine;
     juce::dsp::IIR::Filter<float> dampingFilter;
     DispersionFilter dispersionFilter;
     juce::dsp::IIR::Filter<float> dcBlocker;
@@ -65,9 +64,7 @@ public:
     float delayLengthInSamples; //the length of the delay line in samples corresponding to frequency
     float decayCoefficient; //the first-order damping coefficient
     float decayTime;
-    float dampingFilterCutoff; //the cutoff frequency of the damping filter
     float sampleRate;
-    bool testMultiTap = false;
 
     chowdsp::StateVariableFilter<float, chowdsp::StateVariableFilterType::MultiMode, 2> svf;
 
