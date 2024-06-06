@@ -5,9 +5,7 @@
 gin::ProcessorOptions ResonariumProcessor::getOptions()
 {
     gin::ProcessorOptions options;
-    // options.wantsMidi = true;
-    // options.useNewsChecker = false;
-    // options.useUpdateChecker = false;
+    //no-op for now...
     return options;
 }
 
@@ -16,8 +14,17 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
                                                  false), synth(*this)
 {
     lf = std::make_unique<gin::CopperLookAndFeel>();
-    exciterParams.setup(*this);
 
+
+    // Parameter setup
+    exciterParams.setup(*this);
+    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    {
+        resonatorBanksParams[i] = ResonatorBankParams(i);
+        resonatorBanksParams[i].setup(*this); // resonator bank handles individual resonator setup
+    }
+
+    //Synth setup
     synth.enableLegacyMode();
     synth.setVoiceStealingEnabled(true);
     synth.setMPE(true);
@@ -29,6 +36,7 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
         voice->id = i;
     }
 
+    //Mod Matrix setup
     setupModMatrix();
     init();
 }
@@ -69,11 +77,12 @@ void ResonariumProcessor::updateState()
 void ResonariumProcessor::reset()
 {
     Processor::reset();
-    synth.clearVoices();
+    synth.turnOffAllVoices(false);
 }
 
 void ResonariumProcessor::prepareToPlay(double newSampleRate, int newSamplesPerBlock)
 {
+
     Processor::prepareToPlay(newSampleRate, newSamplesPerBlock);
     synth.prepare({newSampleRate, static_cast<juce::uint32>(newSamplesPerBlock), 2});
     modMatrix.setSampleRate(newSampleRate);
@@ -87,7 +96,7 @@ void ResonariumProcessor::prepareToPlay(double newSampleRate, int newSamplesPerB
 
 void ResonariumProcessor::releaseResources()
 {
-
+    DBG("Releasing resources...");
 }
 
 void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
