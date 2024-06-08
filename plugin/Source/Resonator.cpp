@@ -29,7 +29,7 @@ float Resonator::popSample()
     outSample = outSample + delayLine.popSample(0, delayLengthInSamples, true);
     outSample = dampingFilter.processSample(outSample);
     // outSample = svf.processSample(0, outSample);
-    outSample = dispersionFilter.processSample(outSample);
+    if(!testFlag) outSample = dispersionFilter.processSample(outSample);
     outSample = outSample * decayCoefficient;
     return outSample;
 }
@@ -37,7 +37,9 @@ float Resonator::popSample()
 float Resonator::pushSample(float input)
 {
     if(!enabled) return 0.0f;
-    delayLine.pushSample(0, dcBlocker.processSample(input));
+    // delayLine.pushSample(0, dcBlocker.processSample(input));
+    if(!testFlag) delayLine.pushSample(0, input);
+    else delayLine.pushSample(0, dcBlocker.processSample(input));
     return input;
 }
 
@@ -108,4 +110,14 @@ void Resonator::updateParameters(float frequency)
     //TODO implement decayFilterResonance
     //TODO implement decayFilterKeytrack
     gain = voice.getValue(params.gain);
+
+    if(voice.getValue(params.testParameter) > 0.5f)
+    {
+        testFlag = true;
+        DBG("TestFlag is true");
+    } else
+    {
+        testFlag = false;
+        DBG("TestFlag is false");
+    }
 }

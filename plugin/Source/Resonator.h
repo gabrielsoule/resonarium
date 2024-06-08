@@ -80,6 +80,10 @@ public:
 
     //Pointer to the voice that owns this Resonator; awkwardly required for polyphonic modulation via ModMatrix
     ResonatorVoice& voice;
+
+    //A general purpose test parameter used for debugging and A/B experimentation
+    float testParameter;
+    bool testFlag;
 };
 
 

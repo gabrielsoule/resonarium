@@ -43,11 +43,12 @@ struct ResonatorParams
         decayFilterType,
         decayFilterResonance,
         decayFilterKeytrack,
-        gain;
+        gain,
+        testParameter;
 
     ResonatorParams() : resonatorIndex(-1), bankIndex(-1), harmonic(nullptr), decayTime(nullptr), dispersion(nullptr),
                         decayFilterCutoff(nullptr), decayFilterType(nullptr), decayFilterResonance(nullptr),
-                        decayFilterKeytrack(nullptr), gain(nullptr)
+                        decayFilterKeytrack(nullptr), gain(nullptr), testParameter(nullptr)
     {
     }
 

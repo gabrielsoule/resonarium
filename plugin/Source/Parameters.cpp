@@ -80,6 +80,10 @@ void ResonatorParams::setup(ResonariumProcessor& p)
                          {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
                          0.0f);
     gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
+
+    testParameter = p.addExtParam("testParameter" + suffix, "Test Parameter" + suffix, "Test", "",
+                                  {0.0, 1.0, 0.0, 1.0f}, 0.0f,
+                                  0.0f);
 }
 
 ResonatorBankParams::ResonatorBankParams(int index) : index(index), resonatorParams{}
