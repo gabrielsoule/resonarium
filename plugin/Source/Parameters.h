@@ -8,7 +8,8 @@
 * The parameters are divided into structs for readability and compartmentalization.
 *   (I'd rather keep the raw DSP code separate from the plugin/host interface bookkeeping code.)
 * Functions that map parameter state to information strings, etc, are also included here.
-* Since the structs contain only pointers, they are lightweight and can be passed around easily.
+* Since the structs contain only pointers, and parameters are not added or changed after instantiation,
+* these structs are lightweight and can be passed around safely.
 * Objects which require access to a parameter set are to be provided with the appropiate struct during initialization.
 */
 

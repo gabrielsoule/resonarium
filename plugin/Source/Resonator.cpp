@@ -62,7 +62,7 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
 
     dampingFilter.coefficients =
         juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(
-            sampleRate, spec.sampleRate / 4.0f;);
+            sampleRate, spec.sampleRate / 4.0f);
     dampingFilter.prepare(spec);
 
     dispersionFilter.setDispersionAmount(0.0f);
@@ -86,7 +86,7 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
 void Resonator::setHarmonicOffsetInSemitones(float semitones, float cents)
 {
     //convert the semitones and cents into a frequency offset, based on the current frequency
-    this->harmonicMultiplier = std::pow(2.0, semitones / 12.0 + cents / 1200.0);
+    this->harmonicMultiplier = std::pow(2.0f, semitones / 12.0f + cents / 1200.0f);
 }
 
 void Resonator::updateParameters(float frequency)

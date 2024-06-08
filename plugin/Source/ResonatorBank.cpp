@@ -64,10 +64,10 @@ void ResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
  * Child Resonators are also updated.
  * Frequency is passed as an argument since frequency comes from the MIDI note, not the VST parameters.
  */
-void ResonatorBank::updateParameters(float frequency)
+void ResonatorBank::updateParameters(float newFrequency)
 {
-    this->frequency = frequency;
-    for (auto* r: resonators) r->updateParameters(frequency);
+    this->frequency = newFrequency;
+    for (auto* r: resonators) r->updateParameters(newFrequency);
 }
 
 float ResonatorBank::processSample(float input)

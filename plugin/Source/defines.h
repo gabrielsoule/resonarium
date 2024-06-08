@@ -3,7 +3,15 @@
 
 #define NUM_RESONATORS 6
 #define NUM_RESONATOR_BANKS 1
-#define WINDOW_WIDTH 1200
-#define WINDOW_HEIGHT 800
+
+#define BOX_HEADER_HEIGHT 23
+#define WINDOW_WIDTH 1300
+#define WINDOW_HEIGHT 900
+#define KNOB_W_XSMALL 25
+#define KNOB_H_XSMALL 32
+#define KNOB_W_SMALL 42
+#define KNOB_H_SMALL 57
+#define KNOB_W 56
+#define KNOB_H 70
 
 #endif //DEFINES_H

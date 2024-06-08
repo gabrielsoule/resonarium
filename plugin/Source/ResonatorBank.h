@@ -11,10 +11,9 @@ class ResonatorVoice;
 /**
  * A bank of several Resonators, with support for different intra-resonator feedback modes.
  */
-class ResonatorBank {
+class ResonatorBank
+{
 public:
-
-
     enum CouplingMode
     {
         PARALLEL,
@@ -30,7 +29,7 @@ public:
     float processSample(float input);
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
-    void updateParameters(float frequency);
+    void updateParameters(float newFrequency);
     void setFeedbackMode(CouplingMode newMode);
 
     CouplingMode couplingMode;

@@ -1,6 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "ResonatorVoice.h"
+#include "ui/ResonariumLookAndFeel.h"
 
 gin::ProcessorOptions ResonariumProcessor::getOptions()
 {
@@ -19,7 +20,7 @@ void ResonariumProcessor::distributeParameters()
 ResonariumProcessor::ResonariumProcessor() : gin::Processor(
                                                  false), synth(*this)
 {
-    lf = std::make_unique<gin::CopperLookAndFeel>();
+    lf = std::make_unique<ResonariumLookAndFeel>();
 
     // Parameter setup
     exciterParams.setup(*this);

@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "melatonin_inspector/melatonin_inspector.h"
+#include "ui/ResonariumComponents.h"
 
 class ExciterParamBox : public gin::ParamBox
 {
@@ -11,12 +12,10 @@ public:
     {
         setName("tst");
 
-
         addControl(new gin::Knob(proc.exciterParams.attack), 0, 0);
         addControl(new gin::Knob(proc.exciterParams.decay), 1, 0);
         addControl(new gin::Knob(proc.exciterParams.sustain), 2, 0);
         addControl(new gin::Knob(proc.exciterParams.release), 3, 0);
-        // this->getChildren()[0]->setBounds(0, 0, 30, 30);
         setBounds(0, 40, 250, 200);;
     }
 
@@ -29,15 +28,28 @@ public:
 class ResonatorBankParamBox : public gin::ParamBox
 {
 public:
-    ResonatorBankParamBox(const juce::String& name, ResonariumProcessor& proc_, int resonatorNum_) :
-        gin::ParamBox(name), proc(proc_), resonatorNum(resonatorNum_)
+    ResonatorBankParamBox(const juce::String& name, int resonatorNum_, ResonatorBankParams bankParams) :
+        gin::ParamBox(name), resonatorNum(resonatorNum_), bankParams(bankParams)
     {
         setName("resonatorBankParams");
-        setBounds(250, 40, WINDOW_WIDTH - 250, 200);
+        setBounds(250 + 1, 40, WINDOW_WIDTH - 250, 450);
+
+
+        juce::Rectangle<int> resonatorsArea = getLocalBounds(); //the block of screen where the resonator bank's resonators are drawn
+        resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
+        resonatorsArea.setHeight(350);
+        for(int i = 0; i < NUM_RESONATORS; i++)
+        {
+            resonatorsArea.removeFromLeft(7);
+            ResonatorComponent* resonatorComponent = new ResonatorComponent(bankParams.resonatorParams[i]);
+            resonatorComponent->setBounds(resonatorsArea.removeFromLeft(KNOB_W_SMALL));
+            addAndMakeVisible(resonatorComponent);
+
+        }
     }
 
-    ResonariumProcessor& proc;
     int resonatorNum;
+    ResonatorBankParams bankParams;
 };
 
 class ResonariumEditor : public gin::ProcessorEditor
@@ -55,7 +67,7 @@ private:
 
     juce::Label myLabel;
 
-    ExciterParamBox testBox{"EXCITER", proc};
+    ExciterParamBox exciterBox{"EXCITER", proc};
     std::vector<SafePointer<ResonatorBankParamBox>> resonatorBankParamBoxes;
 
     std::unique_ptr<melatonin::Inspector> inspector;

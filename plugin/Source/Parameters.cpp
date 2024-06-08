@@ -46,7 +46,7 @@ void ResonatorParams::setup(ResonariumProcessor& p)
                             {0.0, 1.0, 1.0, 1.0f}, 0.0f,
                             0.0f);
 
-    harmonic = p.addExtParam("harmonic" + suffix, "Pitch Offset" + suffix, "Pitch", "semis",
+    harmonic = p.addExtParam("harmonic" + suffix, "Pitch Offset" + suffix, "Pitch", " st",
                              {-24.0f, 24.0f, 0.01f, 1.0f}, 0.0f,
                              0.0f);
 
@@ -54,7 +54,7 @@ void ResonatorParams::setup(ResonariumProcessor& p)
                               {0.0, 60.0, 0.0, 0.2f}, 3.0f,
                               0.0f);
 
-    dispersion = p.addExtParam("dispersion" + suffix, "Dispersion" + suffix, "Dispersion", "%",
+    dispersion = p.addExtParam("dispersion" + suffix, "Dispersion" + suffix, "Disp.", "%",
                                {0.0, 100.0f, 0.0, 1.0f}, 0.0f,
                                0.0f);
     dispersion->conversionFunction = [](const float x) { return x / 100.0f; };
