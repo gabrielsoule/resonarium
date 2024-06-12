@@ -46,6 +46,14 @@ public:
 
     void paramChanged() override
     {
+        // for some reason paramChanged() is being called before this component is added to the parent
+        // this is fine, except that we can't access the lookandfeel at this point
+        // this is a hack to get around that. There might be side effects. That's a later problem.
+        if(this->getParentComponent() == nullptr)
+        {
+            return;
+        }
+
         MultiParamComponent::paramChanged();
         for (auto c : this->getChildren())
         {
@@ -54,10 +62,10 @@ public:
 
         if(resonatorParams.enabled->isOn())
         {
-            borderColor = findColour(gin::PluginLookAndFeel::accentColourId);
+            borderColor = findColour(gin::PluginLookAndFeel::accentColourId, true);
         } else
         {
-            borderColor = findColour(gin::PluginLookAndFeel::title1ColourId);
+            borderColor = findColour(gin::PluginLookAndFeel::title1ColourId, true);
         }
     }
 
