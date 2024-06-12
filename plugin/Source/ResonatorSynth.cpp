@@ -27,9 +27,13 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
 
 void ResonatorSynth::distributeParameters()
 {
+    ImpulseExciterParams impulseExciterParams;
+    impulseExciterParams.setup(processor, 0);
     for(auto* v : voices)
     {
         ResonatorVoice* voice = dynamic_cast<ResonatorVoice*>(v);
+        voice->impulseExciter.params = impulseExciterParams;
+        voice->impulseExciter.filter.params = impulseExciterParams.filterParams;
         jassert(voice != nullptr);
         for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
         {

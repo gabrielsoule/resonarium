@@ -17,9 +17,6 @@ void DispersionFilter::prepare(juce::dsp::ProcessSpec spec)
     //no-op for now, filter does not need to know sample rate
 }
 
-/**
- * Reset the internal state variables of the filter.
- */
 void DispersionFilter::reset()
 {
     state[0] = 0;
@@ -36,5 +33,29 @@ void DispersionFilter::setDispersionAmount(float amount)
     float angle = amount * -juce::MathConstants<float>::halfPi;
     c = std::cos(angle);
     s = std::sin(angle);
-    // DBG("Dispersion filter coefficients: c = " + juce::String(c) + ", s = " + juce::String(s));
 }
+
+float OneZeroFilter::processSample(float input)
+{
+    const float output = (1 - p) * input + p * state;
+    state = output;
+    return output;
+}
+
+void OneZeroFilter::prepare(juce::dsp::ProcessSpec spec)
+{
+
+}
+
+void OneZeroFilter::reset()
+{
+    state = 0;
+}
+
+void OneZeroFilter::setBrightness(float brightness)
+{
+    this->p = brightness;
+}
+
+
+

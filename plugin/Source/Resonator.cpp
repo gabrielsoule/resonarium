@@ -27,9 +27,10 @@ float Resonator::popSample()
     if(!enabled) return 0.0f;
     float outSample = 0;
     outSample = outSample + delayLine.popSample(0, delayLengthInSamples, true);
-    outSample = dampingFilter.processSample(outSample);
+    // outSample = dampingFilter.processSample(outSample);
     // outSample = svf.processSample(0, outSample);
-    if(!testFlag) outSample = dispersionFilter.processSample(outSample);
+    outSample = oneZeroFilter.processSample(outSample);
+    outSample = dispersionFilter.processSample(outSample);
     outSample = outSample * decayCoefficient;
     return outSample;
 }
@@ -50,6 +51,7 @@ void Resonator::reset()
     dcBlocker.reset();
     dispersionFilter.reset();
     svf.reset();
+    oneZeroFilter.reset();
 }
 
 void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
@@ -69,6 +71,8 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
 
     dispersionFilter.setDispersionAmount(0.0f);
     dispersionFilter.prepare(spec);
+
+    oneZeroFilter.prepare(spec);
 
     //One pole DC blocker coefficients that are appropriate for a ~40-50hz sample rate
     juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients =
@@ -106,18 +110,20 @@ void Resonator::updateParameters(float frequency)
     dispersionFilter.setDispersionAmount(voice.getValue(params.dispersion));
     dampingFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(
         sampleRate, voice.getValue(params.decayFilterCutoff));
+    oneZeroFilter.setBrightness(juce::jmap(params.testParameter->getValue(), params.testParameter->getUserRangeStart(), params.testParameter->getUserRangeEnd(), 0.0f, 1.0f));
+    // DBG(oneZeroFilter.p);
     //TODO implement decayFilterType
     //TODO implement decayFilterResonance
     //TODO implement decayFilterKeytrack
     gain = voice.getValue(params.gain);
 
-    if(voice.getValue(params.testParameter) > 0.5f)
-    {
-        testFlag = true;
-        DBG("TestFlag is true");
-    } else
-    {
-        testFlag = false;
-        DBG("TestFlag is false");
-    }
+    // if(voice.getValue(params.testParameter) > 0.5f)
+    // {
+    //     testFlag = true;
+    //     DBG("TestFlag is true");
+    // } else
+    // {
+    //     testFlag = false;
+    //     DBG("TestFlag is false");
+    // }
 }

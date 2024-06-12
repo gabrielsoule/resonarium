@@ -55,9 +55,11 @@ public:
     void updateParameters(float frequency);
 
     bool enabled;
-    juce::dsp::DelayLine<float> delayLine;
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Lagrange3rd> delayLine;
     juce::dsp::IIR::Filter<float> dampingFilter;
     DispersionFilter dispersionFilter;
+    OneZeroFilter oneZeroFilter;
+
     juce::dsp::IIR::Filter<float> dcBlocker;
     float minFrequency; //the minimum frequency of the resonator
     float maxFrequency; //the maximum frequency of the resonator

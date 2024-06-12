@@ -10,6 +10,13 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
     return options;
 }
 
+/**
+ * Distributes the appropriate parameter structs to the appropriate DSP components.
+ * It's a little funky but it does the trick.
+ * DSP components can't instantiate and setup their own parameters, since many DSP object
+ * instances share the same parameters.
+ * For example, all synthesiser voices -- and all their child DSP components -- share parameters.
+ */
 void ResonariumProcessor::distributeParameters()
 {
     synth.distributeParameters();
@@ -26,8 +33,7 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     exciterParams.setup(*this);
     for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
-        resonatorBanksParams[i] = ResonatorBankParams(i);
-        resonatorBanksParams[i].setup(*this); // resonator bank handles individual resonator setup
+        resonatorBanksParams[i].setup(*this, i); // resonator bank handles individual resonator setup
     }
 
     //Synth setup
@@ -43,13 +49,16 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     }
 
     //Mod Matrix setup
-    setupModMatrix();
 
     //Internal init, required by gin/JUCE, loads all presets into memory
-    init();
 
     //Finally, distribute parameter structs to their appropriate DSP components
     distributeParameters();
+
+    setupModMatrix();
+
+    init();
+
 }
 
 ResonariumProcessor::~ResonariumProcessor()

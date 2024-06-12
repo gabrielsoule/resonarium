@@ -6,7 +6,8 @@
 /**
 * The Parameters file includes structs that manage the host-visible parameters of the synthesizer.
 * The parameters are divided into structs for readability and compartmentalization.
-*   (I'd rather keep the raw DSP code separate from the plugin/host interface bookkeeping code.)
+*   (I'd rather keep the raw DSP code separate from the plugin/host interface bookkeeping code, and this way,
+*   all the parameter initialization is done in one file)
 * Functions that map parameter state to information strings, etc, are also included here.
 * Since the structs contain only pointers, and parameters are not added or changed after instantiation,
 * these structs are lightweight and can be passed around safely.
@@ -15,12 +16,53 @@
 
 class ResonariumProcessor;
 
+
 /**
- * Parameters for the exciter module.
+ * Parameters for a multi-mode filter.
+ */
+struct MultiFilterParams
+{
+    //since we expect anticipate instances of MultiFilterParams to exist,
+    //we need to give each one a unique name for the host.
+    juce::String prefix;
+    gin::Parameter::Ptr
+        type = nullptr,
+        frequency = nullptr,
+        resonance = nullptr;
+
+    MultiFilterParams() = default;
+
+    void setup(ResonariumProcessor& p, juce::String suffix);
+};
+
+/**
+ * Parameters for an ADSR envelope.
+ */
+struct ADSRParams
+{
+    //since we anticipate several instances of MultiFilterParams to exist,
+    //we need to give each one a unique name for the host.
+    juce::String prefix;
+    gin::Parameter::Ptr
+        attack,
+        decay,
+        sustain,
+        release;
+
+    ADSRParams() = default;
+
+    void setup(ResonariumProcessor& p, juce::String prefix);
+};
+
+
+/**
+ * DEPRECATED Parameters for the exciter module.
  */
 struct ExciterParams
 {
     gin::Parameter::Ptr attack, decay, sustain, release, level;
+
+    ExciterParams() = default;
 
     void setup(ResonariumProcessor& p);
 };
@@ -46,15 +88,9 @@ struct ResonatorParams
         gain,
         testParameter;
 
-    ResonatorParams() : resonatorIndex(-1), bankIndex(-1), harmonic(nullptr), decayTime(nullptr), dispersion(nullptr),
-                        decayFilterCutoff(nullptr), decayFilterType(nullptr), decayFilterResonance(nullptr),
-                        decayFilterKeytrack(nullptr), gain(nullptr), testParameter(nullptr)
-    {
-    }
+    ResonatorParams() = default;
 
-    ResonatorParams(int resonatorIndex, int bankIndex);
-
-    void setup(ResonariumProcessor& p);
+    void setup(ResonariumProcessor& p, int resonatorIndex, int bankIndex);
 };
 
 /**
@@ -69,14 +105,38 @@ struct ResonatorBankParams
         couplingMode,
         outputGain;
 
-    ResonatorBankParams() : index(-1), resonatorParams{}, noteOffset(nullptr), couplingMode(nullptr),
-                            outputGain(nullptr)
-    {
-    }
+    ResonatorBankParams() = default;
 
-    ResonatorBankParams(int index);
+    void setup(ResonariumProcessor& p, int index);
+};
 
-    void setup(ResonariumProcessor& p);
+struct ImpulseExciterParams
+{
+    int index;
+    MultiFilterParams filterParams;
+    gin::Parameter::Ptr
+        thickness,
+        pickPosition,
+        gain;
+
+    ImpulseExciterParams() = default;
+
+    void setup(ResonariumProcessor& p, int index);
+};
+
+struct NoiseExciterParams
+{
+    int index;
+    MultiFilterParams filterParams;
+    ADSRParams adsrParams;
+    gin::Parameter::Ptr
+        type,
+        density,
+        gain;
+
+    NoiseExciterParams() = default;
+
+    void setup(ResonariumProcessor p, int index);
 };
 
 

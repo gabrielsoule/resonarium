@@ -17,6 +17,10 @@ public:
         addControl(new gin::Knob(proc.exciterParams.sustain), 2, 0);
         addControl(new gin::Knob(proc.exciterParams.release), 3, 0);
         setBounds(0, 40, 250, 200);;
+        auto* testButton = new juce::ToggleButton("Enable?");
+        testButton->setBounds(150, 150, 80, 40);
+        addAndMakeVisible(testButton);
+
     }
 
     ResonariumProcessor& proc;

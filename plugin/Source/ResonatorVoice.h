@@ -9,6 +9,7 @@
 
 #include <JuceHeader.h>
 #include "defines.h"
+#include "Exciters.h"
 #include "ResonatorBank.h"
 
 class NoiseGenerator
@@ -17,7 +18,6 @@ public:
     void reset()
     {
         noiseSeed = 22222;
-        gain = 0.4f;
     }
 
     float nextValue()
@@ -29,7 +29,6 @@ public:
 
 private:
     unsigned int noiseSeed;
-    float gain;
 };
 
 class ResonariumProcessor;
@@ -64,6 +63,8 @@ public:
     juce::OwnedArray<ResonatorBank> resonatorBanks;
     int silenceCount = 0;
     int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
+
+    ImpulseExciter impulseExciter;
 };
 
 

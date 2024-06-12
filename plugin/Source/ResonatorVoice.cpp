@@ -25,6 +25,7 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     MPESynthesiserVoice::setCurrentSampleRate(spec.sampleRate);
     exciterAmpEnv.setSampleRate(spec.sampleRate);
     noteSmoother.setSampleRate(spec.sampleRate);
+    impulseExciter.prepare(spec, this);
     for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
         jassert(resonatorBanks[i]->params.index == i); //ensure that parameters have been correctly distributed
@@ -59,11 +60,13 @@ void ResonatorVoice::noteStarted()
     snapParams();
 
     exciterAmpEnv.reset();
-    for(int i = 0; i < NUM_RESONATOR_BANKS; i++) resonatorBanks[i]->reset();
+    impulseExciter.reset();
+    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+        resonatorBanks[i]->reset();
     exciterAmpEnv.noteOn();
     silenceCount = 0;
 
-    // resonator.processSample(0.9f);
+    impulseExciter.noteStarted();
 }
 
 void ResonatorVoice::noteRetriggered()
@@ -85,6 +88,8 @@ void ResonatorVoice::noteStopped(bool allowTailOff)
     {
         DBG("Released note " + juce::String(id));
     }
+
+    impulseExciter.noteStopped(allowTailOff);
 }
 
 bool ResonatorVoice::isVoiceActive()
@@ -105,25 +110,32 @@ void ResonatorVoice::updateParameters()
     currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
-    for(int i = 0; i < NUM_RESONATOR_BANKS; i++) resonatorBanks[i]->updateParameters(frequency);
+    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+        resonatorBanks[i]->updateParameters(frequency);
+    impulseExciter.updateParameters();
 
 }
 
 void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
     updateParameters(); //important!
-    gin::ScratchBuffer buffer(2, numSamples);
+    gin::ScratchBuffer buffer(outputBuffer.getNumChannels(), numSamples);
+    juce::dsp::AudioBlock<float> block(buffer);
+    impulseExciter.process(block);
+    //TODO fill the buffer with exciter samples
 
     float maxAmplitude = 0.0f;
 
     for (int i = 0; i < numSamples; i++)
     {
         float lastEnvVal = exciterAmpEnv.process();
-        const float exciterSample = noise.nextValue() * lastEnvVal;
+        // const float exciterSample = noise.nextValue() * lastEnvVal;
+        const float exciterSample = block.getSample(0, i);
 
         //TODO Properly support resonator bank feedback routing; for now, just add everything together
         float sample = 0.0f;
-        for(int j = 0; j < NUM_RESONATOR_BANKS; j++) sample += resonatorBanks[j]->processSample(exciterSample);
+        for(int j = 0; j < NUM_RESONATOR_BANKS; j++)
+            sample += resonatorBanks[j]->processSample(exciterSample);
 
         if (exciterAmpEnv.getState() == gin::ADSR::State::finished)
             maxAmplitude = juce::jmax(maxAmplitude, std::abs(sample));
@@ -133,7 +145,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 
     if (exciterAmpEnv.getState() == gin::ADSR::State::finished)
     {
-        if (maxAmplitude < 0.002f)
+        if (maxAmplitude < 0.001f)
         {
             silenceCount += 1;
             if (silenceCount > silenceCountThreshold)

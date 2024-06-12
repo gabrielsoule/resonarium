@@ -1,8 +1,12 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+//everyone's favorite header file... a list of magic numbers!
 #define NUM_RESONATORS 6
 #define NUM_RESONATOR_BANKS 1
+#define NUM_IMPULSE_EXCITERS 2
+#define NUM_NOISE_EXCITERS 2
+#define NUM_SAMPLE_EXCITERS 1
 
 #define BOX_HEADER_HEIGHT 23
 #define WINDOW_WIDTH 1300

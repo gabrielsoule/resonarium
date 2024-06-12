@@ -79,8 +79,6 @@ float ResonatorBank::processSample(float input)
         float totalGain = 0.0f;
         for (auto* r : resonators)
         {
-
-
             outSample += r->processSample(input);
 
             totalGain += r->gain;
