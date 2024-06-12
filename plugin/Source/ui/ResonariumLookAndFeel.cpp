@@ -129,20 +129,36 @@ void ResonariumLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, i
 
     const float thickness = (radius - 1) / radius;
 
-    g.setColour (slider.findColour (juce::Slider::trackColourId).withMultipliedAlpha (slider.isEnabled() ? 1.0f : 0.5f));
+    // g.setColour (slider.findColour (juce::Slider::trackColourId).withMultipliedAlpha (slider.isEnabled() ? 1.0f : 0.5f));
 
     // Draw knob
     {
+        const auto scl = 1.3f;
         const auto pi = juce::MathConstants<float>::pi;
-        const auto rcO = juce::Rectangle<float> (rx, ry, rw, rw).withSizeKeepingCentre (radius, radius);
+        const auto rcO = juce::Rectangle<float> (rx, ry, rw, rw).withSizeKeepingCentre (radius * scl, radius * scl);
         const auto rcI = juce::Rectangle<float> (rx, ry, rw, rw).withSizeKeepingCentre (radius * 0.17f, radius * 0.17f);
-        const auto c = 2.0f * pi * radius;
+        const auto c = 2.0f * pi * radius * scl;
         const auto gap = (rcI.getWidth () / c) * 2.0f * pi;
 
         juce::Path knob;
         knob.addArc (rcO.getX(), rcO.getY(), rcO.getWidth(), rcO.getHeight(), angle + gap, angle - gap + pi * 2, true );
         knob.addArc (rcI.getX(), rcI.getY(), rcI.getWidth(), rcI.getHeight(), angle - pi / 2, angle + pi / 2 - pi * 2, false );
         knob.closeSubPath();
+        if(slider.isEnabled())
+        {
+            juce::DropShadow shadow(juce::Colours::black, 24, juce::Point<int>{0,4});
+            shadow.drawForPath(g, knob);
+        }
+        if(!slider.isEnabled())
+        {
+            g.setColour (slider.findColour (juce::Slider::trackColourId).withMultipliedAlpha(0.5f));
+        } else if(isMouseOver)
+        {
+            g.setColour (slider.findColour (juce::Slider::trackColourId).brighter (0.3f));
+        } else
+        {
+            g.setColour (slider.findColour (juce::Slider::trackColourId).withMultipliedAlpha (1.0f));
+        }
         g.fillPath (knob);
     }
 
