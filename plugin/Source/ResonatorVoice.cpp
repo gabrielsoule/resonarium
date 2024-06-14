@@ -5,13 +5,24 @@
 #include "ResonatorVoice.h"
 #include "PluginProcessor.h"
 
-ResonatorVoice::ResonatorVoice(ResonariumProcessor& p) : processor(p)
+bool BYPASS_RESONATORS =  false; //testing flag to listen to the exciter signal only
+
+ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : processor(p)
 {
-    noise.reset();
     frequency = 440.0f;
-    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
-        resonatorBanks.add(new ResonatorBank(*this));
+        resonatorBanks.add(new ResonatorBank(*this, params.resonatorBankParams[i]));
+    }
+
+    for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
+    {
+        exciters.add(new ImpulseExciter(*this, params.impulseExciterParams[i]));
+    }
+
+    for (int i = 0; i < NUM_NOISE_EXCITERS; i++)
+    {
+        exciters.add(new NoiseExciter(*this, params.noiseExciterParams[i]));
     }
 }
 
@@ -23,9 +34,11 @@ ResonatorVoice::~ResonatorVoice()
 void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
 {
     MPESynthesiserVoice::setCurrentSampleRate(spec.sampleRate);
-    exciterAmpEnv.setSampleRate(spec.sampleRate);
     noteSmoother.setSampleRate(spec.sampleRate);
-    impulseExciter.prepare(spec, this);
+    for(auto* exciter : exciters)
+    {
+        exciter->prepare(spec);
+    }
     for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
         jassert(resonatorBanks[i]->params.index == i); //ensure that parameters have been correctly distributed
@@ -59,14 +72,22 @@ void ResonatorVoice::noteStarted()
     updateParameters();
     snapParams();
 
-    exciterAmpEnv.reset();
-    impulseExciter.reset();
-    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
-        resonatorBanks[i]->reset();
-    exciterAmpEnv.noteOn();
-    silenceCount = 0;
+    for(auto* exciter : exciters)
+    {
+        exciter->reset();
+    }
+    for(auto* resonatorBank : resonatorBanks)
+    {
+        resonatorBank->reset();
+    }
 
-    impulseExciter.noteStarted();
+    silenceCount = 0;
+    numBlocksSinceNoteOn = 0;
+
+    for(auto* exciter : exciters)
+    {
+        exciter->noteStarted();
+    }
 }
 
 void ResonatorVoice::noteRetriggered()
@@ -76,8 +97,6 @@ void ResonatorVoice::noteRetriggered()
 
 void ResonatorVoice::noteStopped(bool allowTailOff)
 {
-    exciterAmpEnv.noteOff();
-
     if (!allowTailOff)
     {
         DBG("Forcefully stopping note " + juce::String(id));
@@ -89,7 +108,10 @@ void ResonatorVoice::noteStopped(bool allowTailOff)
         DBG("Released note " + juce::String(id));
     }
 
-    impulseExciter.noteStopped(allowTailOff);
+    for(auto* exciter : exciters)
+    {
+        exciter->noteStopped(allowTailOff);
+    }
 }
 
 bool ResonatorVoice::isVoiceActive()
@@ -101,49 +123,57 @@ void ResonatorVoice::updateParameters()
 {
     auto note = getCurrentlyPlayingNote();
     processor.modMatrix.setPolyValue(*this, processor.modSrcNote, note.initialNote / 127.0f);
-
-    exciterAmpEnv.setAttack(getValue(processor.exciterParams.attack));
-    exciterAmpEnv.setDecay(getValue(processor.exciterParams.decay));
-    exciterAmpEnv.setSustainLevel(getValue(processor.exciterParams.sustain));
-    exciterAmpEnv.setRelease(getValue(processor.exciterParams.release));
-
     currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
     for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    {
         resonatorBanks[i]->updateParameters(frequency);
-    impulseExciter.updateParameters();
+    }
 
+    for(auto* exciter : exciters)
+    {
+        exciter->updateParameters();
+    }
 }
 
 void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
+    //reminder: the output buffer/block is SHARED between voices and may NOT be empty; must ADD only
     updateParameters(); //important!
     gin::ScratchBuffer buffer(outputBuffer.getNumChannels(), numSamples);
     juce::dsp::AudioBlock<float> block(buffer);
-    impulseExciter.process(block);
-    //TODO fill the buffer with exciter samples
+    juce::dsp::AudioBlock<float> outputBlock(outputBuffer);
+
+    for (auto* exciter : exciters)
+    {
+        exciter->process(block);
+    }
 
     float maxAmplitude = 0.0f;
 
-    for (int i = 0; i < numSamples; i++)
+    if(!BYPASS_RESONATORS)
     {
-        float lastEnvVal = exciterAmpEnv.process();
-        // const float exciterSample = noise.nextValue() * lastEnvVal;
-        const float exciterSample = block.getSample(0, i);
+        for (int i = 0; i < numSamples; i++)
+        {
+            const float exciterSample = block.getSample(0, i);
 
-        //TODO Properly support resonator bank feedback routing; for now, just add everything together
-        float sample = 0.0f;
-        for(int j = 0; j < NUM_RESONATOR_BANKS; j++)
-            sample += resonatorBanks[j]->processSample(exciterSample);
+            //TODO Properly support resonator bank feedback routing; for now, just add everything together
+            float sample = 0.0f;
+            for(int j = 0; j < NUM_RESONATOR_BANKS; j++)
+                sample += resonatorBanks[j]->processSample(exciterSample);
 
-        if (exciterAmpEnv.getState() == gin::ADSR::State::finished)
             maxAmplitude = juce::jmax(maxAmplitude, std::abs(sample));
-        outputBuffer.addSample(0, startSample + i, sample);
-        outputBuffer.addSample(1, startSample + i, sample);
+            outputBuffer.addSample(0, startSample + i, sample);
+            outputBuffer.addSample(1, startSample + i, sample);
+        }
+    } else
+    {
+        //add the audioblock to the output buffer
+        outputBlock.getSubBlock(startSample, numSamples).add(block);
     }
 
-    if (exciterAmpEnv.getState() == gin::ADSR::State::finished)
+    if (numBlocksSinceNoteOn > 0)
     {
         if (maxAmplitude < 0.001f)
         {
@@ -160,7 +190,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
             silenceCount = 0;
         }
     }
-
+    numBlocksSinceNoteOn++;
     finishBlock(numSamples);
 }
 

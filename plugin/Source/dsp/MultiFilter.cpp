@@ -1,18 +1,13 @@
 #include "MultiFilter.h"
 #include "../ResonatorVoice.h"
 
-MultiFilter::MultiFilter() : type(MultiFilter::Type::none)
-{
-}
-
-void MultiFilter::prepare(const juce::dsp::ProcessSpec& spec, ResonatorVoice* voice)
+void MultiFilter::prepare(const juce::dsp::ProcessSpec& spec)
 {
     poly = (voice != nullptr);
-    this->voice = voice;
     this->sampleRate = spec.sampleRate;
 
     this->freq = 2000.0f;
-    this->q = 0.707f;
+    this->Q = 0.707f;
 
     filter.state = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, freq);
     filter.prepare(spec);
@@ -41,55 +36,64 @@ void MultiFilter::setType(Type type)
 void MultiFilter::setParameters(float frequency, float q)
 {
     this->freq = frequency;
-    this->q = q;
+    this->Q = q;
     updateFlag = true;
+}
+
+std::array<float, 6> MultiFilter::makeUnityGainBandpass(float sampleRate, float frequency, float Q)
+{
+    jassert (sampleRate > 0.0);
+    jassert (frequency > 0 && frequency <= static_cast<float> (sampleRate * 0.5));
+    jassert (Q > 0.0);
+
+    const auto n = 1 / std::tan (juce::MathConstants<float>::pi * frequency / static_cast<float> (sampleRate));
+    const auto nSquared = n * n;
+    const auto invQ = 1 / Q;
+    const auto c1 = 1 / (1 + invQ * n + nSquared);
+
+    return { { c1 * n, 0,
+               -c1 * n, 1,
+               c1 * 2 * (1 - nSquared),
+               c1 * (1 - invQ * n + nSquared) } };
 }
 
 void MultiFilter::updateParameters()
 {
-    if (type == none) return; //no-op
-
     if (useHostedParams)
     {
-        type = static_cast<Type>(static_cast<int>(params.type->getProcValue()));
+        this->type = static_cast<Type>(static_cast<int>(params.type->getProcValue()));
         if (poly)
         {
             freq = voice->getValue(params.frequency);
-            q = voice->getValue(params.resonance);
+            Q = voice->getValue(params.resonance);
         }
         else
         {
             freq = params.frequency->getProcValue();
-            q = params.resonance->getProcValue();
+            Q = params.resonance->getProcValue();
         }
     }
+
+    if (type == none) return; //no-op
 
     //TODO add optimization via updateFlag to only compute new coefficients when necessary
     switch (type)
     {
     case MultiFilter::Type::lowpass:
-        *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, freq, q);
+        *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(sampleRate, freq, Q);
         break;
     case MultiFilter::Type::highpass:
-        *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(sampleRate, freq, q);
+        *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(sampleRate, freq, Q);
         break;
     case MultiFilter::Type::bandpass:
-        *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeBandPass(sampleRate, freq, q);
+        *filter.state = makeUnityGainBandpass(sampleRate, freq, Q);
         break;
     case MultiFilter::Type::notch:
-        *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeNotch(sampleRate, freq, q);
+        *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeNotch(sampleRate, freq, Q);
         break;
-    // case MultiFilter::Type::lowshelf:
-    //     *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeLowShelf(sampleRate, freq, q);
-    //     break;
-    // case MultiFilter::Type::highshelf:
-    //     *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeHighShelf(sampleRate, freq, q);
-    //     break;
-    // case MultiFilter::Type::peak:
-    //     *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makePeakFilter(sampleRate, freq, q, 1.5f);
-    //     break;
+
     case MultiFilter::Type::allpass:
-        *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeAllPass(sampleRate, freq, q);
+        *filter.state = juce::dsp::IIR::ArrayCoefficients<float>::makeAllPass(sampleRate, freq, Q);
         break;
     default:
         break;

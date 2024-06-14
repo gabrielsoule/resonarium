@@ -12,32 +12,13 @@
 #include "Exciters.h"
 #include "ResonatorBank.h"
 
-class NoiseGenerator
-{
-public:
-    void reset()
-    {
-        noiseSeed = 22222;
-    }
-
-    float nextValue()
-    {
-        noiseSeed = noiseSeed * 196314165 + 907633515;
-        int temp = int(noiseSeed >> 7) - 16777216;
-        return (float(temp) / 16777216.0f);
-    }
-
-private:
-    unsigned int noiseSeed;
-};
-
 class ResonariumProcessor;
 
 
 class ResonatorVoice : public gin::SynthesiserVoice, public gin::ModVoice
 {
 public:
-    ResonatorVoice(ResonariumProcessor& p);
+    ResonatorVoice(ResonariumProcessor& p, VoiceParams params);
     ~ResonatorVoice() override;
     void noteStarted() override;
     void noteStopped(bool allowTailOff) override;
@@ -55,16 +36,15 @@ public:
 
     ResonariumProcessor& processor;
     float frequency;
-    gin::ADSR exciterAmpEnv;
-    NoiseGenerator noise = NoiseGenerator();
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote;
     int id;
     juce::OwnedArray<ResonatorBank> resonatorBanks;
     int silenceCount = 0;
     int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
+    int numBlocksSinceNoteOn; // what it says on the tin.
 
-    ImpulseExciter impulseExciter;
+    juce::OwnedArray<Exciter> exciters;
 };
 
 

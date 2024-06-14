@@ -24,7 +24,7 @@ class ResonatorVoice;
 class Resonator
 {
 public:
-    Resonator(ResonatorVoice& parentVoice);
+    Resonator(ResonatorVoice& parentVoice, ResonatorParams params);
 
     /**
     *   Processes an entire sample through the resonator via computing the output sample after filtering and processing,
@@ -77,11 +77,11 @@ public:
     float frequency; //the frequency of the resonator
     float harmonicMultiplier = 1.0f; //by how much should we multiply the base frequency
 
-    //Pointers to the relevant parameters controlling this Resonator
-    ResonatorParams params;
-
     //Pointer to the voice that owns this Resonator; awkwardly required for polyphonic modulation via ModMatrix
     ResonatorVoice& voice;
+
+    //Pointers to the relevant parameters controlling this Resonator
+    ResonatorParams params;
 
     //A general purpose test parameter used for debugging and A/B experimentation
     float testParameter;

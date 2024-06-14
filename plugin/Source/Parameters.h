@@ -54,19 +54,6 @@ struct ADSRParams
     void setup(ResonariumProcessor& p, juce::String prefix);
 };
 
-
-/**
- * DEPRECATED Parameters for the exciter module.
- */
-struct ExciterParams
-{
-    gin::Parameter::Ptr attack, decay, sustain, release, level;
-
-    ExciterParams() = default;
-
-    void setup(ResonariumProcessor& p);
-};
-
 /**
  * Parameters for a single resonator.
  */
@@ -136,7 +123,25 @@ struct NoiseExciterParams
 
     NoiseExciterParams() = default;
 
-    void setup(ResonariumProcessor p, int index);
+    void setup(ResonariumProcessor& p, int index);
+};
+
+/**
+ * This parameter struct encapsulates everything needed to set up a resonator voice.
+ * The setup function should only ever be called once, during initialization.
+ * However, once set up, the struct is safe to duplicate and pass around.
+ * When the plugin is loaded, each ResonatorVoice will copy the contents of this struct to
+ * the appropriate child DSP components.
+ * These structs are super cheap to copy, plus we only do this once at setup,
+ * so it's not a big deal to pass-by-value.
+ */
+struct VoiceParams
+{
+    ResonatorBankParams resonatorBankParams[NUM_RESONATOR_BANKS];
+    ImpulseExciterParams impulseExciterParams[NUM_IMPULSE_EXCITERS];
+    NoiseExciterParams noiseExciterParams[NUM_NOISE_EXCITERS];
+
+    void setup(ResonariumProcessor& p);
 };
 
 

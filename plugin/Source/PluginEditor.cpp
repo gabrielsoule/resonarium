@@ -2,21 +2,20 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
+ResonariumEditor::ResonariumEditor(ResonariumProcessor& p, VoiceParams voiceParams)
     : gin::ProcessorEditor(p), proc(p)
 {
     setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-    addAndMakeVisible(exciterBox);
 
     for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
         SafePointer<ResonatorBankParamBox> ptr = new ResonatorBankParamBox(
-            "Resonator Bank " + std::to_string(i), i, p.resonatorBanksParams[i]);
+            "Resonator Bank " + std::to_string(i), i, voiceParams.resonatorBankParams[i]);
         resonatorBankParamBoxes.push_back(ptr);
         addAndMakeVisible(*ptr);
     }
 
-    // Melatonoin Inspector -- don't modify
+    // Melatonin Inspector -- don't modify
     addAndMakeVisible(inspectButton);
     inspectButton.onClick = [&]
     {

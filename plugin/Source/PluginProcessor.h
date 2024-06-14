@@ -3,7 +3,6 @@
 #include <JuceHeader.h>
 
 #include "ResonatorSynth.h"
-#include "defines.h"
 #include "Parameters.h"
 
 //==============================================================================
@@ -25,15 +24,12 @@ public:
     bool supportsMPE() const override {return true;}
     void setupModMatrix();
     gin::ProcessorOptions getOptions();
-    void distributeParameters();
 
     ResonatorSynth synth;
     gin::ModMatrix modMatrix;
     gin::ModSrcId modSrcPressure, modSrcTimbre, modSrcPitchbend, modSrcNote, modSrcVelocity;
 
-    ExciterParams exciterParams;
-    ResonatorBankParams resonatorBanksParams[NUM_RESONATOR_BANKS];
+    VoiceParams voiceParams; //contains all the parameters that a voice needs modulated polyphonically (which is almost all of 'em)
 
-    //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonariumProcessor)
 };

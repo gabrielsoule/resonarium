@@ -19,7 +19,7 @@ public:
      * Called once during setup. Instructs the synth to access parameters from the processor
      * and distribute them to the appropriate voices and resonators.
      */
-    void distributeParameters();
+    void setupParameters();
 private:
     ResonariumProcessor& processor;
 };

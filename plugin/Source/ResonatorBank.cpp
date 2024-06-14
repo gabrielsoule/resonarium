@@ -5,12 +5,12 @@
 #include "ResonatorBank.h"
 #include "ResonatorVoice.h"
 
-ResonatorBank::ResonatorBank(ResonatorVoice& parentVoice) : voice(parentVoice)
+ResonatorBank::ResonatorBank(ResonatorVoice& parentVoice, ResonatorBankParams params) : voice(parentVoice), params(params)
 {
     //add some resonators to the OwnedArray
     for (int i = 0; i < NUM_RESONATORS; i++)
     {
-        resonators.add(new Resonator(parentVoice));
+        resonators.add(new Resonator(parentVoice, params.resonatorParams[i]));
     }
 
     couplingMode = PARALLEL;

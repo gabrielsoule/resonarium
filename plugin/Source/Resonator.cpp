@@ -2,7 +2,7 @@
 
 #include "ResonatorVoice.h"
 
-Resonator::Resonator(ResonatorVoice& parentVoice) : voice(parentVoice)
+Resonator::Resonator(ResonatorVoice& parentVoice, ResonatorParams params) : voice(parentVoice), params(params)
 {
 }
 

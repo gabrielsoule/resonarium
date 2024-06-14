@@ -23,7 +23,7 @@ public:
         RANDOM
     };
 
-    ResonatorBank(ResonatorVoice& parentVoice);
+    ResonatorBank(ResonatorVoice& parentVoice, ResonatorBankParams params);
     ~ResonatorBank();
 
     float processSample(float input);
@@ -46,11 +46,13 @@ public:
     float lastOutput = 0.0f;
     juce::dsp::IIR::Filter<float> couplingFilter;
 
+    //Pointer to the voice that owns this ResonatorBank; awkwardly required for polyphonic modulation via ModMatrix
+    ResonatorVoice& voice;
+
     //Pointers to the relevant parameters controlling this ResonatorBank
     ResonatorBankParams params;
 
-    //Pointer to the voice that owns this ResonatorBank; awkwardly required for polyphonic modulation via ModMatrix
-    ResonatorVoice& voice;
+
 };
 
 #endif //RESONATORBANK_H

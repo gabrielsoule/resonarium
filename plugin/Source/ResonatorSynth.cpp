@@ -25,23 +25,38 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
     }
 }
 
-void ResonatorSynth::distributeParameters()
+void ResonatorSynth::setupParameters()
 {
-    ImpulseExciterParams impulseExciterParams;
-    impulseExciterParams.setup(processor, 0);
-    for(auto* v : voices)
-    {
-        ResonatorVoice* voice = dynamic_cast<ResonatorVoice*>(v);
-        voice->impulseExciter.params = impulseExciterParams;
-        voice->impulseExciter.filter.params = impulseExciterParams.filterParams;
-        jassert(voice != nullptr);
-        for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
-        {
-            voice->resonatorBanks[i]->params = processor.resonatorBanksParams[i];
-            for(int j = 0; j < NUM_RESONATORS; j++)
-            {
-                voice->resonatorBanks[i]->resonators[j]->params = voice->resonatorBanks[i]->params.resonatorParams[j];
-            }
-        }
-    }
+    // VoiceParams params;
+    // params.setup(processor);
+    //
+    // for(auto* v : voices)
+    // {
+    //     ResonatorVoice* voice = dynamic_cast<ResonatorVoice*>(v);
+    //     voice->distributeParameters(params);
+    // }
+
+    // ImpulseExciterParams impulseExciterParams;
+    // impulseExciterParams.setup(processor, 0);
+    //
+    // NoiseExciterParams noiseExciterParams;
+    // noiseExciterParams.setup(processor, 0);
+    //
+    // for(auto* v : voices)
+    // {
+    //     ResonatorVoice* voice = dynamic_cast<ResonatorVoice*>(v);
+    //     voice->impulseExciter.params = impulseExciterParams;
+    //     voice->impulseExciter.filter.params = impulseExciterParams.filterParams;
+    //     voice->noiseExciter.params = noiseExciterParams;
+    //     voice->noiseExciter.filter.params = noiseExciterParams.filterParams;
+    //     jassert(voice != nullptr);
+    //     for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    //     {
+    //         voice->resonatorBanks[i]->params = processor.resonatorBanksParams[i];
+    //         for(int j = 0; j < NUM_RESONATORS; j++)
+    //         {
+    //             voice->resonatorBanks[i]->resonators[j]->params = voice->resonatorBanks[i]->params.resonatorParams[j];
+    //         }
+    //     }
+    // }
 }

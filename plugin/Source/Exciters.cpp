@@ -1,10 +1,9 @@
 #include "Exciters.h"
 #include "ResonatorVoice.h"
 
-void ImpulseExciter::prepare(const juce::dsp::ProcessSpec& spec, ResonatorVoice* voice)
+void ImpulseExciter::prepare(const juce::dsp::ProcessSpec& spec)
 {
-    Exciter::prepare(spec, voice);
-    filter.prepare(spec, voice);
+    filter.prepare(spec);
     scratchBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     scratchBuffer.clear();
     scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
@@ -18,21 +17,21 @@ void ImpulseExciter::nextSample()
 
 void ImpulseExciter::process(juce::dsp::AudioBlock<float> block)
 {
+    juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0,  (size_t) block.getNumSamples());
+    auto gain = voice.getValue(params.gain);
     if (firstBlock)
     {
         for (int i = 0; i < impulseLength; i++)
         {
-            scratchBlock.setSample(0, i, 1);
-            DBG("Setting impulse sample to 1");
+            truncatedBlock.setSample(0, i, gain * 5);
         }
-        firstBlock = false;
     }
 
-    juce::dsp::ProcessContextReplacing<float> context(scratchBlock);
-    // filter.process(context);
+    filter.process(juce::dsp::ProcessContextReplacing<float>(truncatedBlock));
     //TODO Add proper multi channel support here
-    block.add(scratchBlock);
+    block.add(truncatedBlock);
     scratchBlock.clear();
+    firstBlock = false;
 }
 
 void ImpulseExciter::reset()
@@ -45,7 +44,7 @@ void ImpulseExciter::reset()
 
 void ImpulseExciter::noteStarted()
 {
-    impulseLength = voice->getValue(params.thickness);
+    impulseLength = voice.getValue(params.thickness);
     firstBlock = true;
 }
 
@@ -59,10 +58,15 @@ void ImpulseExciter::updateParameters()
     filter.updateParameters();
 }
 
-void ImpulseTrainExciter::updateParameters()
+void NoiseExciter::prepare(const juce::dsp::ProcessSpec& spec)
 {
-
+    filter.prepare(spec);
+    scratchBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
+    scratchBuffer.clear();
+    scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
+    reset();
 }
+
 
 void NoiseExciter::nextSample()
 {
@@ -71,85 +75,39 @@ void NoiseExciter::nextSample()
 
 void NoiseExciter::process(juce::dsp::AudioBlock<float> block)
 {
+    juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0,  (size_t) block.getNumSamples());
+    auto gain = voice.getValue(params.gain);
+    for(int i = 0; i < truncatedBlock.getNumSamples(); i++)
+    {
+        truncatedBlock.setSample(0, i, noise.nextValue() * gain * envelope.process());
+    }
 
+    filter.process(juce::dsp::ProcessContextReplacing<float>(truncatedBlock));
+    block.add(truncatedBlock);
 }
 
 void NoiseExciter::reset()
 {
-
+    noise.reset();
+    envelope.reset();
+    filter.reset();
 }
 
 void NoiseExciter::noteStarted()
 {
-
+    envelope.noteOn();
 }
 
 void NoiseExciter::noteStopped(bool avoidTailOff)
 {
-
+    envelope.noteOff();
 }
 
 void NoiseExciter::updateParameters()
 {
-
-}
-
-void SampleExciter::nextSample()
-{
-
-}
-
-void SampleExciter::process(juce::dsp::AudioBlock<float> block)
-{
-
-}
-
-void SampleExciter::reset()
-{
-
-}
-
-void SampleExciter::noteStarted()
-{
-
-}
-
-void SampleExciter::noteStopped(bool avoidTailOff)
-{
-
-}
-
-void SampleExciter::updateParameters()
-{
-
-}
-
-void AudioInputExciter::nextSample()
-{
-
-}
-
-void AudioInputExciter::process(juce::dsp::AudioBlock<float> block)
-{
-
-}
-
-void AudioInputExciter::reset()
-{
-
-}
-
-void AudioInputExciter::noteStarted()
-{
-
-}
-
-void AudioInputExciter::noteStopped(bool avoidTailOff)
-{
-
-}
-
-void AudioInputExciter::updateParameters()
-{
-
+    envelope.setAttack(voice.getValue(params.adsrParams.attack));
+    envelope.setDecay(voice.getValue(params.adsrParams.decay));
+    envelope.setSustainLevel(voice.getValue(params.adsrParams.sustain));
+    envelope.setRelease(voice.getValue(params.adsrParams.release));
+    filter.updateParameters();
 }

@@ -5,30 +5,6 @@
 #include "melatonin_inspector/melatonin_inspector.h"
 #include "ui/ResonariumComponents.h"
 
-class ExciterParamBox : public gin::ParamBox
-{
-public:
-    ExciterParamBox(const juce::String& name, ResonariumProcessor& proc_) : gin::ParamBox(name), proc(proc_)
-    {
-        setName("tst");
-
-        addControl(new gin::Knob(proc.exciterParams.attack), 0, 0);
-        addControl(new gin::Knob(proc.exciterParams.decay), 1, 0);
-        addControl(new gin::Knob(proc.exciterParams.sustain), 2, 0);
-        addControl(new gin::Knob(proc.exciterParams.release), 3, 0);
-        setBounds(0, 40, 250, 200);;
-        auto* testButton = new juce::ToggleButton("Enable?");
-        testButton->setBounds(150, 150, 80, 40);
-        addAndMakeVisible(testButton);
-
-    }
-
-    ResonariumProcessor& proc;
-
-    int idx;
-};
-
-
 class ResonatorBankParamBox : public gin::ParamBox
 {
 public:
@@ -59,7 +35,7 @@ public:
 class ResonariumEditor : public gin::ProcessorEditor
 {
 public:
-    ResonariumEditor(ResonariumProcessor&);
+    ResonariumEditor(ResonariumProcessor&, VoiceParams params);
     ~ResonariumEditor() override;
 
     //==============================================================================
@@ -69,9 +45,6 @@ public:
 private:
     ResonariumProcessor& proc;
 
-    juce::Label myLabel;
-
-    ExciterParamBox exciterBox{"EXCITER", proc};
     std::vector<SafePointer<ResonatorBankParamBox>> resonatorBankParamBoxes;
 
     std::unique_ptr<melatonin::Inspector> inspector;

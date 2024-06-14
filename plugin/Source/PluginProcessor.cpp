@@ -10,31 +10,13 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
     return options;
 }
 
-/**
- * Distributes the appropriate parameter structs to the appropriate DSP components.
- * It's a little funky but it does the trick.
- * DSP components can't instantiate and setup their own parameters, since many DSP object
- * instances share the same parameters.
- * For example, all synthesiser voices -- and all their child DSP components -- share parameters.
- */
-void ResonariumProcessor::distributeParameters()
-{
-    synth.distributeParameters();
-    //maybe do more once we have more DSP components doing stuff?
-}
-
 //==============================================================================
 ResonariumProcessor::ResonariumProcessor() : gin::Processor(
                                                  false), synth(*this)
 {
     lf = std::make_unique<ResonariumLookAndFeel>();
 
-    // Parameter setup
-    exciterParams.setup(*this);
-    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
-    {
-        resonatorBanksParams[i].setup(*this, i); // resonator bank handles individual resonator setup
-    }
+    voiceParams.setup(*this);
 
     //Synth setup
     synth.enableLegacyMode();
@@ -42,22 +24,14 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     synth.setMPE(true);
     for (int i = 0; i < 16; i++)
     {
-        auto voice = new ResonatorVoice(*this);
+        auto voice = new ResonatorVoice(*this, voiceParams);
         modMatrix.addVoice(voice);
         synth.addVoice(voice);
         voice->id = i;
     }
 
-    //Mod Matrix setup
-
-    //Internal init, required by gin/JUCE, loads all presets into memory
-
-    //Finally, distribute parameter structs to their appropriate DSP components
-    distributeParameters();
-
-    setupModMatrix();
-
-    init();
+    setupModMatrix(); //set up the modulation matrix
+    init(); //internal init
 
 }
 
@@ -137,7 +111,7 @@ bool ResonariumProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* ResonariumProcessor::createEditor()
 {
-    return new gin::ScaledPluginEditor(new ResonariumEditor(*this), state);
+    return new gin::ScaledPluginEditor(new ResonariumEditor(*this, voiceParams), state);
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
