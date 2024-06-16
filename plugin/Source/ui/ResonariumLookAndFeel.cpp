@@ -2,8 +2,16 @@
 
 ResonariumLookAndFeel::ResonariumLookAndFeel()
 {
-    typeface = juce::Typeface::createSystemTypefaceFor (gin::Resources::InterRegular_otf, gin::Resources::InterRegular_otfSize);
-
+    typeface = juce::Typeface::createSystemTypefaceFor (gin::Resources::BarlowThin_ttf, gin::Resources::BarlowThin_ttfSize);
+    auto myfont = juce::Font(juce::FontOptions("Futura", "Medium", 14));
+    setDefaultSansSerifTypeface(typeface);
+    DBG(myfont.toString());
+    juce::Array<juce::Font> fonts;
+    juce::Font::findFonts(fonts);
+    for(auto font : fonts)
+    {
+        DBG(font.toString());
+    }
     setColour (whiteColourId, juce::Colour (0xffFFFFFF));
     setColour (blackColourId, juce::Colour (0xff000000));
     setColour (displayColourId, juce::Colour (0xff0D0E0F));
@@ -303,6 +311,17 @@ juce::PopupMenu::Options ResonariumLookAndFeel::getOptionsForComboBoxPopupMenu (
                                      .withInitiallySelectedItem (box.getSelectedId())
                                      .withMinimumWidth (box.getWidth())
                                      .withMaximumNumColumns (20);
+}
+
+juce::Font ResonariumLookAndFeel::getTextButtonFont (juce::TextButton&, int buttonHeight)
+{
+    return juce::Font ("Futura", "Medium", 16.0f); // Change to your preferred font
+}
+
+// Override the font for Labels
+juce::Font ResonariumLookAndFeel::getLabelFont (juce::Label&)
+{
+    return juce::Font ("Futura", "Medium", 14.0f); // Change to your preferred font
 }
 
 //==============================================================================

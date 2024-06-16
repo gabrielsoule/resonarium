@@ -37,11 +37,11 @@ public:
         auto bounds = getLocalBounds();
         bounds.removeFromTop(7); //just a little off the top, please
         enableButton->setBounds(bounds.removeFromTop(12));
-        gainKnob->setBounds(bounds.removeFromTop(KNOB_W_SMALL));
-        pitchOffsetKnob->setBounds(bounds.removeFromTop(KNOB_W_SMALL));
-        decayTimeKnob->setBounds(bounds.removeFromTop(KNOB_W_SMALL));
-        dispersionKnob->setBounds(bounds.removeFromTop(KNOB_W_SMALL));
-        decayFilterCutoffKnob->setBounds(bounds.removeFromTop(KNOB_W_SMALL));
+        gainKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
+        pitchOffsetKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
+        decayTimeKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
+        dispersionKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
+        decayFilterCutoffKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
     }
 
     void paramChanged() override

@@ -15,6 +15,24 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p, VoiceParams voicePara
         addAndMakeVisible(*ptr);
     }
 
+    for(int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
+    {
+        SafePointer<ImpulseExciterParamBox> ptr = new ImpulseExciterParamBox(
+            "Impulse Exciter " + std::to_string(i), i, voiceParams.impulseExciterParams[i]);
+        impulseExciterParamBoxes.push_back(ptr);
+        addAndMakeVisible(*ptr);
+    }
+
+    for(int i = 0; i < NUM_NOISE_EXCITERS; i++)
+    {
+        SafePointer<NoiseExciterParamBox> ptr = new NoiseExciterParamBox(
+            "Noise Exciter " + std::to_string(i), i, voiceParams.noiseExciterParams[i]);
+        noiseExciterParamBoxes.push_back(ptr);
+        addAndMakeVisible(*ptr);
+    }
+
+
+
     // Melatonin Inspector -- don't modify
     addAndMakeVisible(inspectButton);
     inspectButton.onClick = [&]
