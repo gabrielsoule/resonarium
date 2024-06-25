@@ -59,6 +59,7 @@ public:
         //the block of screen where the resonator bank's resonators are drawn
         resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
         resonatorsArea.setHeight(350);
+        resonatorsArea.removeFromLeft(100);
         for (int i = 0; i < NUM_RESONATORS; i++)
         {
             resonatorsArea.removeFromLeft(7);
@@ -66,6 +67,11 @@ public:
             resonatorComponent->setBounds(resonatorsArea.removeFromLeft(KNOB_W_SMALL));
             addAndMakeVisible(resonatorComponent);
         }
+
+        auto* select = new gin::Select(bankParams.couplingMode);
+
+        addControl(select);
+
     }
 
     int resonatorNum;

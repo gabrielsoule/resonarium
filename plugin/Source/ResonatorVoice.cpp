@@ -5,7 +5,7 @@
 #include "ResonatorVoice.h"
 #include "PluginProcessor.h"
 
-bool BYPASS_RESONATORS =  false; //testing flag to listen to the exciter signal only
+bool BYPASS_RESONATORS = false; //testing flag to listen to the exciter signal only
 
 ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : processor(p)
 {
@@ -35,11 +35,15 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
 {
     MPESynthesiserVoice::setCurrentSampleRate(spec.sampleRate);
     noteSmoother.setSampleRate(spec.sampleRate);
-    for(auto* exciter : exciters)
+    exciterBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
+    resonatorBankBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
+    exciterBuffer.clear();
+    resonatorBankBuffer.clear();
+    for (auto* exciter : exciters)
     {
         exciter->prepare(spec);
     }
-    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
         jassert(resonatorBanks[i]->params.index == i); //ensure that parameters have been correctly distributed
         resonatorBanks[i]->prepare(spec);
@@ -72,11 +76,11 @@ void ResonatorVoice::noteStarted()
     updateParameters();
     snapParams();
 
-    for(auto* exciter : exciters)
+    for (auto* exciter : exciters)
     {
         exciter->reset();
     }
-    for(auto* resonatorBank : resonatorBanks)
+    for (auto* resonatorBank : resonatorBanks)
     {
         resonatorBank->reset();
     }
@@ -84,7 +88,7 @@ void ResonatorVoice::noteStarted()
     silenceCount = 0;
     numBlocksSinceNoteOn = 0;
 
-    for(auto* exciter : exciters)
+    for (auto* exciter : exciters)
     {
         exciter->noteStarted();
     }
@@ -108,7 +112,7 @@ void ResonatorVoice::noteStopped(bool allowTailOff)
         DBG("Released note " + juce::String(id));
     }
 
-    for(auto* exciter : exciters)
+    for (auto* exciter : exciters)
     {
         exciter->noteStopped(allowTailOff);
     }
@@ -126,12 +130,12 @@ void ResonatorVoice::updateParameters()
     currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
-    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
         resonatorBanks[i]->updateParameters(frequency);
     }
 
-    for(auto* exciter : exciters)
+    for (auto* exciter : exciters)
     {
         exciter->updateParameters();
     }
@@ -141,39 +145,61 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 {
     //reminder: the output buffer/block is SHARED between voices and may NOT be empty; must ADD only
     updateParameters(); //important!
-    gin::ScratchBuffer buffer(outputBuffer.getNumChannels(), numSamples);
-    juce::dsp::AudioBlock<float> block(buffer);
-    juce::dsp::AudioBlock<float> outputBlock(outputBuffer);
+
+    //this block holds the exciter samples. The exciters fill it, then is routed to the resonator banks.
+    juce::dsp::AudioBlock<float> exciterBlock = juce::dsp::AudioBlock<float>(exciterBuffer)
+        .getSubBlock(startSample, numSamples);
+    exciterBlock.clear();
+
+    //this block holds the output from the resonator banks. It is added to the main output buffer.
+    juce::dsp::AudioBlock<float> resonatorBankOutputBlock = juce::dsp::AudioBlock<float>(resonatorBankBuffer)
+        .getSubBlock(startSample, numSamples);
+    resonatorBankOutputBlock.clear();
+
+    //this block points to the main output buffer supplied by the synthesizer code.
+    //important to NOT clear this block, since it contains audio from the other voices
+    juce::dsp::AudioBlock<float> outputBlock = juce::dsp::AudioBlock<float>(outputBuffer)
+        .getSubBlock(startSample, numSamples);
 
     for (auto* exciter : exciters)
     {
-        exciter->process(block);
+        exciter->process(exciterBlock);
     }
 
-    float maxAmplitude = 0.0f;
-
-    if(!BYPASS_RESONATORS)
+    if (!BYPASS_RESONATORS)
     {
-        for (int i = 0; i < numSamples; i++)
+        // for (int i = 0; i < numSamples; i++)
+        // {
+        //     const float exciterSample = exciterSignalBlock.getSample(0, i);
+        //
+        //     //TODO Properly support resonator bank feedback routing; for now, just add everything together
+        //     //TODO Support multiple resonator banks in series
+        //     float sample = 0.0f;
+        //     for (int j = 0; j < NUM_RESONATOR_BANKS; j++)
+        //         sample += resonatorBanks[j]->processSample(exciterSample);
+        //
+        //     maxAmplitude = juce::jmax(maxAmplitude, std::abs(sample));
+        //     outputBuffer.addSample(0, startSample + i, sample);
+        //     outputBuffer.addSample(1, startSample + i, sample);
+        // }
+
+        for (auto* resonatorBank : resonatorBanks)
         {
-            const float exciterSample = block.getSample(0, i);
-
-            //TODO Properly support resonator bank feedback routing; for now, just add everything together
-            float sample = 0.0f;
-            for(int j = 0; j < NUM_RESONATOR_BANKS; j++)
-                sample += resonatorBanks[j]->processSample(exciterSample);
-
-            maxAmplitude = juce::jmax(maxAmplitude, std::abs(sample));
-            outputBuffer.addSample(0, startSample + i, sample);
-            outputBuffer.addSample(1, startSample + i, sample);
+            resonatorBank->process(exciterBlock, resonatorBankOutputBlock);
         }
-    } else
+    }
+    else
     {
         //add the audioblock to the output buffer
-        outputBlock.getSubBlock(startSample, numSamples).add(block);
+        outputBlock.getSubBlock(startSample, numSamples).add(exciterBlock);
     }
 
-    if (numBlocksSinceNoteOn > 0)
+    //add the resonator banks' output to the main synth output
+    outputBlock.add(resonatorBankOutputBlock);
+
+    //do silence detection, since the resonators can be unpredictable
+    float maxAmplitude = resonatorBankBuffer.getMagnitude(0, startSample, numSamples);
+    if (numBlocksSinceNoteOn > 10)
     {
         if (maxAmplitude < 0.001f)
         {
@@ -184,6 +210,12 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
                 stopVoice();
                 clearCurrentNote();
             }
+        }
+        else if(maxAmplitude > 100.0f)
+        {
+            DBG("Amplitude overflow detected, stopping note " + juce::String(id));
+            stopVoice();
+            clearCurrentNote();
         }
         else
         {

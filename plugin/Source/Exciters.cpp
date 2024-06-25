@@ -24,7 +24,7 @@ void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block)
     {
         for (int i = 0; i < impulseLength; i++)
         {
-            truncatedBlock.setSample(0, i, gain * 5);
+            truncatedBlock.setSample(0, i, gain * 2);
         }
     }
 
@@ -51,11 +51,12 @@ void ImpulseExciter::noteStarted()
 
 void ImpulseExciter::noteStopped(bool avoidTailOff)
 {
-
+    impulseLength = voice.getValue(params.thickness);
 }
 
 void ImpulseExciter::updateParameters()
 {
+    impulseLength = voice.getValue(params.thickness);
     filter.updateParameters();
 }
 

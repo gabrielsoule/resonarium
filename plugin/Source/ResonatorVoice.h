@@ -42,7 +42,9 @@ public:
     int silenceCount = 0;
     int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
     int numBlocksSinceNoteOn; // what it says on the tin.
-
+    juce::AudioBuffer<float> exciterBuffer; // buffer for exciters to write to, is routed to resonator banks
+    juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to output
+    juce::dsp::IIR::Filter<float> dcBlocker;
     juce::OwnedArray<Exciter> exciters;
 };
 

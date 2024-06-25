@@ -17,16 +17,15 @@ public:
     enum CouplingMode
     {
         PARALLEL,
-        CASCADE,
         INTERLINKED,
-        INTERLINKED2,
-        RANDOM
+        CASCADE,
     };
 
     ResonatorBank(ResonatorVoice& parentVoice, ResonatorBankParams params);
     ~ResonatorBank();
 
     float processSample(float input);
+    void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock);
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
     void updateParameters(float newFrequency);

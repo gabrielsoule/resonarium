@@ -68,9 +68,12 @@ void ResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
 void ResonatorBank::updateParameters(float newFrequency)
 {
     this->frequency = newFrequency;
+    this->couplingMode = static_cast<CouplingMode>(voice.getValue(params.couplingMode));
     for (auto* r: resonators) r->updateParameters(newFrequency);
+
 }
 
+[[deprecated("Use process(...) instead for amortized efficiency")]]
 float ResonatorBank::processSample(float input)
 {
     //Process the resonators in parallel with no intra-resonator feedback
@@ -80,8 +83,7 @@ float ResonatorBank::processSample(float input)
         float totalGain = 0.0f;
         for (auto* r : resonators)
         {
-            outSample += r->processSample(input);
-
+            outSample += r->processSample(input) * r->gain;
             totalGain += r->gain;
         }
         outSample = outSample / totalGain;
@@ -97,21 +99,21 @@ float ResonatorBank::processSample(float input)
     //Feed the combined output of all resonators into the input of each resonator
     else if (couplingMode == CouplingMode::INTERLINKED)
     {
-        auto p = 0.2f;
-        float b[NUM_RESONATORS];
-        for(int i = 0; i < NUM_RESONATORS; i++)
-        {
-           b[i] = 2.0f / NUM_RESONATORS;
-        }
+
 
         float resonatorOutSamples[NUM_RESONATORS];
 
         float outSample = 0.0f;
         float feedbackSample =  0.0f;
+
         for(int i = 0; i < NUM_RESONATORS; i++)
         {
             resonatorOutSamples[i] = resonators[i]->popSample();
-            feedbackSample += b[i] * resonatorOutSamples[i];
+            auto bridgeGain = 1.0f;
+            //main invariant: the feedbackSample maximum amplitude must be -2.0f.
+            //Hence, the gain of each resonator is weighted by the number of resonators and their respective gains.
+
+            feedbackSample += resonatorOutSamples[i];
             outSample += resonatorOutSamples[i];
         }
 
@@ -128,38 +130,114 @@ float ResonatorBank::processSample(float input)
 
     }
 
-    else if (couplingMode == CouplingMode::INTERLINKED2)
-    {
-        float outSample = 0.0f;
-        lastOutput = 0.3f * (couplingFilter.processSample(lastOutput)) / static_cast<float>(NUM_RESONATORS);
-        DBG(lastOutput);
-
-        for(auto* r : resonators)
-        {
-            r->decayCoefficient = 0.8f;
-            auto temp = (input + lastOutput);
-            outSample += r->processSample(temp);
-        }
-
-        lastOutput = outSample;
-
-        return outSample / NUM_RESONATORS;
-    }
-
-    else if (couplingMode == CouplingMode::RANDOM)
-    {
-        auto state0 = resonators[0]->popSample();
-        auto state1 = resonators[1]->popSample();
-
-        resonators[0]->pushSample(state1 + input);
-        resonators[1]->pushSample(state0 + input);
-
-        return state1;
-    }
+    // else if (couplingMode == CouplingMode::INTERLINKED2)
+    // {
+    //     float outSample = 0.0f;
+    //     lastOutput = 0.3f * (couplingFilter.processSample(lastOutput)) / static_cast<float>(NUM_RESONATORS);
+    //     DBG(lastOutput);
+    //
+    //     for(auto* r : resonators)
+    //     {
+    //         r->decayCoefficient = 0.8f;
+    //         auto temp = (input + lastOutput);
+    //         outSample += r->processSample(temp);
+    //     }
+    //
+    //     lastOutput = outSample;
+    //
+    //     return outSample / NUM_RESONATORS;
+    // }
+    //
+    // else if (couplingMode == CouplingMode::RANDOM)
+    // {
+    //     auto state0 = resonators[0]->popSample();
+    //     auto state1 = resonators[1]->popSample();
+    //
+    //     resonators[0]->pushSample(state1 + input);
+    //     resonators[1]->pushSample(state0 + input);
+    //
+    //     return state1;
+    // }
     else
     {
         DBG("Invalid feedback mode!");
         return -1;
+    }
+}
+
+void ResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
+{
+    //reminder: the outputBlock may already have samples inside...
+    jassert(exciterBlock.getNumSamples() == outputBlock.getNumSamples());
+    jassert(exciterBlock.getNumChannels() == outputBlock.getNumChannels());
+
+    //compute the total gain so that the output can be normalized,
+    //used by all resonator bank processing modes
+    float totalGain = 0.0f;
+    for (auto* r : resonators)
+    {
+        totalGain += r->gain;
+    }
+
+    if(totalGain == 0.0f) return;
+
+    if(couplingMode == PARALLEL)
+    {
+        for(int i = 0; i < exciterBlock.getNumSamples(); i++)
+        {
+            float outSample = 0.0f;
+            for (auto* r : resonators)
+            {
+                outSample += r->processSample(exciterBlock.getSample(0, i)) * r->gain;
+            }
+            outSample = outSample / totalGain;
+            outputBlock.addSample(0, i, outSample);
+            outputBlock.addSample(1, i, outSample);
+        }
+    }
+    else if(couplingMode == INTERLINKED)
+    {
+        // DBG("Total gain: " + juce::String(totalGain));
+        // for(auto r: resonators)
+        // {
+        //     DBG("Resonator gain: " + juce::String(r->gain));
+        //     DBG("Adjusted gain:" + juce::String(r->gain / totalGain));
+        // }
+
+        for(int i = 0; i < exciterBlock.getNumSamples(); i++)
+        {
+            float resonatorOutSamples[NUM_RESONATORS];
+            float outSample = 0.0f;
+            float feedbackSample =  0.0f;
+
+            for(int j = 0; j < NUM_RESONATORS; j++)
+            {
+                resonatorOutSamples[j] = resonators[j]->popSample();
+                feedbackSample += resonatorOutSamples[j] * (resonators[j]->gain / totalGain);
+                outSample += resonatorOutSamples[j] * resonators[j]->gain;
+            }
+
+            //apply the bridge filter H(z) = -2.
+            //This is a necessary criterion for stability
+            feedbackSample = -2.0f * feedbackSample;
+
+            for(int j = 0; j < NUM_RESONATORS; j++)
+            {
+                resonators[j]->pushSample(feedbackSample + resonatorOutSamples[j] + exciterBlock.getSample(0, i));
+            }
+
+            outputBlock.addSample(0, i, outSample);
+            outputBlock.addSample(1, i, outSample);
+        }
+
+    } else if(couplingMode == CASCADE)
+    {
+        jassertfalse; //NYI
+    }
+    else
+    {
+        DBG("Invalid feedback mode!");
+        jassertfalse;
     }
 }
 

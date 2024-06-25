@@ -173,7 +173,11 @@ void Resonator::updateParameters(float frequency)
 {
     this->enabled = params.enabled->isOn();
 
-    if(!enabled) return;
+    if(!enabled)
+    {
+        this->gain = 0.0f;
+        return;
+    }
 
     this->harmonicMultiplier = std::pow(2.0f, voice.getValue(params.harmonicInSemitones) / 12.0f);
     this->frequency = frequency;
@@ -192,7 +196,7 @@ void Resonator::updateParameters(float frequency)
     //TODO implement decayFilterType
     //TODO implement decayFilterResonance
     //TODO implement decayFilterKeytrack
-    // gain = voice.getValue(params.gain);
+    this->gain = voice.getValue(params.gain);
 
     loopFilter.updateParameters();
     // if(voice.getValue(params.testParameter) > 0.5f)

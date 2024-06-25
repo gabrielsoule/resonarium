@@ -35,6 +35,19 @@ static juce::String resonatorFilterTypeTextFunction(const gin::Parameter&, float
     }
 }
 
+static juce::String couplingModeTextFunction(const gin::Parameter&, float v)
+{
+    switch (int(v))
+    {
+    case 0: return "Parallel";
+    case 1: return "Interlinked";
+    case 2: return "Cascade";
+    default:
+        jassertfalse;
+        return {};
+    }
+}
+
 void MultiFilterParams::setup(ResonariumProcessor& p, juce::String prefix)
 {
     this->prefix = prefix;
@@ -160,7 +173,7 @@ void ResonatorBankParams::setup(ResonariumProcessor& p, int index)
 
     couplingMode = p.addExtParam("couplingMode" + suffix, "Coupling Mode" + suffix, "Coupling", "",
                                  {0.0, 2.0, 1.0, 1.0f}, 0.0f,
-                                 gin::SmoothingType::linear);
+                                 gin::SmoothingType::linear, couplingModeTextFunction);
 
     outputGain = p.addExtParam("outputGain" + suffix, "Output Gain" + suffix, "Gain", "dB",
                                {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
