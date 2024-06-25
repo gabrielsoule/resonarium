@@ -11,10 +11,56 @@
 #include "Parameters.h"
 #include "dsp/Filters.h"
 #include "chowdsp_filters/LowerOrderFilters/chowdsp_StateVariableFilter.h"
+#include "dsp/MultiFilter.h"
 
 class ResonatorVoice;
+
 /**
- * A multi-purpose resonator based roughly on digital waveguide literature, including
+ * Encapsulates the different damping filters that can be used in the waveguide loop,
+ * along with a set of hosted parameters.
+ */
+class WaveguideFilter
+{
+public:
+    enum Type
+    {
+        //the classic order-two FIR filter used in the original Karplus-Strong algorithm
+        //parameters: 1, cutoff 0.0f-1.0f
+        eks,
+        //a biquad filter with adjustable cutoff and resonance
+        //parameters: (3), cutoff, resonance 0-100, type
+        biquad,
+        //a state-variable filter with adjustable cutoff and resonance
+        //parameters: (3), cutoff, resonance 0-100, mode -1.0-1.0f
+        svf,
+        eq3, //parameters (4) (low, mid, high)
+    };
+
+    WaveguideFilter(ResonatorVoice& voice, ResonatorParams params);
+
+    void prepare(const juce::dsp::ProcessSpec& spec);
+    void reset();
+    void updateParameters();
+    float processSample(float sample);
+    /**
+    * Changes the type of filter used in the waveguide loop.
+    * If the type differs from the current type, the filter is reset.
+    * Otherwise, this is a no-op.
+    */
+    void setType(Type type);
+    Type type = eks;
+    MultiFilter biquadFilter;
+    OneZeroFilter eksFilter;
+    //SVF svfFilter; TODO implement
+    //EQ3 eq3Filter; TODO implement
+
+    ResonatorVoice& voice;
+    ResonatorParams params;
+};
+
+
+/**
+ * A multipurpose resonator based roughly on digital waveguide literature, including
  * the extended Karplus-Strong algorithm, banded waveguide synthesis, and other techniques.
  *
  * The Resonator object itself is designed to be used within
@@ -55,12 +101,8 @@ public:
     void updateParameters(float frequency);
 
     bool enabled;
-    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Lagrange3rd> delayLine;
-    juce::dsp::IIR::Filter<float> dampingFilter;
-    DispersionFilter dispersionFilter;
-    OneZeroFilter oneZeroFilter;
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLine;
 
-    juce::dsp::IIR::Filter<float> dcBlocker;
     float minFrequency; //the minimum frequency of the resonator
     float maxFrequency; //the maximum frequency of the resonator
     float delayLengthInSamples; //the length of the delay line in samples corresponding to frequency
@@ -68,6 +110,13 @@ public:
     float decayTime;
     float sampleRate;
 
+    WaveguideFilter loopFilter; //the filter used in the waveguide loop
+
+    juce::dsp::IIR::Filter<float> dampingFilter;
+    DispersionFilter dispersionFilter;
+    OneZeroFilter oneZeroFilter;
+
+    juce::dsp::IIR::Filter<float> dcBlocker;
     chowdsp::StateVariableFilter<float, chowdsp::StateVariableFilterType::MultiMode, 2> svf;
 
     //these parameters are managed by an enclosing ResonatorBank,

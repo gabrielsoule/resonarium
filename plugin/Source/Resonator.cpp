@@ -1,9 +1,77 @@
 #include "Resonator.h"
-
 #include "ResonatorVoice.h"
 
-Resonator::Resonator(ResonatorVoice& parentVoice, ResonatorParams params) : voice(parentVoice), params(params)
+WaveguideFilter::WaveguideFilter(ResonatorVoice& voice, ResonatorParams params) : voice(voice), params(params)
 {
+
+}
+
+void WaveguideFilter::prepare(const juce::dsp::ProcessSpec& spec)
+{
+    biquadFilter.prepare(spec);
+    eksFilter.prepare(spec);
+    biquadFilter.normalize = false;
+}
+
+void WaveguideFilter::reset()
+{
+    biquadFilter.reset();
+    eksFilter.reset();
+}
+
+void WaveguideFilter::updateParameters()
+{
+    Type newType = static_cast<Type>(static_cast<int>(params.decayFilterType->getProcValue()));
+    this->type = newType;
+    // if (newType != type)
+    // {
+    //     setType(newType);
+    // }
+    if (type == biquad)
+    {
+        biquadFilter.setType(static_cast<MultiFilter::Type>(static_cast<int>(params.biquadFilterType->getProcValue())));
+        // biquadFilter.setParameters(voice.getValue(params.decayFilterCutoff), voice.getValue(params.decayFilterResonance));
+        biquadFilter.setParameters(voice.getValue(params.decayFilterCutoff), 1);
+        biquadFilter.updateParameters();
+        //print the biquadFilter.filterL.coefficients->coefficients;
+        DBG("Coefficients");
+        for(auto c : biquadFilter.filterL.coefficients->coefficients)
+        {
+            DBG(c);
+        }
+    }
+    else if (type == eks)
+    {
+        eksFilter.setBrightness(voice.getValue(params.eksFilterBrightness));
+    }
+    else
+    {
+        jassertfalse;
+    }
+
+}
+
+float WaveguideFilter::processSample(float sample)
+{
+    float output;
+    if (type == biquad)
+    {
+        return biquadFilter.processSample(0, sample);
+    }
+    else if (type == eks)
+    {
+        return eksFilter.processSample(sample);
+    }
+    else
+    {
+        jassertfalse;
+        return -1; //TODO implement other filter types
+    }
+}
+
+Resonator::Resonator(ResonatorVoice& parentVoice, ResonatorParams params) : loopFilter(parentVoice, params), voice(parentVoice), params(params)
+{
+
 }
 
 //TODO Support multi-channel processing and do some interesting stuff in the stereo field
@@ -16,7 +84,7 @@ Resonator::Resonator(ResonatorVoice& parentVoice, ResonatorParams params) : voic
  */
 float Resonator::processSample(float input)
 {
-    if(!enabled) return 0.0f;
+    if (!enabled) return 0.0f;
     float outSample = popSample();
     pushSample(outSample + input);
     return outSample;
@@ -24,12 +92,13 @@ float Resonator::processSample(float input)
 
 float Resonator::popSample()
 {
-    if(!enabled) return 0.0f;
+    if (!enabled) return 0.0f;
     float outSample = 0;
     outSample = outSample + delayLine.popSample(0, delayLengthInSamples, true);
     // outSample = dampingFilter.processSample(outSample);
     // outSample = svf.processSample(0, outSample);
-    outSample = oneZeroFilter.processSample(outSample);
+    // outSample = oneZeroFilter.processSample(outSample);
+    outSample = loopFilter.processSample(outSample);
     outSample = dispersionFilter.processSample(outSample);
     outSample = outSample * decayCoefficient;
     return outSample;
@@ -52,6 +121,7 @@ void Resonator::reset()
     dispersionFilter.reset();
     svf.reset();
     oneZeroFilter.reset();
+    loopFilter.reset();
 }
 
 void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
@@ -73,6 +143,10 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
     dispersionFilter.prepare(spec);
 
     oneZeroFilter.prepare(spec);
+    oneZeroFilter.setBrightness(0.5f);
+
+    loopFilter.prepare(spec);
+    loopFilter.type = WaveguideFilter::Type::eks;
 
     //One pole DC blocker coefficients that are appropriate for a ~40-50hz sample rate
     juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients =
@@ -99,7 +173,9 @@ void Resonator::updateParameters(float frequency)
 {
     this->enabled = params.enabled->isOn();
 
-    this->harmonicMultiplier = std::pow(2.0f, voice.getValue(params.harmonic) / 12.0f);
+    if(!enabled) return;
+
+    this->harmonicMultiplier = std::pow(2.0f, voice.getValue(params.harmonicInSemitones) / 12.0f);
     this->frequency = frequency;
 
     delayLengthInSamples = sampleRate / (frequency * harmonicMultiplier);
@@ -110,13 +186,15 @@ void Resonator::updateParameters(float frequency)
     dispersionFilter.setDispersionAmount(voice.getValue(params.dispersion));
     dampingFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(
         sampleRate, voice.getValue(params.decayFilterCutoff));
-    oneZeroFilter.setBrightness(juce::jmap(params.testParameter->getValue(), params.testParameter->getUserRangeStart(), params.testParameter->getUserRangeEnd(), 0.0f, 1.0f));
+    oneZeroFilter.setBrightness(juce::jmap(params.testParameter->getValue(), params.testParameter->getUserRangeStart(),
+                                           params.testParameter->getUserRangeEnd(), 0.0f, 1.0f));
     // DBG(oneZeroFilter.p);
     //TODO implement decayFilterType
     //TODO implement decayFilterResonance
     //TODO implement decayFilterKeytrack
-    gain = voice.getValue(params.gain);
+    // gain = voice.getValue(params.gain);
 
+    loopFilter.updateParameters();
     // if(voice.getValue(params.testParameter) > 0.5f)
     // {
     //     testFlag = true;

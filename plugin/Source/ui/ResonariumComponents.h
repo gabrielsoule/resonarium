@@ -15,7 +15,7 @@ public:
     {
         this->enableButton = new gin::SVGPluginButton(resonatorParams.enabled, gin::Assets::power);
         this->gainKnob = new gin::Knob(resonatorParams.gain);
-        this->pitchOffsetKnob = new gin::Knob(resonatorParams.harmonic);
+        this->pitchOffsetKnob = new gin::Knob(resonatorParams.harmonicInSemitones);
         this->dispersionKnob = new gin::Knob(resonatorParams.dispersion);
         this->decayTimeKnob = new gin::Knob(resonatorParams.decayTime);
         this->decayFilterCutoffKnob = new gin::Knob(resonatorParams.decayFilterCutoff);

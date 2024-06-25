@@ -72,6 +72,7 @@ set(JUCE_BUILD_EXAMPLES OFF)
 add_subdirectory(modules/juce)
 add_subdirectory(modules/melatonin_inspector)
 add_subdirectory(modules/chowdsp_utils)
+add_subdirectory (modules/melatonin_perfetto)
 
 set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/modules/juce" APPEND PROPERTY LABELS JUCE)
 
@@ -125,6 +126,8 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
         gin_simd
 
         melatonin_inspector
+
+        Melatonin::Perfetto
 
         chowdsp::chowdsp_dsp_utils
         chowdsp::chowdsp_gui

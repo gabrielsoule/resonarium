@@ -10,6 +10,7 @@ ResonatorBank::ResonatorBank(ResonatorVoice& parentVoice, ResonatorBankParams pa
     //add some resonators to the OwnedArray
     for (int i = 0; i < NUM_RESONATORS; i++)
     {
+        DBG(parentVoice.id);
         resonators.add(new Resonator(parentVoice, params.resonatorParams[i]));
     }
 
@@ -96,31 +97,34 @@ float ResonatorBank::processSample(float input)
     //Feed the combined output of all resonators into the input of each resonator
     else if (couplingMode == CouplingMode::INTERLINKED)
     {
+        auto p = 0.2f;
+        float b[NUM_RESONATORS];
+        for(int i = 0; i < NUM_RESONATORS; i++)
+        {
+           b[i] = 2.0f / NUM_RESONATORS;
+        }
+
+        float resonatorOutSamples[NUM_RESONATORS];
+
         float outSample = 0.0f;
         float feedbackSample =  0.0f;
-        float feedbackGainSum = 0.0f;
-        float outputGainSum = 0.0f;
+        for(int i = 0; i < NUM_RESONATORS; i++)
+        {
+            resonatorOutSamples[i] = resonators[i]->popSample();
+            feedbackSample += b[i] * resonatorOutSamples[i];
+            outSample += resonatorOutSamples[i];
+        }
+
+        feedbackSample = -1.0f * feedbackSample; //apply the bridge filter, which for now is H(z)=-1 :-)
+        // feedbackSample += input;
+        // feedbackSample = 0.0f;
 
         for(int i = 0; i < NUM_RESONATORS; i++)
         {
-            float ithResonatorOutput = resonators[i]->popSample();
-            feedbackSample += ithResonatorOutput * resonators[i]->feedbackGain;
-            outSample += ithResonatorOutput * resonators[i]->gain;
-            feedbackGainSum += resonators[i]->feedbackGain;
-            outputGainSum += resonators[i]->gain;
+            resonators[i]->pushSample(feedbackSample + resonatorOutSamples[i] + input);
         }
-
-        feedbackSample += input; //add the exciter signal, which has a gain of 1 (i.e. goes from -1 to 1 in amplitude)
-        // feedbackGainSum += 1;
-
-        feedbackSample = feedbackGainSum != 0 ? feedbackSample / feedbackGainSum : input;
-
-        for(int i = 0; i < NUM_RESONATORS; i++)
-        {
-            resonators[i]->pushSample(feedbackSample);
-        }
-
-        return outSample / outputGainSum;
+        //
+        return outSample;
 
     }
 

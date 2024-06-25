@@ -41,6 +41,7 @@ public:
     int getAlertWindowButtonHeight() override       { return 20; }
     juce::Font getLabelFont (juce::Label&) override;
     juce::Font getTextButtonFont(juce::TextButton&, int buttonHeight) override;
+    juce::Font getPopupMenuFont() override;
 
     juce::SharedResourcePointer<gin::Images> images;
 

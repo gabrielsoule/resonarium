@@ -46,7 +46,7 @@ public:
      * Exciter audio is added non-destructively to the existing
      * samples in the buffer.
      */
-    virtual void process(juce::dsp::AudioBlock<float> block) = 0;
+    virtual void process(juce::dsp::AudioBlock<float>& block) = 0;
     virtual void reset() = 0;
     virtual void noteStarted() = 0;
     virtual void noteStopped(bool avoidTailOff) = 0;
@@ -74,11 +74,11 @@ public:
 class ImpulseExciter : public Exciter
 {
 public:
-    ImpulseExciter(ResonatorVoice& voice, ImpulseExciterParams params) : Exciter(voice), params(params), filter(params.filterParams){}
+    ImpulseExciter(ResonatorVoice& voice, ImpulseExciterParams params) : Exciter(voice), params(params), filter(params.filterParams, false){}
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float> block) override;
+    void process(juce::dsp::AudioBlock<float>& block) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;
@@ -101,11 +101,11 @@ public:
 class NoiseExciter : public Exciter
 {
 public:
-    NoiseExciter(ResonatorVoice& voice, NoiseExciterParams params) : Exciter(voice), params(params), filter(params.filterParams){}
+    NoiseExciter(ResonatorVoice& voice, NoiseExciterParams params) : Exciter(voice), params(params), filter(params.filterParams, false){}
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float> block) override;
+    void process(juce::dsp::AudioBlock<float>& block) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;

@@ -318,6 +318,11 @@ juce::Font ResonariumLookAndFeel::getTextButtonFont (juce::TextButton&, int butt
     return juce::Font ("Futura", "Medium", 16.0f); // Change to your preferred font
 }
 
+juce::Font ResonariumLookAndFeel::getPopupMenuFont()
+{
+    return juce::Font ("Futura", "Medium", 18.0f); // Change to your preferred font
+}
+
 // Override the font for Labels
 juce::Font ResonariumLookAndFeel::getLabelFont (juce::Label&)
 {

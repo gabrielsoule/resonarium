@@ -8,7 +8,6 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "defines.h"
 #include "Exciters.h"
 #include "ResonatorBank.h"
 
@@ -38,7 +37,7 @@ public:
     float frequency;
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote;
-    int id;
+    int id = 0;
     juce::OwnedArray<ResonatorBank> resonatorBanks;
     int silenceCount = 0;
     int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?

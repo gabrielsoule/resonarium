@@ -65,13 +65,17 @@ struct ResonatorParams
     int bankIndex = -1;
     gin::Parameter::Ptr
         enabled,
-        harmonic,
+        harmonicInSemitones,
+        harmonicMultiplier,
         decayTime,
         dispersion,
+        decayFilterType, //EKS, BQD, SVF, EQ3
+        biquadFilterType, //LP, HP, BP, NOTCH, AP
         decayFilterCutoff,
-        decayFilterType,
-        decayFilterResonance,
-        decayFilterKeytrack,
+        decayFilterResonance, //for both SVF and BQD filter modes
+        decayFilterKeytrack, //bool y/n
+        eksFilterBrightness, //for EKS filter mode only
+        svfFilterMode, //for SVF filter mode only
         gain,
         testParameter;
 

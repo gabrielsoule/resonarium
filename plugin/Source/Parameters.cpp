@@ -13,8 +13,22 @@ static juce::String filterTextFunction(const gin::Parameter&, float v)
     case 1: return "LP";
     case 2: return "HP";
     case 3: return "BP";
-    case 4: return "Notch";
-    case 5: return "Allpass";
+    case 4: return "NT";
+    case 5: return "AP";
+    default:
+        jassertfalse;
+        return {};
+    }
+}
+
+static juce::String resonatorFilterTypeTextFunction(const gin::Parameter&, float v)
+{
+    switch (int(v))
+    {
+    case 0: return "EKS";
+    case 1: return "BQD";
+    case 2: return "SVF";
+    case 3: return "EQ3";
     default:
         jassertfalse;
         return {};
@@ -70,9 +84,13 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                             {0.0, 1.0, 1.0, 1.0f}, 0.0f,
                             0.0f);
 
-    harmonic = p.addExtParam("harmonic" + suffix, "Pitch Offset" + suffix, "Pitch", " st",
-                             {-24.0f, 24.0f, 0.01f, 1.0f}, 0.0f,
-                             0.0f);
+    harmonicInSemitones = p.addExtParam("pitchOffsetSemis" + suffix, "Pitch Offset" + suffix, "Pitch", " st",
+                                        {-24.0f, 24.0f, 0.01f, 1.0f}, 0.0f,
+                                        0.0f);
+
+    harmonicMultiplier = p.addExtParam("harmonicMultiplier" + suffix, "Harmonic Multiplier" + suffix, "Mult.", "",
+                                       {0.0, 20.0, 0.01, 0.4f}, 1.0f,
+                                       0.0f);
 
     decayTime = p.addExtParam("decayTime" + suffix, "Decay Time" + suffix, "Decay", "s",
                               {0.0, 60.0, 0.0, 0.2f}, 3.0f,
@@ -83,22 +101,35 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                0.0f);
     dispersion->conversionFunction = [](const float x) { return x / 100.0f; };
 
+    // EKS, BQD, SVF, EQ3
+    decayFilterType = p.addExtParam("decayFilterType" + suffix, "Filter Type" + suffix, "Filter", "",
+                                    {0.0, 3.0, 1.0, 1.0f}, 0.0f,
+                                    0.0f, resonatorFilterTypeTextFunction);
+
+    // LP, HP, BP, NOTCH, AP
+    biquadFilterType = p.addExtParam("biquadFilterType" + suffix, "Biquad Type" + suffix, "Biquad Type", "",
+                                     {0.0, 5.0f, 1.0, 1.0},
+                                     0.0, 0.0f, filterTextFunction);
+
     decayFilterCutoff = p.addExtParam("decayFilterCutoff" + suffix, "Filter Cutoff" + suffix, "Cutoff", "Hz",
                                       {20.0, 20000.0, 0.0, 1.0f}, 1000.0f,
                                       0.0f);
 
-    // LP, BP, HP, SVF
-    decayFilterType = p.addExtParam("decayFilterType" + suffix, "Filter Type" + suffix, "Filter", "",
-                                    {0.0, 7.0, 1.0, 1.0f}, 0.0f,
-                                    0.0f);
-
     decayFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Resonance" + suffix, "Res", "",
-                                         {0.0, 100.0f, 0.0, 0.2f}, 0.0f,
+                                         {0.01f, 100.0f, 0.0, 0.2f}, 0.707f,
                                          0.0f);
 
-    decayFilterKeytrack = p.addExtParam("filter_keytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
+    decayFilterKeytrack = p.addExtParam("filterKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
                                         {0.0, 100.0f, 0.0, 1.0f}, 0.0f,
                                         0.0f);
+
+    eksFilterBrightness = p.addExtParam("eksBrightness" + suffix, "Brightness" + suffix, "Brightness", "",
+                                        {0.0, 1.0f, 0.0, 1.0f}, 0.5f,
+                                        0.0f);
+
+    svfFilterMode = p.addExtParam("svfMode" + suffix, "Mode" + suffix, "Mode", "",
+                                  {-1.0, 1.0f, 0.0, 1.0f}, 0.0f,
+                                  0.0f);
 
     gain = p.addExtParam("gain" + suffix, "Gain" + suffix, "Gain", "dB",
                          {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
@@ -149,8 +180,8 @@ void ImpulseExciterParams::setup(ResonariumProcessor& p, int index)
                                        {0.0, 1.0, 0.01, 1.0f}, 0.5f,
                                        0.0f);
     this->gain = p.addExtParam(prefix + "gain", prefix + "Gain", "Gain", "dB",
-                              {-100.0, 10.0, 0.0, 4.0f}, 0.0f,
-                              0.0f);
+                               {-100.0, 10.0, 0.0, 4.0f}, 0.0f,
+                               0.0f);
     gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
     filterParams.setup(p, "impExciter" + std::to_string(index));

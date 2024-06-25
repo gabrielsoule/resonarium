@@ -4,6 +4,7 @@
 void ImpulseExciter::prepare(const juce::dsp::ProcessSpec& spec)
 {
     filter.prepare(spec);
+    filter.normalize = false;
     scratchBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     scratchBuffer.clear();
     scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
@@ -15,7 +16,7 @@ void ImpulseExciter::nextSample()
 
 }
 
-void ImpulseExciter::process(juce::dsp::AudioBlock<float> block)
+void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block)
 {
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0,  (size_t) block.getNumSamples());
     auto gain = voice.getValue(params.gain);
@@ -27,7 +28,7 @@ void ImpulseExciter::process(juce::dsp::AudioBlock<float> block)
         }
     }
 
-    filter.process(juce::dsp::ProcessContextReplacing<float>(truncatedBlock));
+    filter.process(truncatedBlock);
     //TODO Add proper multi channel support here
     block.add(truncatedBlock);
     scratchBlock.clear();
@@ -73,7 +74,7 @@ void NoiseExciter::nextSample()
 
 }
 
-void NoiseExciter::process(juce::dsp::AudioBlock<float> block)
+void NoiseExciter::process(juce::dsp::AudioBlock<float>& block)
 {
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0,  (size_t) block.getNumSamples());
     auto gain = voice.getValue(params.gain);
@@ -82,7 +83,7 @@ void NoiseExciter::process(juce::dsp::AudioBlock<float> block)
         truncatedBlock.setSample(0, i, noise.nextValue() * gain * envelope.process());
     }
 
-    filter.process(juce::dsp::ProcessContextReplacing<float>(truncatedBlock));
+    filter.process(truncatedBlock);
     block.add(truncatedBlock);
 }
 
