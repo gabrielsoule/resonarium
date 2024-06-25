@@ -48,6 +48,11 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
         jassert(resonatorBanks[i]->params.index == i); //ensure that parameters have been correctly distributed
         resonatorBanks[i]->prepare(spec);
     }
+
+    juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients =
+        new juce::dsp::IIR::Coefficients<float>(1, -1, 1, -0.995f);
+    dcBlocker.state = dcBlockerCoefficients;
+    dcBlocker.prepare(spec);
 }
 
 void ResonatorVoice::noteStarted()
@@ -94,6 +99,8 @@ void ResonatorVoice::noteStarted()
         exciter->noteStarted();
         exciter->updateParameters();
     }
+
+    dcBlocker.reset();
 }
 
 void ResonatorVoice::noteRetriggered()
@@ -197,6 +204,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     }
 
     //add the resonator banks' output to the main synth output
+    dcBlocker.process(juce::dsp::ProcessContextReplacing<float>(resonatorBankOutputBlock));
     outputBlock.add(resonatorBankOutputBlock);
 
     //do silence detection, since the resonators can be unpredictable

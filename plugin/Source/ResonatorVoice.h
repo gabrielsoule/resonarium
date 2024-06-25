@@ -44,7 +44,7 @@ public:
     int numBlocksSinceNoteOn; // what it says on the tin.
     juce::AudioBuffer<float> exciterBuffer; // buffer for exciters to write to, is routed to resonator banks
     juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to output
-    juce::dsp::IIR::Filter<float> dcBlocker;
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlocker;
     juce::OwnedArray<Exciter> exciters;
 };
 
