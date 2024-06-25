@@ -1,11 +1,6 @@
-//
-// Created by Gabriel Soule on 5/8/24.
-//
-
 #ifndef RESONATORBANK_H
 #define RESONATORBANK_H
 #include "Resonator.h"
-#include "defines.h"
 
 class ResonatorVoice;
 /**
@@ -23,8 +18,6 @@ public:
 
     ResonatorBank(ResonatorVoice& parentVoice, ResonatorBankParams params);
     ~ResonatorBank();
-
-    float processSample(float input);
     void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock);
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
@@ -36,22 +29,11 @@ public:
     float sampleRate;
     juce::OwnedArray<Resonator> resonators;
 
-    // for use in intra-resonator feedback.
-    // stores each resonator's last output times its feedback gain.
-    // these will not equal the audible output samples,
-    // since the resonators have different gain for feedback vs DAW output.
-    // for example, a resonator can hav
-    float lastResonatorOutputs[NUM_RESONATORS];
-    float lastOutput = 0.0f;
-    juce::dsp::IIR::Filter<float> couplingFilter;
-
     //Pointer to the voice that owns this ResonatorBank; awkwardly required for polyphonic modulation via ModMatrix
     ResonatorVoice& voice;
 
     //Pointers to the relevant parameters controlling this ResonatorBank
     ResonatorBankParams params;
-
-
 };
 
 #endif //RESONATORBANK_H
