@@ -73,8 +73,6 @@ void ResonatorVoice::noteStarted()
     processor.modMatrix.setPolyValue(*this, processor.modSrcTimbre, note.initialTimbre.asUnsignedFloat());
     processor.modMatrix.setPolyValue(*this, processor.modSrcPressure, note.pressure.asUnsignedFloat());
 
-    updateParameters();
-    snapParams();
 
     for (auto* exciter : exciters)
     {
@@ -85,12 +83,16 @@ void ResonatorVoice::noteStarted()
         resonatorBank->reset();
     }
 
+    updateParameters();
+    snapParams();
+
     silenceCount = 0;
     numBlocksSinceNoteOn = 0;
 
     for (auto* exciter : exciters)
     {
         exciter->noteStarted();
+        exciter->updateParameters();
     }
 }
 

@@ -20,43 +20,39 @@ void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block)
 {
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0,  (size_t) block.getNumSamples());
     auto gain = voice.getValue(params.gain);
-    if (firstBlock)
+    const int impulsesThisBlock = juce::jmin<int>(truncatedBlock.getNumSamples(), impulsesRemaining);
+    for(int i = 0; i < impulsesThisBlock; i++)
     {
-        for (int i = 0; i < impulseLength; i++)
-        {
-            truncatedBlock.setSample(0, i, gain * 2);
-        }
+        truncatedBlock.setSample(0, i, gain * 2);
     }
+
+    impulsesRemaining -= impulsesThisBlock;
 
     filter.process(truncatedBlock);
     //TODO Add proper multi channel support here
     block.add(truncatedBlock);
     scratchBlock.clear();
-    firstBlock = false;
 }
 
 void ImpulseExciter::reset()
 {
-    impulseCounter = 0;
-    firstBlock = true;
     filter.reset();
     scratchBlock.clear();
+    impulsesRemaining = voice.getValue(params.thickness);
 }
 
 void ImpulseExciter::noteStarted()
 {
-    impulseLength = voice.getValue(params.thickness);
-    firstBlock = true;
+    impulsesRemaining = voice.getValue(params.thickness);
 }
 
 void ImpulseExciter::noteStopped(bool avoidTailOff)
 {
-    impulseLength = voice.getValue(params.thickness);
+
 }
 
 void ImpulseExciter::updateParameters()
 {
-    impulseLength = voice.getValue(params.thickness);
     filter.updateParameters();
 }
 

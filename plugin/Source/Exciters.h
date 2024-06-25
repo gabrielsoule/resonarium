@@ -87,9 +87,7 @@ public:
 
     ImpulseExciterParams params;
     MultiFilter filter;
-    int impulseLength;
-    int impulseCounter;
-    bool firstBlock;
+    int impulsesRemaining;
     juce::AudioBuffer<float> scratchBuffer;
     juce::dsp::AudioBlock<float> scratchBlock;
 };
