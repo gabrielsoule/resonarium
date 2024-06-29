@@ -1,7 +1,3 @@
-//
-// Created by Gabriel Soule on 5/1/24.
-//
-
 #include "ResonatorVoice.h"
 #include "PluginProcessor.h"
 
@@ -177,35 +173,20 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 
     if (!BYPASS_RESONATORS)
     {
-        // for (int i = 0; i < numSamples; i++)
-        // {
-        //     const float exciterSample = exciterSignalBlock.getSample(0, i);
-        //
-        //     //TODO Properly support resonator bank feedback routing; for now, just add everything together
-        //     //TODO Support multiple resonator banks in series
-        //     float sample = 0.0f;
-        //     for (int j = 0; j < NUM_RESONATOR_BANKS; j++)
-        //         sample += resonatorBanks[j]->processSample(exciterSample);
-        //
-        //     maxAmplitude = juce::jmax(maxAmplitude, std::abs(sample));
-        //     outputBuffer.addSample(0, startSample + i, sample);
-        //     outputBuffer.addSample(1, startSample + i, sample);
-        // }
-
         for (auto* resonatorBank : resonatorBanks)
         {
             resonatorBank->process(exciterBlock, resonatorBankOutputBlock);
         }
+
+        //add the resonator banks' output to the main synth output
+        dcBlocker.process(juce::dsp::ProcessContextReplacing<float>(resonatorBankOutputBlock));
+        outputBlock.add(resonatorBankOutputBlock);
     }
     else
     {
         //add the audioblock to the output buffer
-        outputBlock.getSubBlock(startSample, numSamples).add(exciterBlock);
+        outputBlock.add(exciterBlock);
     }
-
-    //add the resonator banks' output to the main synth output
-    dcBlocker.process(juce::dsp::ProcessContextReplacing<float>(resonatorBankOutputBlock));
-    outputBlock.add(resonatorBankOutputBlock);
 
     //do silence detection, since the resonators can be unpredictable
     float maxAmplitude = resonatorBankBuffer.getMagnitude(0, startSample, numSamples);
@@ -221,7 +202,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
                 clearCurrentNote();
             }
         }
-        else if(maxAmplitude > 100.0f)
+        else if (maxAmplitude > 100.0f)
         {
             DBG("Amplitude overflow detected, stopping note " + juce::String(id));
             stopVoice();

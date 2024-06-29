@@ -131,7 +131,7 @@ void Resonator::prepare(const juce::dsp::ProcessSpec& spec)
     sampleRate = spec.sampleRate;
     minFrequency = 15;
     maxFrequency = (sampleRate / 2.0f) - 1;
-    delayLine.setMaximumDelayInSamples(4096);
+    delayLine.setMaximumDelayInSamples(spec.sampleRate);
     delayLine.prepare(spec);
 
     dampingFilter.coefficients =

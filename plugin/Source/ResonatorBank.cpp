@@ -33,7 +33,7 @@ void ResonatorBank::reset()
     {
         resonators[i]->reset();
     }
-
+    couplingFilter.reset();
     jassert(NUM_RESONATORS == resonators.size());
 }
 
@@ -46,6 +46,8 @@ void ResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
     }
 
     sampleRate = spec.sampleRate;
+    couplingFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(spec.sampleRate, 1000.0f, 0.707f);
+    couplingFilter.prepare(spec);
     reset();
 }
 

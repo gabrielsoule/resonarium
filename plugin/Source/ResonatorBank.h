@@ -29,6 +29,8 @@ public:
     float sampleRate;
     juce::OwnedArray<Resonator> resonators;
 
+    juce::dsp::IIR::Filter<float> couplingFilter;
+
     //Pointer to the voice that owns this ResonatorBank; awkwardly required for polyphonic modulation via ModMatrix
     ResonatorVoice& voice;
 

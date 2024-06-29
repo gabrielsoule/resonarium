@@ -14,7 +14,8 @@ class ResonatorVoice;
 * The MultiFilter is marginally clever: if the voice pointer
 * is null, it will operate in monophonic mode automatically,
 * and if any of the parameter pointers are null, then it will operate
-* without relying on the hosted parameters.
+* without relying on the hosted parameters. It will operate in mono or stereo
+* depending on the number of channels in the input block.
 */
 class MultiFilter
 {

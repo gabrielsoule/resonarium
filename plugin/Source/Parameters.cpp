@@ -98,7 +98,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                             0.0f);
 
     harmonicInSemitones = p.addExtParam("pitchOffsetSemis" + suffix, "Pitch Offset" + suffix, "Pitch", " st",
-                                        {-24.0f, 24.0f, 0.01f, 1.0f}, 0.0f,
+                                        {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
                                         0.0f);
 
     harmonicMultiplier = p.addExtParam("harmonicMultiplier" + suffix, "Harmonic Multiplier" + suffix, "Mult.", "",
