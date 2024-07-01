@@ -50,12 +50,12 @@ void ResonatorSynth::setupParameters()
     //     voice->noiseExciter.params = noiseExciterParams;
     //     voice->noiseExciter.filter.params = noiseExciterParams.filterParams;
     //     jassert(voice != nullptr);
-    //     for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    //     for(int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
     //     {
-    //         voice->resonatorBanks[i]->params = processor.resonatorBanksParams[i];
-    //         for(int j = 0; j < NUM_RESONATORS; j++)
+    //         voice->waveguideResonatorBanks[i]->params = processor.resonatorBanksParams[i];
+    //         for(int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
     //         {
-    //             voice->resonatorBanks[i]->resonators[j]->params = voice->resonatorBanks[i]->params.resonatorParams[j];
+    //             voice->waveguideResonatorBanks[i]->resonators[j]->params = voice->waveguideResonatorBanks[i]->params.resonatorParams[j];
     //         }
     //     }
     // }

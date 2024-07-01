@@ -9,7 +9,8 @@
 
 #include <JuceHeader.h>
 #include "Exciters.h"
-#include "ResonatorBank.h"
+#include "ModalResonatorBank.h"
+#include "WaveguideResonatorBank.h"
 
 class ResonariumProcessor;
 
@@ -38,7 +39,8 @@ public:
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote;
     int id = 0;
-    juce::OwnedArray<ResonatorBank> resonatorBanks;
+    juce::OwnedArray<WaveguideResonatorBank> waveguideResonatorBanks;
+    juce::OwnedArray<ModalResonatorBank> modalResonatorBanks;
     int silenceCount = 0;
     int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
     int numBlocksSinceNoteOn; // what it says on the tin.

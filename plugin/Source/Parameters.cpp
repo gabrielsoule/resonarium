@@ -85,13 +85,13 @@ void ADSRParams::setup(ResonariumProcessor& p, juce::String prefix)
 
 void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bankIndex)
 {
-    jassert(resonatorIndex >= 0 && resonatorIndex < NUM_RESONATORS);
-    jassert(bankIndex >= 0 && bankIndex < NUM_RESONATOR_BANKS);
+    jassert(resonatorIndex >= 0 && resonatorIndex < NUM_WAVEGUIDE_RESONATORS);
+    jassert(bankIndex >= 0 && bankIndex < NUM_WAVEGUIDE_RESONATOR_BANKS);
 
     this->resonatorIndex = resonatorIndex;
     this->bankIndex = bankIndex;
 
-    juce::String suffix = " b" + std::to_string(bankIndex) + "r" + std::to_string(resonatorIndex);
+    juce::String suffix = " wb" + std::to_string(bankIndex) + "r" + std::to_string(resonatorIndex);
 
     enabled = p.addExtParam("enabled" + suffix, "Enabled" + suffix, "On/Off", " ",
                             {0.0, 1.0, 1.0, 1.0f}, 0.0f,
@@ -154,18 +154,16 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                   0.0f);
 }
 
-void ResonatorBankParams::setup(ResonariumProcessor& p, int index)
+void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
 {
-    jassert(index >= 0 && index < NUM_RESONATOR_BANKS);
-
+    jassert(index >= 0 && index < NUM_WAVEGUIDE_RESONATOR_BANKS);
     this->index = index;
-
-    for (int i = 0; i < NUM_RESONATORS; i++)
+    for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
     {
         resonatorParams[i].setup(p, i, index);
     }
 
-    juce::String suffix = " b" + std::to_string(index);
+    juce::String suffix = " wb" + std::to_string(index);
 
     noteOffset = p.addExtParam("noteOffset" + suffix, "Note Offset" + suffix, "Note", "semitones",
                                {-24.0f, 24.0f, 0.0f, 1.0f}, 0.0f,
@@ -180,6 +178,32 @@ void ResonatorBankParams::setup(ResonariumProcessor& p, int index)
                                gin::SmoothingType::linear);
     outputGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 }
+
+void ModalResonatorBankParams::setup(ResonariumProcessor& p, int index)
+{
+    jassert(index >= 0 && index < NUM_WAVEGUIDE_RESONATOR_BANKS);
+    this->index = index;
+
+    juce::String bankSuffix = " mb" + std::to_string(index);
+
+    for(int i = 0; i < NUM_MODAL_RESONATORS; i++)
+    {
+        juce::String resonatorSuffix = bankSuffix + "r" + juce::String(i);
+        enabled[i] = p.addExtParam("enabled" + resonatorSuffix, "Enabled" + resonatorSuffix, "On/Off", " ",
+                                   {0.0, 1.0, 1.0, 1.0f}, 0.0f,
+                                   gin::SmoothingType::linear);
+        harmonicInSemitones[i] = p.addExtParam("pitchOffsetSemis" + resonatorSuffix, "Pitch Offset" + resonatorSuffix, "Pitch", " st",
+                                               {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
+                                               0.0f);
+        decay[i] = p.addExtParam("decayTime" + resonatorSuffix, "Decay Time" + resonatorSuffix, "Decay", "s",
+                                {0.05, 20.0, 0.0, 0.2f}, 3.0f,
+                                gin::SmoothingType::linear);
+        gain[i] = p.addExtParam("gain" + resonatorSuffix, "Gain" + resonatorSuffix, "Gain", "dB",
+                         {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
+                         0.0f);
+    }
+}
+
 
 void ImpulseExciterParams::setup(ResonariumProcessor& p, int index)
 {
@@ -222,7 +246,11 @@ void NoiseExciterParams::setup(ResonariumProcessor& p, int index)
 
 void VoiceParams::setup(ResonariumProcessor& p)
 {
-    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    for(int i = 0; i < NUM_MODAL_RESONATOR_BANKS; i++)
+    {
+        modalResonatorBankParams[i].setup(p, i);
+    }
+    for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
     {
         resonatorBankParams[i].setup(p, i);
     }

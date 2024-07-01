@@ -6,9 +6,14 @@ bool BYPASS_RESONATORS = false; //testing flag to listen to the exciter signal o
 ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : processor(p)
 {
     frequency = 440.0f;
-    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
     {
-        resonatorBanks.add(new ResonatorBank(*this, params.resonatorBankParams[i]));
+        waveguideResonatorBanks.add(new WaveguideResonatorBank(*this, params.resonatorBankParams[i]));
+    }
+
+    for(int i = 0; i < NUM_MODAL_RESONATOR_BANKS; i++)
+    {
+        modalResonatorBanks.add(new ModalResonatorBank(*this, params.modalResonatorBankParams[i]));
     }
 
     for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
@@ -24,7 +29,9 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
 
 ResonatorVoice::~ResonatorVoice()
 {
-    resonatorBanks.clear(true);
+    waveguideResonatorBanks.clear(true);
+    exciters.clear(true);
+    modalResonatorBanks.clear(true);
 }
 
 void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
@@ -39,10 +46,16 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     {
         exciter->prepare(spec);
     }
-    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
     {
-        jassert(resonatorBanks[i]->params.index == i); //ensure that parameters have been correctly distributed
-        resonatorBanks[i]->prepare(spec);
+        jassert(waveguideResonatorBanks[i]->params.index == i); //ensure that parameters have been correctly distributed
+        waveguideResonatorBanks[i]->prepare(spec);
+    }
+
+    for(int i = 0; i < NUM_MODAL_RESONATOR_BANKS; i++)
+    {
+        jassert(modalResonatorBanks[i]->params.index == i);
+        modalResonatorBanks[i]->prepare(spec);
     }
 
     juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients =
@@ -79,7 +92,7 @@ void ResonatorVoice::noteStarted()
     {
         exciter->reset();
     }
-    for (auto* resonatorBank : resonatorBanks)
+    for (auto* resonatorBank : waveguideResonatorBanks)
     {
         resonatorBank->reset();
     }
@@ -135,9 +148,15 @@ void ResonatorVoice::updateParameters()
     currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
-    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
+
+    for (auto* waveguideResonatorBank : waveguideResonatorBanks)
     {
-        resonatorBanks[i]->updateParameters(frequency);
+        waveguideResonatorBank->updateParameters(frequency);
+    }
+
+    for(auto* modalResonatorBank : modalResonatorBanks)
+    {
+        modalResonatorBank->updateParameters(frequency);
     }
 
     for (auto* exciter : exciters)
@@ -173,9 +192,14 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 
     if (!BYPASS_RESONATORS)
     {
-        for (auto* resonatorBank : resonatorBanks)
+        for (auto* waveguideResonatorBank : waveguideResonatorBanks)
         {
-            resonatorBank->process(exciterBlock, resonatorBankOutputBlock);
+            waveguideResonatorBank->process(exciterBlock, resonatorBankOutputBlock);
+        }
+
+        for(auto* modalResonatorBank : modalResonatorBanks)
+        {
+            modalResonatorBank->process(exciterBlock, resonatorBankOutputBlock);
         }
 
         //add the resonator banks' output to the main synth output

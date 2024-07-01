@@ -2,7 +2,6 @@
 #define EXCITERS_H
 
 #include <JuceHeader.h>
-#include "ResonatorBank.h"
 #include "dsp/MultiFilter.h"
 
 class NoiseGenerator

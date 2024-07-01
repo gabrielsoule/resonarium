@@ -76,7 +76,7 @@ Resonator::Resonator(ResonatorVoice& parentVoice, ResonatorParams params) : loop
 
 //TODO Support multi-channel processing and do some interesting stuff in the stereo field
 /**
- * WARNING: Since the enclosing ResonatorBank manages the feedback gain and output gain of each resonator,
+ * WARNING: Since the enclosing WaveguideResonatorBank manages the feedback gain and output gain of each resonator,
  * essentially duplicating the signal, the resonator does NOT apply its own gain to its own output signal.
  * The gain (resonator.gain) must be applied by the caller of processSample.
  * @param input

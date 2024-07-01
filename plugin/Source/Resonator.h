@@ -64,8 +64,8 @@ public:
  * the extended Karplus-Strong algorithm, banded waveguide synthesis, and other techniques.
  *
  * The Resonator object itself is designed to be used within
- * a ResonatorBank; therefore some variables are defined which
- * specifically apply to the enclosing ResonatorBank rather than the resonator itself.
+ * a WaveguideResonatorBank; therefore some variables are defined which
+ * specifically apply to the enclosing WaveguideResonatorBank rather than the resonator itself.
  */
 class Resonator
 {
@@ -119,7 +119,7 @@ public:
     juce::dsp::IIR::Filter<float> dcBlocker;
     chowdsp::StateVariableFilter<float, chowdsp::StateVariableFilterType::MultiMode, 2> svf;
 
-    //these parameters are managed by an enclosing ResonatorBank,
+    //these parameters are managed by an enclosing WaveguideResonatorBank,
     //but they're stored in Resonator for simplicity
     float gain = 1.0f; //how loud should this resonator be? this is a scalar in [0, 1] -- not a -dB value!
     float feedbackGain = 1.0f; //how much should this resonator feed back into the resonator bank?

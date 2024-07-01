@@ -7,7 +7,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p, VoiceParams voicePara
 {
     setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
     {
         SafePointer<ResonatorBankParamBox> ptr = new ResonatorBankParamBox(
             "Resonator Bank " + std::to_string(i), i, voiceParams.resonatorBankParams[i]);

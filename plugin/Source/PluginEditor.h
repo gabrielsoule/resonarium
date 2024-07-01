@@ -48,7 +48,7 @@ public:
 class ResonatorBankParamBox : public gin::ParamBox
 {
 public:
-    ResonatorBankParamBox(const juce::String& name, int resonatorNum_, ResonatorBankParams bankParams) :
+    ResonatorBankParamBox(const juce::String& name, int resonatorNum_, WaveguideResonatorBankParams bankParams) :
         gin::ParamBox(name), resonatorNum(resonatorNum_), bankParams(bankParams)
     {
         setName("resonatorBankParams");
@@ -60,7 +60,7 @@ public:
         resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
         resonatorsArea.setHeight(350);
         resonatorsArea.removeFromLeft(100);
-        for (int i = 0; i < NUM_RESONATORS; i++)
+        for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
         {
             resonatorsArea.removeFromLeft(7);
             ResonatorComponent* resonatorComponent = new ResonatorComponent(bankParams.resonatorParams[i]);
@@ -75,7 +75,7 @@ public:
     }
 
     int resonatorNum;
-    ResonatorBankParams bankParams;
+    WaveguideResonatorBankParams bankParams;
 };
 
 class ResonariumEditor : public gin::ProcessorEditor

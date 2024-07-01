@@ -87,18 +87,33 @@ struct ResonatorParams
 /**
  * Parameters for a resonator bank. Contains several ResonatorParam structs.
  */
-struct ResonatorBankParams
+struct WaveguideResonatorBankParams
 {
     int index = -1;
-    ResonatorParams resonatorParams[NUM_RESONATORS];
+    ResonatorParams resonatorParams[NUM_WAVEGUIDE_RESONATORS];
     gin::Parameter::Ptr
         noteOffset,
         couplingMode,
         outputGain;
 
-    ResonatorBankParams() = default;
+    WaveguideResonatorBankParams() = default;
 
     void setup(ResonariumProcessor& p, int index);
+};
+
+struct ModalResonatorBankParams
+{
+    int index = -1;
+    gin::Parameter::Ptr enabled[NUM_MODAL_RESONATORS];
+    gin::Parameter::Ptr harmonicMultiplier[NUM_MODAL_RESONATORS];
+    gin::Parameter::Ptr harmonicInSemitones[NUM_MODAL_RESONATORS];
+    gin::Parameter::Ptr decay[NUM_MODAL_RESONATORS];
+    gin::Parameter::Ptr gain[NUM_MODAL_RESONATORS];
+
+    ModalResonatorBankParams() = default;
+
+    void setup(ResonariumProcessor& p, int index);
+
 };
 
 struct ImpulseExciterParams
@@ -141,7 +156,8 @@ struct NoiseExciterParams
  */
 struct VoiceParams
 {
-    ResonatorBankParams resonatorBankParams[NUM_RESONATOR_BANKS];
+    WaveguideResonatorBankParams resonatorBankParams[NUM_WAVEGUIDE_RESONATOR_BANKS];
+    ModalResonatorBankParams modalResonatorBankParams[NUM_MODAL_RESONATOR_BANKS];
     ImpulseExciterParams impulseExciterParams[NUM_IMPULSE_EXCITERS];
     NoiseExciterParams noiseExciterParams[NUM_NOISE_EXCITERS];
 
