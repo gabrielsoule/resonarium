@@ -3,9 +3,6 @@
 
 #include <JuceHeader.h>
 #include "../Parameters.h"
-
-class ResonatorVoice;
-
 /**
 * Light wrapper over Juce::IIRFilter to easily enable multiple filter types in a single class,
 * along with an optional set of host-controlled parameters.
@@ -39,7 +36,7 @@ public:
         params.resonance = nullptr;
         params.type = nullptr;
     }
-    MultiFilter(ResonatorVoice* voice, MultiFilterParams params, bool normalize) : type(none), voice(voice), params(params), normalize(normalize) {}
+    MultiFilter(gin::ModVoice* voice, MultiFilterParams params, bool normalize) : type(none), voice(voice), params(params), normalize(normalize) {}
     void prepare(const juce::dsp::ProcessSpec& spec);
     void reset();
     void setType(Type type);
@@ -65,7 +62,7 @@ public:
     bool poly; // true if the filter is a polyphonic filter, i.e. voice is not null
     bool useHostedParams; //true if the filter should retrieve parameters from the hosted parameter struct
     bool updateFlag = false;
-    ResonatorVoice* voice;
+    gin::ModVoice* voice;
     MultiFilterParams params;
     bool normalize; //true if the bandpass filter should be unity gain, or boosted by Q
     std::array<float, 6> coefficients;

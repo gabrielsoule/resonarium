@@ -1,5 +1,4 @@
 #include "MultiFilter.h"
-#include "../ResonatorVoice.h"
 
 void MultiFilter::prepare(const juce::dsp::ProcessSpec& spec)
 {

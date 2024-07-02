@@ -4,7 +4,7 @@
 #include "ResonatorBank.h"
 
 //the resonant bandpass filters have very high gain right out of the box
-#define BANDPASS_AMPLITUDE_SCALE 0.001f
+#define BANDPASS_AMPLITUDE_SCALE 0.009f
 
 
 class ModalResonatorBank : public ResonatorBank {
@@ -20,8 +20,9 @@ public:
     float sampleRate;
 
     ModalResonatorBankParams params;
+    int modalBankIndex = -1;
+    juce::AudioBuffer<float> scratchBuffer;
     juce::dsp::AudioBlock<float> scratchBlock;
-    // juce::dsp::IIR::Filter<float> resonators[NUM_MODAL_RESONATORS];
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> resonators[NUM_MODAL_RESONATORS];
     std::array<float, 6> coefficients[NUM_MODAL_RESONATORS];
     float frequencyOffsets[NUM_MODAL_RESONATORS];

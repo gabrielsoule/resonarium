@@ -25,16 +25,15 @@ public:
     void updateParameters(float newFrequency) override;
     void setFeedbackMode(CouplingMode newMode);
 
+    WaveguideResonatorBankParams params;
+    int waveguideBankIndex = -1;
+    juce::dsp::AudioBlock<float> scratchBuffer;
     CouplingMode couplingMode;
     float frequency;
     float sampleRate;
     juce::OwnedArray<Resonator> resonators;
-
     juce::dsp::IIR::Filter<float> couplingFilter;
 
-    //Pointers to the relevant parameters controlling this WaveguideResonatorBank
-    WaveguideResonatorBankParams params;
-    juce::dsp::AudioBlock<float> scratchBuffer;
 };
 
 #endif //WAVEGUIDERESONATORBANK_H

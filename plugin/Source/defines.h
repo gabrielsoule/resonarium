@@ -3,11 +3,13 @@
 
 //everyone's favorite header file... a list of magic numbers!
 //At least they're all in one place and not scattered throughout the codebase like rice at a wedding.
+#define NUM_SYNTH_VOICES 16
+
 #define NUM_WAVEGUIDE_RESONATORS 8
-#define NUM_WAVEGUIDE_RESONATOR_BANKS 1
+#define NUM_WAVEGUIDE_RESONATOR_BANKS 2
 
 #define NUM_MODAL_RESONATORS 8
-#define NUM_MODAL_RESONATOR_BANKS 1
+#define NUM_MODAL_RESONATOR_BANKS 2
 
 #define NUM_IMPULSE_EXCITERS 1
 #define NUM_NOISE_EXCITERS 1

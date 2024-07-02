@@ -8,7 +8,7 @@
 class ImpulseExciterParamBox : public gin::ParamBox
 {
 public:
-    ImpulseExciterParamBox(const juce::String& name, int index, ImpulseExciterParams impulseParams) :
+    ImpulseExciterParamBox(const juce::String& name, ResonariumProcessor& proc, int index, ImpulseExciterParams impulseParams) :
         gin::ParamBox(name), impulseParams(impulseParams)
     {
         setName("impulseExciterParams");
@@ -26,7 +26,7 @@ public:
 class NoiseExciterParamBox : public gin::ParamBox
 {
 public:
-    NoiseExciterParamBox(const juce::String& name, int index, NoiseExciterParams noiseParams) : gin::ParamBox(name)
+    NoiseExciterParamBox(const juce::String& name, ResonariumProcessor& proc, int index, NoiseExciterParams noiseParams) : gin::ParamBox(name)
     {
         setName("noiseExciterParams");
         setBounds(0, 40 + 200, 300, 250);
@@ -45,25 +45,26 @@ public:
 };
 
 
-class ResonatorBankParamBox : public gin::ParamBox
+class WaveguideResonatorBankParamBox : public gin::ParamBox
 {
 public:
-    ResonatorBankParamBox(const juce::String& name, int resonatorNum_, WaveguideResonatorBankParams bankParams) :
-        gin::ParamBox(name), resonatorNum(resonatorNum_), bankParams(bankParams)
+    WaveguideResonatorBankParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum,
+                                   WaveguideResonatorBankParams bankParams) :
+        gin::ParamBox(name), resonatorNum(resonatorNum), bankParams(bankParams), uiParams(proc.uiParams)
     {
-        setName("resonatorBankParams");
+        setName("waveguideResonatorBankParams " + juce::String(resonatorNum));
         setBounds(300 + 1, 40, WINDOW_WIDTH - 250, 450);
-
+        addHeader({"MODAL 1", "WAVEGUIDE 1", "MODAL 2", "WAVEGUIDE 2"}, resonatorNum, uiParams.resonatorBankSelect);
+        this->headerTabButtonWidth = 150;
 
         juce::Rectangle<int> resonatorsArea = getLocalBounds();
-        //the block of screen where the resonator bank's resonators are drawn
         resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
         resonatorsArea.setHeight(350);
         resonatorsArea.removeFromLeft(100);
         for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
         {
             resonatorsArea.removeFromLeft(7);
-            ResonatorComponent* resonatorComponent = new ResonatorComponent(bankParams.resonatorParams[i]);
+            WaveguideResonatorComponent* resonatorComponent = new WaveguideResonatorComponent(bankParams.resonatorParams[i]);
             resonatorComponent->setBounds(resonatorsArea.removeFromLeft(KNOB_W_SMALL));
             addAndMakeVisible(resonatorComponent);
         }
@@ -71,17 +72,47 @@ public:
         auto* select = new gin::Select(bankParams.couplingMode);
 
         addControl(select);
-
     }
 
     int resonatorNum;
     WaveguideResonatorBankParams bankParams;
+    UIParams uiParams;
+};
+
+class ModalResonatorBankParamBox : public gin::ParamBox
+{
+public:
+    ModalResonatorBankParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum, ModalResonatorBankParams bankParams) :
+        gin::ParamBox(name), resonatorNum(resonatorNum), bankParams(bankParams), uiParams(proc.uiParams)
+    {
+        setName("modalResonatorBankParams " + juce::String(resonatorNum));
+        setBounds(300 + 1, 40, WINDOW_WIDTH - 250, 450);
+        addHeader({"MODAL 1", "WAVEGUIDE 1", "MODAL 2", "WAVEGUIDE 2"}, resonatorNum, uiParams.resonatorBankSelect);
+        this->headerTabButtonWidth = 150;
+
+        juce::Rectangle<int> resonatorsArea = getLocalBounds();
+        resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
+        resonatorsArea.setHeight(350);
+        resonatorsArea.removeFromLeft(100);
+
+        for(int i = 0; i < NUM_MODAL_RESONATORS; i++)
+        {
+            resonatorsArea.removeFromLeft(7);
+            ModalResonatorComponent* resonatorComponent = new ModalResonatorComponent(bankParams, i);
+            resonatorComponent->setBounds(resonatorsArea.removeFromLeft(KNOB_W_SMALL));
+            addAndMakeVisible(resonatorComponent);
+        }
+    }
+
+    int resonatorNum;
+    ModalResonatorBankParams bankParams;
+    UIParams uiParams;
 };
 
 class ResonariumEditor : public gin::ProcessorEditor
 {
 public:
-    ResonariumEditor(ResonariumProcessor&, VoiceParams params);
+    ResonariumEditor(ResonariumProcessor&, VoiceParams params, UIParams uiParams);
     ~ResonariumEditor() override;
 
     //==============================================================================
@@ -90,8 +121,9 @@ public:
 
 private:
     ResonariumProcessor& proc;
+    UIParams uiParams;
 
-    std::vector<SafePointer<ResonatorBankParamBox>> resonatorBankParamBoxes;
+    std::vector<SafePointer<WaveguideResonatorBankParamBox>> resonatorBankParamBoxes;
     std::vector<SafePointer<ImpulseExciterParamBox>> impulseExciterParamBoxes;
     std::vector<SafePointer<NoiseExciterParamBox>> noiseExciterParamBoxes;
 

@@ -14,7 +14,9 @@ public:
     virtual void reset() = 0;
     virtual void prepare(const juce::dsp::ProcessSpec& spec) = 0;
     virtual void updateParameters(float newFrequency) = 0;
+
     ResonatorVoice& voice;
+    int resonatorBankIndex = -1;
 };
 
 

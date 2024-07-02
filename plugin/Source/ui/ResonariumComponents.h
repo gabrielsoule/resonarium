@@ -8,10 +8,13 @@
 #include "../Parameters.h"
 #include "../defines.h"
 
-class ResonatorComponent : public gin::MultiParamComponent
+/**
+ * Component containing a vertical stack of controls corresponding to a single waveguide resonator.
+ */
+class WaveguideResonatorComponent : public gin::MultiParamComponent
 {
 public:
-    ResonatorComponent(ResonatorParams resonatorParams) : resonatorParams(resonatorParams)
+    WaveguideResonatorComponent(ResonatorParams resonatorParams) : resonatorParams(resonatorParams)
     {
         this->enableButton = new gin::SVGPluginButton(resonatorParams.enabled, gin::Assets::power);
         this->gainKnob = new gin::Knob(resonatorParams.gain);
@@ -90,7 +93,65 @@ public:
     gin::Knob* brightnessKnob;
 
     ResonatorParams resonatorParams;
+};
 
+/**
+ * Component containing a vertical stack of controls corresponding to a single modal filter.
+ * Very similar to WaveguideResonatorComponent, but at this stage of development I'd rather have a
+ * little bit of duplicated code rather than a complex polymorphic "GeneralizedResonatorKnobStack" virtual
+ * class or something like that...
+ */
+class ModalResonatorComponent : public gin::MultiParamComponent
+{
+public:
+    ModalResonatorComponent(ModalResonatorBankParams params, int index) : resonatorParams(params), index(index)
+    {
+        this->enableButton = new gin::SVGPluginButton(resonatorParams.enabled[index], gin::Assets::power);
+        this->gainKnob = new gin::Knob(resonatorParams.gain[index]);
+        this->pitchOffsetKnob = new gin::Knob(resonatorParams.harmonicInSemitones[index]);
+        this->decayTimeKnob = new gin::Knob(resonatorParams.decay[index]);
+
+        addAndMakeVisible(enableButton);
+        addAndMakeVisible(gainKnob);
+        addAndMakeVisible(pitchOffsetKnob);
+        addAndMakeVisible(decayTimeKnob);
+
+        watchParam(resonatorParams.enabled[index]);
+
+    }
+
+    void resized() override
+    {
+        auto bounds = getLocalBounds();
+        bounds.removeFromTop(7); //just a little off the top, please
+        enableButton->setBounds(bounds.removeFromTop(12));
+        gainKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
+        pitchOffsetKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
+        decayTimeKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
+    }
+
+    void paramChanged() override
+    {
+        if(this->getParentComponent() == nullptr)
+        {
+            return;
+        }
+
+        MultiParamComponent::paramChanged();
+        for (auto c : this->getChildren())
+        {
+            if (c != enableButton) c->setEnabled(resonatorParams.enabled[index]->isOn());
+        }
+    }
+
+    const float padding = 4.0f;
+    gin::SVGPluginButton* enableButton;
+    gin::Knob* gainKnob;
+    gin::Knob* pitchOffsetKnob;
+    gin::Knob* decayTimeKnob;
+
+    ModalResonatorBankParams resonatorParams;
+    int index;
 
 };
 

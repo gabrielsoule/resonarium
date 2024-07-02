@@ -7,10 +7,9 @@ WaveguideResonatorBank::WaveguideResonatorBank(ResonatorVoice& parentVoice, Wave
     //add some resonators to the OwnedArray
     for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
     {
-        DBG(parentVoice.id);
         resonators.add(new Resonator(parentVoice, params.resonatorParams[i]));
     }
-
+    waveguideBankIndex = params.index;
     couplingMode = PARALLEL;
 }
 

@@ -8,10 +8,6 @@ ResonariumLookAndFeel::ResonariumLookAndFeel()
     DBG(myfont.toString());
     juce::Array<juce::Font> fonts;
     juce::Font::findFonts(fonts);
-    for(auto font : fonts)
-    {
-        DBG(font.toString());
-    }
     setColour (whiteColourId, juce::Colour (0xffFFFFFF));
     setColour (blackColourId, juce::Colour (0xff000000));
     setColour (displayColourId, juce::Colour (0xff0D0E0F));

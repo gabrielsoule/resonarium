@@ -186,21 +186,22 @@ void ModalResonatorBankParams::setup(ResonariumProcessor& p, int index)
 
     juce::String bankSuffix = " mb" + std::to_string(index);
 
-    for(int i = 0; i < NUM_MODAL_RESONATORS; i++)
+    for (int i = 0; i < NUM_MODAL_RESONATORS; i++)
     {
         juce::String resonatorSuffix = bankSuffix + "r" + juce::String(i);
         enabled[i] = p.addExtParam("enabled" + resonatorSuffix, "Enabled" + resonatorSuffix, "On/Off", " ",
                                    {0.0, 1.0, 1.0, 1.0f}, 0.0f,
                                    gin::SmoothingType::linear);
-        harmonicInSemitones[i] = p.addExtParam("pitchOffsetSemis" + resonatorSuffix, "Pitch Offset" + resonatorSuffix, "Pitch", " st",
+        harmonicInSemitones[i] = p.addExtParam("pitchOffsetSemis" + resonatorSuffix, "Pitch Offset" + resonatorSuffix,
+                                               "Pitch", " st",
                                                {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
                                                0.0f);
         decay[i] = p.addExtParam("decayTime" + resonatorSuffix, "Decay Time" + resonatorSuffix, "Decay", "s",
-                                {0.05, 20.0, 0.0, 0.2f}, 3.0f,
-                                gin::SmoothingType::linear);
+                                 {0.05, 20.0, 0.0, 0.2f}, 3.0f,
+                                 gin::SmoothingType::linear);
         gain[i] = p.addExtParam("gain" + resonatorSuffix, "Gain" + resonatorSuffix, "Gain", "dB",
-                         {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
-                         0.0f);
+                                {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
+                                0.0f);
         gain[i]->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
     }
 }
@@ -247,13 +248,13 @@ void NoiseExciterParams::setup(ResonariumProcessor& p, int index)
 
 void VoiceParams::setup(ResonariumProcessor& p)
 {
-    for(int i = 0; i < NUM_MODAL_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_MODAL_RESONATOR_BANKS; i++)
     {
         modalResonatorBankParams[i].setup(p, i);
     }
     for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
     {
-        resonatorBankParams[i].setup(p, i);
+        waveguideResonatorBankParams[i].setup(p, i);
     }
     for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
     {
@@ -263,4 +264,11 @@ void VoiceParams::setup(ResonariumProcessor& p)
     {
         noiseExciterParams[i].setup(p, i);
     }
+}
+
+void UIParams::setup(ResonariumProcessor& p)
+{
+    resonatorBankSelect = p.addIntParam("uiResonatorBank", "Bank", "", "",
+                                        {0, NUM_MODAL_RESONATOR_BANKS + NUM_WAVEGUIDE_RESONATOR_BANKS - 1, 0.0f, 1.0f},
+                                        0.0f, gin::SmoothingType::linear);
 }

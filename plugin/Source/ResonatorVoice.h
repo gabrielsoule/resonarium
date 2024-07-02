@@ -39,8 +39,9 @@ public:
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote;
     int id = 0;
-    juce::OwnedArray<WaveguideResonatorBank> waveguideResonatorBanks;
-    juce::OwnedArray<ModalResonatorBank> modalResonatorBanks;
+    // juce::OwnedArray<WaveguideResonatorBank> waveguideResonatorBanks;
+    // juce::OwnedArray<ModalResonatorBank> modalResonatorBanks;
+    juce::OwnedArray<ResonatorBank> resonatorBanks;
     int silenceCount = 0;
     int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
     int numBlocksSinceNoteOn; // what it says on the tin.

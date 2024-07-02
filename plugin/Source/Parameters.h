@@ -156,10 +156,17 @@ struct NoiseExciterParams
  */
 struct VoiceParams
 {
-    WaveguideResonatorBankParams resonatorBankParams[NUM_WAVEGUIDE_RESONATOR_BANKS];
+    WaveguideResonatorBankParams waveguideResonatorBankParams[NUM_WAVEGUIDE_RESONATOR_BANKS];
     ModalResonatorBankParams modalResonatorBankParams[NUM_MODAL_RESONATOR_BANKS];
     ImpulseExciterParams impulseExciterParams[NUM_IMPULSE_EXCITERS];
     NoiseExciterParams noiseExciterParams[NUM_NOISE_EXCITERS];
+
+    void setup(ResonariumProcessor& p);
+};
+
+struct UIParams
+{
+    gin::Parameter::Ptr resonatorBankSelect;
 
     void setup(ResonariumProcessor& p);
 };

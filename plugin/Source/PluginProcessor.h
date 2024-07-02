@@ -30,6 +30,6 @@ public:
     gin::ModSrcId modSrcPressure, modSrcTimbre, modSrcPitchbend, modSrcNote, modSrcVelocity;
 
     VoiceParams voiceParams; //contains all the parameters that a voice needs modulated polyphonically (which is almost all of 'em)
-
+    UIParams uiParams;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ResonariumProcessor)
 };

@@ -4,6 +4,7 @@
 
 ModalResonatorBank::ModalResonatorBank(ResonatorVoice& parentVoice, ModalResonatorBankParams params) : ResonatorBank(parentVoice), params(params)
 {
+    modalBankIndex = params.index;
 }
 
 ModalResonatorBank::~ModalResonatorBank()
@@ -13,9 +14,8 @@ ModalResonatorBank::~ModalResonatorBank()
 void ModalResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
 {
     this->sampleRate = spec.sampleRate;
-    juce::AudioBuffer<float> audioBuffer(spec.numChannels, spec.maximumBlockSize);
-    audioBuffer.clear();
-    this->scratchBlock = juce::dsp::AudioBlock<float>(audioBuffer);
+    this->scratchBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
+    this->scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
     for(int i = 0; i < NUM_MODAL_RESONATORS; i++)
     {
         resonators[i].prepare(spec);
@@ -30,6 +30,7 @@ void ModalResonatorBank::reset()
     {
         resonators[i].reset();
     }
+
 }
 
 void ModalResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
@@ -55,7 +56,6 @@ void ModalResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock, juc
             outputBlock.add(scratchBlock);
         }
     }
-
 }
 
 void ModalResonatorBank::updateParameters(float newFrequency)

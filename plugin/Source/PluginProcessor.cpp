@@ -17,12 +17,13 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     lf = std::make_unique<ResonariumLookAndFeel>();
 
     voiceParams.setup(*this);
+    uiParams.setup(*this);
 
     //Synth setup
     synth.enableLegacyMode();
     synth.setVoiceStealingEnabled(true);
     synth.setMPE(true);
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < NUM_SYNTH_VOICES; i++)
     {
         auto voice = new ResonatorVoice(*this, voiceParams);
         modMatrix.addVoice(voice);
@@ -111,7 +112,9 @@ bool ResonariumProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* ResonariumProcessor::createEditor()
 {
-    return new gin::ScaledPluginEditor(new ResonariumEditor(*this, voiceParams), state);
+    auto* editor =  new gin::ScaledPluginEditor(new ResonariumEditor(*this, voiceParams, uiParams), state);
+    editor->editor->resized();
+    return editor;
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
