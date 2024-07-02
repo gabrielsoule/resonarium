@@ -43,6 +43,8 @@ void ModalResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock, juc
         }
     }
 
+    if (totalGain == 0.0f) return;
+
     for(int i = 0; i < NUM_MODAL_RESONATORS; i++)
     {
         if(params.enabled[i]->isOn())
@@ -53,6 +55,7 @@ void ModalResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock, juc
             outputBlock.add(scratchBlock);
         }
     }
+
 }
 
 void ModalResonatorBank::updateParameters(float newFrequency)
@@ -71,7 +74,7 @@ void ModalResonatorBank::updateParameters(float newFrequency)
             float newFrequencyOffset = std::pow(2.0f, newFrequencyOffsetInSemis / 12.0f);
             gain[i] = newGain;
             decay[i] = newDecay;
-            coefficients[i] = makeResonatorCoefficients(sampleRate, newFrequency + frequencyOffsets[i], decay[i]);
+            coefficients[i] = makeResonatorCoefficients(sampleRate, newFrequency * newFrequencyOffset, decay[i]);
             *resonators[i].state = coefficients[i];
         }
     }

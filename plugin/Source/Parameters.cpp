@@ -201,6 +201,7 @@ void ModalResonatorBankParams::setup(ResonariumProcessor& p, int index)
         gain[i] = p.addExtParam("gain" + resonatorSuffix, "Gain" + resonatorSuffix, "Gain", "dB",
                          {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
                          0.0f);
+        gain[i]->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
     }
 }
 
