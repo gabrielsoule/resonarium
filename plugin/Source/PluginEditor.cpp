@@ -71,11 +71,9 @@ ResonariumEditor::~ResonariumEditor()
 void ResonariumEditor::paint(juce::Graphics& g)
 {
     auto area = getLocalBounds();
-    g.setColour(juce::Colours::white);
     g.setFont(16.0f);
-    auto helloWorld = juce::String("Hello!");
+    auto helloWorld = juce::String("What up!");
     g.drawText(helloWorld, area.removeFromTop(150), juce::Justification::centred, false);
-
     this->titleBar.programName.setColour(juce::Label::textColourId, juce::Colours::purple);
 }
 

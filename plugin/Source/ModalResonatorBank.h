@@ -4,7 +4,7 @@
 #include "ResonatorBank.h"
 
 //the resonant bandpass filters have very high gain right out of the box
-#define BANDPASS_AMPLITUDE_SCALE 0.009f
+#define BANDPASS_AMPLITUDE_SCALE 0.005f
 
 
 class ModalResonatorBank : public ResonatorBank {
