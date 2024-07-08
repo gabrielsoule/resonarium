@@ -52,7 +52,7 @@ void ModalResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock, juc
         {
             juce::dsp::ProcessContextNonReplacing<float> context(exciterBlock, scratchBlock);
             resonators[i].process(context);
-            scratchBlock.multiplyBy((gain[i] / totalGain) * BANDPASS_AMPLITUDE_SCALE);
+            scratchBlock.multiplyBy(gain[i] * BANDPASS_AMPLITUDE_SCALE);
             outputBlock.add(scratchBlock);
         }
     }
