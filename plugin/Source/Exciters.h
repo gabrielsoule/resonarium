@@ -137,7 +137,13 @@ class ImpulseTrainExciter : public Exciter
 {
 public:
 
-    enum Mode {IMPULSE, PULSE, NOISE_BURST};
+    enum Mode
+    {
+        IMPULSE,
+        STATIC,
+        PULSE,
+        NOISE_BURST
+    };
 
     ImpulseTrainExciter(ResonatorVoice& voice, ImpulseTrainExciterParams params) : Exciter(voice), params(params), filter(params.filterParams, false){}
 
@@ -158,8 +164,11 @@ public:
     juce::Random rng;
 
     Mode mode = IMPULSE;
+    float character;
+    float entropy;
     int periodInSamples = -1;
     int samplesSinceLastImpulse = -1;
+    float staticProbability;
 
     //for the IMPULSE mode -- how long is the impulse, and how many impulses left to send out?
     int impulseLength = -1;

@@ -13,7 +13,6 @@ void ImpulseExciter::prepare(const juce::dsp::ProcessSpec& spec)
 
 void ImpulseExciter::nextSample()
 {
-
 }
 
 void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block)
@@ -131,8 +130,11 @@ void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block)
     jassert(impulsesLeft >= 0);
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
     auto gain = voice.getValue(params.gain);
+
     for (int i = 0; i < truncatedBlock.getNumSamples(); i++)
     {
+        //all per-sample processing that happens regardless of mode goes here
+        float envelopeSample = gain * envelope.process();
         if (mode == IMPULSE)
         {
             if (samplesSinceLastImpulse == 0)
@@ -140,11 +142,9 @@ void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block)
                 impulsesLeft = impulseLength;
             }
 
-            float sample = gain * envelope.process();
-
             if (impulsesLeft > 0)
             {
-                truncatedBlock.setSample(0, i, sample);
+                truncatedBlock.setSample(0, i, envelopeSample);
                 impulsesLeft--;
             }
             else
@@ -156,6 +156,18 @@ void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block)
             if (samplesSinceLastImpulse < 0)
             {
                 samplesSinceLastImpulse = periodInSamples - 1;
+            }
+        }
+        else if (mode == STATIC)
+        {
+            float r = rng.nextFloat();
+            if (r < staticProbability)
+            {
+                truncatedBlock.setSample(0, i, noise.nextValue() * envelopeSample);
+            }
+            else
+            {
+                truncatedBlock.setSample(0, i, 0.0f);
             }
         }
         else if (mode == PULSE)
@@ -172,6 +184,8 @@ void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block)
         }
     }
 
+    filter.process(truncatedBlock);
+
     block.add(truncatedBlock);
 }
 
@@ -181,6 +195,7 @@ void ImpulseTrainExciter::reset()
     envelope.reset();
     filter.reset();
     samplesSinceLastImpulse = 0;
+    rng.setSeedRandomly();
     impulsesLeft = impulseLength;
 }
 
@@ -202,10 +217,22 @@ void ImpulseTrainExciter::updateParameters()
     envelope.setRelease(voice.getValue(params.adsrParams.release));
     filter.updateParameters();
     mode = static_cast<Mode>(voice.getValue(params.mode));
+    character = voice.getValue(params.character);
+    entropy = voice.getValue(params.entropy);
     periodInSamples = static_cast<int>(std::round(sampleRate / voice.getValue(params.speed)));
-    impulseLength = static_cast<int>(std::round((voice.getValue(params.character) * 15.0f)));
-    if (impulseLength <= 0) impulseLength = 1;
+
+    //compute values for the different impulse train modes
+    if(mode == IMPULSE)
+    {
+        impulseLength = static_cast<int>(std::round((voice.getValue(params.character) * 15.0f)));
+        if (impulseLength <= 0) impulseLength = 1;
+
+    } else if (mode == STATIC)
+    {
+        staticProbability = (character / 7.0f);
+        staticProbability = staticProbability * staticProbability;
+    }
+
     jassert(periodInSamples > 0);
     jassert(impulseLength > 0);
-
 }

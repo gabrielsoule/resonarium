@@ -13,7 +13,7 @@ public:
         gin::ParamBox(name), impulseParams(impulseParams)
     {
         setName("impulseExciterParams");
-        setBounds(0, 40, 300, 200);
+        setBounds(0, 40, EXCITER_BOX_WIDTH, 165);
         addControl(new gin::Knob(impulseParams.thickness), 0, 0);
         addControl(new gin::Knob(impulseParams.gain), 0, 1);
         addControl(new gin::Select(impulseParams.filterParams.type), 1, 1);
@@ -31,16 +31,16 @@ public:
                          NoiseExciterParams noiseParams) : gin::ParamBox(name), noiseParams(noiseParams)
     {
         setName("noiseExciterParams");
-        setBounds(0, 40 + 200, 300, 250);
-        addControl(new gin::Knob(noiseParams.type), 0, 0);
-        addControl(new gin::Knob(noiseParams.gain), 1, 0);
-        addControl(new gin::Knob(noiseParams.adsrParams.attack), 0, 1);
-        addControl(new gin::Knob(noiseParams.adsrParams.decay), 1, 1);
-        addControl(new gin::Knob(noiseParams.adsrParams.sustain), 2, 1);
-        addControl(new gin::Knob(noiseParams.adsrParams.release), 3, 1);
-        addControl(new gin::Select(noiseParams.filterParams.type), 0, 2);
-        addControl(new gin::Knob(noiseParams.filterParams.frequency), 1, 2);
-        addControl(new gin::Knob(noiseParams.filterParams.resonance), 2, 2);
+        setBounds(0, 40 + 165, EXCITER_BOX_WIDTH, 165);
+        // addControl(new gin::Knob(noiseParams.type), 0, 0);
+        addControl(new gin::Knob(noiseParams.adsrParams.attack), 0, 0);
+        addControl(new gin::Knob(noiseParams.adsrParams.decay), 1, 0);
+        addControl(new gin::Knob(noiseParams.adsrParams.sustain), 2, 0);
+        addControl(new gin::Knob(noiseParams.adsrParams.release), 3, 0);
+        addControl(new gin::Knob(noiseParams.gain), 0, 1);
+        addControl(new gin::Select(noiseParams.filterParams.type), 1, 1);
+        addControl(new gin::Knob(noiseParams.filterParams.frequency), 2, 1);
+        addControl(new gin::Knob(noiseParams.filterParams.resonance), 3, 1);
     }
 
     NoiseExciterParams noiseParams;
@@ -54,7 +54,7 @@ public:
         impulseTrainParams(impulseTrainParams)
     {
         setName("impulseTrainExciterParams");
-        setBounds(0, 40 + 200 + 250, 300, 250);
+        setBounds(0, 40 + 165 + 165, EXCITER_BOX_WIDTH, 240);
 
         addControl(new gin::Select(impulseTrainParams.mode), 0, 0);
         addControl(new gin::Knob(impulseTrainParams.speed), 1, 0);
@@ -65,7 +65,7 @@ public:
         addControl(new gin::Knob(impulseTrainParams.adsrParams.sustain), 2, 1);
         addControl(new gin::Knob(impulseTrainParams.adsrParams.release), 3, 1);
         addControl(new gin::Knob(impulseTrainParams.gain), 0, 2);
-        addControl(new gin::Knob(impulseTrainParams.filterParams.type), 1, 2);
+        addControl(new gin::Select(impulseTrainParams.filterParams.type), 1, 2);
         addControl(new gin::Knob(impulseTrainParams.filterParams.frequency), 2, 2);
         addControl(new gin::Knob(impulseTrainParams.filterParams.resonance), 3, 2);
     }
@@ -81,7 +81,7 @@ public:
         gin::ParamBox(name), resonatorNum(resonatorNum), bankParams(bankParams), uiParams(proc.uiParams)
     {
         setName("waveguideResonatorBankParams " + juce::String(resonatorNum));
-        setBounds(300 + 1, 40, WINDOW_WIDTH - 250, 450);
+        setBounds(EXCITER_BOX_WIDTH + 1, 40, WINDOW_WIDTH - 250, 450);
         addHeader({"MODAL 1", "WAVEGUIDE 1", "MODAL 2", "WAVEGUIDE 2"}, resonatorNum, uiParams.resonatorBankSelect);
         this->headerTabButtonWidth = 150;
 
@@ -116,7 +116,7 @@ public:
         gin::ParamBox(name), resonatorNum(resonatorNum), bankParams(bankParams), uiParams(proc.uiParams)
     {
         setName("modalResonatorBankParams " + juce::String(resonatorNum));
-        setBounds(300 + 1, 40, WINDOW_WIDTH - 250, 450);
+        setBounds(EXCITER_BOX_WIDTH + 1, 40, WINDOW_WIDTH - 250, 450);
         addHeader({"MODAL 1", "WAVEGUIDE 1", "MODAL 2", "WAVEGUIDE 2"}, resonatorNum, uiParams.resonatorBankSelect);
         this->headerTabButtonWidth = 150;
 

@@ -1,7 +1,7 @@
 #include "ResonatorVoice.h"
 #include "PluginProcessor.h"
 
-bool BYPASS_RESONATORS = true; //testing flag to listen to the exciter signal only
+bool BYPASS_RESONATORS = false; //testing flag to listen to the exciter signal only
 
 ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : processor(p)
 {
@@ -209,7 +209,6 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     else
     {
         //add the audioblock to the output buffer
-        DBG(exciterBuffer.getMagnitude(0, startSample, numSamples));
         outputBlock.add(exciterBlock);
     }
 

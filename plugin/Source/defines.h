@@ -25,5 +25,6 @@
 #define KNOB_H_SMALL 57
 #define KNOB_W 56
 #define KNOB_H 70
+#define EXCITER_BOX_WIDTH 230
 
 #endif //DEFINES_H
