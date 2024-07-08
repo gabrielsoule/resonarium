@@ -14,8 +14,9 @@ public:
     {
         setName("impulseExciterParams");
         setBounds(0, 40, EXCITER_BOX_WIDTH, 165);
+        addEnable(impulseParams.enabled);
         addControl(new gin::Knob(impulseParams.thickness), 0, 0);
-        addControl(new gin::Knob(impulseParams.gain), 0, 1);
+        addControl(new gin::Knob(impulseParams.level), 0, 1);
         addControl(new gin::Select(impulseParams.filterParams.type), 1, 1);
         addControl(new gin::Knob(impulseParams.filterParams.frequency), 2, 1);
         addControl(new gin::Knob(impulseParams.filterParams.resonance), 3, 1);
@@ -32,12 +33,12 @@ public:
     {
         setName("noiseExciterParams");
         setBounds(0, 40 + 165, EXCITER_BOX_WIDTH, 165);
-        // addControl(new gin::Knob(noiseParams.type), 0, 0);
+        addEnable(noiseParams.enabled);
         addControl(new gin::Knob(noiseParams.adsrParams.attack), 0, 0);
         addControl(new gin::Knob(noiseParams.adsrParams.decay), 1, 0);
         addControl(new gin::Knob(noiseParams.adsrParams.sustain), 2, 0);
         addControl(new gin::Knob(noiseParams.adsrParams.release), 3, 0);
-        addControl(new gin::Knob(noiseParams.gain), 0, 1);
+        addControl(new gin::Knob(noiseParams.level), 0, 1);
         addControl(new gin::Select(noiseParams.filterParams.type), 1, 1);
         addControl(new gin::Knob(noiseParams.filterParams.frequency), 2, 1);
         addControl(new gin::Knob(noiseParams.filterParams.resonance), 3, 1);
@@ -55,7 +56,7 @@ public:
     {
         setName("impulseTrainExciterParams");
         setBounds(0, 40 + 165 + 165, EXCITER_BOX_WIDTH, 240);
-
+        addEnable(impulseTrainParams.enabled);
         addControl(new gin::Select(impulseTrainParams.mode), 0, 0);
         addControl(new gin::Knob(impulseTrainParams.speed), 1, 0);
         addControl(new gin::Knob(impulseTrainParams.character), 2, 0);
@@ -64,7 +65,7 @@ public:
         addControl(new gin::Knob(impulseTrainParams.adsrParams.decay), 1, 1);
         addControl(new gin::Knob(impulseTrainParams.adsrParams.sustain), 2, 1);
         addControl(new gin::Knob(impulseTrainParams.adsrParams.release), 3, 1);
-        addControl(new gin::Knob(impulseTrainParams.gain), 0, 2);
+        addControl(new gin::Knob(impulseTrainParams.level), 0, 2);
         addControl(new gin::Select(impulseTrainParams.filterParams.type), 1, 2);
         addControl(new gin::Knob(impulseTrainParams.filterParams.frequency), 2, 2);
         addControl(new gin::Knob(impulseTrainParams.filterParams.resonance), 3, 2);

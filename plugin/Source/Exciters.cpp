@@ -17,8 +17,10 @@ void ImpulseExciter::nextSample()
 
 void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block)
 {
+    if(!params.enabled->isOn()) return;
+
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
-    auto gain = voice.getValue(params.gain);
+    auto gain = voice.getValue(params.level);
     const int impulsesThisBlock = juce::jmin<int>(truncatedBlock.getNumSamples(), impulsesRemaining);
     for (int i = 0; i < impulsesThisBlock; i++)
     {
@@ -51,6 +53,7 @@ void ImpulseExciter::noteStopped(bool avoidTailOff)
 
 void ImpulseExciter::updateParameters()
 {
+    if(!params.enabled->isOn()) return;
     filter.updateParameters();
 }
 
@@ -70,8 +73,10 @@ void NoiseExciter::nextSample()
 
 void NoiseExciter::process(juce::dsp::AudioBlock<float>& block)
 {
+    if(!params.enabled->isOn()) return;
+
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
-    auto gain = voice.getValue(params.gain);
+    auto gain = voice.getValue(params.level);
     for (int i = 0; i < truncatedBlock.getNumSamples(); i++)
     {
         truncatedBlock.setSample(0, i, noise.nextValue() * gain * envelope.process());
@@ -100,6 +105,8 @@ void NoiseExciter::noteStopped(bool avoidTailOff)
 
 void NoiseExciter::updateParameters()
 {
+    if(!params.enabled->isOn()) return;
+
     envelope.setAttack(voice.getValue(params.adsrParams.attack));
     envelope.setDecay(voice.getValue(params.adsrParams.decay));
     envelope.setSustainLevel(voice.getValue(params.adsrParams.sustain));
@@ -124,12 +131,14 @@ void ImpulseTrainExciter::nextSample()
 
 void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block)
 {
+    if(!params.enabled->isOn()) return;
+
     jassert(periodInSamples > 0);
     jassert(impulseLength > 0);
     jassert(samplesSinceLastImpulse >= 0);
     jassert(impulsesLeft >= 0);
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
-    auto gain = voice.getValue(params.gain);
+    auto gain = voice.getValue(params.level);
 
     for (int i = 0; i < truncatedBlock.getNumSamples(); i++)
     {
@@ -211,6 +220,8 @@ void ImpulseTrainExciter::noteStopped(bool avoidTailOff)
 
 void ImpulseTrainExciter::updateParameters()
 {
+    if(!params.enabled->isOn()) return;
+
     envelope.setAttack(voice.getValue(params.adsrParams.attack));
     envelope.setDecay(voice.getValue(params.adsrParams.decay));
     envelope.setSustainLevel(voice.getValue(params.adsrParams.sustain));

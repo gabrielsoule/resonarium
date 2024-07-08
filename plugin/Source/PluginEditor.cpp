@@ -34,7 +34,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p, VoiceParams voicePara
     for(int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
     {
         SafePointer<ImpulseExciterParamBox> ptr = new ImpulseExciterParamBox(
-            "Impulse Exciter " + std::to_string(i), proc, i, voiceParams.impulseExciterParams[i]);
+            "Impulse Exciter", proc, i, voiceParams.impulseExciterParams[i]);
         impulseExciterParamBoxes.push_back(ptr);
         addAndMakeVisible(*ptr);
     }
@@ -42,7 +42,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p, VoiceParams voicePara
     for(int i = 0; i < NUM_NOISE_EXCITERS; i++)
     {
         SafePointer<NoiseExciterParamBox> ptr = new NoiseExciterParamBox(
-            "Noise Exciter " + std::to_string(i), proc, i, voiceParams.noiseExciterParams[i]);
+            "Noise Exciter", proc, i, voiceParams.noiseExciterParams[i]);
         noiseExciterParamBoxes.push_back(ptr);
         addAndMakeVisible(*ptr);
     }
@@ -50,7 +50,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p, VoiceParams voicePara
     for(int i = 0; i < NUM_IMPULSE_TRAIN_EXCITERS; i++)
     {
         SafePointer<ImpulseTrainExciterParamBox> ptr = new ImpulseTrainExciterParamBox(
-            "Impulse Train Exciter " + std::to_string(i), proc, i, voiceParams.impulseTrainExciterParams[i]);
+            "Sequence Exciter ", proc, i, voiceParams.impulseTrainExciterParams[i]);
         impulseTrainExciterParamBoxes.push_back(ptr);
         addAndMakeVisible(*ptr);
     }

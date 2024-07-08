@@ -113,7 +113,6 @@ struct ModalResonatorBankParams
     ModalResonatorBankParams() = default;
 
     void setup(ResonariumProcessor& p, int index);
-
 };
 
 struct ImpulseExciterParams
@@ -121,9 +120,10 @@ struct ImpulseExciterParams
     int index;
     MultiFilterParams filterParams;
     gin::Parameter::Ptr
+        enabled,
         thickness,
         pickPosition,
-        gain;
+        level;
 
     ImpulseExciterParams() = default;
 
@@ -136,9 +136,10 @@ struct NoiseExciterParams
     MultiFilterParams filterParams;
     ADSRParams adsrParams;
     gin::Parameter::Ptr
+        enabled,
         type,
         density,
-        gain;
+        level;
 
     NoiseExciterParams() = default;
 
@@ -151,12 +152,13 @@ struct ImpulseTrainExciterParams
     MultiFilterParams filterParams;
     ADSRParams adsrParams;
     gin::Parameter::Ptr
-    mode,
-    speed,
-    sync,
-    entropy,
-    character,
-    gain;
+        enabled,
+        mode,
+        speed,
+        sync,
+        entropy,
+        character,
+        level;
 
     ImpulseTrainExciterParams() = default;
 

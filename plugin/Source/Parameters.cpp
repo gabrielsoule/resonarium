@@ -226,16 +226,20 @@ void ImpulseExciterParams::setup(ResonariumProcessor& p, int index)
     this->index = index;
     juce::String prefix = "impExciter" + std::to_string(index) + " ";
 
+    this->enabled = p.addExtParam(prefix + "enabled", prefix + " Enabled", "On/Off", "",
+                                 {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                                 0.0f);
+
     this->thickness = p.addExtParam(prefix + "thickness", prefix + "Thickness", "Density", "",
                                     {1.0f, 10.0f, 1.0f, 1.0f}, 1.0f,
                                     0.0f);
     this->pickPosition = p.addExtParam(prefix + "pickPosition", prefix + "Pick Position", "Position", "",
                                        {0.0f, 1.0f, 0.01f, 1.0f}, 0.5f,
                                        0.0f);
-    this->gain = p.addExtParam(prefix + "gain", prefix + "Gain", "Gain", "dB",
-                               {-100.0f, 10.0f, 0.0f, 4.0f}, 0.0f,
+    this->level = p.addExtParam(prefix + "level", prefix + " Level", "Level", "",
+                               {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
                                0.0f);
-    gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
+    // level->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
     filterParams.setup(p, "impExciter" + std::to_string(index));
 }
@@ -245,16 +249,20 @@ void NoiseExciterParams::setup(ResonariumProcessor& p, int index)
     this->index = index;
     juce::String prefix = "noiseExciter" + std::to_string(index);
 
+    this->enabled = p.addExtParam(prefix + "enabled", prefix + " Enabled", "On/Off", "",
+                                 {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                                 0.0f);
+
     this->type = p.addIntParam(prefix + "type", prefix + " Type", "Type", "",
                                {0.0f, 2.0f, 1.0f, 1.0f}, 0.0f,
                                0.0f);
     this->density = p.addExtParam(prefix + "density", prefix + " Density", "Density", "",
                                   {0.0f, 1.0f, 0.01f, 1.0f}, 0.5f,
                                   0.0f);
-    this->gain = p.addExtParam(prefix + "gain", prefix + " Gain", "Gain", "dB",
-                               {-100.0f, 0.0f, 0.0f, 4.0f}, 0.0f,
+    this->level = p.addExtParam(prefix + "level", prefix + " Level", "Level", "",
+                               {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
                                0.0f);
-    gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
+    // level->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
     filterParams.setup(p, prefix);
     adsrParams.setup(p, prefix);
@@ -264,6 +272,10 @@ void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
 {
     this->index = index;
     juce::String prefix = "impTrainExciter" + std::to_string(index);
+
+    this->enabled = p.addExtParam(prefix + "enabled", prefix + " Enabled", "On/Off", "",
+                                 {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                                 0.0f);
 
     this->mode = p.addExtParam(prefix + "mode", prefix + " Mode", "Mode", "",
                                {0.0f, 3.0f, 1.0f, 1.0f}, 0.0f,
@@ -285,10 +297,10 @@ void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
                                     {0.0f, 1.0f, 0.01f, 1.0f}, 0.0f,
                                     0.0f);
 
-    this->gain = p.addExtParam(prefix + "gain", prefix + " Gain", "Gain", "dB",
-                               {-100.0f, 0.0f, 0.0, 4.0f}, 0.0f,
+    this->level = p.addExtParam(prefix + "level", prefix + " Level", "Level", "",
+                               {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
                                0.0f);
-    gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
+    // level->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
 
     filterParams.setup(p, prefix);
