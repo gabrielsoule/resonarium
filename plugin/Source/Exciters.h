@@ -81,7 +81,6 @@ public:
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;
-    void distributeParameters(ImpulseExciterParams params);
     void updateParameters() override;
 
     ImpulseExciterParams params;
@@ -115,6 +114,56 @@ public:
     juce::AudioBuffer<float> scratchBuffer;
     juce::dsp::AudioBlock<float> scratchBlock;
 
+};
+
+/**
+ * Generates various types of impulse trains.
+ * IMPULSE:
+ *      Generates a basic impulse train.
+ *      MODIFIER changes the thickness of each impulse.
+ *      ENTROPY applies randomness to the polarity of each impulse.
+ *
+ * PULSE:
+ *      Generates a shaped pulse.
+ *      MODIFIER changes the shape of the pulse.
+ *      ENTROPY applies randomness to the pulse
+ *
+ * NOISE_PULSE:
+ *      Generates a noisy burst.
+ *      MODIFIER changes the shape of the burst envelope.
+ *      ENTROPY applies nonlinear scaling to eahc sample
+ */
+class ImpulseTrainExciter : public Exciter
+{
+public:
+
+    enum Mode {IMPULSE, PULSE, NOISE_BURST};
+
+    ImpulseTrainExciter(ResonatorVoice& voice, ImpulseTrainExciterParams params) : Exciter(voice), params(params), filter(params.filterParams, false){}
+
+    void prepare(const juce::dsp::ProcessSpec& spec) override;
+    void nextSample() override;
+    void process(juce::dsp::AudioBlock<float>& block) override;
+    void reset() override;
+    void noteStarted() override;
+    void noteStopped(bool avoidTailOff) override;
+    void updateParameters() override;
+
+    ImpulseTrainExciterParams params;
+    NoiseGenerator noise;
+    gin::AnalogADSR envelope;
+    MultiFilter filter;
+    juce::AudioBuffer<float> scratchBuffer;
+    juce::dsp::AudioBlock<float> scratchBlock;
+    juce::Random rng;
+
+    Mode mode = IMPULSE;
+    int periodInSamples = -1;
+    int samplesSinceLastImpulse = -1;
+
+    //for the IMPULSE mode -- how long is the impulse, and how many impulses left to send out?
+    int impulseLength = -1;
+    int impulsesLeft = -1;
 };
 
 /**

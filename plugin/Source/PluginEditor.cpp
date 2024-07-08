@@ -47,6 +47,16 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p, VoiceParams voicePara
         addAndMakeVisible(*ptr);
     }
 
+    for(int i = 0; i < NUM_IMPULSE_TRAIN_EXCITERS; i++)
+    {
+        SafePointer<ImpulseTrainExciterParamBox> ptr = new ImpulseTrainExciterParamBox(
+            "Impulse Train Exciter " + std::to_string(i), proc, i, voiceParams.impulseTrainExciterParams[i]);
+        impulseTrainExciterParamBoxes.push_back(ptr);
+        addAndMakeVisible(*ptr);
+    }
+
+
+
 
 
     // Melatonin Inspector -- don't modify

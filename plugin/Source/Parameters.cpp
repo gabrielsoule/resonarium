@@ -48,11 +48,21 @@ static juce::String couplingModeTextFunction(const gin::Parameter&, float v)
     }
 }
 
+static juce::String impulseTrainExciterModeTextFunction(const gin::Parameter&, float v)
+{
+    switch (int(v))
+    {
+    case 0: return "Impulse";
+    case 1: return "Pulse";
+    case 2: return "Noise Burst";
+    }
+}
+
 void MultiFilterParams::setup(ResonariumProcessor& p, juce::String prefix)
 {
     this->prefix = prefix;
 
-    type = p.addExtParam(prefix + "filterType", prefix + " Filter Type", "Type", "",
+    type = p.addExtParam(prefix + "filterType", prefix + " Filter Type", "Fltr", "",
                          {0.0, 5.0f, 1.0, 1.0},
                          0.0, 0.0f, filterTextFunction);
     frequency = p.addExtParam(prefix + "frequency", prefix + " Frequency ", "Freq", "Hz",
@@ -246,6 +256,41 @@ void NoiseExciterParams::setup(ResonariumProcessor& p, int index)
     adsrParams.setup(p, prefix);
 }
 
+void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
+{
+    this->index = index;
+    juce::String prefix = "impTrainExciter" + std::to_string(index);
+
+    this->mode = p.addExtParam(prefix + "mode", prefix + " Mode", "Mode", "",
+                              {0.0, 2.0, 1.0, 1.0f}, 0.0f,
+                              0.0f, impulseTrainExciterModeTextFunction);
+
+    this->speed = p.addExtParam(prefix + "speed", prefix + " Speed", "Speed", "Hz",
+                         {0.1, 1000.0, 0.01, 0.4f}, 1.0f,
+                         0.0f);
+
+    this->sync = p.addExtParam(prefix + "sync", prefix + " Sync", "Sync", "",
+                         {0.0, 1.0, 0.01, 1.0f}, 0.0f,
+                         0.0f);
+
+    this->entropy = p.addExtParam(prefix + "entropy", prefix + " Entropy", "Rnd", "",
+                         {0.0, 1.0, 0.01, 1.0f}, 0.0f,
+                         0.0f);
+
+    this->character = p.addExtParam(prefix + "character", prefix + " Character", "Mod", "",
+                         {0.0, 1.0, 0.01, 1.0f}, 0.0f,
+                         0.0f);
+
+    this->gain = p.addExtParam(prefix + "gain", prefix + " Gain", "Gain", "dB",
+                         {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
+                         0.0f);
+    gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
+
+
+    filterParams.setup(p, prefix);
+    adsrParams.setup(p, prefix);
+}
+
 void VoiceParams::setup(ResonariumProcessor& p)
 {
     for (int i = 0; i < NUM_MODAL_RESONATOR_BANKS; i++)
@@ -263,6 +308,10 @@ void VoiceParams::setup(ResonariumProcessor& p)
     for (int i = 0; i < NUM_NOISE_EXCITERS; i++)
     {
         noiseExciterParams[i].setup(p, i);
+    }
+    for (int i = 0; i < NUM_IMPULSE_TRAIN_EXCITERS; i++)
+    {
+        impulseTrainExciterParams[i].setup(p, i);
     }
 }
 

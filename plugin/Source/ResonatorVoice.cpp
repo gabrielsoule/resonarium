@@ -1,7 +1,7 @@
 #include "ResonatorVoice.h"
 #include "PluginProcessor.h"
 
-bool BYPASS_RESONATORS = false; //testing flag to listen to the exciter signal only
+bool BYPASS_RESONATORS = true; //testing flag to listen to the exciter signal only
 
 ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : processor(p)
 {
@@ -18,9 +18,8 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
         // waveguideResonatorBanks.add(waveguideBank);
         resonatorBanks.add(waveguideBank);
         resonatorBankIndex++;
-
     }
-    for(int i = 0; i < NUM_MODAL_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_MODAL_RESONATOR_BANKS; i++)
     {
         auto* modalBank = new ModalResonatorBank(*this, params.modalResonatorBankParams[i]);
         modalBank->resonatorBankIndex = resonatorBankIndex;
@@ -37,6 +36,11 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
     for (int i = 0; i < NUM_NOISE_EXCITERS; i++)
     {
         exciters.add(new NoiseExciter(*this, params.noiseExciterParams[i]));
+    }
+
+    for (int i = 0; i < NUM_IMPULSE_TRAIN_EXCITERS; i++)
+    {
+        exciters.add(new ImpulseTrainExciter(*this, params.impulseTrainExciterParams[i]));
     }
 }
 
@@ -59,7 +63,7 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
         exciter->prepare(spec);
     }
 
-    for(auto* resonatorBank : resonatorBanks)
+    for (auto* resonatorBank : resonatorBanks)
     {
         resonatorBank->prepare(spec);
     }
@@ -93,6 +97,12 @@ void ResonatorVoice::noteStarted()
     processor.modMatrix.setPolyValue(*this, processor.modSrcTimbre, note.initialTimbre.asUnsignedFloat());
     processor.modMatrix.setPolyValue(*this, processor.modSrcPressure, note.pressure.asUnsignedFloat());
 
+    killIfSilent = false;
+    silenceCount = 0;
+    numBlocksSinceNoteOn = 0;
+
+    updateParameters();
+    snapParams();
 
     for (auto* exciter : exciters)
     {
@@ -103,16 +113,9 @@ void ResonatorVoice::noteStarted()
         resonatorBank->reset();
     }
 
-    updateParameters();
-    snapParams();
-
-    silenceCount = 0;
-    numBlocksSinceNoteOn = 0;
-
     for (auto* exciter : exciters)
     {
         exciter->noteStarted();
-        exciter->updateParameters();
     }
 
     dcBlocker.reset();
@@ -125,6 +128,7 @@ void ResonatorVoice::noteRetriggered()
 
 void ResonatorVoice::noteStopped(bool allowTailOff)
 {
+    killIfSilent = true;
     if (!allowTailOff)
     {
         DBG("Forcefully stopping note " + juce::String(id));
@@ -155,7 +159,7 @@ void ResonatorVoice::updateParameters()
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
 
-    for(auto* resonatorBank : resonatorBanks)
+    for (auto* resonatorBank : resonatorBanks)
     {
         resonatorBank->updateParameters(frequency);
     }
@@ -193,7 +197,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 
     if (!BYPASS_RESONATORS)
     {
-        for(auto* resonatorBank : resonatorBanks)
+        for (auto* resonatorBank : resonatorBanks)
         {
             resonatorBank->process(exciterBlock, resonatorBankOutputBlock);
         }
@@ -205,12 +209,13 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     else
     {
         //add the audioblock to the output buffer
+        DBG(exciterBuffer.getMagnitude(0, startSample, numSamples));
         outputBlock.add(exciterBlock);
     }
 
     //do silence detection, since the resonators can be unpredictable
     float maxAmplitude = resonatorBankBuffer.getMagnitude(0, startSample, numSamples);
-    if (numBlocksSinceNoteOn > 10)
+    if (killIfSilent && numBlocksSinceNoteOn > 10)
     {
         if (maxAmplitude < 0.001f)
         {

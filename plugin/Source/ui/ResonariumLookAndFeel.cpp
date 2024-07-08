@@ -44,7 +44,7 @@ ResonariumLookAndFeel::ResonariumLookAndFeel()
     setColour (juce::MidiKeyboardComponent::textLabelColourId, juce::Colours::transparentBlack);
     setColour (juce::MidiKeyboardComponent::shadowColourId, findColour (grey90ColourId));
 
-    setColour (juce::Label::textColourId, findColour (grey90ColourId));
+    setColour (juce::Label::textColourId, findColour (grey90ColourId).withAlpha(0.8f));
 
     setColour (juce::TextButton::textColourOnId, findColour (accentColourId));
     setColour (juce::TextButton::textColourOffId, findColour (grey60ColourId));

@@ -145,6 +145,24 @@ struct NoiseExciterParams
     void setup(ResonariumProcessor& p, int index);
 };
 
+struct ImpulseTrainExciterParams
+{
+    int index;
+    MultiFilterParams filterParams;
+    ADSRParams adsrParams;
+    gin::Parameter::Ptr
+    mode,
+    speed,
+    sync,
+    entropy,
+    character,
+    gain;
+
+    ImpulseTrainExciterParams() = default;
+
+    void setup(ResonariumProcessor& p, int index);
+};
+
 /**
  * This parameter struct encapsulates everything needed to set up a resonator voice.
  * The setup function should only ever be called once, during initialization.
@@ -160,6 +178,7 @@ struct VoiceParams
     ModalResonatorBankParams modalResonatorBankParams[NUM_MODAL_RESONATOR_BANKS];
     ImpulseExciterParams impulseExciterParams[NUM_IMPULSE_EXCITERS];
     NoiseExciterParams noiseExciterParams[NUM_NOISE_EXCITERS];
+    ImpulseTrainExciterParams impulseTrainExciterParams[NUM_IMPULSE_TRAIN_EXCITERS];
 
     void setup(ResonariumProcessor& p);
 };
