@@ -165,6 +165,45 @@ struct ImpulseTrainExciterParams
     void setup(ResonariumProcessor& p, int index);
 };
 
+struct LFOParams
+{
+    int index;
+    gin::Parameter::Ptr
+        enabled,
+        sync,
+        retrig,
+        wave,
+        rate,
+        beat,
+        depth,
+        offset,
+        phase,
+        fade,
+        delay;
+
+    LFOParams() = default;
+
+    void setup(ResonariumProcessor& p, int index);
+};
+
+struct RandomLFOParams
+{
+    int index;
+    gin::Parameter::Ptr
+        enabled,
+        sync,
+        rate,
+        beat,
+        depth,
+        offset,
+        smooth,
+        jitter;
+
+    RandomLFOParams() = default;
+
+    void setup(ResonariumProcessor& p, int index);
+};
+
 /**
  * This parameter struct encapsulates everything needed to set up a resonator voice.
  * The setup function should only ever be called once, during initialization.
@@ -173,6 +212,9 @@ struct ImpulseTrainExciterParams
  * the appropriate child DSP components.
  * These structs are super cheap to copy, plus we only do this once at setup,
  * so it's not a big deal to pass-by-value.
+ *
+ * It's important to note that there is only one VoiceParams object per plugin instance,
+ * which is shared by all voices.
  */
 struct VoiceParams
 {
@@ -181,6 +223,24 @@ struct VoiceParams
     ImpulseExciterParams impulseExciterParams[NUM_IMPULSE_EXCITERS];
     NoiseExciterParams noiseExciterParams[NUM_NOISE_EXCITERS];
     ImpulseTrainExciterParams impulseTrainExciterParams[NUM_IMPULSE_TRAIN_EXCITERS];
+    LFOParams lfoParams[NUM_LFOS];
+
+    VoiceParams() = default;
+
+    void setup(ResonariumProcessor& p);
+};
+
+/**
+ * Parameters for the synthesizer as a whole. These parameters by definition
+ * must be monophonic, as they apply to the entire synthesizer.
+ */
+struct SynthParams
+{
+    VoiceParams voiceParams;
+    LFOParams lfoParams[NUM_LFOS];
+    RandomLFOParams randomLfoParams[NUM_LFOS];
+
+    SynthParams() = default;
 
     void setup(ResonariumProcessor& p);
 };
@@ -188,6 +248,10 @@ struct VoiceParams
 struct UIParams
 {
     gin::Parameter::Ptr resonatorBankSelect;
+    gin::Parameter::Ptr lfoSelect;
+    gin::Parameter::Ptr randomLfoSelect;
+
+    UIParams() = default;
 
     void setup(ResonariumProcessor& p);
 };

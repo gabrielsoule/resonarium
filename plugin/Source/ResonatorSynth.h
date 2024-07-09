@@ -6,24 +6,25 @@
 #define RESONATORSYNTH_H
 
 #pragma once
+#include "defines.h"
 #include <JuceHeader.h>
+#include "Parameters.h"
 
 class ResonariumProcessor;
 
-class ResonatorSynth : public gin::Synthesiser {
+class ResonatorSynth : public gin::Synthesiser
+{
 public:
     explicit ResonatorSynth(ResonariumProcessor& p);
     void prepare(const juce::dsp::ProcessSpec& spec);
-
-    /**
-     * Called once during setup. Instructs the synth to access parameters from the processor
-     * and distribute them to the appropriate voices and resonators.
-     */
-    void setupParameters();
-private:
+    void updateParameters();
+    void renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     ResonariumProcessor& processor;
-};
+    gin::LFO monoLFOs[NUM_LFOS];
+    SynthParams params;
 
+    int currentBlockSize = -1;
+};
 
 
 #endif //RESONATORSYNTH_H

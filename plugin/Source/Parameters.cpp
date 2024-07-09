@@ -62,6 +62,44 @@ static juce::String impulseTrainExciterModeTextFunction(const gin::Parameter&, f
     }
 }
 
+static juce::String enableTextFunction(const gin::Parameter&, float v)
+{
+    return v > 0.0f ? "On" : "Off";
+}
+
+static juce::String durationTextFunction(const gin::Parameter&, float v)
+{
+    return gin::NoteDuration::getNoteDurations()[size_t(v)].getName();
+}
+
+static juce::String lfoTextFunction(const gin::Parameter&, float v)
+{
+    switch ((gin::LFO::WaveShape)int(v))
+    {
+    case gin::LFO::WaveShape::none: return "None";
+    case gin::LFO::WaveShape::sine: return "Sine";
+    case gin::LFO::WaveShape::triangle: return "Triangle";
+    case gin::LFO::WaveShape::sawUp: return "Saw Up";
+    case gin::LFO::WaveShape::sawDown: return "Saw Down";
+    case gin::LFO::WaveShape::square: return "Square";
+    case gin::LFO::WaveShape::squarePos: return "Square+";
+    case gin::LFO::WaveShape::sampleAndHold: return "S&H";
+    case gin::LFO::WaveShape::noise: return "Noise";
+    case gin::LFO::WaveShape::stepUp3: return "Step Up 3";
+    case gin::LFO::WaveShape::stepUp4: return "Step Up 4";
+    case gin::LFO::WaveShape::stepup8: return "Step Up 8";
+    case gin::LFO::WaveShape::stepDown3: return "Step Down 3";
+    case gin::LFO::WaveShape::stepDown4: return "Step Down 4";
+    case gin::LFO::WaveShape::stepDown8: return "Step Down 8";
+    case gin::LFO::WaveShape::pyramid3: return "Pyramid 3";
+    case gin::LFO::WaveShape::pyramid5: return "Pyramid 5";
+    case gin::LFO::WaveShape::pyramid9: return "Pyramid 9";
+    default:
+        jassertfalse;
+        return {};
+    }
+}
+
 void MultiFilterParams::setup(ResonariumProcessor& p, juce::String prefix)
 {
     this->prefix = prefix;
@@ -309,6 +347,96 @@ void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
     adsrParams.setup(p, prefix);
 }
 
+void LFOParams::setup(ResonariumProcessor& p, int index)
+{
+    this->index = index;
+    juce::String prefix = "lfo" + std::to_string(index);
+    auto notes = gin::NoteDuration::getNoteDurations();
+
+    enabled = p.addExtParam(prefix + "enable", prefix + "Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, enableTextFunction);
+
+    sync = p.addIntParam(prefix + "sync", prefix + "Sync", "Sync", "",
+                         {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                         0.0f, enableTextFunction);
+
+    retrig = p.addIntParam(prefix + "retrig", prefix + "Retrig", "Retrig", "",
+                           {0.0f, 1.0f, 1.0f, 1.0f}, 1.0f,
+                           0.0f, enableTextFunction);
+
+    wave = p.addIntParam(prefix + "wave", prefix + "Wave", "Wave", "",
+                         {1.0f, 17.0f, 1.0f, 1.0f}, 1.0f,
+                         0.0f, lfoTextFunction);
+
+    rate = p.addExtParam(prefix + "rate", prefix + "Rate", "Rate", "Hz",
+                         {0.0f, 50.0f, 0.0f, 0.3f},
+                         10.0f, 0.0f);
+
+    beat = p.addIntParam(prefix + "beat", prefix + "Beat", "Beat", "",
+                         {0.0f, float(notes.size() - 1), 1.0f, 1.0f},
+                         13.0f, 0.0f, durationTextFunction);
+
+    depth = p.addExtParam(prefix + "depth", prefix + "Depth", "Depth", "",
+                          {-1.0f, 1.0f, 0.0f, 1.0f},
+                          1.0f, 0.0f);
+
+    phase = p.addExtParam(prefix + "phase", prefix + "Phase", "Phase", "",
+                          {-1.0f, 1.0f, 0.0f, 1.0f},
+                          0.0f, 0.0f);
+
+    offset = p.addExtParam(prefix + "offset", prefix + "Offset", "Offset", "",
+                           {-1.0f, 1.0f, 0.0f, 1.0f},
+                           0.0f, 0.0f);
+
+    fade = p.addExtParam(prefix + "fade", prefix + "Fade", "Fade", "s",
+                         {-60.0f, 60.0f, 0.0f, 0.2f, true},
+                         0.0f, 0.0f);
+
+    delay = p.addExtParam(prefix + "delay", prefix + "Delay", "Delay", "s",
+                          {0.0f, 60.0f, 0.0f, 0.2f},
+                          0.0f, 0.0f);
+}
+
+void RandomLFOParams::setup(ResonariumProcessor& p, int index)
+{
+    this->index = index;
+    juce::String prefix = "lfo" + std::to_string(index);
+    auto notes = gin::NoteDuration::getNoteDurations();
+
+    enabled = p.addExtParam(prefix + "enable", prefix + "Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, enableTextFunction);
+
+    sync = p.addIntParam(prefix + "sync", prefix + "Sync", "Sync", "",
+                         {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                         0.0f, enableTextFunction);
+
+    rate = p.addExtParam(prefix + "rate", prefix + "Rate", "Rate", "Hz",
+                         {0.0f, 50.0f, 0.0f, 0.3f},
+                         10.0f, 0.0f);
+
+    beat = p.addIntParam(prefix + "beat", prefix + "Beat", "Beat", "",
+                         {0.0f, float(notes.size() - 1), 1.0f, 1.0f},
+                         13.0f, 0.0f, durationTextFunction);
+
+    depth = p.addExtParam(prefix + "depth", prefix + "Depth", "Depth", "",
+                          {-1.0f, 1.0f, 0.0f, 1.0f},
+                          1.0f, 0.0f);
+
+    offset = p.addExtParam(prefix + "offset", prefix + "Offset", "Offset", "",
+                           {-1.0f, 1.0f, 0.0f, 1.0f},
+                           0.0f, 0.0f);
+
+    smooth = p.addExtParam(prefix + "smooth", prefix + "Smooth", "Smooth", "%",
+                           {0.0f, 1.0f, 0.01f, 1.0f},
+                           0.0f, 0.0f);
+
+    jitter = p.addExtParam(prefix + "smooth", prefix + "Jitter", "Jitter", "%",
+                           {0.0f, 1.0f, 0.01f, 1.0f},
+                           0.0f, 0.0f);
+}
+
 void VoiceParams::setup(ResonariumProcessor& p)
 {
     for (int i = 0; i < NUM_MODAL_RESONATOR_BANKS; i++)
@@ -331,11 +459,38 @@ void VoiceParams::setup(ResonariumProcessor& p)
     {
         impulseTrainExciterParams[i].setup(p, i);
     }
+
+    //Do NOT set up LFO params; these are set later by the enclosing synth
+}
+
+void SynthParams::setup(ResonariumProcessor& p)
+{
+    voiceParams.setup(p);
+    for (int i = 0; i < NUM_LFOS; i++)
+    {
+        lfoParams[i].setup(p, i);
+        randomLfoParams[i].setup(p, i);
+
+        //ensure that the same parameters are used for the synth-level monophonic LFOs
+        //and the voice-level polyphonic LFOs
+        //the result is that each LFO is actually two LFOs under the hood,
+        //where one is monophonic and one is polyphonic
+        voiceParams.lfoParams[i] = lfoParams[i];
+    }
+
 }
 
 void UIParams::setup(ResonariumProcessor& p)
 {
-    resonatorBankSelect = p.addIntParam("uiResonatorBank", "Bank", "", "",
-                                        {0, NUM_MODAL_RESONATOR_BANKS + NUM_WAVEGUIDE_RESONATOR_BANKS - 1, 0.0f, 1.0f},
+    resonatorBankSelect = p.addIntParam("uiActiveResonatorBank", "Bank", "", "",
+                                        {0, NUM_MODAL_RESONATOR_BANKS + NUM_WAVEGUIDE_RESONATOR_BANKS - 1, 1.0f, 1.0f},
                                         0.0f, gin::SmoothingType::linear);
+
+    lfoSelect = p.addIntParam("uiActiveLfo", "LFO", "", "",
+                              {0.0f, NUM_LFOS - 1, 1.0f, 1.0f},
+                              0.0f, gin::SmoothingType::linear);
+
+    randomLfoSelect = p.addIntParam("uiActiveRandLfo", "RAND", "", "",
+                              {0.0f, NUM_LFOS - 1, 1.0f, 1.0f},
+                              0.0f, gin::SmoothingType::linear);
 }

@@ -112,6 +112,14 @@ void NoiseExciter::updateParameters()
     envelope.setSustainLevel(voice.getValue(params.adsrParams.sustain));
     envelope.setRelease(voice.getValue(params.adsrParams.release));
     filter.updateParameters();
+    DBG(voice.getValue(params.filterParams.frequency));
+    DBG("Actual filter id...: " + juce::String(gin::ModDstId(params.filterParams.frequency->getModIndex()).id));
+    DBG(params.filterParams.frequency->getModMatrix()->getModSources(params.filterParams.frequency).size());
+    for(auto& p : params.filterParams.frequency->getModMatrix()->getModSources(params.filterParams.frequency))
+    {
+        DBG("Mod source");
+        DBG(p.id);
+    }
 }
 
 void ImpulseTrainExciter::prepare(const juce::dsp::ProcessSpec& spec)

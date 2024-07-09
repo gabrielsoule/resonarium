@@ -55,7 +55,7 @@ public:
         // for some reason paramChanged() is being called before this component is added to the parent
         // this is fine, except that we can't access the lookandfeel at this point
         // this is a hack to get around that. There might be side effects. That's a later problem.
-        if(this->getParentComponent() == nullptr)
+        if (this->getParentComponent() == nullptr)
         {
             return;
         }
@@ -66,18 +66,19 @@ public:
             if (c != enableButton) c->setEnabled(resonatorParams.enabled->isOn());
         }
 
-        if(resonatorParams.enabled->isOn())
+        if (resonatorParams.enabled->isOn())
         {
             borderColor = findColour(gin::PluginLookAndFeel::accentColourId, true);
-        } else
+        }
+        else
         {
             borderColor = findColour(gin::PluginLookAndFeel::title1ColourId, true);
         }
     }
 
-    void paint (juce::Graphics& g) override
+    void paint(juce::Graphics& g) override
     {
-        g.setColour (borderColor); // Set the color of the background
+        g.setColour(borderColor); // Set the color of the background
         float cornerSize = 10.0f; // Set the corner size for the rounded rectangle
         // g.drawRoundedRectangle (getLocalBounds().reduced(2.0f,2.0f).toFloat(), cornerSize, 2); // Draw the rounded rectangle
     }
@@ -117,7 +118,6 @@ public:
         addAndMakeVisible(decayTimeKnob);
 
         watchParam(resonatorParams.enabled[index]);
-
     }
 
     void resized() override
@@ -132,7 +132,7 @@ public:
 
     void paramChanged() override
     {
-        if(this->getParentComponent() == nullptr)
+        if (this->getParentComponent() == nullptr)
         {
             return;
         }
@@ -152,7 +152,265 @@ public:
 
     ModalResonatorBankParams resonatorParams;
     int index;
+};
 
+
+class ImpulseExciterParamBox : public gin::ParamBox
+{
+public:
+    ImpulseExciterParamBox(const juce::String& name, ResonariumProcessor& proc, int index,
+                           ImpulseExciterParams impulseParams) :
+        gin::ParamBox(name), impulseParams(impulseParams)
+    {
+        setName("impulseExciterParams");
+        addEnable(impulseParams.enabled);
+        addControl(new gin::Knob(impulseParams.thickness), 0, 0);
+        addControl(new gin::Knob(impulseParams.level), 0, 1);
+        addControl(new gin::Select(impulseParams.filterParams.type), 1, 1);
+        addControl(new gin::Knob(impulseParams.filterParams.frequency), 2, 1);
+        addControl(new gin::Knob(impulseParams.filterParams.resonance), 3, 1);
+    }
+
+    ImpulseExciterParams impulseParams;
+};
+
+class NoiseExciterParamBox : public gin::ParamBox
+{
+public:
+    NoiseExciterParamBox(const juce::String& name, ResonariumProcessor& proc, int index,
+                         NoiseExciterParams noiseParams) : gin::ParamBox(name), noiseParams(noiseParams)
+    {
+        setName("noiseExciterParams");
+        addEnable(noiseParams.enabled);
+        addControl(new gin::Knob(noiseParams.adsrParams.attack), 0, 0);
+        addControl(new gin::Knob(noiseParams.adsrParams.decay), 1, 0);
+        addControl(new gin::Knob(noiseParams.adsrParams.sustain), 2, 0);
+        addControl(new gin::Knob(noiseParams.adsrParams.release), 3, 0);
+        addControl(new gin::Knob(noiseParams.level), 0, 1);
+        addControl(new gin::Select(noiseParams.filterParams.type), 1, 1);
+        addControl(new gin::Knob(noiseParams.filterParams.frequency), 2, 1);
+        addControl(new gin::Knob(noiseParams.filterParams.resonance), 3, 1);
+    }
+
+    NoiseExciterParams noiseParams;
+};
+
+class ImpulseTrainExciterParamBox : public gin::ParamBox
+{
+public:
+    ImpulseTrainExciterParamBox(const juce::String& name, ResonariumProcessor& proc, int index,
+                                ImpulseTrainExciterParams impulseTrainParams) : gin::ParamBox(name),
+        impulseTrainParams(impulseTrainParams)
+    {
+        setName("impulseTrainExciterParams");
+        addEnable(impulseTrainParams.enabled);
+        addControl(new gin::Select(impulseTrainParams.mode), 0, 0);
+        addControl(new gin::Knob(impulseTrainParams.speed), 1, 0);
+        addControl(new gin::Knob(impulseTrainParams.character), 2, 0);
+        addControl(new gin::Knob(impulseTrainParams.entropy), 3, 0);
+        addControl(new gin::Knob(impulseTrainParams.adsrParams.attack), 0, 1);
+        addControl(new gin::Knob(impulseTrainParams.adsrParams.decay), 1, 1);
+        addControl(new gin::Knob(impulseTrainParams.adsrParams.sustain), 2, 1);
+        addControl(new gin::Knob(impulseTrainParams.adsrParams.release), 3, 1);
+        addControl(new gin::Knob(impulseTrainParams.level), 0, 2);
+        addControl(new gin::Select(impulseTrainParams.filterParams.type), 1, 2);
+        addControl(new gin::Knob(impulseTrainParams.filterParams.frequency), 2, 2);
+        addControl(new gin::Knob(impulseTrainParams.filterParams.resonance), 3, 2);
+    }
+
+    ImpulseTrainExciterParams impulseTrainParams;
+};
+
+class ModalResonatorBankParamBox : public gin::ParamBox
+{
+public:
+    ModalResonatorBankParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum,
+                               ModalResonatorBankParams bankParams) :
+        gin::ParamBox(name), resonatorNum(resonatorNum), bankParams(bankParams), uiParams(proc.uiParams)
+    {
+        setName("modalResonatorBankParams " + juce::String(resonatorNum));
+        this->headerTabButtonWidth = 150;
+        addHeader({"MODAL 1", "WAVEGUIDE 1", "MODAL 2", "WAVEGUIDE 2"}, resonatorNum, uiParams.resonatorBankSelect);
+        for (int i = 0; i < NUM_MODAL_RESONATORS; i++)
+        {
+            auto* resonatorComponent = new ModalResonatorComponent(bankParams, i);
+            resonatorComponents.add(resonatorComponent);
+            addAndMakeVisible(resonatorComponent);
+        }
+    }
+
+    void resized() override
+    {
+        ParamBox::resized();
+        juce::Rectangle<int> resonatorsArea = getLocalBounds();
+        resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
+        resonatorsArea.setHeight(350);
+        resonatorsArea.removeFromLeft(100);
+        for (int i = 0; i < NUM_MODAL_RESONATORS; i++)
+        {
+            resonatorsArea.removeFromLeft(7);
+            resonatorComponents[i]->setBounds(resonatorsArea.removeFromLeft(KNOB_W_SMALL));
+        }
+    }
+
+    int resonatorNum;
+    juce::Array<ModalResonatorComponent*> resonatorComponents;
+    ModalResonatorBankParams bankParams;
+    UIParams uiParams;
+};
+
+
+class WaveguideResonatorBankParamBox : public gin::ParamBox
+{
+public:
+    WaveguideResonatorBankParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum,
+                                   WaveguideResonatorBankParams bankParams) :
+        gin::ParamBox(name), resonatorNum(resonatorNum), bankParams(bankParams), uiParams(proc.uiParams)
+    {
+        setName("waveguideResonatorBankParams " + juce::String(resonatorNum));
+        this->headerTabButtonWidth = 150;
+        addHeader({"MODAL 1", "WAVEGUIDE 1", "MODAL 2", "WAVEGUIDE 2"}, resonatorNum, uiParams.resonatorBankSelect);
+        auto* select = new gin::Select(bankParams.couplingMode);
+        addControl(select);
+        for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+        {
+            WaveguideResonatorComponent* resonatorComponent = new WaveguideResonatorComponent(
+                bankParams.resonatorParams[i]);
+            resonatorComponents.add(resonatorComponent);
+            addAndMakeVisible(resonatorComponent);
+        }
+    }
+
+    void resized() override
+    {
+        ParamBox::resized();
+        juce::Rectangle<int> resonatorsArea = getLocalBounds();
+        resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
+        resonatorsArea.setHeight(350);
+        resonatorsArea.removeFromLeft(100);
+        for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+        {
+            resonatorsArea.removeFromLeft(7);
+            resonatorComponents[i]->setBounds(resonatorsArea.removeFromLeft(KNOB_W_SMALL));
+        }
+    }
+
+    int resonatorNum;
+    juce::Array<WaveguideResonatorComponent*> resonatorComponents;
+    WaveguideResonatorBankParams bankParams;
+    UIParams uiParams;
+};
+
+class LFOParamBox : public gin::ParamBox
+{
+public:
+    LFOParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum, LFOParams lfoParams) :
+        gin::ParamBox(name), lfoParams(lfoParams)
+    {
+        setName("lfo" + juce::String(lfoParams.index + 1));
+        addEnable(lfoParams.enabled);
+        juce::StringArray lfoNames;
+        for(int i = 0; i < NUM_LFOS; i++)
+        {
+            lfoNames.add("LFO " + juce::String(i + 1));
+        }
+        addHeader(lfoNames, lfoParams.index, proc.uiParams.lfoSelect);
+        headerTabButtonWidth = 75;
+
+        // addModSource (new gin::ModulationSourceButton (proc.modMatrix, proc.modSrcLfo[idx], true));
+        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoLFO[lfoParams.index], false));
+
+        addControl(r = new gin::Knob(lfoParams.rate), 0, 0);
+        addControl(b = new gin::Select(lfoParams.beat), 1, 0);
+        addControl(new gin::Knob(lfoParams.depth, true), 2, 0);
+        addControl(new gin::Knob(lfoParams.fade, true), 3, 0);
+        addControl(new gin::Knob(lfoParams.delay));
+
+        addControl(new gin::Select(lfoParams.wave), 0, 1);
+        addControl(new gin::Switch(lfoParams.sync), 1, 1);
+        addControl(new gin::Knob(lfoParams.phase, true), 2, 1);
+        addControl(new gin::Knob(lfoParams.offset, true), 3, 1);
+
+        auto l = new gin::LFOComponent();
+        l->setParams(lfoParams.wave, lfoParams.sync, lfoParams.rate, lfoParams.beat, lfoParams.depth, lfoParams.offset,
+                     lfoParams.phase, lfoParams.enabled);
+        addControl(l, 4, 0, 2, 1);
+        watchParam(lfoParams.sync);
+    }
+
+    gin::LFOComponent visualizer;
+    LFOParams lfoParams;
+    gin::ParamComponent::Ptr r = nullptr;
+    gin::ParamComponent::Ptr b = nullptr;
+
+    void resized() override
+    {
+        ParamBox::resized();
+    }
+
+    void paramChanged() override
+    {
+        gin::ParamBox::paramChanged();
+
+        if (r && b)
+        {
+            r->setVisible(!lfoParams.sync->isOn());
+            b->setVisible(lfoParams.sync->isOn());
+        }
+    }
+};
+
+class RandomLFOParamBox : public gin::ParamBox
+{
+public:
+    RandomLFOParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum, RandomLFOParams randomLfoParams) :
+        gin::ParamBox(name), randomLfoParams(randomLfoParams)
+    {
+        setName("rnd" + juce::String(randomLfoParams.index + 1));
+        addEnable(randomLfoParams.enabled);
+        juce::StringArray lfoNames;
+        for(int i = 0; i < NUM_LFOS; i++)
+        {
+            lfoNames.add("RAND " + juce::String(i + 1));
+        }
+        addHeader(lfoNames, randomLfoParams.index, proc.uiParams.randomLfoSelect);
+        headerTabButtonWidth = 75;
+
+        // addModSource (new gin::ModulationSourceButton (proc.modMatrix, proc.modSrcLfo[idx], true));
+        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoRND[randomLfoParams.index], false));
+
+        addControl(r = new gin::Knob(randomLfoParams.rate), 0, 0);
+        addControl(b = new gin::Select(randomLfoParams.beat), 1, 0);
+        addControl(new gin::Knob(randomLfoParams.depth, true), 2, 0);
+        addControl(new gin::Knob(randomLfoParams.jitter), 3, 0);
+        addControl(new gin::Switch(randomLfoParams.sync), 1, 1);
+        addControl(new gin::Knob(randomLfoParams.offset), 2, 1);
+        addControl(new gin::Knob(randomLfoParams.smooth), 3, 1);
+
+        watchParam(randomLfoParams.sync);
+
+
+    }
+
+    void resized() override
+    {
+        ParamBox::resized();
+    }
+
+    void paramChanged() override
+    {
+        gin::ParamBox::paramChanged();
+
+        if (r && b)
+        {
+            r->setVisible(!randomLfoParams.sync->isOn());
+            b->setVisible(randomLfoParams.sync->isOn());
+        }
+    }
+
+    RandomLFOParams randomLfoParams;
+    gin::ParamComponent::Ptr r = nullptr;
+    gin::ParamComponent::Ptr b = nullptr;
 };
 
 

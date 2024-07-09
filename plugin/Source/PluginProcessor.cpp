@@ -16,16 +16,16 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
 {
     lf = std::make_unique<ResonariumLookAndFeel>();
 
-    voiceParams.setup(*this);
     uiParams.setup(*this);
 
     //Synth setup
     synth.enableLegacyMode();
     synth.setVoiceStealingEnabled(true);
     synth.setMPE(true);
+    synth.params.setup(*this);
     for (int i = 0; i < NUM_SYNTH_VOICES; i++)
     {
-        auto voice = new ResonatorVoice(*this, voiceParams);
+        ResonatorVoice* voice = new ResonatorVoice(*this, synth.params.voiceParams);
         modMatrix.addVoice(voice);
         synth.addVoice(voice);
         voice->id = i;
@@ -33,7 +33,6 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
 
     setupModMatrix(); //set up the modulation matrix
     init(); //internal init
-
 }
 
 ResonariumProcessor::~ResonariumProcessor()
@@ -48,13 +47,23 @@ void ResonariumProcessor::setupModMatrix()
     modSrcNote = modMatrix.addPolyModSource("note", "MIDI Note Number", false);
     modSrcVelocity = modMatrix.addPolyModSource("vel", "MIDI Velocity", false);
 
+    for (int i = 0; i < NUM_LFOS; i++)
+    {
+        modSrcMonoLFO.add(modMatrix.addMonoModSource(juce::String::formatted("mlfo%d", i + 1),
+                                                     juce::String::formatted("LFO %d (Mono)", i + 1),
+                                                     true));
+
+        modSrcMonoRND.add(modMatrix.addMonoModSource(juce::String::formatted("mrnd%d", i + 1),
+                                                     juce::String::formatted("RAND %d (Mono)", i + 1),
+                                                     true));
+    }
+
     for (auto pp : getPluginParameters())
     {
         if (!pp->isInternal())
-            DBG("Adding parameter " + pp->getName(40) + " to mod matrix as a poly parameter");
+            DBG("  Adding parameter " + pp->getName(40) + " to mod matrix as a poly parameter");
         modMatrix.addParameter(pp, true);
     }
-
     DBG("TOTAL PARAMETERS REGISTERED: " + juce::String(getPluginParameters().size()));
 
     modMatrix.build();
@@ -80,8 +89,8 @@ void ResonariumProcessor::reset()
 void ResonariumProcessor::prepareToPlay(double newSampleRate, int newSamplesPerBlock)
 {
     Processor::prepareToPlay(newSampleRate, newSamplesPerBlock);
-    synth.prepare({newSampleRate, static_cast<juce::uint32>(newSamplesPerBlock), 2});
     modMatrix.setSampleRate(newSampleRate);
+    synth.prepare({newSampleRate, static_cast<juce::uint32>(newSamplesPerBlock), 2});
 
     DBG("Resonarium instance preparing to play:");
     DBG("   Input channels: " + juce::String(getMainBusNumInputChannels()));
@@ -112,7 +121,7 @@ bool ResonariumProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* ResonariumProcessor::createEditor()
 {
-    auto* editor =  new gin::ScaledPluginEditor(new ResonariumEditor(*this, voiceParams, uiParams), state);
+    auto* editor = new gin::ScaledPluginEditor(new ResonariumEditor(*this), state);
     editor->editor->resized();
     return editor;
 }
