@@ -45,8 +45,6 @@ public:
     float processSample(int channel, float sample) noexcept;
     void process (juce::dsp::AudioBlock<float>& block) noexcept;
 
-
-
     /**
     * Updates the filter coefficients automatically by querying the hosted parameter struct.
     */

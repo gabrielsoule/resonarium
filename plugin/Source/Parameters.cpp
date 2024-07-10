@@ -396,12 +396,16 @@ void LFOParams::setup(ResonariumProcessor& p, int index)
     delay = p.addExtParam(prefix + "delay", prefix + "Delay", "Delay", "s",
                           {0.0f, 60.0f, 0.0f, 0.2f},
                           0.0f, 0.0f);
+
+    stereo = p.addExtParam(prefix + "stereo", prefix + "Stereo", "Stereo", "",
+                           {0.0f, 1.0f, 0.01f, 1.0f},
+                           0.0f, 0.0f);
 }
 
 void RandomLFOParams::setup(ResonariumProcessor& p, int index)
 {
     this->index = index;
-    juce::String prefix = "lfo" + std::to_string(index);
+    juce::String prefix = "rnd" + std::to_string(index);
     auto notes = gin::NoteDuration::getNoteDurations();
 
     enabled = p.addExtParam(prefix + "enable", prefix + "Enable", "Enable", "",
@@ -432,7 +436,11 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
                            {0.0f, 1.0f, 0.01f, 1.0f},
                            0.0f, 0.0f);
 
-    jitter = p.addExtParam(prefix + "smooth", prefix + "Jitter", "Jitter", "%",
+    jitter = p.addExtParam(prefix + "jitter", prefix + "Jitter", "Jitter", "%",
+                           {0.0f, 1.0f, 0.01f, 1.0f},
+                           0.0f, 0.0f);
+
+    stereo = p.addExtParam(prefix + "stereo", prefix + "Stereo", "Stereo", "",
                            {0.0f, 1.0f, 0.01f, 1.0f},
                            0.0f, 0.0f);
 }

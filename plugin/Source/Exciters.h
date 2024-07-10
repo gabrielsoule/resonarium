@@ -33,7 +33,7 @@ class Exciter
 {
 public:
 
-    Exciter(ResonatorVoice& voice) : voice(voice) {}
+    explicit Exciter(gin::ModVoice& voice) : voice(voice) {sampleRate = 44100; maximumBlockSize = 512;}
 
     virtual ~Exciter()
     = default;
@@ -61,7 +61,7 @@ public:
     }
 
     //A pointer to the parent Voice. No need to worry about leaking this, as the voice owns the Exciter.
-    ResonatorVoice& voice;
+    gin::ModVoice& voice;
     float sampleRate;
     float maximumBlockSize;
 };
@@ -73,7 +73,7 @@ public:
 class ImpulseExciter : public Exciter
 {
 public:
-    ImpulseExciter(ResonatorVoice& voice, ImpulseExciterParams params) : Exciter(voice), params(params), filter(params.filterParams, false){}
+    ImpulseExciter(gin::ModVoice& voice, ImpulseExciterParams params) : Exciter(voice), params(params), filter(&voice, params.filterParams, false){}
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
@@ -97,7 +97,7 @@ public:
 class NoiseExciter : public Exciter
 {
 public:
-    NoiseExciter(ResonatorVoice& voice, NoiseExciterParams params) : Exciter(voice), params(params), filter(params.filterParams, false){}
+    NoiseExciter(gin::ModVoice& voice, NoiseExciterParams params) : Exciter(voice), params(params), filter(&voice, params.filterParams, false){}
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
@@ -145,7 +145,7 @@ public:
         NOISE_BURST
     };
 
-    ImpulseTrainExciter(ResonatorVoice& voice, ImpulseTrainExciterParams params) : Exciter(voice), params(params), filter(params.filterParams, false){}
+    ImpulseTrainExciter(gin::ModVoice& voice, ImpulseTrainExciterParams params) : Exciter(voice), params(params), filter(&voice, params.filterParams, false){}
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;

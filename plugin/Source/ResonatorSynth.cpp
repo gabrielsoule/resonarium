@@ -26,13 +26,6 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
     {
         monoLFOs[i].setSampleRate(spec.sampleRate);
     }
-
-    DBG("Source ID: " + juce::String(processor.modSrcMonoLFO[0].id));
-    DBG("Destination ID: " + juce::String(gin::ModDstId(params.voiceParams.noiseExciterParams[0].filterParams.frequency->getModIndex()).id));
-    processor.modMatrix.setModDepth(processor.modSrcMonoLFO[0], gin::ModDstId(params.voiceParams.noiseExciterParams[0].filterParams.frequency->getModIndex()), 1.0f);
-    DBG("Size: " + juce::String(params.voiceParams.noiseExciterParams[0].filterParams.frequency->getModMatrix()->getModSources(params.voiceParams.noiseExciterParams[0].filterParams.frequency).size()));
-    DBG("Size: " + juce::String(processor.modMatrix.getModSources(params.voiceParams.noiseExciterParams[0].filterParams.frequency).size()));
-
 }
 
 void ResonatorSynth::updateParameters()

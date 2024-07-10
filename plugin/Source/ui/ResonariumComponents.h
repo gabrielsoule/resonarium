@@ -301,6 +301,16 @@ public:
     UIParams uiParams;
 };
 
+// class ADSRParamBox : public gin::ParamBox
+// {
+// public:
+//     ADSRParamBox(const juce::String& name, ResonariumProcessor& proc, ADSRParams adsrParams) :
+//     gin::ParamBox(name), adsrParams(adsrParams)
+//     {
+//         setName("env" + juce::String(adsr))
+//     }
+// };
+
 class LFOParamBox : public gin::ParamBox
 {
 public:
@@ -310,7 +320,7 @@ public:
         setName("lfo" + juce::String(lfoParams.index + 1));
         addEnable(lfoParams.enabled);
         juce::StringArray lfoNames;
-        for(int i = 0; i < NUM_LFOS; i++)
+        for (int i = 0; i < NUM_LFOS; i++)
         {
             lfoNames.add("LFO " + juce::String(i + 1));
         }
@@ -321,10 +331,11 @@ public:
         addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoLFO[lfoParams.index], false));
 
         addControl(r = new gin::Knob(lfoParams.rate), 0, 0);
-        addControl(b = new gin::Select(lfoParams.beat), 1, 0);
+        addControl(b = new gin::Select(lfoParams.beat), 0, 0);
+        addControl(new gin::Knob(lfoParams.stereo), 1, 0);
         addControl(new gin::Knob(lfoParams.depth, true), 2, 0);
-        addControl(new gin::Knob(lfoParams.fade, true), 3, 0);
-        addControl(new gin::Knob(lfoParams.delay));
+        // addControl(new gin::Knob(lfoParams.fade, true), 3, 0);
+        addControl(new gin::Knob(lfoParams.delay), 3, 0);
 
         addControl(new gin::Select(lfoParams.wave), 0, 1);
         addControl(new gin::Switch(lfoParams.sync), 1, 1);
@@ -363,13 +374,14 @@ public:
 class RandomLFOParamBox : public gin::ParamBox
 {
 public:
-    RandomLFOParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum, RandomLFOParams randomLfoParams) :
+    RandomLFOParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum,
+                      RandomLFOParams randomLfoParams) :
         gin::ParamBox(name), randomLfoParams(randomLfoParams)
     {
         setName("rnd" + juce::String(randomLfoParams.index + 1));
         addEnable(randomLfoParams.enabled);
         juce::StringArray lfoNames;
-        for(int i = 0; i < NUM_LFOS; i++)
+        for (int i = 0; i < NUM_LFOS; i++)
         {
             lfoNames.add("RAND " + juce::String(i + 1));
         }
@@ -383,13 +395,11 @@ public:
         addControl(b = new gin::Select(randomLfoParams.beat), 1, 0);
         addControl(new gin::Knob(randomLfoParams.depth, true), 2, 0);
         addControl(new gin::Knob(randomLfoParams.jitter), 3, 0);
+        addControl(new gin::Knob(randomLfoParams.stereo), 0, 1);
         addControl(new gin::Switch(randomLfoParams.sync), 1, 1);
         addControl(new gin::Knob(randomLfoParams.offset), 2, 1);
         addControl(new gin::Knob(randomLfoParams.smooth), 3, 1);
-
         watchParam(randomLfoParams.sync);
-
-
     }
 
     void resized() override

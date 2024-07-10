@@ -44,6 +44,7 @@ struct ADSRParams
     //we need to give each one a unique name for the host.
     juce::String prefix;
     gin::Parameter::Ptr
+        mode,
         attack,
         decay,
         sustain,
@@ -179,7 +180,8 @@ struct LFOParams
         offset,
         phase,
         fade,
-        delay;
+        delay,
+        stereo;
 
     LFOParams() = default;
 
@@ -197,7 +199,8 @@ struct RandomLFOParams
         depth,
         offset,
         smooth,
-        jitter;
+        jitter,
+        stereo;
 
     RandomLFOParams() = default;
 
