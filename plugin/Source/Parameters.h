@@ -253,6 +253,7 @@ struct UIParams
     gin::Parameter::Ptr resonatorBankSelect;
     gin::Parameter::Ptr lfoSelect;
     gin::Parameter::Ptr randomLfoSelect;
+    gin::Parameter::Ptr bypassResonators;
 
     UIParams() = default;
 

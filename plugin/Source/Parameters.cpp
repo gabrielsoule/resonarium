@@ -485,7 +485,6 @@ void SynthParams::setup(ResonariumProcessor& p)
         //where one is monophonic and one is polyphonic
         voiceParams.lfoParams[i] = lfoParams[i];
     }
-
 }
 
 void UIParams::setup(ResonariumProcessor& p)
@@ -499,6 +498,10 @@ void UIParams::setup(ResonariumProcessor& p)
                               0.0f, gin::SmoothingType::linear);
 
     randomLfoSelect = p.addIntParam("uiActiveRandLfo", "RAND", "", "",
-                              {0.0f, NUM_LFOS - 1, 1.0f, 1.0f},
-                              0.0f, gin::SmoothingType::linear);
+                                    {0.0f, NUM_LFOS - 1, 1.0f, 1.0f},
+                                    0.0f, gin::SmoothingType::linear);
+
+    bypassResonators = p.addIntParam("uiBypassResonators", "BypassResonators", "", "",
+                                     {0.0f, 1.0f, 1.0f, 1.0f},
+                                     0.0f, 0.0f);
 }

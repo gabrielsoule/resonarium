@@ -1,8 +1,6 @@
 #include "ResonatorVoice.h"
 #include "PluginProcessor.h"
 
-bool BYPASS_RESONATORS = false; //testing flag to listen to the exciter signal only
-
 ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : processor(p)
 {
     frequency = 440.0f;
@@ -101,7 +99,9 @@ void ResonatorVoice::noteStarted()
     silenceCount = 0;
     numBlocksSinceNoteOn = 0;
 
-    updateParameters();
+    updateParameters ();
+    snapParams();
+    updateParameters ();
     snapParams();
 
     for (auto* exciter : exciters)
@@ -168,6 +168,8 @@ void ResonatorVoice::updateParameters()
     {
         exciter->updateParameters();
     }
+
+    bypassResonators = processor.uiParams.bypassResonators->isOn();
 }
 
 void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
@@ -195,7 +197,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
         exciter->process(exciterBlock);
     }
 
-    if (!BYPASS_RESONATORS)
+    if (!bypassResonators)
     {
         for (auto* resonatorBank : resonatorBanks)
         {
@@ -208,7 +210,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     }
     else
     {
-        //add the audioblock to the output buffer
+        //add the raw exciter output to the output buffer without the DC blocker
         outputBlock.add(exciterBlock);
     }
 

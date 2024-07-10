@@ -88,6 +88,9 @@ public:
     int impulsesRemaining;
     juce::AudioBuffer<float> scratchBuffer;
     juce::dsp::AudioBlock<float> scratchBlock;
+    float level;
+    int thickness;
+    bool polarityFlag = false;
 };
 
 /**
@@ -113,7 +116,6 @@ public:
     MultiFilter filter;
     juce::AudioBuffer<float> scratchBuffer;
     juce::dsp::AudioBlock<float> scratchBlock;
-
 };
 
 /**

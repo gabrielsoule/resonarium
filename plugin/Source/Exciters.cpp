@@ -20,11 +20,12 @@ void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block)
     if(!params.enabled->isOn()) return;
 
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
-    auto gain = voice.getValue(params.level);
+    auto adjustedGain =level / static_cast<float>(thickness);
     const int impulsesThisBlock = juce::jmin<int>(truncatedBlock.getNumSamples(), impulsesRemaining);
     for (int i = 0; i < impulsesThisBlock; i++)
     {
-        truncatedBlock.setSample(0, i, gain * 2);
+        auto sample = (polarityFlag) ? adjustedGain : -adjustedGain;
+        truncatedBlock.setSample(0, i, sample);
     }
 
     impulsesRemaining -= impulsesThisBlock;
@@ -44,7 +45,7 @@ void ImpulseExciter::reset()
 
 void ImpulseExciter::noteStarted()
 {
-    impulsesRemaining = voice.getValue(params.thickness);
+    impulsesRemaining = thickness;
 }
 
 void ImpulseExciter::noteStopped(bool avoidTailOff)
@@ -54,6 +55,8 @@ void ImpulseExciter::noteStopped(bool avoidTailOff)
 void ImpulseExciter::updateParameters()
 {
     if(!params.enabled->isOn()) return;
+    thickness = voice.getValue(params.thickness);
+    level = voice.getValue(params.level);
     filter.updateParameters();
 }
 

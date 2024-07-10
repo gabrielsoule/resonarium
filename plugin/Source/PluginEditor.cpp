@@ -75,7 +75,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
         ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_SMALL_HEIGHT, 400,
                        PARAM_BOX_SMALL_HEIGHT);
     }
-    // Melatonin Inspector -- don't modify
+
     #if JUCE_DEBUG
     addAndMakeVisible(inspectButton);
     inspectButton.onClick = [&]
@@ -88,7 +88,24 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
         inspector->setVisible(true);
     };
-    #endif
+    addAndMakeVisible(bypassResonatorsButton);
+    bypassResonatorsButton.setColour(juce::TextButton::textColourOnId, juce::Colours::green);
+    bypassResonatorsButton.setToggleable(true);
+    bypassResonatorsButton.setClickingTogglesState(true);
+    bypassResonatorsButton.onClick = [&]
+    {
+        if (!uiParams.bypassResonators->isOn())
+        {
+            uiParams.bypassResonators->setValue(1.0f);
+            DBG("Bypassing resonators!");
+        }
+        else
+        {
+            uiParams.bypassResonators->setValue(0.0f);
+            DBG("No longer bypassing resonators!");
+        }
+    };
+#endif
 }
 
 ResonariumEditor::~ResonariumEditor()
@@ -97,15 +114,16 @@ ResonariumEditor::~ResonariumEditor()
 
 void ResonariumEditor::paint(juce::Graphics& g)
 {
-    auto area = getLocalBounds();
-    g.setFont(16.0f);
-    this->titleBar.programName.setColour(juce::Label::textColourId, juce::Colours::purple);
+    // auto area = getLocalBounds();
+    // g.setFont(16.0f);
+    // this->titleBar.programName.setColour(juce::Label::textColourId, juce::Colours::purple);
 }
 
 void ResonariumEditor::resized()
 {
 #if JUCE_DEBUG
     inspectButton.setBounds(50, 0, 100, 40);
+    bypassResonatorsButton.setBounds(150, 0, 150, 40);
 #endif
     ProcessorEditor::resized();
     for (auto* c : this->getChildren())

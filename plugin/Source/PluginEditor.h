@@ -28,6 +28,9 @@ private:
     std::vector<SafePointer<RandomLFOParamBox>> randomLfoParamBoxes;
 
     std::unique_ptr<melatonin::Inspector> inspector;
-    juce::TextButton inspectButton{"Inspect the UI"};
+
+    //debug buttons, invisible on a release build
+    juce::TextButton inspectButton{"INSPECT UI"};
+    juce::TextButton bypassResonatorsButton{"BYPASS RESONATORS"};
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ResonariumEditor)
 };
