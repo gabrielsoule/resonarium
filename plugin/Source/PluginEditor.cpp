@@ -76,6 +76,18 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                        PARAM_BOX_SMALL_HEIGHT);
     }
 
+    for(int i = 0; i < NUM_MSEGS; i++)
+    {
+        SafePointer<MSEGParamBox> ptr = new MSEGParamBox(
+            "MSEG " + std::to_string(i + 1), proc, proc.synth.params.msegParams[i]);
+        msegParamBoxes.push_back(ptr);
+        addAndMakeVisible(ptr);
+        ptr->setBounds(EXCITER_BOX_WIDTH + 1 + 400 + 1, 40 + RESONATOR_BANK_BOX_HEIGHT, 400, PARAM_BOX_MEDIUM_HEIGHT);
+    }
+
+    usage.setBounds(WINDOW_WIDTH - 150, 10, 110, 20);
+    addAndMakeVisible(usage);
+
     #if JUCE_DEBUG
     addAndMakeVisible(inspectButton);
     inspectButton.onClick = [&]
@@ -105,6 +117,9 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
             DBG("No longer bypassing resonators!");
         }
     };
+
+    this->ResonariumEditor::resized();
+
 #endif
 }
 

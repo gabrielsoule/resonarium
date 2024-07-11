@@ -405,6 +405,7 @@ void LFOParams::setup(ResonariumProcessor& p, int index)
 void RandomLFOParams::setup(ResonariumProcessor& p, int index)
 {
     this->index = index;
+    seed = juce::Random::getSystemRandom().nextInt();
     juce::String prefix = "rnd" + std::to_string(index);
     auto notes = gin::NoteDuration::getNoteDurations();
 
@@ -440,9 +441,58 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
                            {0.0f, 1.0f, 0.01f, 1.0f},
                            0.0f, 0.0f);
 
+    jitter = p.addExtParam(prefix + "chaos", prefix + "chaos", "Chaos", "%",
+                           {0.0f, 1.0f, 0.01f, 1.0f},
+                           0.0f, 0.0f);
+
     stereo = p.addExtParam(prefix + "stereo", prefix + "Stereo", "Stereo", "",
                            {0.0f, 1.0f, 0.01f, 1.0f},
                            0.0f, 0.0f);
+}
+
+void MSEGParams::setup(ResonariumProcessor& p, int index)
+{
+    this->index = index;
+    juce::String prefix = "mseg" + std::to_string(index);
+    enabled = p.addExtParam(prefix + "enable", "MSEG" + std::to_string(index) + "Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, enableTextFunction);
+
+    sync = p.addIntParam(prefix + "sync", "MSEG" + std::to_string(index) + "Sync", "Sync", "",
+                         {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                         0.0f, enableTextFunction);
+
+    rate = p.addExtParam(prefix + "rate", "MSEG" + std::to_string(index) + "Rate", "Rate", "Hz",
+                         {0.0f, 50.0f, 0.0f, 0.3f},
+                         10.0f, 0.0f);
+
+    beat = p.addIntParam(prefix + "beat", "MSEG" + std::to_string(index) + "Beat", "Beat", "",
+                         {0.0f, 13.0f, 1.0f, 1.0f},
+                         13.0f, 0.0f, durationTextFunction);
+
+    depth = p.addExtParam(prefix + "depth", "MSEG" + std::to_string(index) + "Depth", "Depth", "",
+                          {-1.0f, 1.0f, 0.0f, 1.0f},
+                          1.0f, 0.0f);
+
+    offset = p.addExtParam(prefix + "offset", "MSEG" + std::to_string(index) + "Offset", "Offset", "",
+                           {-1.0f, 1.0f, 0.0f, 1.0f},
+                           0.0f, 0.0f);
+
+    phase = p.addExtParam(prefix + "phase", "MSEG" + std::to_string(index) + "Phase", "Phase", "",
+                          {-1.0f, 1.0f, 0.0f, 1.0f},
+                          0.0f, 0.0f);
+
+    xgrid = p.addExtParam(prefix + "xgrid", "MSEG" + std::to_string(index) + "XGrid", "XGrid", "",
+                          {2.0f, 32.0f, 1.0f, 1.0f},
+                          2.0f, 0.0f);
+
+    ygrid = p.addExtParam(prefix + "ygrid", "MSEG" + std::to_string(index) + "YGrid", "YGrid", "",
+                          {2.0f, 32.0f, 1.0f, 1.0f},
+                          2.0f, 0.0f);
+
+    loop = p.addIntParam(prefix + "loop", "MSEG" + std::to_string(index) + "Loop", "Loop", "",
+                         {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                         0.0f, enableTextFunction);
 }
 
 void VoiceParams::setup(ResonariumProcessor& p)
@@ -485,6 +535,11 @@ void SynthParams::setup(ResonariumProcessor& p)
         //where one is monophonic and one is polyphonic
         voiceParams.lfoParams[i] = lfoParams[i];
     }
+
+    for(int i = 0; i < NUM_MSEGS; i++)
+    {
+        msegParams[i].setup(p, i);
+    }
 }
 
 void UIParams::setup(ResonariumProcessor& p)
@@ -500,6 +555,10 @@ void UIParams::setup(ResonariumProcessor& p)
     randomLfoSelect = p.addIntParam("uiActiveRandLfo", "RAND", "", "",
                                     {0.0f, NUM_LFOS - 1, 1.0f, 1.0f},
                                     0.0f, gin::SmoothingType::linear);
+
+    msegSelect = p.addIntParam("uiActiveMSEG", "MSEG", "", "",
+                               {0.0f, NUM_MSEGS - 1, 1.0f, 1.0f},
+                               0.0f, gin::SmoothingType::linear);
 
     bypassResonators = p.addIntParam("uiBypassResonators", "BypassResonators", "", "",
                                      {0.0f, 1.0f, 1.0f, 1.0f},

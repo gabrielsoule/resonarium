@@ -7,6 +7,7 @@
 #include <JuceHeader.h>
 #include "../Parameters.h"
 #include "../defines.h"
+#include "../ResonatorVoice.h"
 
 /**
  * Component containing a vertical stack of controls corresponding to a single waveguide resonator.
@@ -315,8 +316,9 @@ class LFOParamBox : public gin::ParamBox
 {
 public:
     LFOParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum, LFOParams lfoParams) :
-        gin::ParamBox(name), lfoParams(lfoParams)
+        gin::ParamBox(name), proc(proc), lfoParams(lfoParams)
     {
+        jassert(lfoParams.index != -1);
         setName("lfo" + juce::String(lfoParams.index + 1));
         addEnable(lfoParams.enabled);
         juce::StringArray lfoNames;
@@ -329,6 +331,7 @@ public:
 
         // addModSource (new gin::ModulationSourceButton (proc.modMatrix, proc.modSrcLfo[idx], true));
         addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoLFO[lfoParams.index], false));
+        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcPolyLFO[lfoParams.index], true));
 
         addControl(r = new gin::Knob(lfoParams.rate), 0, 0);
         addControl(b = new gin::Select(lfoParams.beat), 0, 0);
@@ -342,14 +345,31 @@ public:
         addControl(new gin::Knob(lfoParams.phase, true), 2, 1);
         addControl(new gin::Knob(lfoParams.offset, true), 3, 1);
 
-        auto l = new gin::LFOComponent();
-        l->setParams(lfoParams.wave, lfoParams.sync, lfoParams.rate, lfoParams.beat, lfoParams.depth, lfoParams.offset,
+        visualizer = new gin::LFOComponent();
+        visualizer->setParams(lfoParams.wave, lfoParams.sync, lfoParams.rate, lfoParams.beat, lfoParams.depth, lfoParams.offset,
                      lfoParams.phase, lfoParams.enabled);
-        addControl(l, 4, 0, 2, 1);
+        jassert(lfoParams.enabled != nullptr);
+        visualizer->phaseCallback = [this, lfoParams]
+        {
+            std::vector<float> res;
+
+            if (lfoParams.enabled->isOn())
+            {
+                res.push_back (this->proc.synth.monoLFOs[lfoParams.index].getCurrentPhase());
+
+                for (auto v : this->proc.synth.getActiveVoices())
+                    if (auto voice = dynamic_cast<ResonatorVoice*> (v))
+                        res.push_back (voice->polyLFOs[lfoParams.index].getCurrentPhase());
+            }
+
+            return res;
+        };
+        addControl(visualizer);
         watchParam(lfoParams.sync);
     }
 
-    gin::LFOComponent visualizer;
+    ResonariumProcessor& proc;
+    gin::LFOComponent* visualizer;
     LFOParams lfoParams;
     gin::ParamComponent::Ptr r = nullptr;
     gin::ParamComponent::Ptr b = nullptr;
@@ -357,6 +377,7 @@ public:
     void resized() override
     {
         ParamBox::resized();
+        visualizer->setBounds(230, 40, 150, 110);
     }
 
     void paramChanged() override
@@ -421,6 +442,48 @@ public:
     RandomLFOParams randomLfoParams;
     gin::ParamComponent::Ptr r = nullptr;
     gin::ParamComponent::Ptr b = nullptr;
+};
+
+class MSEGParamBox : public gin::ParamBox
+{
+public:
+    MSEGParamBox(const juce::String& name, ResonariumProcessor& proc, MSEGParams msegParams) : gin::ParamBox(name)
+    {
+        setName("mseg" + juce::String(msegParams.index + 1));
+
+        addEnable(msegParams.enabled);
+        juce::StringArray lfoNames;
+        for (int i = 0; i < NUM_LFOS; i++)
+        {
+            lfoNames.add("MSEG " + juce::String(i + 1));
+        }
+        addHeader(lfoNames, msegParams.index, proc.uiParams.msegSelect);
+        headerTabButtonWidth = 75;
+
+        msegComponent = new gin::MSEGComponent(proc.synth.msegData.getReference(msegParams.index));
+        msegComponent->setParams(msegParams.sync, msegParams.rate, msegParams.beat, msegParams.depth, msegParams.offset,
+                                 msegParams.phase, msegParams.enabled, msegParams.xgrid, msegParams.ygrid,
+                                 msegParams.loop);
+        addControl(msegComponent, 0, 0, 4, 2);
+        msegComponent->setEditable(true);
+    }
+
+    gin::MSEGComponent* msegComponent;
+};
+
+class TestParamBox : public gin::ParamBox
+{
+public:
+    TestParamBox(const juce::String& name, ResonariumProcessor& proc) : gin::ParamBox(name), mseg(data)
+    {
+        msegComponent = new gin::MSEGComponent(data);
+        msegComponent->setBounds(50, 50, 300, 200);
+        addControl(msegComponent);
+    }
+
+    gin::MSEGComponent* msegComponent;
+    gin::MSEG::Data data;
+    gin::MSEG mseg;
 };
 
 

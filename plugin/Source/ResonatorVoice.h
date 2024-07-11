@@ -30,11 +30,12 @@ public:
     void noteKeyStateChanged() override;
     // void setCurrentSampleRate(double newRate) override;
     void prepare(const juce::dsp::ProcessSpec& spec);
-    void updateParameters();
+    void updateParameters(int numSamples);
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
     bool isVoiceActive() override;
 
-    ResonariumProcessor& processor;
+    ResonariumProcessor& p;
+    VoiceParams params;
     float frequency;
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote;
@@ -48,6 +49,7 @@ public:
     juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to output
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlocker;
     juce::OwnedArray<Exciter> exciters;
+    gin::LFO polyLFOs[NUM_LFOS];
 
     bool bypassResonators = false;
 };

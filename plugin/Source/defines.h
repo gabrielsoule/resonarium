@@ -22,6 +22,7 @@
 #define NUM_LFOS 4
 #define NUM_ENVELOPES 4
 #define NUM_RANDOMS 4
+#define NUM_MSEGS 4
 
 //misc. UI stuff
 #define WINDOW_WIDTH 1300

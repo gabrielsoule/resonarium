@@ -26,8 +26,8 @@ struct MultiFilterParams
     //we need to give each one a unique name for the host.
     juce::String prefix;
     gin::Parameter::Ptr
-        type = nullptr,
-        frequency = nullptr,
+        type,
+        frequency,
         resonance = nullptr;
 
     MultiFilterParams() = default;
@@ -48,7 +48,7 @@ struct ADSRParams
         attack,
         decay,
         sustain,
-        release;
+        release = nullptr;
 
     ADSRParams() = default;
 
@@ -78,7 +78,7 @@ struct ResonatorParams
         eksFilterBrightness, //for EKS filter mode only
         svfFilterMode, //for SVF filter mode only
         gain,
-        testParameter;
+        testParameter = nullptr;
 
     ResonatorParams() = default;
 
@@ -95,7 +95,7 @@ struct WaveguideResonatorBankParams
     gin::Parameter::Ptr
         noteOffset,
         couplingMode,
-        outputGain;
+        outputGain = nullptr;
 
     WaveguideResonatorBankParams() = default;
 
@@ -118,13 +118,13 @@ struct ModalResonatorBankParams
 
 struct ImpulseExciterParams
 {
-    int index;
+    int index = -1;
     MultiFilterParams filterParams;
     gin::Parameter::Ptr
         enabled,
         thickness,
         pickPosition,
-        level;
+        level = nullptr;
 
     ImpulseExciterParams() = default;
 
@@ -133,14 +133,14 @@ struct ImpulseExciterParams
 
 struct NoiseExciterParams
 {
-    int index;
+    int index = -1;
     MultiFilterParams filterParams;
     ADSRParams adsrParams;
     gin::Parameter::Ptr
         enabled,
         type,
         density,
-        level;
+        level = nullptr;
 
     NoiseExciterParams() = default;
 
@@ -149,7 +149,7 @@ struct NoiseExciterParams
 
 struct ImpulseTrainExciterParams
 {
-    int index;
+    int index = -1;
     MultiFilterParams filterParams;
     ADSRParams adsrParams;
     gin::Parameter::Ptr
@@ -159,7 +159,7 @@ struct ImpulseTrainExciterParams
         sync,
         entropy,
         character,
-        level;
+        level = nullptr;
 
     ImpulseTrainExciterParams() = default;
 
@@ -168,7 +168,7 @@ struct ImpulseTrainExciterParams
 
 struct LFOParams
 {
-    int index;
+    int index = -1;
     gin::Parameter::Ptr
         enabled,
         sync,
@@ -181,7 +181,7 @@ struct LFOParams
         phase,
         fade,
         delay,
-        stereo;
+        stereo = nullptr;
 
     LFOParams() = default;
 
@@ -190,7 +190,8 @@ struct LFOParams
 
 struct RandomLFOParams
 {
-    int index;
+    int index = -1;
+    int seed = 42;
     gin::Parameter::Ptr
         enabled,
         sync,
@@ -200,9 +201,30 @@ struct RandomLFOParams
         offset,
         smooth,
         jitter,
-        stereo;
+        chaos,
+        stereo = nullptr;
 
     RandomLFOParams() = default;
+
+    void setup(ResonariumProcessor& p, int index);
+};
+
+struct MSEGParams
+{
+    int index = -1;
+    gin::Parameter::Ptr
+        enabled,
+        sync,
+        rate,
+        beat,
+        depth,
+        offset,
+        phase,
+        xgrid,
+        ygrid,
+        loop = nullptr;
+
+    MSEGParams() = default;
 
     void setup(ResonariumProcessor& p, int index);
 };
@@ -242,6 +264,7 @@ struct SynthParams
     VoiceParams voiceParams;
     LFOParams lfoParams[NUM_LFOS];
     RandomLFOParams randomLfoParams[NUM_LFOS];
+    MSEGParams msegParams[NUM_MSEGS];
 
     SynthParams() = default;
 
@@ -253,6 +276,7 @@ struct UIParams
     gin::Parameter::Ptr resonatorBankSelect;
     gin::Parameter::Ptr lfoSelect;
     gin::Parameter::Ptr randomLfoSelect;
+    gin::Parameter::Ptr msegSelect;
     gin::Parameter::Ptr bypassResonators;
 
     UIParams() = default;

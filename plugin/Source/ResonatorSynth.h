@@ -21,6 +21,8 @@ public:
     void renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     ResonariumProcessor& processor;
     gin::LFO monoLFOs[NUM_LFOS];
+    juce::Array<gin::MSEG> monoMSEGs;
+    juce::Array<gin::MSEG::Data> msegData;
     SynthParams params;
 
     int currentBlockSize = -1;

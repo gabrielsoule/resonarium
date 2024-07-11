@@ -33,9 +33,12 @@ public:
         modSrcPitchbend,
         modSrcNote,
         modSrcVelocity;
-    juce::Array<gin::ModSrcId> modSrcMonoLFO;
-    juce::Array<gin::ModSrcId> modSrcMonoRND;
-    juce::Array<gin::ModSrcId> modSrcPolyENV;
+    juce::Array<gin::ModSrcId>
+        modSrcMonoLFO,
+        modSrcPolyLFO,
+        modSrcMonoRND,
+        modSrcPolyENV,
+        modSrcMonoMSEG;
     //contains all the parameters that a voice needs modulated polyphonically (which is almost all of 'em)
     UIParams uiParams;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ResonariumProcessor)

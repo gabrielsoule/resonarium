@@ -1,7 +1,7 @@
 #include "ResonatorVoice.h"
 #include "PluginProcessor.h"
 
-ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : processor(p)
+ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : p(p), params(params)
 {
     frequency = 440.0f;
     int resonatorBankIndex = 0;
@@ -66,6 +66,11 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
         resonatorBank->prepare(spec);
     }
 
+    for (auto& l : polyLFOs)
+    {
+        l.setSampleRate(spec.sampleRate);
+    }
+
     juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients =
         new juce::dsp::IIR::Coefficients<float>(1, -1, 1, -0.995f);
     dcBlocker.state = dcBlockerCoefficients;
@@ -91,17 +96,17 @@ void ResonatorVoice::noteStarted()
         noteSmoother.setValueUnsmoothed(note.initialNote / 127.0f);
     }
 
-    processor.modMatrix.setPolyValue(*this, processor.modSrcVelocity, note.noteOnVelocity.asUnsignedFloat());
-    processor.modMatrix.setPolyValue(*this, processor.modSrcTimbre, note.initialTimbre.asUnsignedFloat());
-    processor.modMatrix.setPolyValue(*this, processor.modSrcPressure, note.pressure.asUnsignedFloat());
+    p.modMatrix.setPolyValue(*this, p.modSrcVelocity, note.noteOnVelocity.asUnsignedFloat());
+    p.modMatrix.setPolyValue(*this, p.modSrcTimbre, note.initialTimbre.asUnsignedFloat());
+    p.modMatrix.setPolyValue(*this, p.modSrcPressure, note.pressure.asUnsignedFloat());
 
     killIfSilent = false;
     silenceCount = 0;
     numBlocksSinceNoteOn = 0;
 
-    updateParameters ();
+    updateParameters(0);
     snapParams();
-    updateParameters ();
+    updateParameters(0);
     snapParams();
 
     for (auto* exciter : exciters)
@@ -113,9 +118,20 @@ void ResonatorVoice::noteStarted()
         resonatorBank->reset();
     }
 
+    for (auto& lfo : polyLFOs)
+    {
+        lfo.reset();
+    }
+
     for (auto* exciter : exciters)
     {
         exciter->noteStarted();
+    }
+
+    for (int i = 0; i < NUM_LFOS; ++i)
+    {
+        polyLFOs[i].noteOn(
+            params.lfoParams[i].retrig->getBoolValue() ? -1 : juce::Random::getSystemRandom().nextFloat());
     }
 
     dcBlocker.reset();
@@ -151,13 +167,44 @@ bool ResonatorVoice::isVoiceActive()
     return isActive();
 }
 
-void ResonatorVoice::updateParameters()
+void ResonatorVoice::updateParameters(int numSamples)
 {
     auto note = getCurrentlyPlayingNote();
-    processor.modMatrix.setPolyValue(*this, processor.modSrcNote, note.initialNote / 127.0f);
+    p.modMatrix.setPolyValue(*this, p.modSrcNote, note.initialNote / 127.0f);
     currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
+
+    for (int i = 0; i < NUM_LFOS; i++)
+    {
+        if (params.lfoParams[i].enabled->isOn())
+        {
+            gin::LFO::Parameters internalParams;
+
+            float freq = 0;
+            if (params.lfoParams[i].sync->getProcValue() > 0.0f)
+                freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
+                    toSeconds(p.getPlayHead());
+            else
+                freq = p.modMatrix.getValue(params.lfoParams[i].rate);
+
+            internalParams.waveShape = (gin::LFO::WaveShape)int(params.lfoParams[i].wave->getProcValue());
+            internalParams.frequency = freq;
+            internalParams.phase = p.modMatrix.getValue(params.lfoParams[i].phase);
+            internalParams.offset = p.modMatrix.getValue(params.lfoParams[i].offset);
+            internalParams.depth = p.modMatrix.getValue(params.lfoParams[i].depth);
+            internalParams.delay = 0;
+            internalParams.fade = 0;
+
+            polyLFOs[i].setParameters(internalParams);
+            polyLFOs[i].process(numSamples);
+            p.modMatrix.setPolyValue(*this, p.modSrcPolyLFO[i], polyLFOs[i].getOutput());
+        }
+        else
+        {
+            p.modMatrix.setPolyValue(*this, p.modSrcPolyLFO[i], 0);
+        }
+    }
 
     for (auto* resonatorBank : resonatorBanks)
     {
@@ -169,13 +216,13 @@ void ResonatorVoice::updateParameters()
         exciter->updateParameters();
     }
 
-    bypassResonators = processor.uiParams.bypassResonators->isOn();
+    bypassResonators = p.uiParams.bypassResonators->isOn();
 }
 
 void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
     //reminder: the output buffer/block is SHARED between voices and may NOT be empty; must ADD only
-    updateParameters(); //important!
+    updateParameters(numSamples); //important!
 
     //this block holds the exciter samples. The exciters fill it, then is routed to the resonator banks.
     juce::dsp::AudioBlock<float> exciterBlock = juce::dsp::AudioBlock<float>(exciterBuffer)
@@ -246,13 +293,13 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 void ResonatorVoice::notePressureChanged()
 {
     auto note = getCurrentlyPlayingNote();
-    processor.modMatrix.setPolyValue(*this, processor.modSrcPressure, note.pressure.asUnsignedFloat());
+    p.modMatrix.setPolyValue(*this, p.modSrcPressure, note.pressure.asUnsignedFloat());
 }
 
 void ResonatorVoice::noteTimbreChanged()
 {
     auto note = getCurrentlyPlayingNote();
-    processor.modMatrix.setPolyValue(*this, processor.modSrcTimbre, note.timbre.asUnsignedFloat());
+    p.modMatrix.setPolyValue(*this, p.modSrcTimbre, note.timbre.asUnsignedFloat());
 }
 
 void ResonatorVoice::notePitchbendChanged()

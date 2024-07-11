@@ -26,8 +26,10 @@ private:
     std::vector<SafePointer<ImpulseTrainExciterParamBox>> impulseTrainExciterParamBoxes;
     std::vector<SafePointer<LFOParamBox>> lfoParamBoxes;
     std::vector<SafePointer<RandomLFOParamBox>> randomLfoParamBoxes;
+    std::vector<SafePointer<MSEGParamBox>> msegParamBoxes;
 
     std::unique_ptr<melatonin::Inspector> inspector;
+    gin::SynthesiserUsage usage { proc.synth };
 
     //debug buttons, invisible on a release build
     juce::TextButton inspectButton{"INSPECT UI"};
