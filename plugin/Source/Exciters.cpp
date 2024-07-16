@@ -17,6 +17,7 @@ void ImpulseExciter::nextSample()
 
 void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block)
 {
+    jassert(block.getNumChannels() == 2);
     if(!params.enabled->isOn()) return;
 
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
@@ -26,6 +27,7 @@ void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block)
     {
         auto sample = (polarityFlag) ? adjustedGain : -adjustedGain;
         truncatedBlock.setSample(0, i, sample);
+        truncatedBlock.setSample(1, i, sample);
     }
 
     impulsesRemaining -= impulsesThisBlock;
@@ -76,15 +78,18 @@ void NoiseExciter::nextSample()
 
 void NoiseExciter::process(juce::dsp::AudioBlock<float>& block)
 {
+    jassert(block.getNumChannels() == 2);
     if(!params.enabled->isOn()) return;
 
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
     auto gain = voice.getValue(params.level);
     for (int i = 0; i < truncatedBlock.getNumSamples(); i++)
     {
-        truncatedBlock.setSample(0, i, noise.nextValue() * gain * envelope.process());
-    }
+        const float sample = noise.nextValue() * gain * envelope.process();
+        truncatedBlock.setSample(0, i, sample);
+        truncatedBlock.setSample(1, i, sample);
 
+    }
     filter.process(truncatedBlock);
     block.add(truncatedBlock);
 }
@@ -157,11 +162,13 @@ void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block)
             if (impulsesLeft > 0)
             {
                 truncatedBlock.setSample(0, i, envelopeSample);
+                truncatedBlock.setSample(1, i, envelopeSample);
                 impulsesLeft--;
             }
             else
             {
                 truncatedBlock.setSample(0, i, 0.0f);
+                truncatedBlock.setSample(1, i, 0.0f);
             }
 
             samplesSinceLastImpulse--;
@@ -175,11 +182,14 @@ void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block)
             float r = rng.nextFloat();
             if (r < staticProbability)
             {
-                truncatedBlock.setSample(0, i, noise.nextValue() * envelopeSample);
+                const float sample  = noise.nextValue() * envelopeSample;
+                truncatedBlock.setSample(0, i, sample);
+                truncatedBlock.setSample(1, i, sample);
             }
             else
             {
                 truncatedBlock.setSample(0, i, 0.0f);
+                truncatedBlock.setSample(1, i, 0.0f);
             }
         }
         else if (mode == PULSE)

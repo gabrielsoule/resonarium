@@ -26,8 +26,6 @@ public:
     float frequencyOffsets[NUM_MODAL_RESONATORS];
     float gain[NUM_MODAL_RESONATORS];
     float decay[NUM_MODAL_RESONATORS];
-
-    // static std::array<float, 6> makeResonatorCoefficients(float sampleRate, float frequency, float t60);
 };
 
 

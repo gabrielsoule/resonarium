@@ -30,10 +30,8 @@ void WaveguideFilter::updateParameters()
     if (type == biquad)
     {
         biquadFilter.setType(static_cast<MultiFilter::Type>(static_cast<int>(params.biquadFilterType->getProcValue())));
-        // biquadFilter.setParameters(voice.getValue(params.decayFilterCutoff), voice.getValue(params.decayFilterResonance));
         biquadFilter.setParameters(voice.getValue(params.decayFilterCutoff), 1);
         biquadFilter.updateParameters();
-        //print the biquadFilter.filterL.coefficients->coefficients;
         DBG("Coefficients");
         for(auto c : biquadFilter.filterL.coefficients->coefficients)
         {
