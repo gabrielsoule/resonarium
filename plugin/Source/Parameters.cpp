@@ -62,6 +62,19 @@ static juce::String impulseTrainExciterModeTextFunction(const gin::Parameter&, f
     }
 }
 
+static juce::String randomLFOModeTextFunction(const gin::Parameter&, float v)
+{
+    switch (int(v))
+    {
+    case 0: return "Perlin";
+    case 1: return "Step";
+    case 2: return "S&H";
+    default:
+        jassertfalse;
+        return {};
+    }
+}
+
 static juce::String enableTextFunction(const gin::Parameter&, float v)
 {
     return v > 0.0f ? "On" : "Off";
@@ -321,7 +334,7 @@ void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
                                {0.0f, 3.0f, 1.0f, 1.0f}, 0.0f,
                                0.0f, impulseTrainExciterModeTextFunction);
 
-    this->speed = p.addExtParam(prefix + "speed", prefix + " Speed", "Speed", "Hz",
+    this->rate = p.addExtParam(prefix + "rate", prefix + " Rate", "Rate", "Hz",
                                 {0.1f, 1000.0f, 0.01f, 0.4f}, 1.0f,
                                 0.0f);
 
@@ -371,7 +384,7 @@ void LFOParams::setup(ResonariumProcessor& p, int index)
 
     rate = p.addExtParam(prefix + "rate", prefix + "Rate", "Rate", "Hz",
                          {0.0f, 50.0f, 0.0f, 0.3f},
-                         10.0f, 0.0f);
+                         1.0f, 0.0f);
 
     beat = p.addIntParam(prefix + "beat", prefix + "Beat", "Beat", "",
                          {0.0f, float(notes.size() - 1), 1.0f, 1.0f},
@@ -413,13 +426,17 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                             0.0f, enableTextFunction);
 
+    mode = p.addIntParam(prefix + "mode", prefix + "Mode", "Mode", "",
+                         {0.0f, 2.0f, 1.0f, 1.0f}, 0.0f,
+                         0.0f, randomLFOModeTextFunction);
+
     sync = p.addIntParam(prefix + "sync", prefix + "Sync", "Sync", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                          0.0f, enableTextFunction);
 
     rate = p.addExtParam(prefix + "rate", prefix + "Rate", "Rate", "Hz",
                          {0.0f, 50.0f, 0.0f, 0.3f},
-                         10.0f, 0.0f);
+                         1.0f, 0.0f);
 
     beat = p.addIntParam(prefix + "beat", prefix + "Beat", "Beat", "",
                          {0.0f, float(notes.size() - 1), 1.0f, 1.0f},
@@ -441,9 +458,9 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
                            {0.0f, 1.0f, 0.01f, 1.0f},
                            0.0f, 0.0f);
 
-    jitter = p.addExtParam(prefix + "chaos", prefix + "chaos", "Chaos", "%",
+    chaos = p.addExtParam(prefix + "chaos", prefix + "chaos", "Chaos", "%",
                            {0.0f, 1.0f, 0.01f, 1.0f},
-                           0.0f, 0.0f);
+                           1.0f, 0.0f);
 
     stereo = p.addExtParam(prefix + "stereo", prefix + "Stereo", "Stereo", "",
                            {0.0f, 1.0f, 0.01f, 1.0f},
@@ -534,6 +551,7 @@ void SynthParams::setup(ResonariumProcessor& p)
         //the result is that each LFO is actually two LFOs under the hood,
         //where one is monophonic and one is polyphonic
         voiceParams.lfoParams[i] = lfoParams[i];
+        voiceParams.randomLfoParams[i] = randomLfoParams[i];
     }
 
     for(int i = 0; i < NUM_MSEGS; i++)

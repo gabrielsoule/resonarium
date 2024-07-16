@@ -9,6 +9,7 @@
 #include "defines.h"
 #include <JuceHeader.h>
 #include "Parameters.h"
+#include "util/RandomLFO.h"
 
 class ResonariumProcessor;
 
@@ -19,8 +20,9 @@ public:
     void prepare(const juce::dsp::ProcessSpec& spec);
     void updateParameters();
     void renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
-    ResonariumProcessor& processor;
+    ResonariumProcessor& proc;
     gin::LFO monoLFOs[NUM_LFOS];
+    RandomLFO monoRandomLFOs[NUM_RANDOMS];
     juce::Array<gin::MSEG> monoMSEGs;
     juce::Array<gin::MSEG::Data> msegData;
     SynthParams params;

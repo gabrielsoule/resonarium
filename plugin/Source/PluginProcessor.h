@@ -37,6 +37,7 @@ public:
         modSrcMonoLFO,
         modSrcPolyLFO,
         modSrcMonoRND,
+        modSrcPolyRND,
         modSrcPolyENV,
         modSrcMonoMSEG;
     //contains all the parameters that a voice needs modulated polyphonically (which is almost all of 'em)

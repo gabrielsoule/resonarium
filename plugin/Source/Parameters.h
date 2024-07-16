@@ -155,7 +155,7 @@ struct ImpulseTrainExciterParams
     gin::Parameter::Ptr
         enabled,
         mode,
-        speed,
+        rate,
         sync,
         entropy,
         character,
@@ -194,6 +194,7 @@ struct RandomLFOParams
     int seed = 42;
     gin::Parameter::Ptr
         enabled,
+        mode,
         sync,
         rate,
         beat,
@@ -249,6 +250,7 @@ struct VoiceParams
     NoiseExciterParams noiseExciterParams[NUM_NOISE_EXCITERS];
     ImpulseTrainExciterParams impulseTrainExciterParams[NUM_IMPULSE_TRAIN_EXCITERS];
     LFOParams lfoParams[NUM_LFOS];
+    RandomLFOParams randomLfoParams[NUM_RANDOMS];
 
     VoiceParams() = default;
 

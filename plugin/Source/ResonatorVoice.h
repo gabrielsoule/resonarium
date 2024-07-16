@@ -11,6 +11,7 @@
 #include "Exciters.h"
 #include "ModalResonatorBank.h"
 #include "WaveguideResonatorBank.h"
+#include "util/RandomLFO.h"
 
 class ResonariumProcessor;
 
@@ -34,7 +35,7 @@ public:
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
     bool isVoiceActive() override;
 
-    ResonariumProcessor& p;
+    ResonariumProcessor& proc;
     VoiceParams params;
     float frequency;
     gin::EasedValueSmoother<float> noteSmoother;
@@ -50,6 +51,9 @@ public:
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlocker;
     juce::OwnedArray<Exciter> exciters;
     gin::LFO polyLFOs[NUM_LFOS];
+    RandomLFO polyRandomLFOs[NUM_RANDOMS];
+    juce::Array<gin::MSEG> polyMSEGs;
+    juce::Array<gin::MSEG::Data> msegData;
 
     bool bypassResonators = false;
 };

@@ -233,7 +233,7 @@ void ImpulseTrainExciter::updateParameters()
     mode = static_cast<Mode>(voice.getValue(params.mode));
     character = voice.getValue(params.character);
     entropy = voice.getValue(params.entropy);
-    periodInSamples = static_cast<int>(std::round(sampleRate / voice.getValue(params.speed)));
+    periodInSamples = static_cast<int>(std::round(sampleRate / voice.getValue(params.rate)));
 
     //compute values for the different impulse train modes
     if(mode == IMPULSE)

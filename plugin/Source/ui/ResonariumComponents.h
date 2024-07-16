@@ -206,7 +206,7 @@ public:
         setName("impulseTrainExciterParams");
         addEnable(impulseTrainParams.enabled);
         addControl(new gin::Select(impulseTrainParams.mode), 0, 0);
-        addControl(new gin::Knob(impulseTrainParams.speed), 1, 0);
+        addControl(new gin::Knob(impulseTrainParams.rate), 1, 0);
         addControl(new gin::Knob(impulseTrainParams.character), 2, 0);
         addControl(new gin::Knob(impulseTrainParams.entropy), 3, 0);
         addControl(new gin::Knob(impulseTrainParams.adsrParams.attack), 0, 1);
@@ -409,17 +409,18 @@ public:
         addHeader(lfoNames, randomLfoParams.index, proc.uiParams.randomLfoSelect);
         headerTabButtonWidth = 75;
 
-        // addModSource (new gin::ModulationSourceButton (proc.modMatrix, proc.modSrcLfo[idx], true));
         addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoRND[randomLfoParams.index], false));
+        addModSource (new gin::ModulationSourceButton (proc.modMatrix, proc.modSrcPolyRND[randomLfoParams.index], true));
 
         addControl(r = new gin::Knob(randomLfoParams.rate), 0, 0);
-        addControl(b = new gin::Select(randomLfoParams.beat), 1, 0);
+        addControl(b = new gin::Select(randomLfoParams.beat), 0, 0);
+        addControl(new gin::Knob(randomLfoParams.stereo), 1, 0);
         addControl(new gin::Knob(randomLfoParams.depth, true), 2, 0);
         addControl(new gin::Knob(randomLfoParams.jitter), 3, 0);
-        addControl(new gin::Knob(randomLfoParams.stereo), 0, 1);
+        addControl(new gin::Knob(randomLfoParams.chaos), 0, 1);
         addControl(new gin::Switch(randomLfoParams.sync), 1, 1);
-        addControl(new gin::Knob(randomLfoParams.offset), 2, 1);
-        addControl(new gin::Knob(randomLfoParams.smooth), 3, 1);
+        addControl(new gin::Knob(randomLfoParams.smooth), 2, 1);
+        addControl(new gin::Knob(randomLfoParams.offset), 3, 1);
         watchParam(randomLfoParams.sync);
     }
 
