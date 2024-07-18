@@ -41,6 +41,11 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
         exciters.add(new ImpulseTrainExciter(*this, params.impulseTrainExciterParams[i]));
     }
 
+    for(int i = 0; i < NUM_LFOS; i++)
+    {
+        polyLFOs[i].params = params.lfoParams[i];
+    }
+
     for(int i = 0; i < NUM_RANDOMS; i++)
     {
         polyRandomLFOs[i].params = params.randomLfoParams[i];
@@ -73,7 +78,7 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
 
     for (auto& l : polyLFOs)
     {
-        l.setSampleRate(spec.sampleRate);
+        l.prepare(spec);
     }
 
     for(auto& r : polyRandomLFOs)
@@ -190,30 +195,22 @@ void ResonatorVoice::updateParameters(int numSamples)
     {
         if (params.lfoParams[i].enabled->isOn())
         {
-            gin::LFO::Parameters internalParams;
-
             float freq = 0;
             if (params.lfoParams[i].sync->getProcValue() > 0.0f)
                 freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
                     toSeconds(proc.getPlayHead());
             else
                 freq = proc.modMatrix.getValue(params.lfoParams[i].rate);
-
-            internalParams.waveShape = static_cast<gin::LFO::WaveShape>(static_cast<int>(params.lfoParams[i].wave->getProcValue()));
-            internalParams.frequency = freq;
-            internalParams.phase = getValue(params.lfoParams[i].phase);
-            internalParams.offset = getValue(params.lfoParams[i].offset);
-            internalParams.depth = getValue(params.lfoParams[i].depth);
-            internalParams.delay = getValue(params.lfoParams[i].delay);
-            internalParams.fade = getValue(params.lfoParams[i].fade);
-
-            polyLFOs[i].setParameters(internalParams);
+            polyLFOs[i].updateParameters(*this, freq);
             polyLFOs[i].process(numSamples);
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyLFO[i], polyLFOs[i].getOutput());
+            //TODO optimize this call to avoid two searches to getreference
+            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyLFO[i], polyLFOs[i].getOutput(0), 0);
+            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyLFO[i], polyLFOs[i].getOutput(1), 1);
         }
         else
         {
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyLFO[i], 0);
+            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyLFO[i], polyLFOs[i].getOutput(0), 0);
+            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyLFO[i], polyLFOs[i].getOutput(1), 1);
         }
     }
 

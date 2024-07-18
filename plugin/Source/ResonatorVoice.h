@@ -12,6 +12,7 @@
 #include "ModalResonatorBank.h"
 #include "WaveguideResonatorBank.h"
 #include "util/RandomLFO.h"
+#include "util/StereoLFOWrapper.h"
 
 class ResonariumProcessor;
 
@@ -50,7 +51,7 @@ public:
     juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to output
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlocker;
     juce::OwnedArray<Exciter> exciters;
-    gin::LFO polyLFOs[NUM_LFOS];
+    StereoLFOWrapper polyLFOs[NUM_LFOS];
     RandomLFO polyRandomLFOs[NUM_RANDOMS];
     juce::Array<gin::MSEG> polyMSEGs;
     juce::Array<gin::MSEG::Data> msegData;

@@ -1,5 +1,6 @@
 #ifndef WAVEGUIDERESONATORBANK_H
 #define WAVEGUIDERESONATORBANK_H
+#include "defines.h"
 #include "Resonator.h"
 #include "ResonatorBank.h"
 
@@ -33,6 +34,9 @@ public:
     float sampleRate;
     juce::OwnedArray<Resonator> resonators;
     juce::dsp::IIR::Filter<float> couplingFilter;
+    juce::dsp::FIR::Filter<float> couplingFilterFIR;
+    juce::dsp::FIR::Coefficients<float>::Ptr couplingCoefficientsFIR;
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Lagrange3rd> firDelays[NUM_WAVEGUIDE_RESONATORS];
 
 };
 

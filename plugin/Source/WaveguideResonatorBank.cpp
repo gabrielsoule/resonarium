@@ -29,20 +29,28 @@ void WaveguideResonatorBank::reset()
         resonators[i]->reset();
     }
     couplingFilter.reset();
+    couplingFilterFIR.reset();
 }
 
 void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
 {
+    sampleRate = spec.sampleRate;
+    couplingCoefficientsFIR = juce::dsp::FilterDesign<float>::designFIRLowpassWindowMethod(10000, sampleRate, 21, juce::dsp::WindowingFunction<float>::hamming);
+    couplingFilterFIR.prepare(spec);
+    couplingFilterFIR.coefficients = couplingCoefficientsFIR;
+
+
     for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
     {
         jassert(resonators[i]->params.resonatorIndex == i); //ensure that parameters have been correctly distributed
         resonators[i]->prepare(spec);
+        firDelays[i].prepare(spec);
+        firDelays[i].setMaximumDelayInSamples(100);
+        firDelays[i].setDelay(10);
+        firDelays[i].reset();
     }
-
-    sampleRate = spec.sampleRate;
-    couplingFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(spec.sampleRate, 1000.0f, 0.707f);
-    couplingFilter.prepare(spec);
     reset();
+
 }
 
 /**
@@ -111,7 +119,7 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
 
             for (int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
             {
-                resonators[j]->pushSample(feedbackSample + resonatorOutSamples[j] + exciterBlock.getSample(0, i));
+                resonators[j]->pushSample((feedbackSample + resonatorOutSamples[j]) * -1 + exciterBlock.getSample(0, i));
             }
 
             outputBlock.addSample(0, i, outSample);
@@ -120,7 +128,34 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
     }
     else if (couplingMode == CASCADE)
     {
-        jassertfalse; //NYI
+        for (int i = 0; i < exciterBlock.getNumSamples(); i++)
+        {
+            float resonatorOutSamples[NUM_WAVEGUIDE_RESONATORS];
+            float outSample = 0.0f;
+            float feedbackSample = 0.0f;
+
+            for (int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
+            {
+                resonatorOutSamples[j] = resonators[j]->popSample();
+                feedbackSample += resonatorOutSamples[j] * (resonators[j]->gain / totalGain);
+                outSample += resonatorOutSamples[j] * resonators[j]->gain;
+            }
+
+            //apply the bridge filter H(z) = -2
+            //This is a necessary criterion for stability
+            feedbackSample = -2.0f * feedbackSample;
+            feedbackSample = couplingFilterFIR.processSample(feedbackSample);
+
+            for (int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
+            {
+                float resonatorOutSample = firDelays[j].popSample(0);
+                firDelays[j].pushSample(0, resonatorOutSamples[j]);
+                resonators[j]->pushSample(feedbackSample + resonatorOutSample + exciterBlock.getSample(0, i));
+            }
+
+            outputBlock.addSample(0, i, outSample);
+            outputBlock.addSample(1, i, outSample);
+        }
     }
     else
     {

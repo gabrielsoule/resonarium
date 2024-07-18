@@ -26,7 +26,8 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
 
     for (int i = 0; i < NUM_LFOS; i++)
     {
-        monoLFOs[i].setSampleRate(spec.sampleRate);
+        monoLFOs[i].params = params.lfoParams[i];
+        monoLFOs[i].prepare(spec);
     }
 
     for(int i = 0; i < NUM_RANDOMS; i++)
@@ -46,34 +47,56 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
 void ResonatorSynth::updateParameters()
 {
     // Update Mono LFOs
+    // for (int i = 0; i < NUM_LFOS; i++)
+    // {
+    //     if (params.lfoParams[i].enabled->isOn())
+    //     {
+    //         gin::LFO::Parameters internalParams;
+    //
+    //         float freq = 0;
+    //         if (params.lfoParams[i].sync->getProcValue() > 0.0f)
+    //             freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
+    //                 toSeconds(proc.getPlayHead());
+    //         else
+    //             freq = proc.modMatrix.getValue(params.lfoParams[i].rate);
+    //
+    //         internalParams.waveShape = (gin::LFO::WaveShape)int(params.lfoParams[i].wave->getProcValue());
+    //         internalParams.frequency = freq;
+    //         internalParams.phase = proc.modMatrix.getValue(params.lfoParams[i].phase);
+    //         internalParams.offset = proc.modMatrix.getValue(params.lfoParams[i].offset);
+    //         internalParams.depth = proc.modMatrix.getValue(params.lfoParams[i].depth);
+    //         internalParams.delay = 0;
+    //         internalParams.fade = 0;
+    //
+    //         monoLFOs[i].setParameters(internalParams);
+    //         monoLFOs[i].process(currentBlockSize);
+    //         proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], monoLFOs[i].getOutput());
+    //     }
+    //     else
+    //     {
+    //         proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], 0);
+    //     }
+    // }
+
     for (int i = 0; i < NUM_LFOS; i++)
     {
         if (params.lfoParams[i].enabled->isOn())
         {
-            gin::LFO::Parameters internalParams;
-
             float freq = 0;
             if (params.lfoParams[i].sync->getProcValue() > 0.0f)
                 freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
                     toSeconds(proc.getPlayHead());
             else
                 freq = proc.modMatrix.getValue(params.lfoParams[i].rate);
-
-            internalParams.waveShape = (gin::LFO::WaveShape)int(params.lfoParams[i].wave->getProcValue());
-            internalParams.frequency = freq;
-            internalParams.phase = proc.modMatrix.getValue(params.lfoParams[i].phase);
-            internalParams.offset = proc.modMatrix.getValue(params.lfoParams[i].offset);
-            internalParams.depth = proc.modMatrix.getValue(params.lfoParams[i].depth);
-            internalParams.delay = 0;
-            internalParams.fade = 0;
-
-            monoLFOs[i].setParameters(internalParams);
+            monoLFOs[i].updateParameters(proc.modMatrix, freq);
             monoLFOs[i].process(currentBlockSize);
-            proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], monoLFOs[i].getOutput());
+            proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], monoLFOs[i].getOutput(0), 0);
+            proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], monoLFOs[i].getOutput(1), 1);
         }
         else
         {
-            proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], 0);
+            proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], 0, 0);
+            proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], 0, 1);
         }
     }
 

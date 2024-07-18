@@ -413,6 +413,7 @@ void LFOParams::setup(ResonariumProcessor& p, int index)
     stereo = p.addExtParam(prefix + "stereo", prefix + "Stereo", "Stereo", "",
                            {0.0f, 1.0f, 0.01f, 1.0f},
                            0.0f, 0.0f);
+    stereo->conversionFunction = [](const float x) { return x * 0.5f; };
 }
 
 void RandomLFOParams::setup(ResonariumProcessor& p, int index)

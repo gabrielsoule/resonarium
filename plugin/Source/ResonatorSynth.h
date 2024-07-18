@@ -10,6 +10,7 @@
 #include <JuceHeader.h>
 #include "Parameters.h"
 #include "util/RandomLFO.h"
+#include "util/StereoLFOWrapper.h"
 
 class ResonariumProcessor;
 
@@ -21,7 +22,7 @@ public:
     void updateParameters();
     void renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     ResonariumProcessor& proc;
-    gin::LFO monoLFOs[NUM_LFOS];
+    StereoLFOWrapper monoLFOs[NUM_LFOS];
     RandomLFO monoRandomLFOs[NUM_RANDOMS];
     juce::Array<gin::MSEG> monoMSEGs;
     juce::Array<gin::MSEG::Data> msegData;

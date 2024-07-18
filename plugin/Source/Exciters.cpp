@@ -82,12 +82,15 @@ void NoiseExciter::process(juce::dsp::AudioBlock<float>& block)
     if(!params.enabled->isOn()) return;
 
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
-    auto gain = voice.getValue(params.level);
+    auto gainL = voice.getValue(params.level, 0);
+    auto gainR = voice.getValue(params.level, 1);
     for (int i = 0; i < truncatedBlock.getNumSamples(); i++)
     {
-        const float sample = noise.nextValue() * gain * envelope.process();
-        truncatedBlock.setSample(0, i, sample);
-        truncatedBlock.setSample(1, i, sample);
+        const float envSample = envelope.process();
+        const float sampleL = noise.nextValue() * gainL * envSample;
+        const float sampleR = noise.nextValue() * gainR * envSample;
+        truncatedBlock.setSample(0, i, sampleL);
+        truncatedBlock.setSample(1, i, sampleR);
 
     }
     filter.process(truncatedBlock);

@@ -355,11 +355,11 @@ public:
 
             if (lfoParams.enabled->isOn())
             {
-                res.push_back (this->proc.synth.monoLFOs[lfoParams.index].getCurrentPhase());
+                res.push_back (this->proc.synth.monoLFOs[lfoParams.index].getCurrentPhase(0));
 
                 for (auto v : this->proc.synth.getActiveVoices())
                     if (auto voice = dynamic_cast<ResonatorVoice*> (v))
-                        res.push_back (voice->polyLFOs[lfoParams.index].getCurrentPhase());
+                        res.push_back (voice->polyLFOs[lfoParams.index].getCurrentPhase(0));
             }
 
             return res;
