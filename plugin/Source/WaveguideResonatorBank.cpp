@@ -36,7 +36,7 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
 {
     sampleRate = spec.sampleRate;
     couplingCoefficientsFIR = juce::dsp::FilterDesign<float>::designFIRLowpassWindowMethod(10000, sampleRate, 21, juce::dsp::WindowingFunction<float>::hamming);
-    couplingFilterFIR.prepare(spec);
+    // couplingFilterFIR.prepare(spec);
     couplingFilterFIR.coefficients = couplingCoefficientsFIR;
 
 

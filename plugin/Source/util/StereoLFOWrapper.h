@@ -5,7 +5,7 @@
 #include <JuceHeader.h>
 #include "../Parameters.h"
 /**
-* This class wraps around (two copies of) GIN's excellent LFO to provide stereo functionality.
+* This class wraps around (two copies of) Gin's excellent LFO to provide stereo functionality.
 
 */
 class StereoLFOWrapper {

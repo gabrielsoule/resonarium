@@ -11,22 +11,22 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     //TODO Make this NOT HARD CODED.
     auto* mrb1 = new ModalResonatorBankParamBox(
         "Modal Bank " + std::to_string(1), proc, 0, voiceParams.modalResonatorBankParams[0]);
-    mrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, WINDOW_WIDTH - 250, RESONATOR_BANK_BOX_HEIGHT);
+    mrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(mrb1);
 
     auto* wrb1 = new WaveguideResonatorBankParamBox(
         "Waveguide Bank " + std::to_string(1), proc, 1, voiceParams.waveguideResonatorBankParams[0]);
-    wrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, WINDOW_WIDTH - 250, RESONATOR_BANK_BOX_HEIGHT);
+    wrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(wrb1);
 
     auto* mrb2 = new ModalResonatorBankParamBox(
         "Modal Bank " + std::to_string(2), proc, 2, voiceParams.modalResonatorBankParams[1]);
-    mrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, WINDOW_WIDTH - 250, RESONATOR_BANK_BOX_HEIGHT);
+    mrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(mrb2);
 
     auto* wrb2 = new WaveguideResonatorBankParamBox(
         "Waveguide Bank " + std::to_string(2), proc, 3, voiceParams.waveguideResonatorBankParams[1]);
-    wrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, WINDOW_WIDTH - 250, RESONATOR_BANK_BOX_HEIGHT);
+    wrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(wrb2);
 
     for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
@@ -57,22 +57,33 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                        PARAM_BOX_MEDIUM_HEIGHT);
     }
 
+
+    for (int i = 0; i < NUM_ENVELOPES; i++)
+    {
+        SafePointer<ADSRParamBox> ptr = new ADSRParamBox(
+            "ENV " + std::to_string(i + 1), proc, proc.synth.params.adsrParams[i]);
+        envelopeParamBoxes.push_back(ptr);
+        addAndMakeVisible(ptr);
+        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT, 400,
+                       PARAM_BOX_XSMALL_HEIGHT);
+    }
+
     for (int i = 0; i < NUM_LFOS; i++)
     {
         SafePointer<LFOParamBox> ptr = new LFOParamBox(
             "LFO " + std::to_string(i + 1), proc, i, voiceParams.lfoParams[i]);
         lfoParamBoxes.push_back(ptr);
         addAndMakeVisible(ptr);
-        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT, 400, PARAM_BOX_SMALL_HEIGHT);
+        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT, 400, PARAM_BOX_SMALL_HEIGHT);
     }
 
-    for (int i = 0; i < NUM_LFOS; i++)
+    for (int i = 0; i < NUM_RANDOMS; i++)
     {
         SafePointer<RandomLFOParamBox> ptr = new RandomLFOParamBox(
             "RAND " + std::to_string(i + 1), proc, i, proc.synth.params.randomLfoParams[i]);
         randomLfoParamBoxes.push_back(ptr);
         addAndMakeVisible(ptr);
-        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_SMALL_HEIGHT, 400,
+        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_XSMALL_HEIGHT, 400,
                        PARAM_BOX_SMALL_HEIGHT);
     }
 

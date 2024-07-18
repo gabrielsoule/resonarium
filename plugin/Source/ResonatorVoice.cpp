@@ -50,6 +50,11 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
     {
         polyRandomLFOs[i].params = params.randomLfoParams[i];
     }
+
+    for(int i = 0; i < NUM_ENVELOPES; i++)
+    {
+        polyEnvelopes[i].params = params.adsrParams[i];
+    }
 }
 
 ResonatorVoice::~ResonatorVoice()
@@ -85,6 +90,11 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     {
         r.prepare(spec);
         r.voice = this;
+    }
+
+    for(auto& e : polyEnvelopes)
+    {
+        e.prepare(spec);
     }
 
     juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients =
@@ -150,6 +160,12 @@ void ResonatorVoice::noteStarted()
             params.lfoParams[i].retrig->getBoolValue() ? -1 : juce::Random::getSystemRandom().nextFloat());
     }
 
+    for(int i = 0; i < NUM_ENVELOPES; i++)
+    {
+        polyEnvelopes[i].reset();
+        polyEnvelopes[i].noteOn();
+    }
+
     dcBlocker.reset();
 }
 
@@ -175,6 +191,11 @@ void ResonatorVoice::noteStopped(bool allowTailOff)
     for (auto* exciter : exciters)
     {
         exciter->noteStopped(allowTailOff);
+    }
+
+    for(int i = 0; i < NUM_ENVELOPES; i++)
+    {
+        polyEnvelopes[i].noteOff();
     }
 }
 
@@ -228,6 +249,13 @@ void ResonatorVoice::updateParameters(int numSamples)
             polyRandomLFOs[i].process(numSamples);
             proc.modMatrix.setPolyValue(*this, proc.modSrcPolyRND[i], polyRandomLFOs[i].getOutput());
         }
+    }
+
+    for(int i = 0; i < NUM_ENVELOPES; i++)
+    {
+        polyEnvelopes[i].updateParameters(*this);
+        polyEnvelopes[i].process(numSamples);
+        proc.modMatrix.setPolyValue(*this, proc.modSrcPolyENV[i], polyEnvelopes[i].getOutput());
     }
 
     for (auto* resonatorBank : resonatorBanks)

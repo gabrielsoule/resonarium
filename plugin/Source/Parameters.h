@@ -40,10 +40,13 @@ struct MultiFilterParams
  */
 struct ADSRParams
 {
-    //since we anticipate several instances of MultiFilterParams to exist,
+    //since we anticipate several ADSR instances to exist,
     //we need to give each one a unique name for the host.
     juce::String prefix;
+    //the freely assignable ADSRs have indices; the built-in ones do not
+    int index = -1;
     gin::Parameter::Ptr
+        enabled,
         mode,
         attack,
         decay,
@@ -52,7 +55,7 @@ struct ADSRParams
 
     ADSRParams() = default;
 
-    void setup(ResonariumProcessor& p, juce::String prefix);
+    void setup(ResonariumProcessor& p, juce::String prefix, int index = -1);
 };
 
 /**
@@ -251,6 +254,7 @@ struct VoiceParams
     ImpulseTrainExciterParams impulseTrainExciterParams[NUM_IMPULSE_TRAIN_EXCITERS];
     LFOParams lfoParams[NUM_LFOS];
     RandomLFOParams randomLfoParams[NUM_RANDOMS];
+    ADSRParams adsrParams[NUM_ENVELOPES];
 
     VoiceParams() = default;
 
@@ -267,6 +271,7 @@ struct SynthParams
     LFOParams lfoParams[NUM_LFOS];
     RandomLFOParams randomLfoParams[NUM_LFOS];
     MSEGParams msegParams[NUM_MSEGS];
+    ADSRParams adsrParams[NUM_ENVELOPES];
 
     SynthParams() = default;
 
@@ -279,6 +284,7 @@ struct UIParams
     gin::Parameter::Ptr lfoSelect;
     gin::Parameter::Ptr randomLfoSelect;
     gin::Parameter::Ptr msegSelect;
+    gin::Parameter::Ptr adsrSelect;
     gin::Parameter::Ptr bypassResonators;
 
     UIParams() = default;

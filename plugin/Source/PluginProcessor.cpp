@@ -54,18 +54,25 @@ void ResonariumProcessor::setupModMatrix()
                                                      true));
 
         modSrcPolyLFO.add(modMatrix.addPolyModSource(juce::String::formatted("lfo%d", i + 1),
-                                                     juce::String::formatted("LFO %d", i + 1), true));
+                                                     juce::String::formatted("LFO %d", i + 1),
+                                                     true));
     }
 
-    for(int i = 0; i < NUM_RANDOMS; i++)
+    for (int i = 0; i < NUM_RANDOMS; i++)
     {
         modSrcMonoRND.add(modMatrix.addMonoModSource(juce::String::formatted("mrnd%d", i + 1),
-                                             juce::String::formatted("RAND %d (Mono)", i + 1),
-                                             true));
+                                                     juce::String::formatted("RAND %d (Mono)", i + 1),
+                                                     true));
         modSrcPolyRND.add(modMatrix.addPolyModSource(juce::String::formatted("mrnd%d", i + 1),
-                                             juce::String::formatted("RAND %d", i + 1),
-                                             true));
+                                                     juce::String::formatted("RAND %d", i + 1),
+                                                     true));
+    }
 
+    for (int i = 0; i < NUM_ENVELOPES; i++)
+    {
+        modSrcPolyENV.add(modMatrix.addPolyModSource(juce::String::formatted("env%d", i + 1),
+                                                     juce::String::formatted("ENV %d", i + 1),
+                                                     false));
     }
 
     for (int i = 0; i < NUM_MSEGS; i++)

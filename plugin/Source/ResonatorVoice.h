@@ -13,6 +13,7 @@
 #include "WaveguideResonatorBank.h"
 #include "util/RandomLFO.h"
 #include "util/StereoLFOWrapper.h"
+#include "util/WrappedEnvelope.h"
 
 class ResonariumProcessor;
 
@@ -53,6 +54,7 @@ public:
     juce::OwnedArray<Exciter> exciters;
     StereoLFOWrapper polyLFOs[NUM_LFOS];
     RandomLFO polyRandomLFOs[NUM_RANDOMS];
+    WrappedEnvelope polyEnvelopes[NUM_ENVELOPES];
     juce::Array<gin::MSEG> polyMSEGs;
     juce::Array<gin::MSEG::Data> msegData;
 

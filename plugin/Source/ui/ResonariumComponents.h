@@ -302,15 +302,51 @@ public:
     UIParams uiParams;
 };
 
-// class ADSRParamBox : public gin::ParamBox
-// {
-// public:
-//     ADSRParamBox(const juce::String& name, ResonariumProcessor& proc, ADSRParams adsrParams) :
-//     gin::ParamBox(name), adsrParams(adsrParams)
-//     {
-//         setName("env" + juce::String(adsr))
-//     }
-// };
+class ADSRParamBox : public gin::ParamBox
+{
+public:
+    ADSRParamBox(const juce::String& name, ResonariumProcessor& proc, ADSRParams adsrParams) :
+    gin::ParamBox(name), proc(proc), adsrParams(adsrParams)
+    {
+        setName("env" + juce::String(adsrParams.index + 1));
+        addEnable(adsrParams.enabled);
+        juce::StringArray adsrNames;
+        for(int i = 0; i < NUM_ENVELOPES; i++)
+        {
+            adsrNames.add("ENV " + juce::String(i + 1));
+        }
+        addHeader(adsrNames, adsrParams.index, proc.uiParams.adsrSelect);
+        headerTabButtonWidth = 75;
+
+        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcPolyENV[adsrParams.index], true));
+
+        addControl(new gin::Knob(adsrParams.attack), 0, 0);
+        addControl(new gin::Knob(adsrParams.decay), 1, 0);
+        addControl(new gin::Knob(adsrParams.sustain), 2, 0);
+        addControl(new gin::Knob(adsrParams.release), 3, 0);
+
+        visualizer = new gin::ADSRComponent();
+        auto g = new gin::ADSRComponent();
+        g->setParams (adsrParams.attack, adsrParams.decay, adsrParams.sustain, adsrParams.release);
+        g->phaseCallback = [this, adsrParams]
+        {
+            std::vector<std::pair<int, float>> res;
+
+            if (adsrParams.enabled->isOn())
+            {
+                for (auto v : this->proc.synth.getActiveVoices())
+                    if (auto rv = dynamic_cast<ResonatorVoice*> (v))
+                        res.push_back (rv->polyEnvelopes[adsrParams.index].internalADSR.getCurrentPhase());
+            }
+
+            return res;
+        };
+        addControl(g, 4, 0, 3, 1);
+    }
+    ResonariumProcessor& proc;
+    gin::ADSRComponent* visualizer;
+    ADSRParams adsrParams;
+};
 
 class LFOParamBox : public gin::ParamBox
 {
@@ -448,7 +484,8 @@ public:
 class MSEGParamBox : public gin::ParamBox
 {
 public:
-    MSEGParamBox(const juce::String& name, ResonariumProcessor& proc, MSEGParams msegParams) : gin::ParamBox(name)
+    MSEGParamBox(const juce::String& name, ResonariumProcessor& proc, MSEGParams msegParams) :
+    gin::ParamBox(name), msegParams(msegParams)
     {
         setName("mseg" + juce::String(msegParams.index + 1));
 
@@ -461,15 +498,44 @@ public:
         addHeader(lfoNames, msegParams.index, proc.uiParams.msegSelect);
         headerTabButtonWidth = 75;
 
+        addControl(new gin::Switch(msegParams.sync), 0, 2);
+        addControl(r = new gin::Knob(msegParams.rate), 1, 2);
+        addControl(b = new gin::Select(msegParams.beat), 1, 2);
+
+
+
         msegComponent = new gin::MSEGComponent(proc.synth.msegData.getReference(msegParams.index));
         msegComponent->setParams(msegParams.sync, msegParams.rate, msegParams.beat, msegParams.depth, msegParams.offset,
                                  msegParams.phase, msegParams.enabled, msegParams.xgrid, msegParams.ygrid,
                                  msegParams.loop);
-        addControl(msegComponent, 0, 0, 4, 2);
+        addControl(msegComponent);
         msegComponent->setEditable(true);
     }
 
+    void resized() override
+    {
+        ParamBox::resized();
+        auto bounds = getLocalBounds()
+        .reduced(2, BOX_HEADER_HEIGHT + 2)
+        .withTrimmedBottom(60);
+        msegComponent->setBounds(bounds);
+    }
+
+    void paramChanged() override
+    {
+        gin::ParamBox::paramChanged();
+
+        if (r && b)
+        {
+            r->setVisible(!msegParams.sync->isOn());
+            b->setVisible(msegParams.sync->isOn());
+        }
+    }
+
+    MSEGParams msegParams;
     gin::MSEGComponent* msegComponent;
+    gin::ParamComponent::Ptr r = nullptr;
+    gin::ParamComponent::Ptr b = nullptr;;
 };
 
 class TestParamBox : public gin::ParamBox

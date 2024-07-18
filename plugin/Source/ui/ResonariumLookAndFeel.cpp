@@ -24,7 +24,7 @@ ResonariumLookAndFeel::ResonariumLookAndFeel()
     setColour (matte2ColourId, juce::Colour (0xff131417));
     setColour (title1ColourId, juce::Colour (0xff2A2C30));
     setColour (title2ColourId, juce::Colour (0xff25272B));
-    setColour (accentColourId, juce::Colour (0xff8c55ff));
+    setColour (accentColourId, juce::Colour (0xff905CFF));
 
     setColour (gin::WavetableComponent::waveColourId, juce::Colours::green.withAlpha (0.3f));
     setColour (gin::WavetableComponent::activeWaveColourId, juce::Colours::yellow);

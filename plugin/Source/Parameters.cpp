@@ -128,9 +128,14 @@ void MultiFilterParams::setup(ResonariumProcessor& p, juce::String prefix)
                               0.707f, 0.0f);
 }
 
-void ADSRParams::setup(ResonariumProcessor& p, juce::String prefix)
+void ADSRParams::setup(ResonariumProcessor& p, juce::String prefix, int index)
 {
     this->prefix = prefix;
+    this->index = index;
+
+    enabled = p.addExtParam(prefix + "enabled", prefix + " Enabled", "On/Off", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f);
 
     attack = p.addExtParam(prefix + "attack", prefix + " Attack", "A", "s",
                            {0.0f, 60.0f, 0.0f, 0.2f},
@@ -317,14 +322,14 @@ void NoiseExciterParams::setup(ResonariumProcessor& p, int index)
                                 0.0f);
     // level->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
+    adsrParams.setup(p, "noiseExciter1Env" + juce::String(index));
     filterParams.setup(p, prefix);
-    adsrParams.setup(p, prefix);
 }
 
 void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
 {
     this->index = index;
-    juce::String prefix = "impTrainExciter" + std::to_string(index);
+    juce::String prefix = "impTrainExciter" + juce::String(index);
 
     this->enabled = p.addExtParam(prefix + "enabled", prefix + " Enabled", "On/Off", "",
                                   {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
@@ -355,9 +360,8 @@ void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
                                 0.0f);
     // level->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
-
+    adsrParams.setup(p, "impTrainExciterEnv" + juce::String(index));
     filterParams.setup(p, prefix);
-    adsrParams.setup(p, prefix);
 }
 
 void LFOParams::setup(ResonariumProcessor& p, int index)
@@ -555,6 +559,13 @@ void SynthParams::setup(ResonariumProcessor& p)
         voiceParams.randomLfoParams[i] = randomLfoParams[i];
     }
 
+    for(int i = 0; i < NUM_ENVELOPES; i++)
+    {
+        juce::String prefix = "Env " + std::to_string(i + 1);
+        adsrParams[i].setup(p, prefix, i);
+        voiceParams.adsrParams[i] = adsrParams[i];
+    }
+
     for(int i = 0; i < NUM_MSEGS; i++)
     {
         msegParams[i].setup(p, i);
@@ -577,6 +588,10 @@ void UIParams::setup(ResonariumProcessor& p)
 
     msegSelect = p.addIntParam("uiActiveMSEG", "MSEG", "", "",
                                {0.0f, NUM_MSEGS - 1, 1.0f, 1.0f},
+                               0.0f, gin::SmoothingType::linear);
+
+    adsrSelect = p.addIntParam("uiActiveADSR", "ADSR", "", "",
+                               {0.0f, NUM_ENVELOPES - 1, 1.0f, 1.0f},
                                0.0f, gin::SmoothingType::linear);
 
     bypassResonators = p.addIntParam("uiBypassResonators", "BypassResonators", "", "",
