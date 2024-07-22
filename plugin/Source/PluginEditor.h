@@ -28,6 +28,8 @@ private:
     std::vector<SafePointer<RandomLFOParamBox>> randomLfoParamBoxes;
     std::vector<SafePointer<MSEGParamBox>> msegParamBoxes;
     std::vector<SafePointer<ADSRParamBox>> envelopeParamBoxes;
+    SafePointer<MatrixBox> matrixBox;
+    SafePointer<ModSrcBox> modSrcBox;
 
     std::unique_ptr<melatonin::Inspector> inspector;
     gin::SynthesiserUsage usage { proc.synth };

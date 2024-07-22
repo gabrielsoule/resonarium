@@ -74,7 +74,8 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
             "LFO " + std::to_string(i + 1), proc, i, voiceParams.lfoParams[i]);
         lfoParamBoxes.push_back(ptr);
         addAndMakeVisible(ptr);
-        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT, 400, PARAM_BOX_SMALL_HEIGHT);
+        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT, 400,
+                       PARAM_BOX_SMALL_HEIGHT);
     }
 
     for (int i = 0; i < NUM_RANDOMS; i++)
@@ -83,11 +84,13 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
             "RAND " + std::to_string(i + 1), proc, i, proc.synth.params.randomLfoParams[i]);
         randomLfoParamBoxes.push_back(ptr);
         addAndMakeVisible(ptr);
-        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_XSMALL_HEIGHT, 400,
-                       PARAM_BOX_SMALL_HEIGHT);
+        ptr->setBounds(
+            EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
+            400,
+            PARAM_BOX_SMALL_HEIGHT);
     }
 
-    for(int i = 0; i < NUM_MSEGS; i++)
+    for (int i = 0; i < NUM_MSEGS; i++)
     {
         SafePointer<MSEGParamBox> ptr = new MSEGParamBox(
             "MSEG " + std::to_string(i + 1), proc, proc.synth.params.msegParams[i]);
@@ -96,10 +99,20 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
         ptr->setBounds(EXCITER_BOX_WIDTH + 1 + 400 + 1, 40 + RESONATOR_BANK_BOX_HEIGHT, 400, PARAM_BOX_MEDIUM_HEIGHT);
     }
 
+    matrixBox = new MatrixBox("MATRIX", proc);
+    addAndMakeVisible(matrixBox);
+    matrixBox->setBounds(EXCITER_BOX_WIDTH + 1 + 400 + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT, 400,
+                         PARAM_BOX_MEDIUM_HEIGHT);
+
+    modSrcBox = new ModSrcBox("SOURCES", proc);
+    addAndMakeVisible(modSrcBox);
+    modSrcBox->setBounds(EXCITER_BOX_WIDTH + 1 + 400 + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT, 400,
+                         PARAM_BOX_MEDIUM_HEIGHT);
+
     usage.setBounds(WINDOW_WIDTH - 150, 10, 110, 20);
     addAndMakeVisible(usage);
 
-    #if JUCE_DEBUG
+#if JUCE_DEBUG
     addAndMakeVisible(inspectButton);
     inspectButton.onClick = [&]
     {

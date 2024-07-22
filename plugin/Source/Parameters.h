@@ -12,6 +12,10 @@
 * Since the structs contain only pointers, and parameters are not added or changed after instantiation,
 * these structs are lightweight and can be passed around safely.
 * Objects which require access to a parameter set are to be provided with the appropiate struct during initialization.
+*
+* These classes should also contain any data that needs to be
+* shared between the audio and UI threads, especially that which must
+* be saved as part of a preset.
 */
 
 class ResonariumProcessor;
@@ -216,6 +220,10 @@ struct RandomLFOParams
 struct MSEGParams
 {
     int index = -1;
+    //the msegData is loaded from disk;
+    //furthermore, it needs to be shared between the UI and audio threads
+    //good candidate for the parameters
+    std::shared_ptr<gin::MSEG::Data> msegData;
     gin::Parameter::Ptr
         enabled,
         sync,
@@ -223,6 +231,7 @@ struct MSEGParams
         beat,
         depth,
         offset,
+        fade,
         phase,
         xgrid,
         ygrid,
@@ -255,6 +264,7 @@ struct VoiceParams
     LFOParams lfoParams[NUM_LFOS];
     RandomLFOParams randomLfoParams[NUM_RANDOMS];
     ADSRParams adsrParams[NUM_ENVELOPES];
+    MSEGParams msegParams[NUM_MSEGS];
 
     VoiceParams() = default;
 
@@ -270,8 +280,8 @@ struct SynthParams
     VoiceParams voiceParams;
     LFOParams lfoParams[NUM_LFOS];
     RandomLFOParams randomLfoParams[NUM_LFOS];
-    MSEGParams msegParams[NUM_MSEGS];
     ADSRParams adsrParams[NUM_ENVELOPES];
+    MSEGParams msegParams[NUM_MSEGS];
 
     SynthParams() = default;
 
@@ -285,6 +295,7 @@ struct UIParams
     gin::Parameter::Ptr randomLfoSelect;
     gin::Parameter::Ptr msegSelect;
     gin::Parameter::Ptr adsrSelect;
+    gin::Parameter::Ptr modWindowSelect;
     gin::Parameter::Ptr bypassResonators;
 
     UIParams() = default;

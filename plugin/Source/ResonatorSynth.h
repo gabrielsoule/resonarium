@@ -11,20 +11,21 @@
 #include "Parameters.h"
 #include "util/RandomLFO.h"
 #include "util/StereoLFOWrapper.h"
+#include "util/StereoMSEGWrapper.h"
 
 class ResonariumProcessor;
 
 class ResonatorSynth : public gin::Synthesiser
 {
 public:
-    explicit ResonatorSynth(ResonariumProcessor& p);
+    ResonatorSynth(ResonariumProcessor& p);
     void prepare(const juce::dsp::ProcessSpec& spec);
     void updateParameters();
     void renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     ResonariumProcessor& proc;
     StereoLFOWrapper monoLFOs[NUM_LFOS];
     RandomLFO monoRandomLFOs[NUM_RANDOMS];
-    juce::Array<gin::MSEG> monoMSEGs;
+    juce::Array<StereoMSEGWrapper> monoMSEGs;
     juce::Array<gin::MSEG::Data> msegData;
     SynthParams params;
 

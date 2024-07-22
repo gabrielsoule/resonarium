@@ -10,14 +10,31 @@
 
 ResonatorSynth::ResonatorSynth(ResonariumProcessor& p) : proc(p)
 {
-    DBG("Creating Synthesiser");
+    params.setup(proc);
+
+    monoMSEGs.clear();
+    msegData.clear();
+
+    for(int i = 0; i < NUM_LFOS; i++)
+    {
+        monoLFOs[i].params = params.lfoParams[i];
+    }
+
+    for(int i = 0; i < NUM_RANDOMS; i++)
+    {
+        monoRandomLFOs[i].params = params.randomLfoParams[i];
+    }
+
+    for(int i = 0; i < NUM_MSEGS; i++)
+    {
+        auto mseg = StereoMSEGWrapper(params.msegParams[i]);
+        monoMSEGs.add(mseg);
+    }
 }
 
 void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
 {
     setCurrentPlaybackSampleRate(spec.sampleRate);
-    msegData.clear();
-    monoMSEGs.clear();
 
     for (auto* v : voices)
     {
@@ -26,21 +43,19 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
 
     for (int i = 0; i < NUM_LFOS; i++)
     {
-        monoLFOs[i].params = params.lfoParams[i];
+        monoLFOs[i].reset();
         monoLFOs[i].prepare(spec);
     }
 
     for(int i = 0; i < NUM_RANDOMS; i++)
     {
-        monoRandomLFOs[i].params = params.randomLfoParams[i];
+        monoRandomLFOs[i].reset();
         monoRandomLFOs[i].prepare(spec);
     }
 
-    for (int i = 0; i < NUM_MSEGS; i++)
+    for(int i = 0; i < NUM_MSEGS; i++)
     {
-        msegData.add(gin::MSEG::Data());
-        gin::MSEG mseg(msegData.getReference(i));
-        monoMSEGs.add(mseg);
+        monoMSEGs.getReference(i).prepare(spec);
     }
 }
 
@@ -112,39 +127,62 @@ void ResonatorSynth::updateParameters()
                 rate = proc.modMatrix.getValue(params.randomLfoParams[i].rate);
             monoRandomLFOs[i].updateParametersMono(proc.modMatrix, rate);
             monoRandomLFOs[i].process(currentBlockSize);
-            proc.modMatrix.setMonoValue(proc.modSrcMonoRND[i], monoRandomLFOs[i].getOutput());
+            proc.modMatrix.setMonoValue(proc.modSrcMonoRND[i], monoRandomLFOs[i].getOutput(0), 0);
+            proc.modMatrix.setMonoValue(proc.modSrcMonoRND[i], monoRandomLFOs[i].getOutput(1), 1);
         }
     }
 
-    for (int i = 0; i < NUM_MSEGS; i++)
+    for(int i = 0; i < NUM_MSEGS; i++)
     {
-        if (params.msegParams[i].enabled->isOn())
+        if(params.msegParams[i].enabled->isOn())
         {
-            gin::MSEG::Parameters internalParams;
-
-            float freq = 0;
+            float rate = 0;
             if (params.msegParams[i].sync->getProcValue() > 0.0f)
-                freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.msegParams[i].beat->getProcValue())].
+                rate = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.msegParams[i].beat->getProcValue())].
                     toSeconds(proc.getPlayHead());
             else
-                freq = proc.modMatrix.getValue(params.msegParams[i].rate);
-
-            internalParams.frequency = freq;
-            internalParams.phase = proc.modMatrix.getValue(params.msegParams[i].phase);
-            internalParams.offset = proc.modMatrix.getValue(params.msegParams[i].offset);
-            internalParams.depth = proc.modMatrix.getValue(params.msegParams[i].depth);
-            internalParams.delay = 0;
-            internalParams.fade = 0;
-
-            monoMSEGs.getReference(i).setParameters(internalParams);
-            monoLFOs[i].process(currentBlockSize);
-            proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], monoMSEGs.getReference(i).getOutput());
+                rate = proc.modMatrix.getValue(params.msegParams[i].rate);
+            monoMSEGs.getReference(i).updateParameters(proc.modMatrix, rate);
+            monoMSEGs.getReference(i).process(currentBlockSize);
+            proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], monoMSEGs.getReference(i).getOutput(0), 0);
+            proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], monoMSEGs.getReference(i).getOutput(1), 1);
         }
         else
         {
-            proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], 0);
+            proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], 0, 0);
+            proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], 0, 1);
         }
     }
+
+    // for (int i = 0; i < NUM_MSEGS; i++)
+    // {
+    //     if (params.msegParams[i].enabled->isOn())
+    //     {
+    //         gin::MSEG::Parameters internalParams;
+    //
+    //         float freq = 0;
+    //         if (params.msegParams[i].sync->getProcValue() > 0.0f)
+    //             freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.msegParams[i].beat->getProcValue())].
+    //                 toSeconds(proc.getPlayHead());
+    //         else
+    //             freq = proc.modMatrix.getValue(params.msegParams[i].rate);
+    //
+    //         internalParams.frequency = freq;
+    //         internalParams.phase = proc.modMatrix.getValue(params.msegParams[i].phase);
+    //         internalParams.offset = proc.modMatrix.getValue(params.msegParams[i].offset);
+    //         internalParams.depth = proc.modMatrix.getValue(params.msegParams[i].depth);
+    //         internalParams.delay = 0;
+    //         internalParams.fade = 0;
+    //
+    //         monoMSEGs.getReference(i).setParameters(internalParams);
+    //         monoLFOs[i].process(currentBlockSize);
+    //         proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], monoMSEGs.getReference(i).getOutput());
+    //     }
+    //     else
+    //     {
+    //         proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], 0);
+    //     }
+    // }
 }
 
 void ResonatorSynth::renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples)

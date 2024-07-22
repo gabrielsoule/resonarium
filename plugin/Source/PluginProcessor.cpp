@@ -22,7 +22,6 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     synth.enableLegacyMode();
     synth.setVoiceStealingEnabled(true);
     synth.setMPE(true);
-    synth.params.setup(*this);
     for (int i = 0; i < NUM_SYNTH_VOICES; i++)
     {
         ResonatorVoice* voice = new ResonatorVoice(*this, synth.params.voiceParams);
@@ -80,6 +79,19 @@ void ResonariumProcessor::setupModMatrix()
         modSrcMonoMSEG.add(modMatrix.addMonoModSource(juce::String::formatted("mmseg%d", i + 1),
                                                       juce::String::formatted("MSEG %d (Mono)", i + 1),
                                                       true));
+        modSrcPolyMSEG.add(modMatrix.addPolyModSource(juce::String::formatted("env%d", i + 1),
+                                                      juce::String::formatted("MSEG %d", i + 1),
+                                                      false));
+    }
+
+
+    for (int i = 0; i <= 119; i++)
+    {
+        juce::String name = juce::MidiMessage::getControllerName (i);
+        if (name.isEmpty())
+            modSrcCC.add (modMatrix.addMonoModSource (juce::String::formatted ("cc%d", i), juce::String::formatted ("CC %d", i), false));
+        else
+            modSrcCC.add (modMatrix.addMonoModSource (juce::String::formatted ("cc%d", i), juce::String::formatted ("CC %d ", i) + name, false));
     }
 
     for (auto pp : getPluginParameters())

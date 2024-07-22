@@ -476,6 +476,9 @@ void MSEGParams::setup(ResonariumProcessor& p, int index)
 {
     this->index = index;
     juce::String prefix = "mseg" + std::to_string(index);
+    msegData = std::make_shared<gin::MSEG::Data>();
+    msegData->reset();
+    //TODO load the msegData from disk once we figure out how that works...
     enabled = p.addExtParam(prefix + "enable", "MSEG" + std::to_string(index) + "Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                             0.0f, enableTextFunction);
@@ -500,17 +503,21 @@ void MSEGParams::setup(ResonariumProcessor& p, int index)
                            {-1.0f, 1.0f, 0.0f, 1.0f},
                            0.0f, 0.0f);
 
+    fade = p.addExtParam(prefix + "fade", "MSEG" + std::to_string(index) + "Fade", "Fade", "s",
+                         {-60.0f, 60.0f, 0.0f, 0.2f, true},
+                         0.0f, 0.0f);
+
     phase = p.addExtParam(prefix + "phase", "MSEG" + std::to_string(index) + "Phase", "Phase", "",
                           {-1.0f, 1.0f, 0.0f, 1.0f},
                           0.0f, 0.0f);
 
     xgrid = p.addExtParam(prefix + "xgrid", "MSEG" + std::to_string(index) + "XGrid", "XGrid", "",
-                          {2.0f, 32.0f, 1.0f, 1.0f},
-                          2.0f, 0.0f);
+                          {1.0f, 32.0f, 1.0f, 1.0f},
+                          8.0f, 0.0f);
 
     ygrid = p.addExtParam(prefix + "ygrid", "MSEG" + std::to_string(index) + "YGrid", "YGrid", "",
-                          {2.0f, 32.0f, 1.0f, 1.0f},
-                          2.0f, 0.0f);
+                          {1.0f, 32.0f, 1.0f, 1.0f},
+                          1.0f, 0.0f);
 
     loop = p.addIntParam(prefix + "loop", "MSEG" + std::to_string(index) + "Loop", "Loop", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
@@ -549,13 +556,16 @@ void SynthParams::setup(ResonariumProcessor& p)
     for (int i = 0; i < NUM_LFOS; i++)
     {
         lfoParams[i].setup(p, i);
-        randomLfoParams[i].setup(p, i);
-
         //ensure that the same parameters are used for the synth-level monophonic LFOs
         //and the voice-level polyphonic LFOs
         //the result is that each LFO is actually two LFOs under the hood,
         //where one is monophonic and one is polyphonic
         voiceParams.lfoParams[i] = lfoParams[i];
+    }
+
+    for(int i = 0; i < NUM_RANDOMS; i++)
+    {
+        randomLfoParams[i].setup(p, i);
         voiceParams.randomLfoParams[i] = randomLfoParams[i];
     }
 
@@ -569,6 +579,7 @@ void SynthParams::setup(ResonariumProcessor& p)
     for(int i = 0; i < NUM_MSEGS; i++)
     {
         msegParams[i].setup(p, i);
+        voiceParams.msegParams[i] = msegParams[i];
     }
 }
 
@@ -593,6 +604,10 @@ void UIParams::setup(ResonariumProcessor& p)
     adsrSelect = p.addIntParam("uiActiveADSR", "ADSR", "", "",
                                {0.0f, NUM_ENVELOPES - 1, 1.0f, 1.0f},
                                0.0f, gin::SmoothingType::linear);
+
+    modWindowSelect = p.addIntParam("uiActiveModWindow", "Mod Window", "", "",
+                                    {0.0f, 1, 1.0f, 1.0f},
+                                    0.0f, gin::SmoothingType::linear);
 
     bypassResonators = p.addIntParam("uiBypassResonators", "BypassResonators", "", "",
                                      {0.0f, 1.0f, 1.0f, 1.0f},

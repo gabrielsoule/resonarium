@@ -6,6 +6,8 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
     frequency = 440.0f;
     int resonatorBankIndex = 0;
 
+    polyMSEGs.clear();
+
     //each resonator bank has two indices:
     //its index among all resonator banks,
     //and its index among its particular type of resonator bank
@@ -41,19 +43,25 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
         exciters.add(new ImpulseTrainExciter(*this, params.impulseTrainExciterParams[i]));
     }
 
-    for(int i = 0; i < NUM_LFOS; i++)
+    for (int i = 0; i < NUM_LFOS; i++)
     {
         polyLFOs[i].params = params.lfoParams[i];
     }
 
-    for(int i = 0; i < NUM_RANDOMS; i++)
+    for (int i = 0; i < NUM_RANDOMS; i++)
     {
         polyRandomLFOs[i].params = params.randomLfoParams[i];
     }
 
-    for(int i = 0; i < NUM_ENVELOPES; i++)
+    for (int i = 0; i < NUM_ENVELOPES; i++)
     {
         polyEnvelopes[i].params = params.adsrParams[i];
+    }
+
+    for (int i = 0; i < NUM_MSEGS; i++)
+    {
+        auto mseg = StereoMSEGWrapper(params.msegParams[i]);
+        polyMSEGs.add(mseg);
     }
 }
 
@@ -84,17 +92,26 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     for (auto& l : polyLFOs)
     {
         l.prepare(spec);
+        l.reset();
     }
 
-    for(auto& r : polyRandomLFOs)
+    for (auto& r : polyRandomLFOs)
     {
         r.prepare(spec);
         r.voice = this;
+        r.reset();
     }
 
-    for(auto& e : polyEnvelopes)
+    for (auto& e : polyEnvelopes)
     {
         e.prepare(spec);
+        e.reset();
+    }
+
+    for (auto& m : polyMSEGs)
+    {
+        m.reset();
+        m.prepare(spec);
     }
 
     juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients =
@@ -160,10 +177,16 @@ void ResonatorVoice::noteStarted()
             params.lfoParams[i].retrig->getBoolValue() ? -1 : juce::Random::getSystemRandom().nextFloat());
     }
 
-    for(int i = 0; i < NUM_ENVELOPES; i++)
+    for (auto& envelope : polyEnvelopes)
     {
-        polyEnvelopes[i].reset();
-        polyEnvelopes[i].noteOn();
+        envelope.reset();
+        envelope.noteOn();
+    }
+
+    for (auto& mseg : polyMSEGs)
+    {
+        mseg.reset();
+        mseg.noteOn();
     }
 
     dcBlocker.reset();
@@ -193,7 +216,7 @@ void ResonatorVoice::noteStopped(bool allowTailOff)
         exciter->noteStopped(allowTailOff);
     }
 
-    for(int i = 0; i < NUM_ENVELOPES; i++)
+    for (int i = 0; i < NUM_ENVELOPES; i++)
     {
         polyEnvelopes[i].noteOff();
     }
@@ -235,7 +258,7 @@ void ResonatorVoice::updateParameters(int numSamples)
         }
     }
 
-    for(int i = 0; i < NUM_RANDOMS; i++)
+    for (int i = 0; i < NUM_RANDOMS; i++)
     {
         if (params.randomLfoParams[i].enabled->isOn())
         {
@@ -247,15 +270,38 @@ void ResonatorVoice::updateParameters(int numSamples)
                 rate = getValue(params.randomLfoParams[i].rate);
             polyRandomLFOs[i].updateParameters(rate);
             polyRandomLFOs[i].process(numSamples);
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyRND[i], polyRandomLFOs[i].getOutput());
+            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyRND[i], polyRandomLFOs[i].getOutput(0), 0);
+            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyRND[i], polyRandomLFOs[i].getOutput(1), 1);
         }
     }
 
-    for(int i = 0; i < NUM_ENVELOPES; i++)
+    for (int i = 0; i < NUM_ENVELOPES; i++)
     {
         polyEnvelopes[i].updateParameters(*this);
         polyEnvelopes[i].process(numSamples);
         proc.modMatrix.setPolyValue(*this, proc.modSrcPolyENV[i], polyEnvelopes[i].getOutput());
+    }
+
+    for (int i = 0; i < NUM_MSEGS; i++)
+    {
+        if (params.msegParams[i].enabled->isOn())
+        {
+            float freq = 0;
+            if (params.lfoParams[i].sync->getProcValue() > 0.0f)
+                freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
+                    toSeconds(proc.getPlayHead());
+            else
+                freq = proc.modMatrix.getValue(params.lfoParams[i].rate);
+            polyMSEGs.getReference(i).updateParameters(*this, freq);
+            polyMSEGs.getReference(i).process(numSamples);
+            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyMSEG[i], polyMSEGs.getReference(i).getOutput(0), 0);
+            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyMSEG[i], polyMSEGs.getReference(i).getOutput(1), 1);
+        }
+        else
+        {
+            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyMSEG[i], 0, 0);
+            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyMSEG[i], 0, 1);
+        }
     }
 
     for (auto* resonatorBank : resonatorBanks)

@@ -13,6 +13,7 @@
 #include "WaveguideResonatorBank.h"
 #include "util/RandomLFO.h"
 #include "util/StereoLFOWrapper.h"
+#include "util/StereoMSEGWrapper.h"
 #include "util/WrappedEnvelope.h"
 
 class ResonariumProcessor;
@@ -52,12 +53,14 @@ public:
     juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to output
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlocker;
     juce::OwnedArray<Exciter> exciters;
-    StereoLFOWrapper polyLFOs[NUM_LFOS];
-    RandomLFO polyRandomLFOs[NUM_RANDOMS];
-    WrappedEnvelope polyEnvelopes[NUM_ENVELOPES];
-    juce::Array<gin::MSEG> polyMSEGs;
-    juce::Array<gin::MSEG::Data> msegData;
-
+    // StereoLFOWrapper polyLFOs[NUM_LFOS];
+    std::array<StereoLFOWrapper, NUM_LFOS> polyLFOs;
+    // RandomLFO polyRandomLFOs[NUM_RANDOMS];
+    std::array<RandomLFO, NUM_RANDOMS> polyRandomLFOs;
+    // WrappedEnvelope polyEnvelopes[NUM_ENVELOPES];
+    std::array<WrappedEnvelope, NUM_ENVELOPES> polyEnvelopes;
+    // StereoMSEGWrapper polyMSEGs[NUM_MSEGS];
+    juce::Array<StereoMSEGWrapper> polyMSEGs; //have to use heap array since mseg has no default constructor,
     bool bypassResonators = false;
 };
 

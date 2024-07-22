@@ -39,7 +39,9 @@ public:
         modSrcMonoRND,
         modSrcPolyRND,
         modSrcPolyENV,
-        modSrcMonoMSEG;
+        modSrcMonoMSEG,
+        modSrcPolyMSEG,
+        modSrcCC;
     //contains all the parameters that a voice needs modulated polyphonically (which is almost all of 'em)
     UIParams uiParams;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ResonariumProcessor)

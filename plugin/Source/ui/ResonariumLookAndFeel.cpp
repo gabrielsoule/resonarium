@@ -320,9 +320,9 @@ juce::Font ResonariumLookAndFeel::getPopupMenuFont()
 }
 
 // Override the font for Labels
-juce::Font ResonariumLookAndFeel::getLabelFont (juce::Label&)
+juce::Font ResonariumLookAndFeel::getLabelFont (juce::Label& label)
 {
-    return juce::Font ("Futura", "Medium", 14.0f); // Change to your preferred font
+    return juce::Font ("Futura", "Medium", 14.5f); // Change to your preferred font
 }
 
 //==============================================================================
