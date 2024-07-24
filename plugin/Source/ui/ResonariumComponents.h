@@ -258,13 +258,13 @@ public:
     void paint(juce::Graphics& g) override
     {
         ParamBox::paint(g);
-        juce::Path path;
-        path.startNewSubPath(30, 30);
-        path.lineTo(30, 70);
-        path.quadraticTo(30, 100, 60, 100);
-        path.addArrow(juce::Line<float>(100, 100, 200, 200), 3, 5, 5);
-        g.setColour(juce::Colours::blue);
-        g.strokePath(path, juce::PathStrokeType(5.0f));
+        // juce::Path path;
+        // path.startNewSubPath(30, 30);
+        // path.lineTo(30, 70);
+        // path.quadraticTo(30, 100, 60, 100);
+        // path.addArrow(juce::Line<float>(100, 100, 200, 200), 3, 5, 5);
+        // g.setColour(juce::Colours::blue);
+        // g.strokePath(path, juce::PathStrokeType(5.0f));
     }
 
     int resonatorNum;

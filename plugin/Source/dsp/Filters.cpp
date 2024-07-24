@@ -33,6 +33,8 @@ void DispersionFilter::setDispersionAmount(float amount)
     float angle = amount * -juce::MathConstants<float>::halfPi;
     c = std::cos(angle);
     s = std::sin(angle);
+    // c = 1 - amount;
+    // s = - amount;
 }
 
 float OneZeroFilter::processSample(float input)

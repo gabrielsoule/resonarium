@@ -222,7 +222,7 @@ struct MSEGParams
     int index = -1;
     //the msegData is loaded from disk;
     //furthermore, it needs to be shared between the UI and audio threads
-    //good candidate for the parameters
+    //good candidate for being shoved into a parameter struct
     std::shared_ptr<gin::MSEG::Data> msegData;
     gin::Parameter::Ptr
         enabled,

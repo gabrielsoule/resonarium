@@ -3,6 +3,7 @@
 #include "defines.h"
 #include "Resonator.h"
 #include "ResonatorBank.h"
+#include "StereoResonator.h"
 
 class ResonatorVoice;
 /**
@@ -32,7 +33,8 @@ public:
     CouplingMode couplingMode;
     float frequency;
     float sampleRate;
-    juce::OwnedArray<Resonator> resonators;
+    // juce::OwnedArray<Resonator> resonators;
+    juce::OwnedArray<StereoResonator> resonators;
     juce::dsp::IIR::Filter<float> couplingFilter;
     juce::dsp::FIR::Filter<float> couplingFilterFIR;
     juce::dsp::FIR::Coefficients<float>::Ptr couplingCoefficientsFIR;

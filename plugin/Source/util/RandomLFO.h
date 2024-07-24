@@ -32,7 +32,7 @@ public:
         STEP,
         SAMPLE_AND_HOLD,
     };
-    RandomLFO() {}
+    RandomLFO() : leftState(sideStates[0]), rightState(sideStates[1]){}
     RandomLFO(gin::ModVoice* voice, bool stereo);
     RandomLFO(RandomLFOParams params, bool stereo);
     RandomLFO(gin::ModVoice* voice, RandomLFOParams params, bool stereo);
@@ -57,9 +57,10 @@ public:
     double sampleRate;
     float oneOverSampleRate;
     bool stereo = false;
-    RandomState leftState;
-    RandomState rightState;
+    RandomState sideStates[2];
     RandomState centerState;
+    RandomState& leftState; //convienient aliases
+    RandomState& rightState;
 
     float currentPhase;
     float phaseDelta;

@@ -4,15 +4,21 @@
 
 #include "RandomLFO.h"
 
-RandomLFO::RandomLFO(gin::ModVoice* voice, bool stereo) : voice(voice), stereo(stereo)
+RandomLFO::RandomLFO(gin::ModVoice* voice, bool stereo) : voice(voice), stereo(stereo),
+                                                          leftState(sideStates[0]),
+                                                          rightState(sideStates[1])
 {
 }
 
-RandomLFO::RandomLFO(RandomLFOParams params, bool stereo) : params(params), stereo(stereo)
+RandomLFO::RandomLFO(RandomLFOParams params, bool stereo) : params(params), stereo(stereo),
+                                                            leftState(sideStates[0]),
+                                                            rightState(sideStates[1])
 {
 }
 
-RandomLFO::RandomLFO(gin::ModVoice* voice, RandomLFOParams params, bool stereo) : params(params), stereo(stereo)
+RandomLFO::RandomLFO(gin::ModVoice* voice, RandomLFOParams params, bool stereo) : params(params), stereo(stereo),
+    leftState(sideStates[0]),
+    rightState(sideStates[1])
 {
 }
 
@@ -97,19 +103,24 @@ float RandomLFO::process(int numSamples)
 
 float RandomLFO::getOutput()
 {
-    return (centerState.currentRandomValue * 2.0) - 1.0f;
+    return centerState.currentRandomValue * 2.0f - 1.0f;
 }
 
 float RandomLFO::getOutputUnclamped()
 {
+    jassertfalse;
 }
 
 float RandomLFO::getOutput(int channel)
 {
+    jassert(channel == 0 || channel == 1);
+    const float output = sideStates[channel].currentRandomValue * stereoAmount + centerState.currentRandomValue * (1.0f - stereoAmount);
+    return output * 2.0f - 1.0f;
 }
 
 float RandomLFO::getOutputUnclamped(int channel)
 {
+    jassertfalse;
 }
 
 // float RandomLFO::perlinInterpolate(float a, float b, float t)
