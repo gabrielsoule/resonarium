@@ -5,6 +5,8 @@
 #define RESONARIUMCOMPONENTS_H
 
 #include <JuceHeader.h>
+
+#include "ResonariumLookAndFeel.h"
 #include "../Parameters.h"
 #include "../defines.h"
 #include "../ResonatorVoice.h"
@@ -222,6 +224,63 @@ public:
     ImpulseTrainExciterParams impulseTrainParams;
 };
 
+class SampleExciterParamBox : public gin::ParamBox
+{
+public:
+    SampleExciterParamBox(const juce::String& name, ResonariumProcessor& proc, SampleExciterParams sampleParams) :
+        gin::ParamBox(name), sampleParams(sampleParams)
+    {
+        setName("sampleExciterParams");
+        addEnable(sampleParams.enabled);
+        gridWidth = gridWidth * 0.9f;
+        gridHeight = gridHeight * 0.9f;
+        gridOffsetY += 4;
+        addControl(new gin::Knob(sampleParams.gain), 0, 0);
+        addControl(new gin::Knob(sampleParams.mix), 1, 0);
+        addControl(new gin::Knob(sampleParams.start), 2, 0);
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        gin::ParamBox::paint(g);
+        auto sampleArea = getLocalBounds()
+                          .withTrimmedTop(TOP_MENU_BAR_HEIGHT)
+                          .withTrimmedBottom(13)
+                          .withTrimmedLeft(160)
+                          .withTrimmedRight(10);
+        constexpr float cornerSize = 5.0f;
+        constexpr float dashLengths[2] = {4.0f, 8.0f};
+        juce::Path path;
+        path.addRoundedRectangle(sampleArea, cornerSize);
+        const juce::PathStrokeType strokeType(1);
+        strokeType.createDashedStroke(path, path, dashLengths, 2);
+        g.setColour(juce::Colours::darkgrey);
+        g.strokePath(path, strokeType);
+        g.setFont(static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont);
+        g.drawFittedText("DRAG SAMPLE", 165, 40, 50, 50, juce::Justification::centred, 2, 1);
+    }
+    SampleExciterParams sampleParams;
+};
+
+class ExternalInputExciterParamBox : public gin::ParamBox
+{
+public:
+    ExternalInputExciterParamBox(const juce::String& name, ResonariumProcessor& proc,
+                                 ExternalInputExciterParams externalInputParams) : gin::ParamBox(name),
+        extInParams(externalInputParams)
+    {
+        setName("externalInputExciterParams");
+        addEnable(extInParams.enabled);
+        addControl(new gin::Knob(extInParams.gain), 0, 0);
+        addControl(new gin::Knob(extInParams.mix), 1, 0);
+        addControl(new gin::Select(externalInputParams.filterParams.type), 0, 1);
+        addControl(new gin::Knob(externalInputParams.filterParams.frequency), 1, 1);
+        addControl(new gin::Knob(externalInputParams.filterParams.resonance), 2, 1);
+    }
+
+    ExternalInputExciterParams extInParams;
+};
+
 class ModalResonatorBankParamBox : public gin::ParamBox
 {
 public:
@@ -319,12 +378,12 @@ class ADSRParamBox : public gin::ParamBox
 {
 public:
     ADSRParamBox(const juce::String& name, ResonariumProcessor& proc, ADSRParams adsrParams) :
-    gin::ParamBox(name), proc(proc), adsrParams(adsrParams)
+        gin::ParamBox(name), proc(proc), adsrParams(adsrParams)
     {
         setName("env" + juce::String(adsrParams.index + 1));
         addEnable(adsrParams.enabled);
         juce::StringArray adsrNames;
-        for(int i = 0; i < NUM_ENVELOPES; i++)
+        for (int i = 0; i < NUM_ENVELOPES; i++)
         {
             adsrNames.add("ENV " + juce::String(i + 1));
         }
@@ -340,7 +399,7 @@ public:
 
         visualizer = new gin::ADSRComponent();
         auto g = new gin::ADSRComponent();
-        g->setParams (adsrParams.attack, adsrParams.decay, adsrParams.sustain, adsrParams.release);
+        g->setParams(adsrParams.attack, adsrParams.decay, adsrParams.sustain, adsrParams.release);
         g->phaseCallback = [this, adsrParams]
         {
             std::vector<std::pair<int, float>> res;
@@ -348,14 +407,15 @@ public:
             if (adsrParams.enabled->isOn())
             {
                 for (auto v : this->proc.synth.getActiveVoices())
-                    if (auto rv = dynamic_cast<ResonatorVoice*> (v))
-                        res.push_back (rv->polyEnvelopes[adsrParams.index].internalADSR.getCurrentPhase());
+                    if (auto rv = dynamic_cast<ResonatorVoice*>(v))
+                        res.push_back(rv->polyEnvelopes[adsrParams.index].internalADSR.getCurrentPhase());
             }
 
             return res;
         };
         addControl(g, 4, 0, 3, 1);
     }
+
     ResonariumProcessor& proc;
     gin::ADSRComponent* visualizer;
     ADSRParams adsrParams;
@@ -395,8 +455,9 @@ public:
         addControl(new gin::Knob(lfoParams.offset, true), 3, 1);
 
         visualizer = new gin::LFOComponent();
-        visualizer->setParams(lfoParams.wave, lfoParams.sync, lfoParams.rate, lfoParams.beat, lfoParams.depth, lfoParams.offset,
-                     lfoParams.phase, lfoParams.enabled);
+        visualizer->setParams(lfoParams.wave, lfoParams.sync, lfoParams.rate, lfoParams.beat, lfoParams.depth,
+                              lfoParams.offset,
+                              lfoParams.phase, lfoParams.enabled);
         jassert(lfoParams.enabled != nullptr);
         visualizer->phaseCallback = [this, lfoParams]
         {
@@ -404,11 +465,11 @@ public:
 
             if (lfoParams.enabled->isOn())
             {
-                res.push_back (this->proc.synth.monoLFOs[lfoParams.index].getCurrentPhase(0));
+                res.push_back(this->proc.synth.monoLFOs[lfoParams.index].getCurrentPhase(0));
 
                 for (auto v : this->proc.synth.getActiveVoices())
-                    if (auto voice = dynamic_cast<ResonatorVoice*> (v))
-                        res.push_back (voice->polyLFOs[lfoParams.index].getCurrentPhase(0));
+                    if (auto voice = dynamic_cast<ResonatorVoice*>(v))
+                        res.push_back(voice->polyLFOs[lfoParams.index].getCurrentPhase(0));
             }
 
             return res;
@@ -459,7 +520,7 @@ public:
         headerTabButtonWidth = 75;
 
         addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoRND[randomLfoParams.index], false));
-        addModSource (new gin::ModulationSourceButton (proc.modMatrix, proc.modSrcPolyRND[randomLfoParams.index], true));
+        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcPolyRND[randomLfoParams.index], true));
 
         addControl(r = new gin::Knob(randomLfoParams.rate), 0, 0);
         addControl(b = new gin::Select(randomLfoParams.beat), 0, 0);
@@ -498,7 +559,7 @@ class MSEGParamBox : public gin::ParamBox
 {
 public:
     MSEGParamBox(const juce::String& name, ResonariumProcessor& proc, MSEGParams msegParams) :
-    gin::ParamBox(name), proc(proc), msegParams(msegParams)
+        gin::ParamBox(name), proc(proc), msegParams(msegParams)
     {
         setName("mseg" + juce::String(msegParams.index + 1));
 
@@ -520,7 +581,6 @@ public:
         addControl(new gin::Knob(msegParams.ygrid, true), 6, 2);
 
 
-
         msegComponent = new gin::MSEGComponent(proc.synth.monoMSEGs.getReference(msegParams.index).leftData);
         msegComponent->setParams(msegParams.sync, msegParams.rate, msegParams.beat, msegParams.depth, msegParams.offset,
                                  msegParams.phase, msegParams.enabled, msegParams.xgrid, msegParams.ygrid,
@@ -531,11 +591,11 @@ public:
 
             if (msegParams.enabled->isOn())
             {
-                res.push_back (this->proc.synth.monoMSEGs.getReference(msegParams.index).getCurrentPhase(0));
+                res.push_back(this->proc.synth.monoMSEGs.getReference(msegParams.index).getCurrentPhase(0));
 
                 for (auto v : this->proc.synth.getActiveVoices())
-                    if (auto voice = dynamic_cast<ResonatorVoice*> (v))
-                        res.push_back (voice->polyMSEGs.getReference(msegParams.index).getCurrentPhase(0));
+                    if (auto voice = dynamic_cast<ResonatorVoice*>(v))
+                        res.push_back(voice->polyMSEGs.getReference(msegParams.index).getCurrentPhase(0));
             }
 
             return res;
@@ -549,8 +609,8 @@ public:
     {
         ParamBox::resized();
         auto bounds = getLocalBounds()
-        .reduced(2, BOX_HEADER_HEIGHT + 2)
-        .withTrimmedBottom(55);
+                      .reduced(2, BOX_HEADER_HEIGHT + 2)
+                      .withTrimmedBottom(55);
         msegComponent->setBounds(bounds);
     }
 
@@ -574,20 +634,20 @@ public:
 class ModSrcBox : public gin::ParamBox
 {
 public:
-    ModSrcBox (const juce::String& name, ResonariumProcessor& proc)
-        : gin::ParamBox (name), proc (proc)
+    ModSrcBox(const juce::String& name, ResonariumProcessor& proc)
+        : gin::ParamBox(name), proc(proc)
     {
-        setName ("mod");
+        setName("mod");
 
-        addHeader ({"SOURCES", "MATRIX"}, 0, proc.uiParams.modWindowSelect);
+        addHeader({"SOURCES", "MATRIX"}, 0, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
-        addControl (modSrcListComponent = new gin::ModSrcListBox (proc.modMatrix));
+        addControl(modSrcListComponent = new gin::ModSrcListBox(proc.modMatrix));
     }
 
     void resized() override
     {
         ParamBox::resized();
-        modSrcListComponent->setBounds (getLocalBounds().withTrimmedTop(BOX_HEADER_HEIGHT));
+        modSrcListComponent->setBounds(getLocalBounds().withTrimmedTop(BOX_HEADER_HEIGHT));
     }
 
     gin::ModSrcListBox* modSrcListComponent = nullptr;
@@ -598,19 +658,19 @@ public:
 class MatrixBox : public gin::ParamBox
 {
 public:
-    MatrixBox (const juce::String& name, ResonariumProcessor& proc)
-        : gin::ParamBox (name), proc (proc)
+    MatrixBox(const juce::String& name, ResonariumProcessor& proc)
+        : gin::ParamBox(name), proc(proc)
     {
-        setName ("mtx");
-        addHeader ({"SOURCES", "MATRIX"}, 1, proc.uiParams.modWindowSelect);
+        setName("mtx");
+        addHeader({"SOURCES", "MATRIX"}, 1, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
-        addControl (modMatrixComponent = new gin::ModMatrixBox (proc, proc.modMatrix, 75));
+        addControl(modMatrixComponent = new gin::ModMatrixBox(proc, proc.modMatrix, 75));
     }
 
     void resized() override
     {
         ParamBox::resized();
-        modMatrixComponent->setBounds (getLocalBounds().withTrimmedTop(BOX_HEADER_HEIGHT));
+        modMatrixComponent->setBounds(getLocalBounds().withTrimmedTop(BOX_HEADER_HEIGHT));
     }
 
     gin::ModMatrixBox* modMatrixComponent = nullptr;

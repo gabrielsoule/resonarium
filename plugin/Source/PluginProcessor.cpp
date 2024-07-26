@@ -127,6 +127,8 @@ void ResonariumProcessor::prepareToPlay(double newSampleRate, int newSamplesPerB
     Processor::prepareToPlay(newSampleRate, newSamplesPerBlock);
     modMatrix.setSampleRate(newSampleRate);
     synth.prepare({newSampleRate, static_cast<juce::uint32>(newSamplesPerBlock), 2});
+    inputBuffer = juce::AudioBuffer<float>(2, newSamplesPerBlock);
+    inputBuffer.clear();
 
     DBG("Resonarium instance preparing to play:");
     DBG("   Input channels: " + juce::String(getMainBusNumInputChannels()));
@@ -142,6 +144,9 @@ void ResonariumProcessor::releaseResources()
 
 void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
+    inputBuffer.copyFrom(0, 0, buffer.getReadPointer(0), buffer.getNumSamples());
+    inputBuffer.copyFrom(1, 0, buffer.getReadPointer(1), buffer.getNumSamples());
+    buffer.applyGain(std::cos(synth.params.voiceParams.externalInputExciterParams.mix->getProcValue() * juce::MathConstants<float>::halfPi));
     juce::ScopedNoDenormals noDenormals;
     synth.startBlock();
     synth.renderNextBlock(buffer, midi, 0, buffer.getNumSamples());

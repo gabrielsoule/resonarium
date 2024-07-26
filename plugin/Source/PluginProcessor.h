@@ -44,5 +44,9 @@ public:
         modSrcCC;
     //contains all the parameters that a voice needs modulated polyphonically (which is almost all of 'em)
     UIParams uiParams;
+
+    //A copy of the input buffer, which is accessed by Ext. In exciters.
+    juce::AudioBuffer<float> inputBuffer;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ResonariumProcessor)
 };

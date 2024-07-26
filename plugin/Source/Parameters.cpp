@@ -364,6 +364,46 @@ void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
     filterParams.setup(p, prefix);
 }
 
+void ExternalInputExciterParams::setup(ResonariumProcessor& p)
+{
+    filterParams.setup(p, "Ext. In");
+
+    enabled = p.addExtParam("extInEnable", "Ext. In Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, enableTextFunction);
+
+    gain = p.addExtParam("extInGain", "Ext. In Gain", "Gain", "dB",
+                         {-100.0f, 24.0f, 0.0f, 4.0f}, 0.0f,
+                         0.0f);
+    gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
+
+    mix = p.addExtParam("extInMix", "Ext. In Mix", "Mix", "",
+                        {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
+                        0.0f);
+}
+
+void SampleExciterParams::setup(ResonariumProcessor& p)
+{
+    filterParams.setup(p, "Sample");
+
+    enabled = p.addExtParam("sampleEnable", "Sample Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, enableTextFunction);
+
+    gain = p.addExtParam("sampleGain", "Sample Gain", "Gain", "dB",
+                         {-100.0f, 24.0f, 0.0f, 4.0f}, 0.0f,
+                         0.0f);
+    gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
+
+    mix = p.addExtParam("sampleMix", "Sample Mix", "Mix", "",
+                        {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
+                        0.0f);
+
+    start = p.addExtParam("sampleStart", "Sample Start", "Start", "%",
+                          {0.0f, 1.0f, 0.0f, 0.1f}, 0.0f,
+                          0.0f);
+}
+
 void LFOParams::setup(ResonariumProcessor& p, int index)
 {
     this->index = index;
@@ -547,6 +587,8 @@ void VoiceParams::setup(ResonariumProcessor& p)
         impulseTrainExciterParams[i].setup(p, i);
     }
 
+    externalInputExciterParams.setup(p);
+    sampleExciterParams.setup(p);
     //Do NOT set up LFO params; these are set later by the enclosing synth
 }
 

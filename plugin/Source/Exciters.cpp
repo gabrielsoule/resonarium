@@ -1,4 +1,6 @@
 #include "Exciters.h"
+
+#include "PluginProcessor.h"
 #include "ResonatorVoice.h"
 
 void ImpulseExciter::prepare(const juce::dsp::ProcessSpec& spec)
@@ -262,4 +264,54 @@ void ImpulseTrainExciter::updateParameters()
 
     jassert(periodInSamples > 0);
     jassert(impulseLength > 0);
+}
+
+void ExternalInputExciter::prepare(const juce::dsp::ProcessSpec& spec)
+{
+    this->extInBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
+    extInBuffer.clear();
+    this->extInBlock = juce::dsp::AudioBlock<float>(extInBuffer);
+}
+
+void ExternalInputExciter::nextSample()
+{
+
+}
+
+void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& block)
+{
+    if(!params.enabled->isOn()) return;
+
+    ResonatorVoice& v = static_cast<ResonatorVoice&>(this->voice);
+    float mix = std::sin(voice.getValue(params.mix) * juce::MathConstants<float>::halfPi);
+    float gainL = voice.getValue(params.gain, 0) * mix;
+    float gainR = voice.getValue(params.gain, 1) * mix;
+    jassert(gainL == gainR);
+    extInBuffer.copyFrom(0, v.startSample, proc.inputBuffer.getReadPointer(0), v.numSamples, gainL);
+    extInBuffer.copyFrom(1, v.startSample, proc.inputBuffer.getReadPointer(1), v.numSamples, gainR);
+    juce::dsp::AudioBlock<float> extInBlock = juce::dsp::AudioBlock<float>(extInBuffer, v.startSample);
+    // filter.process(extInBlock);
+    block.add(extInBlock);
+
+}
+
+void ExternalInputExciter::reset()
+{
+}
+
+void ExternalInputExciter::noteStarted()
+{
+}
+
+void ExternalInputExciter::noteStopped(bool avoidTailOff)
+{
+}
+
+void ExternalInputExciter::updateParameters()
+{
+}
+
+void ExternalInputExciter::fillExtInputBuffer(juce::AudioBuffer<float> buffer)
+{
+    // this->extInBlock
 }

@@ -33,7 +33,7 @@ class Exciter
 {
 public:
 
-    explicit Exciter(gin::ModVoice& voice) : voice(voice) {sampleRate = 44100; maximumBlockSize = 512;}
+    explicit Exciter(ResonariumProcessor& proc, gin::ModVoice& voice) : proc(proc), voice(voice) {sampleRate = 44100; maximumBlockSize = 512;}
 
     virtual ~Exciter()
     = default;
@@ -49,9 +49,7 @@ public:
     virtual void reset() = 0;
     virtual void noteStarted() = 0;
     virtual void noteStopped(bool avoidTailOff) = 0;
-    virtual void
-
-    updateParameters() = 0;
+    virtual void updateParameters() = 0;
 
     virtual void prepare(const juce::dsp::ProcessSpec& spec)
     {
@@ -60,6 +58,7 @@ public:
         jassert(spec.numChannels == 2); //exciters are stereo
     }
 
+    ResonariumProcessor& proc;
     //A pointer to the parent Voice. No need to worry about leaking this, as the voice owns the Exciter.
     gin::ModVoice& voice;
     float sampleRate;
@@ -73,7 +72,7 @@ public:
 class ImpulseExciter : public Exciter
 {
 public:
-    ImpulseExciter(gin::ModVoice& voice, ImpulseExciterParams params) : Exciter(voice), params(params), filter(&voice, params.filterParams, false){}
+    ImpulseExciter(ResonariumProcessor& proc, gin::ModVoice& voice, ImpulseExciterParams params) : Exciter(proc, voice), params(params), filter(&voice, params.filterParams, false){}
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
@@ -100,7 +99,7 @@ public:
 class NoiseExciter : public Exciter
 {
 public:
-    NoiseExciter(gin::ModVoice& voice, NoiseExciterParams params) : Exciter(voice), params(params), filter(&voice, params.filterParams, false){}
+    NoiseExciter(ResonariumProcessor& proc, gin::ModVoice& voice, NoiseExciterParams params) : Exciter(proc, voice), params(params), filter(&voice, params.filterParams, false){}
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
@@ -147,7 +146,7 @@ public:
         NOISE_BURST
     };
 
-    ImpulseTrainExciter(gin::ModVoice& voice, ImpulseTrainExciterParams params) : Exciter(voice), params(params), filter(&voice, params.filterParams, false){}
+    ImpulseTrainExciter(ResonariumProcessor& proc, gin::ModVoice& voice, ImpulseTrainExciterParams params) : Exciter(proc, voice), params(params), filter(&voice, params.filterParams, false){}
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
@@ -192,19 +191,30 @@ public:
 //     void updateParameters() override;
 // };
 //
-// /**
-//  * An exciter that funnels real-time audio from the host processor chain to excite the resonators.
-//  */
-// class AudioInputExciter : public Exciter
-// {
-// public:
-//     void nextSample() override;
-//     void process(juce::dsp::AudioBlock<float> block) override;
-//     void reset() override;
-//     void noteStarted() override;
-//     void noteStopped(bool avoidTailOff) override;
-//     void updateParameters() override;
-// };
+/**
+ * An exciter that funnels real-time audio from the host processor chain to excite the resonators.
+ * Notably,
+ */
+class ExternalInputExciter : public Exciter
+{
+public:
+
+    ExternalInputExciter(ResonariumProcessor& proc, gin::ModVoice& voice, ExternalInputExciterParams params) : Exciter(proc, voice), params(params), filter(&voice, params.filterParams, false){}
+
+    void prepare(const juce::dsp::ProcessSpec& spec) override;
+    void nextSample() override;
+    void process(juce::dsp::AudioBlock<float>& block) override;
+    void reset() override;
+    void noteStarted() override;
+    void noteStopped(bool avoidTailOff) override;
+    void updateParameters() override;
+    void fillExtInputBuffer(juce::AudioBuffer<float> buffer);
+
+    ExternalInputExciterParams params;
+    MultiFilter filter;
+    juce::AudioBuffer<float> extInBuffer;
+    juce::dsp::AudioBlock<float> extInBlock;
+};
 
 
 #endif //EXCITERS_H

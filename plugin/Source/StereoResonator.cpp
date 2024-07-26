@@ -42,13 +42,13 @@ void StereoResonator::Resonator::updateParameters(float frequency)
 {
     this->gain = voice.getValue(params.gain);
     lastFrequency = nextFrequency;
-    nextFrequency = frequency * std::pow(2.0f, voice.getValue(params.harmonicInSemitones) / 12.0f);
-    delayLengthInSamples = sampleRate / frequency;
+    nextFrequency = frequency * std::pow(2.0f, voice.getValue(params.harmonicInSemitones, channel) / 12.0f);
+    delayLengthInSamples = sampleRate / nextFrequency;
     delayLine.setDelay(delayLengthInSamples);
-    decayCoefficient = std::pow(0.001f, 1.0f / (voice.getValue(params.decayTime) * frequency));
-    apf.setDispersionAmount(voice.getValue(params.dispersion));
+    decayCoefficient = std::pow(0.001f, 1.0f / (voice.getValue(params.decayTime, channel) * nextFrequency));
+    apf.setDispersionAmount(voice.getValue(params.dispersion, channel));
     svf.setMode(0);
-    svf.setCutoffFrequency<false>(1000.0f);
+    svf.setCutoffFrequency<false>(5000.0f);
     svf.setQValue<false>(0.707f);
     svf.update();
 }

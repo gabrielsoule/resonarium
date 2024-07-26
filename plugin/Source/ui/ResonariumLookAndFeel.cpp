@@ -4,7 +4,9 @@ ResonariumLookAndFeel::ResonariumLookAndFeel()
 {
     typeface = juce::Typeface::createSystemTypefaceFor (gin::Resources::BarlowThin_ttf, gin::Resources::BarlowThin_ttfSize);
     auto myfont = juce::Font(juce::FontOptions("Futura", "Medium", 14));
-    setDefaultSansSerifTypeface(typeface);
+    // setDefaultSansSerifTypeface(typeface);
+    setDefaultSansSerifTypeface(myfont.getTypefacePtr());
+    defaultFont = myfont;
     DBG(myfont.toString());
     juce::Array<juce::Font> fonts;
     juce::Font::findFonts(fonts);

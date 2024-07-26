@@ -173,6 +173,33 @@ struct ImpulseTrainExciterParams
     void setup(ResonariumProcessor& p, int index);
 };
 
+struct ExternalInputExciterParams
+{
+    MultiFilterParams filterParams;
+    gin::Parameter::Ptr
+        enabled,
+        gain,
+        mix = nullptr;
+
+    ExternalInputExciterParams() = default;
+
+    void setup(ResonariumProcessor& p);
+};
+
+struct SampleExciterParams
+{
+    MultiFilterParams filterParams;
+    gin::Parameter::Ptr
+        enabled,
+        mix,
+        start,
+        gain = nullptr;
+
+    SampleExciterParams() = default;
+
+    void setup(ResonariumProcessor& p);
+};
+
 struct LFOParams
 {
     int index = -1;
@@ -261,6 +288,8 @@ struct VoiceParams
     ImpulseExciterParams impulseExciterParams[NUM_IMPULSE_EXCITERS];
     NoiseExciterParams noiseExciterParams[NUM_NOISE_EXCITERS];
     ImpulseTrainExciterParams impulseTrainExciterParams[NUM_IMPULSE_TRAIN_EXCITERS];
+    ExternalInputExciterParams externalInputExciterParams;
+    SampleExciterParams sampleExciterParams;
     LFOParams lfoParams[NUM_LFOS];
     RandomLFOParams randomLfoParams[NUM_RANDOMS];
     ADSRParams adsrParams[NUM_ENVELOPES];

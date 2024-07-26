@@ -104,6 +104,7 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                 }
             }
             outSampleL = outSampleL / totalGainL;
+            outSampleR = outSampleR / totalGainR;
             outputBlock.addSample(0, i, outSampleL);
             outputBlock.addSample(1, i, outSampleR);
         }

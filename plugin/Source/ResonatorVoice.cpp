@@ -30,18 +30,20 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
 
     for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
     {
-        exciters.add(new ImpulseExciter(*this, params.impulseExciterParams[i]));
+        exciters.add(new ImpulseExciter(proc, *this, params.impulseExciterParams[i]));
     }
 
     for (int i = 0; i < NUM_NOISE_EXCITERS; i++)
     {
-        exciters.add(new NoiseExciter(*this, params.noiseExciterParams[i]));
+        exciters.add(new NoiseExciter(proc, *this, params.noiseExciterParams[i]));
     }
 
     for (int i = 0; i < NUM_IMPULSE_TRAIN_EXCITERS; i++)
     {
-        exciters.add(new ImpulseTrainExciter(*this, params.impulseTrainExciterParams[i]));
+        exciters.add(new ImpulseTrainExciter(proc, *this, params.impulseTrainExciterParams[i]));
     }
+
+    exciters.add(extInExciter = new ExternalInputExciter(proc, *this, params.externalInputExciterParams));
 
     for (int i = 0; i < NUM_LFOS; i++)
     {
@@ -319,6 +321,8 @@ void ResonatorVoice::updateParameters(int numSamples)
 
 void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
+    this->startSample = startSample;
+    this->numSamples = numSamples;
     //reminder: the output buffer/block is SHARED between voices and may NOT be empty; must ADD only
     updateParameters(numSamples); //important!
 
@@ -326,6 +330,8 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     juce::dsp::AudioBlock<float> exciterBlock = juce::dsp::AudioBlock<float>(exciterBuffer)
         .getSubBlock(startSample, numSamples);
     exciterBlock.clear();
+
+    //extInExciter.fillExtBufferFromProcessor
 
     //this block holds the output from the resonator banks. It is added to the main output buffer.
     juce::dsp::AudioBlock<float> resonatorBankOutputBlock = juce::dsp::AudioBlock<float>(resonatorBankBuffer)
@@ -363,7 +369,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     float maxAmplitude = resonatorBankBuffer.getMagnitude(0, startSample, numSamples);
     if (killIfSilent && numBlocksSinceNoteOn > 10)
     {
-        if (maxAmplitude < 0.001f)
+        if (maxAmplitude < 0.0002f)
         {
             silenceCount += 1;
             if (silenceCount > silenceCountThreshold)

@@ -44,9 +44,8 @@ public:
     juce::Font getPopupMenuFont() override;
 
     juce::SharedResourcePointer<gin::Images> images;
-
-private:
     juce::Typeface::Ptr typeface;
+    juce::Font defaultFont;
 };
 
 //==============================================================================

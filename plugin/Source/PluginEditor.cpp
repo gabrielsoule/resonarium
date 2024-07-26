@@ -57,6 +57,14 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                        PARAM_BOX_MEDIUM_HEIGHT);
     }
 
+    auto* sampleExciterParamBox = new SampleExciterParamBox("Sampler", proc, voiceParams.sampleExciterParams);
+    addAndMakeVisible(sampleExciterParamBox);
+    sampleExciterParamBox->setBounds(0, TOP_MENU_BAR_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT,
+                             EXCITER_BOX_WIDTH, PARAM_BOX_XSMALL_HEIGHT);
+    auto* extInParamBox = new ExternalInputExciterParamBox("External In", proc, voiceParams.externalInputExciterParams);
+    addAndMakeVisible(extInParamBox);
+    extInParamBox->setBounds(0, TOP_MENU_BAR_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
+                             EXCITER_BOX_WIDTH, PARAM_BOX_SMALL_HEIGHT);
 
     for (int i = 0; i < NUM_ENVELOPES; i++)
     {

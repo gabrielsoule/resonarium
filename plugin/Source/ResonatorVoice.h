@@ -49,10 +49,13 @@ public:
     int silenceCount = 0;
     int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
     int numBlocksSinceNoteOn; // what it says on the tin.
+    int startSample; //start sample of the current block
+    int numSamples; //num samples in the current block
     juce::AudioBuffer<float> exciterBuffer; // buffer for exciters to write to, is routed to resonator banks
     juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to output
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlocker;
     juce::OwnedArray<Exciter> exciters;
+    ExternalInputExciter* extInExciter; //alias for the external input exciter which requires some special treatment
     // StereoLFOWrapper polyLFOs[NUM_LFOS];
     std::array<StereoLFOWrapper, NUM_LFOS> polyLFOs;
     // RandomLFO polyRandomLFOs[NUM_RANDOMS];
