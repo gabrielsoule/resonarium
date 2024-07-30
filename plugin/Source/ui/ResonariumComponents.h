@@ -7,32 +7,174 @@
 #include <JuceHeader.h>
 
 #include "ResonariumLookAndFeel.h"
+#include "TextSlider.h"
 #include "../Parameters.h"
 #include "../defines.h"
 #include "../ResonatorVoice.h"
 
-/**
- * Component containing a vertical stack of controls corresponding to a single waveguide resonator.
- */
-class WaveguideResonatorComponent : public gin::MultiParamComponent
+// class ResonatorParameterRow : public gin::MultiParamComponent
+// {
+// public:
+//     ResonatorParameterRow(juce::String title, gin::Parameter::Ptr paramArray[], size_t numParams, int parameterWidth, int parameterHeight, int padding): paramArray(paramArray), numParams(numParams)
+//     {
+//         for (int i = 0; i < numParams; i++)
+//         {
+//             auto* control = new TextSlider(paramArray[i]);
+//             addAndMakeVisible(control);
+//             watchParam(paramArray[i]);
+//
+//         }
+//     }
+//
+//     gin::Parameter::Ptr* paramArray;
+//     int numParams;
+//     int parameterWidth;
+//     int parameterHeight;
+//     int padding;
+// };
+
+static constexpr float SPACING_X = 10; // how far apart are resonator columns?
+static constexpr float SPACING_Y_SMALL = 1;
+static constexpr float SPACING_Y_LARGE = 10;
+static constexpr float PARAMETER_WIDTH = 68;
+static constexpr float PARAMETER_HEIGHT = 25;
+static constexpr float PARAMETER_TEXT_HEIGHT = 14;
+
+
+class WaveguideResonatorComponent_V2 : public gin::MultiParamComponent
 {
 public:
-    WaveguideResonatorComponent(ResonatorParams resonatorParams) : resonatorParams(resonatorParams)
+
+    explicit WaveguideResonatorComponent_V2(ResonatorParams resonatorParams, juce::Colour colour) : resonatorParams(resonatorParams), colour(colour)
     {
-        this->enableButton = new gin::SVGPluginButton(resonatorParams.enabled, gin::Assets::power);
-        this->gainKnob = new gin::Knob(resonatorParams.gain);
-        this->pitchOffsetKnob = new gin::Knob(resonatorParams.harmonicInSemitones);
-        this->dispersionKnob = new gin::Knob(resonatorParams.dispersion);
-        this->decayTimeKnob = new gin::Knob(resonatorParams.decayTime);
-        this->brightnessKnob = new gin::Knob(resonatorParams.eksFilterBrightness);
-        // this->decayFilterCutoffKnob = new gin::Knob(resonatorParams.decayFilterCutoff);
+        enableButton = new gin::SVGPluginButton(resonatorParams.enabled, gin::Assets::power);
+        enableButton->setColour(juce::TextButton::buttonOnColourId, colour);
+        gainKnob = new gin::Knob(resonatorParams.gain);
+        gainKnob->getSlider().setColour(juce::Slider::rotarySliderFillColourId, colour);
+        pitchOffsetKnob = new TextSlider(resonatorParams.harmonicInSemitones, colour);
+        pitchOffsetKnob->setReadoutDecimals(2);
+        decayTimeKnob = new TextSlider(resonatorParams.decayTime, colour);
+        decayTimeKnob->setReadoutDecimals(1);
+        dispersionKnob = new TextSlider(resonatorParams.dispersion, colour);
+        dispersionKnob->setReadoutDecimals(0);
+        loopFilterCutoffKnob = new TextSlider(resonatorParams.loopFilterCutoff, colour);
+        loopFilterCutoffKnob->setReadoutDecimals(0);
+        loopFilterResonanceKnob = new TextSlider(resonatorParams.loopFilterResonance, colour);
+        loopFilterResonanceKnob->setReadoutDecimals(2);
+        loopFilterModeKnob = new TextSlider(resonatorParams.loopFilterMode, colour);
+        loopFilterModeKnob->setReadoutDecimals(2);
+        postFilterCutoffKnob = new TextSlider(resonatorParams.postFilterCutoff, colour);
+        postFilterCutoffKnob->setReadoutDecimals(0);
+        postFilterResonanceKnob = new TextSlider(resonatorParams.postFilterResonance, colour);
+        postFilterResonanceKnob->setReadoutDecimals(2);
+        postFilterModeKnob = new TextSlider(resonatorParams.postFilterMode, colour);
+        postFilterModeKnob->setReadoutDecimals(2);
+
 
         addAndMakeVisible(enableButton);
         addAndMakeVisible(gainKnob);
         addAndMakeVisible(pitchOffsetKnob);
         addAndMakeVisible(decayTimeKnob);
         addAndMakeVisible(dispersionKnob);
-        addAndMakeVisible(brightnessKnob);
+        addAndMakeVisible(loopFilterCutoffKnob);
+        addAndMakeVisible(loopFilterResonanceKnob);
+        addAndMakeVisible(loopFilterModeKnob);
+        addAndMakeVisible(postFilterCutoffKnob);
+        addAndMakeVisible(postFilterResonanceKnob);
+        addAndMakeVisible(postFilterModeKnob);
+
+        watchParam(enableButton->parameter);
+    }
+
+    void resized() override
+    {
+        auto bounds = this->getLocalBounds();
+        enableButton->setBounds(bounds.removeFromTop(12));
+        bounds.removeFromTop(3);
+        gainKnob->setBounds(bounds.removeFromTop(KNOB_W_SMALL).withWidth(KNOB_W_SMALL).translated(bounds.getWidth() / 2 - KNOB_W_SMALL / 2, 0));
+        bounds.removeFromTop(SPACING_Y_SMALL);
+        pitchOffsetKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
+        bounds.removeFromTop(SPACING_Y_LARGE);
+        decayTimeKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
+        bounds.removeFromTop(SPACING_Y_LARGE);
+        dispersionKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
+        bounds.removeFromTop(SPACING_Y_LARGE);
+        loopFilterCutoffKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
+        bounds.removeFromTop(SPACING_Y_SMALL);
+        loopFilterResonanceKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
+        bounds.removeFromTop(SPACING_Y_SMALL);
+        loopFilterModeKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
+        bounds.removeFromTop(SPACING_Y_LARGE);
+        postFilterCutoffKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
+        bounds.removeFromTop(SPACING_Y_SMALL);
+        postFilterResonanceKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
+        bounds.removeFromTop(SPACING_Y_SMALL);
+        postFilterModeKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
+
+
+    }
+    void paramChanged() override
+    {
+        // for some reason paramChanged() is being called before this component is added to the parent
+        // this is fine, except that we can't access the lookandfeel at this point
+        // this is a hack to get around that. There might be side effects. That's a later problem.
+        if (this->getParentComponent() == nullptr)
+        {
+            return;
+        }
+
+        MultiParamComponent::paramChanged();
+        for (auto c : this->getChildren())
+        {
+            if (c != enableButton) c->setEnabled(resonatorParams.enabled->isOn());
+        }
+    }
+
+    gin::SVGPluginButton* enableButton;
+    gin::Knob* gainKnob;
+    TextSlider* pitchOffsetKnob;
+    TextSlider* decayTimeKnob;
+    TextSlider* dispersionKnob;
+    TextSlider* loopFilterCutoffKnob;
+    TextSlider* loopFilterResonanceKnob;
+    TextSlider* loopFilterModeKnob;
+    TextSlider* postFilterCutoffKnob;
+    TextSlider* postFilterResonanceKnob;
+    TextSlider* postFilterModeKnob;
+
+    ResonatorParams resonatorParams;
+    juce::Colour colour;
+
+    int backgroundRectangleStartY;
+};
+
+class WaveguideResonatorComponent : public gin::MultiParamComponent
+{
+public:
+    WaveguideResonatorComponent(ResonatorParams resonatorParams) : resonatorParams(resonatorParams)
+    {
+        this->enableButton = new gin::SVGPluginButton(resonatorParams.enabled, gin::Assets::power);
+        this->gainKnob = new TextSlider(resonatorParams.gain);
+        this->pitchOffsetKnob = new gin::Knob(resonatorParams.harmonicInSemitones);
+        this->dispersionKnob = new gin::Knob(resonatorParams.dispersion);
+        this->decayTimeKnob = new gin::Knob(resonatorParams.decayTime);
+        // this->gainKnob->getSlider().getProperties().set("textOnly", true);
+        // this->gainKnob->setName("MyGainKnob");
+        jassert(this->gainKnob->getSlider().getProperties()["textOnly"]);
+        // this->gainKnob->getSlider().setInterceptsMouseClicks(false, true);
+        // this->brightnessKnob = new gin::Knob(resonatorParams.eksFilterBrightness);
+        // this->decayFilterCutoffKnob = new gin::Knob(resonatorParams.decayFilterCutoff);
+        this->svfCutoffKnob = new gin::Knob(resonatorParams.loopFilterCutoff);
+        this->svfResonanceKnob = new gin::Knob(resonatorParams.loopFilterResonance);
+
+        addAndMakeVisible(enableButton);
+        addAndMakeVisible(gainKnob);
+        addAndMakeVisible(pitchOffsetKnob);
+        addAndMakeVisible(decayTimeKnob);
+        addAndMakeVisible(dispersionKnob);
+        addAndMakeVisible(svfCutoffKnob);
+        addAndMakeVisible(svfResonanceKnob);
+        // addAndMakeVisible(brightnessKnob);
         // addAndMakeVisible(decayFilterCutoffKnob);
 
         watchParam(resonatorParams.enabled);
@@ -49,7 +191,9 @@ public:
         pitchOffsetKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
         decayTimeKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
         dispersionKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
-        brightnessKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
+        svfCutoffKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
+        svfResonanceKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
+        // brightnessKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
         // decayFilterCutoffKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
     }
 
@@ -95,6 +239,8 @@ public:
     gin::Knob* dispersionKnob;
     gin::Knob* decayFilterCutoffKnob;
     gin::Knob* brightnessKnob;
+    gin::Knob* svfCutoffKnob;
+    gin::Knob* svfResonanceKnob;
 
     ResonatorParams resonatorParams;
 };
@@ -259,6 +405,7 @@ public:
         g.setFont(static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont);
         g.drawFittedText("DRAG SAMPLE", 165, 40, 50, 50, juce::Justification::centred, 2, 1);
     }
+
     SampleExciterParams sampleParams;
 };
 
@@ -332,6 +479,153 @@ public:
     UIParams uiParams;
 };
 
+class WaveguideResonatorBankParamBox_V2 : public gin::ParamBox
+{
+public:
+    WaveguideResonatorBankParamBox_V2(const juce::String& name, ResonariumProcessor& proc, int resonatorNum,
+                                      WaveguideResonatorBankParams bankParams) :
+        gin::ParamBox(name), resonatorBankIndex(resonatorNum), bankParams(bankParams), uiParams(proc.uiParams)
+    {
+        juce::Array<juce::Colour> resonatorColors;
+        resonatorColors.add(juce::Colour(0xffFFADAD));
+        resonatorColors.add(juce::Colour(0xffFFD6A5));
+        resonatorColors.add(juce::Colour(0xffFDFFB6));
+        resonatorColors.add(juce::Colour(0xffCAFFBF));
+        resonatorColors.add(juce::Colour(0xff9BF6FF));
+        resonatorColors.add(juce::Colour(0xffA0C4FF));
+        resonatorColors.add(juce::Colour(0xffBDB2FF));
+        resonatorColors.add(juce::Colour(0xffFFC6FF));
+        jassert(resonatorColors.size() == NUM_WAVEGUIDE_RESONATORS);
+        for(int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+        {
+            resonatorColors.set(i, resonatorColors[i].withSaturation(1.0).withLightness(0.8));
+        }
+        setName("waveguideResonatorBankParams " + juce::String(resonatorNum));
+        this->headerTabButtonWidth = 150;
+        addHeader({"MODAL 1", "WAVEGUIDE 1", "MODAL 2", "WAVEGUIDE 2"}, resonatorNum, uiParams.resonatorBankSelect);
+        auto* select = new gin::Select(bankParams.couplingMode);
+        addControl(select);
+        for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+        {
+            auto* resonatorComponent = new WaveguideResonatorComponent_V2(
+                bankParams.resonatorParams[i], resonatorColors[i]);
+            resonatorComponents.add(resonatorComponent);
+            addAndMakeVisible(resonatorComponent);
+        }
+
+        textColour = juce::Colours::white.withAlpha(0.5f);
+
+        addAndMakeVisible(loopFilterLabel = new juce::Label("loopFilterLabel", "LOOP\nFILTER"));
+        addAndMakeVisible(postFilterLabel = new juce::Label("postFilterLabel", "POST\nFILTER"));
+        loopFilterLabel->setJustificationType(juce::Justification::centred);
+        postFilterLabel->setJustificationType(juce::Justification::centred);
+        loopFilterLabel->setFont(loopFilterLabel->getFont().withHeight(17).withExtraKerningFactor(0.05f));
+        postFilterLabel->setFont(postFilterLabel->getFont().withHeight(17).withExtraKerningFactor(0.05f));
+        loopFilterLabel->setEditable(false);
+        postFilterLabel->setEditable(false);
+        loopFilterLabel->setColour(juce::Label::textColourId, textColour);
+        postFilterLabel->setColour(juce::Label::textColourId, textColour);
+    }
+
+    void resized() override
+    {
+        ParamBox::resized();
+        juce::Rectangle<int> resonatorsArea = getLocalBounds();
+        resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
+        resonatorsArea.setHeight(350);
+        resonatorsArea.removeFromLeft(135);
+        for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+        {
+            resonatorsArea.removeFromLeft(7);
+            resonatorComponents[i]->setBounds(resonatorsArea.removeFromLeft(55));
+        }
+        loopFilterLabel->setBounds(-1, 220, 65, 40);
+        loopFilterLabel->setTransform(juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi, loopFilterLabel->getBounds().getCentreX(), loopFilterLabel->getBounds().getCentreY()));
+        // loopFilterLabel->setTransform(juce::AffineTransform::rotation(juce::MathConstants<float>::halfPi));
+        loopFilterLabel->toFront(false);
+
+        postFilterLabel->setBounds(-1, 310, 65, 40);
+        postFilterLabel->setTransform(juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi, postFilterLabel->getBounds().getCentreX(), postFilterLabel->getBounds().getCentreY()));
+        postFilterLabel->toFront(false);
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        ParamBox::paint(g);
+        juce::Font font = static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont.withHeight(17).withExtraKerningFactor(0.05f);
+        g.setFont(font);
+        //draw some attractive background rectangles
+        juce::Rectangle<float> rowBackground = juce::Rectangle<float>(137, BOX_HEADER_HEIGHT + 10 + 55 + 3, 498, PARAMETER_HEIGHT).expanded(0, 1);
+        juce::Rectangle<int> textRect = juce::Rectangle<int>(rowBackground.getX() - 115, rowBackground.getY() + 1, 105, PARAMETER_HEIGHT);
+
+        g.setColour(textColour);
+        g.drawFittedText("GAIN", textRect.translated(0, -40), juce::Justification::centredRight, 1);
+
+        g.setColour(juce::Colours::black);
+        g.fillRoundedRectangle(rowBackground, 14);
+        g.setColour(textColour);
+        g.drawFittedText("PITCH", textRect, juce::Justification::centredRight, 1);
+
+        g.setColour(juce::Colours::black);
+        rowBackground.translate(0, PARAMETER_HEIGHT + SPACING_Y_LARGE);
+        textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_LARGE);
+        g.fillRoundedRectangle(rowBackground, 14);
+        g.setColour(textColour);
+        g.drawFittedText("DECAY", textRect, juce::Justification::centredRight, 1);
+
+        g.setColour(juce::Colours::black);
+        rowBackground.translate(0, PARAMETER_HEIGHT + SPACING_Y_LARGE);
+        textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_LARGE);
+        g.fillRoundedRectangle(rowBackground, 14);
+        g.setColour(textColour);
+        g.drawFittedText("DISP.", textRect, juce::Justification::centredRight, 1);
+
+        g.setColour(juce::Colours::black);
+        juce::Rectangle filterBlockBackground = juce::Rectangle<float>(rowBackground.getX(), rowBackground.getY() + PARAMETER_HEIGHT + SPACING_Y_LARGE + 1, 498, 3 * PARAMETER_HEIGHT + 2 * SPACING_Y_SMALL).expanded(0, 1);
+        g.fillRoundedRectangle(filterBlockBackground, 14);
+        textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_LARGE);
+        g.setColour(textColour);
+        g.drawFittedText("CUTOFF", textRect, juce::Justification::centredRight, 1);
+        textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
+        g.drawFittedText("RES.", textRect, juce::Justification::centredRight, 1);
+        textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
+        g.drawFittedText("MODE", textRect, juce::Justification::centredRight, 1);
+        juce::Path loopFilterBracketPath;
+        loopFilterBracketPath.startNewSubPath(filterBlockBackground.getTopLeft().translated(-70, 2));
+        loopFilterBracketPath.lineTo(filterBlockBackground.getTopLeft().translated(-80, 2));
+        loopFilterBracketPath.lineTo(filterBlockBackground.getBottomLeft().translated(-80, -2));
+        loopFilterBracketPath.lineTo(filterBlockBackground.getBottomLeft().translated(-70, -2));
+        g.strokePath(loopFilterBracketPath, juce::PathStrokeType(2.0f));
+
+        g.setColour(juce::Colours::black);
+        filterBlockBackground.translate(0, 3 * PARAMETER_HEIGHT + 2 * SPACING_Y_SMALL + SPACING_Y_LARGE);
+        g.fillRoundedRectangle(filterBlockBackground, 14);
+        textRect.translate(0, SPACING_Y_LARGE + PARAMETER_HEIGHT);
+        g.setColour(textColour);
+        g.drawFittedText("CUTOFF", textRect, juce::Justification::centredRight, 1);
+        textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
+        g.drawFittedText("RES", textRect, juce::Justification::centredRight, 1);
+        textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
+        g.drawFittedText("MODE", textRect, juce::Justification::centredRight, 1);
+        juce::Path postFilterBracketPath;
+        postFilterBracketPath.startNewSubPath(filterBlockBackground.getTopLeft().translated(-70, 2));
+        postFilterBracketPath.lineTo(filterBlockBackground.getTopLeft().translated(-80, 2));
+        postFilterBracketPath.lineTo(filterBlockBackground.getBottomLeft().translated(-80, -2));
+        postFilterBracketPath.lineTo(filterBlockBackground.getBottomLeft().translated(-70, -2));
+        g.strokePath(postFilterBracketPath, juce::PathStrokeType(2.0f));
+
+
+    }
+
+    int resonatorBankIndex;
+    WaveguideResonatorBankParams bankParams;
+    juce::OwnedArray<WaveguideResonatorComponent_V2> resonatorComponents;
+    UIParams uiParams;
+
+    juce::Colour textColour;
+    juce::Label* loopFilterLabel;
+    juce::Label* postFilterLabel;
+};
 
 class WaveguideResonatorBankParamBox : public gin::ParamBox
 {

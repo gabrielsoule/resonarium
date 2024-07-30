@@ -46,12 +46,41 @@ void StereoResonator::Resonator::updateParameters(float frequency)
     delayLengthInSamples = sampleRate / nextFrequency;
     delayLine.setDelay(delayLengthInSamples);
     decayCoefficient = std::pow(0.001f, 1.0f / (voice.getValue(params.decayTime, channel) * nextFrequency));
-    apf.setDispersionAmount(voice.getValue(params.dispersion, channel));
-    svf.setMode(0);
-    svf.setCutoffFrequency<false>(5000.0f);
-    svf.setQValue<false>(0.707f);
-    svf.update();
+
+    float newCutoff = voice.getValue(params.loopFilterCutoff, channel);
+    float newResonance = voice.getValue(params.loopFilterResonance, channel);
+    // if(newCutoff != svfCutoffFrequency || newResonance != svf.getQValue())
+    // {
+        svf.setCutoffFrequency<false>(newCutoff);
+        // svf.setQValue<false>(newResonance);
+        resonance = newResonance;
+        svfCutoffFrequency = newCutoff;
+        svf.setMode(0);
+        svf.update();
+        // svfNormalizationScalar = 1.0f / svf.getMultiModeMaxGain();
+    // }
+
+    float newDispersion = voice.getValue(params.dispersion, channel);
+    // if(newDispersion != dispersion)
+    // {
+        apf.setDispersionAmount(newDispersion);
+        dispersion = newDispersion;
+    // }
 }
+
+/**
+ * Copy the raw parameter values from another Resonator, skipping all the intermediate calculations.
+ * Useful when there are no stereo modulation signals affecting this StereoResonator.
+ */
+// void StereoResonator::Resonator::copyParameters(StereoResonator::Resonator& other)
+// {
+//     this->gain = other.gain;
+//     this->lastFrequency = other.lastFrequency;
+//     this->nextFrequency = other.nextFrequency;
+//     this->delayLengthInSamples = other.delayLengthInSamples;
+//     delayLine.setDelay(delayLengthInSamples);
+//
+// }
 
 float StereoResonator::processSample(const float input, const int channel)
 {

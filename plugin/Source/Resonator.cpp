@@ -30,7 +30,7 @@ void WaveguideFilter::updateParameters()
     if (type == biquad)
     {
         biquadFilter.setType(static_cast<MultiFilter::Type>(static_cast<int>(params.biquadFilterType->getProcValue())));
-        biquadFilter.setParameters(voice.getValue(params.decayFilterCutoff), 1);
+        // biquadFilter.setParameters(voice.getValue(params.decayFilterCutoff), 1);
         biquadFilter.updateParameters();
         DBG("Coefficients");
         for(auto c : biquadFilter.filterL.coefficients->coefficients)
@@ -187,7 +187,7 @@ void Resonator::updateParameters(float frequency)
     decayCoefficient = std::pow(0.001, 1.0 / (decayTime * frequency)); //simple t60 decay time calculation
     dispersionFilter.setDispersionAmount(voice.getValue(params.dispersion));
     dampingFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeFirstOrderLowPass(
-        sampleRate, voice.getValue(params.decayFilterCutoff));
+        sampleRate, voice.getValue(params.loopFilterCutoff));
     oneZeroFilter.setBrightness(juce::jmap(params.testParameter->getValue(), params.testParameter->getUserRangeStart(),
                                            params.testParameter->getUserRangeEnd(), 0.0f, 1.0f));
     // DBG(oneZeroFilter.p);

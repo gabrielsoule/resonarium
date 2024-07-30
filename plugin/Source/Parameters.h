@@ -3,6 +3,7 @@
 
 #include <JuceHeader.h>
 #include "defines.h"
+
 /**
 * The Parameters file includes structs that manage the host-visible parameters of the synthesizer.
 * The parameters are divided into structs for readability and compartmentalization.
@@ -79,11 +80,14 @@ struct ResonatorParams
         dispersion,
         decayFilterType, //EKS, BQD, SVF, EQ3
         biquadFilterType, //LP, HP, BP, NOTCH, AP
-        decayFilterCutoff,
-        decayFilterResonance, //for both SVF and BQD filter modes
+        loopFilterCutoff,
+        loopFilterResonance, //for both SVF and BQD filter modes
+        loopFilterMode, //for SVF filter mode only
+        postFilterCutoff,
+        postFilterResonance,
+        postFilterMode,
         decayFilterKeytrack, //bool y/n
         eksFilterBrightness, //for EKS filter mode only
-        svfFilterMode, //for SVF filter mode only
         gain,
         testParameter = nullptr;
 
@@ -98,7 +102,7 @@ struct ResonatorParams
 struct WaveguideResonatorBankParams
 {
     int index = -1;
-    ResonatorParams resonatorParams[NUM_WAVEGUIDE_RESONATORS];
+    std::array<ResonatorParams, NUM_WAVEGUIDE_RESONATORS> resonatorParams;
     gin::Parameter::Ptr
         noteOffset,
         couplingMode,
@@ -112,11 +116,11 @@ struct WaveguideResonatorBankParams
 struct ModalResonatorBankParams
 {
     int index = -1;
-    gin::Parameter::Ptr enabled[NUM_MODAL_RESONATORS];
-    gin::Parameter::Ptr harmonicMultiplier[NUM_MODAL_RESONATORS];
-    gin::Parameter::Ptr harmonicInSemitones[NUM_MODAL_RESONATORS];
-    gin::Parameter::Ptr decay[NUM_MODAL_RESONATORS];
-    gin::Parameter::Ptr gain[NUM_MODAL_RESONATORS];
+    std::array<gin::Parameter::Ptr, NUM_MODAL_RESONATORS> enabled;
+    std::array<gin::Parameter::Ptr, NUM_MODAL_RESONATORS> harmonicMultiplier;
+    std::array<gin::Parameter::Ptr, NUM_MODAL_RESONATORS> harmonicInSemitones;
+    std::array<gin::Parameter::Ptr, NUM_MODAL_RESONATORS> decay;
+    std::array<gin::Parameter::Ptr, NUM_MODAL_RESONATORS> gain;
 
     ModalResonatorBankParams() = default;
 
@@ -283,17 +287,17 @@ struct MSEGParams
  */
 struct VoiceParams
 {
-    WaveguideResonatorBankParams waveguideResonatorBankParams[NUM_WAVEGUIDE_RESONATOR_BANKS];
-    ModalResonatorBankParams modalResonatorBankParams[NUM_MODAL_RESONATOR_BANKS];
-    ImpulseExciterParams impulseExciterParams[NUM_IMPULSE_EXCITERS];
-    NoiseExciterParams noiseExciterParams[NUM_NOISE_EXCITERS];
-    ImpulseTrainExciterParams impulseTrainExciterParams[NUM_IMPULSE_TRAIN_EXCITERS];
+    std::array<WaveguideResonatorBankParams, NUM_WAVEGUIDE_RESONATOR_BANKS> waveguideResonatorBankParams;
+    std::array<ModalResonatorBankParams, NUM_MODAL_RESONATOR_BANKS> modalResonatorBankParams;
+    std::array<ImpulseExciterParams, NUM_IMPULSE_EXCITERS> impulseExciterParams;
+    std::array<NoiseExciterParams, NUM_NOISE_EXCITERS> noiseExciterParams;
+    std::array<ImpulseTrainExciterParams, NUM_IMPULSE_TRAIN_EXCITERS> impulseTrainExciterParams;
     ExternalInputExciterParams externalInputExciterParams;
     SampleExciterParams sampleExciterParams;
-    LFOParams lfoParams[NUM_LFOS];
-    RandomLFOParams randomLfoParams[NUM_RANDOMS];
-    ADSRParams adsrParams[NUM_ENVELOPES];
-    MSEGParams msegParams[NUM_MSEGS];
+    std::array<LFOParams, NUM_LFOS> lfoParams;
+    std::array<RandomLFOParams, NUM_RANDOMS> randomLfoParams;
+    std::array<ADSRParams, NUM_ENVELOPES> adsrParams;
+    std::array<MSEGParams, NUM_MSEGS> msegParams;
 
     VoiceParams() = default;
 
@@ -307,10 +311,10 @@ struct VoiceParams
 struct SynthParams
 {
     VoiceParams voiceParams;
-    LFOParams lfoParams[NUM_LFOS];
-    RandomLFOParams randomLfoParams[NUM_LFOS];
-    ADSRParams adsrParams[NUM_ENVELOPES];
-    MSEGParams msegParams[NUM_MSEGS];
+    std::array<LFOParams, NUM_LFOS> lfoParams;
+    std::array<RandomLFOParams, NUM_LFOS> randomLfoParams;
+    std::array<ADSRParams, NUM_ENVELOPES> adsrParams;
+    std::array<MSEGParams, NUM_MSEGS> msegParams;
 
     SynthParams() = default;
 

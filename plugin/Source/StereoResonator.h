@@ -43,6 +43,7 @@ class StereoResonator
         void reset();
         void prepare(const juce::dsp::ProcessSpec& spec);
         void updateParameters(float frequency);
+        void copyParameters(StereoResonator::Resonator& other);
 
         ResonatorVoice& voice;
         ResonatorParams params;
@@ -56,7 +57,11 @@ class StereoResonator
 
         float lastFrequency;
         float nextFrequency;
+        float svfCutoffFrequency;
+        float dispersion;
+        float resonance;
         float gain;
+        float svfNormalizationScalar; //the inverse of the max gain point of the multi-mode SVF
 
         chowdsp::DelayLine<float, chowdsp::DelayLineInterpolationTypes::Lagrange3rd> delayLine;
         chowdsp::SVFMultiMode<float, 1> svf;

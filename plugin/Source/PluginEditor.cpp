@@ -14,7 +14,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     mrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(mrb1);
 
-    auto* wrb1 = new WaveguideResonatorBankParamBox(
+    auto* wrb1 = new WaveguideResonatorBankParamBox_V2(
         "Waveguide Bank " + std::to_string(1), proc, 1, voiceParams.waveguideResonatorBankParams[0]);
     wrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(wrb1);
@@ -24,7 +24,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     mrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(mrb2);
 
-    auto* wrb2 = new WaveguideResonatorBankParamBox(
+    auto* wrb2 = new WaveguideResonatorBankParamBox_V2(
         "Waveguide Bank " + std::to_string(2), proc, 3, voiceParams.waveguideResonatorBankParams[1]);
     wrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(wrb2);
@@ -150,9 +150,11 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
         }
     };
 
+#endif
+
     this->ResonariumEditor::resized();
 
-#endif
+
 }
 
 ResonariumEditor::~ResonariumEditor()

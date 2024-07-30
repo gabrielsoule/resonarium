@@ -123,6 +123,23 @@ void ResonariumLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, i
 void ResonariumLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height, float sliderPos,
                                        const float rotaryStartAngleIn, const float rotaryEndAngle, juce::Slider& slider)
 {
+    // if(slider.getName() == "MyGainKnob")
+    // {
+    //     DBG("MyGainKnob found...");
+    //     DBG(slider.getProperties()["textOnly"].toString());
+    // }
+    if(slider.getProperties()["textOnly"])
+    {
+        // g.setFont(this->defaultFont.withPointHeight(15.0f));
+        // g.setColour(findColour (accentColourId));
+        // g.drawFittedText(juce::String(slider.getValue()), x, y, width, height, juce::Justification::centred, 1);
+        // DBG("TextOnly");
+        return;
+    } else
+    {
+
+    }
+
     float rotaryStartAngle = rotaryStartAngleIn;
     const float radius = juce::jmin (width / 2, height / 2) - 2.0f;
     const float centreX = x + width * 0.5f;
@@ -175,7 +192,13 @@ void ResonariumLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, i
     }
 
     if (slider.isEnabled())
+    {
+        // if(slider.getProperties().contains("customColour"))
+        // {
+        //     g.setColour(slider.getProperties()["customColour"]);
+        // }
         g.setColour (slider.findColour (juce::Slider::rotarySliderFillColourId).withAlpha (isMouseOver ? 0.95f : 0.85f));
+    }
 
     auto fillStartAngle = rotaryStartAngle;
     if (slider.getProperties().contains ("fromCentre"))
@@ -324,7 +347,13 @@ juce::Font ResonariumLookAndFeel::getPopupMenuFont()
 // Override the font for Labels
 juce::Font ResonariumLookAndFeel::getLabelFont (juce::Label& label)
 {
-    return juce::Font ("Futura", "Medium", 14.5f); // Change to your preferred font
+    if(true)
+    {
+        return defaultFont.withHeight(label.getFont().getHeight());
+    } else
+    {
+        return defaultFont.withHeight(14.5f);
+    }
 }
 
 //==============================================================================

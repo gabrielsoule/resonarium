@@ -185,43 +185,55 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     dispersion->conversionFunction = [](const float x) { return x / 100.0f; };
 
     // EKS, BQD, SVF, EQ3
-    decayFilterType = p.addExtParam("decayFilterType" + suffix, "Filter Type" + suffix, "Filter", "",
-                                    {0.0, 3.0, 1.0, 1.0f}, 0.0f,
-                                    0.0f, resonatorFilterTypeTextFunction);
+    // decayFilterType = p.addExtParam("decayFilterType" + suffix, "Filter Type" + suffix, "Filter", "",
+    //                                 {0.0, 3.0, 1.0, 1.0f}, 0.0f,
+    //                                 0.0f, resonatorFilterTypeTextFunction);
 
     // LP, HP, BP, NOTCH, AP
-    biquadFilterType = p.addExtParam("biquadFilterType" + suffix, "Biquad Type" + suffix, "Biquad Type", "",
-                                     {0.0f, 5.0f, 1.0f, 1.0f},
-                                     0.0f, 0.0f, filterTextFunction);
+    // biquadFilterType = p.addExtParam("biquadFilterType" + suffix, "Biquad Type" + suffix, "Biquad Type", "",
+    //                                  {0.0f, 5.0f, 1.0f, 1.0f},
+    //                                  0.0f, 0.0f, filterTextFunction);
 
-    decayFilterCutoff = p.addExtParam("decayFilterCutoff" + suffix, "Filter Cutoff" + suffix, "Cutoff", "Hz",
+    loopFilterCutoff = p.addExtParam("decayFilterCutoff" + suffix, "Filter Cutoff" + suffix, "Cutoff", "Hz",
                                       {20.0f, 20000.0, 0.0f, 1.0f}, 1000.0f,
                                       0.0f);
 
-    decayFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Resonance" + suffix, "Res", "",
+    loopFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Resonance" + suffix, "Res", "",
                                          {0.01f, 100.0f, 0.0f, 0.2f}, 0.707f,
                                          0.0f);
 
-    decayFilterKeytrack = p.addExtParam("filterKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
-                                        {0.0f, 100.0f, 0.0f, 1.0f}, 0.0f,
-                                        0.0f);
+    // decayFilterKeytrack = p.addExtParam("filterKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
+    //                                     {0.0f, 100.0f, 0.0f, 1.0f}, 0.0f,
+    //                                     0.0f);
 
-    eksFilterBrightness = p.addExtParam("eksBrightness" + suffix, "Brightness" + suffix, "Brightness", "",
-                                        {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-                                        0.0f);
+    // eksFilterBrightness = p.addExtParam("eksBrightness" + suffix, "Brightness" + suffix, "Brightness", "",
+    //                                     {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+    //                                     0.0f);
 
-    svfFilterMode = p.addExtParam("svfMode" + suffix, "Mode" + suffix, "Mode", "",
+    loopFilterMode = p.addExtParam("svfMode" + suffix, "Mode" + suffix, "Mode", "",
                                   {-1.0, 1.0f, 0.0, 1.0f}, 0.0f,
                                   0.0f);
+
+    postFilterCutoff = p.addExtParam("postFilterCutoff" + suffix, "Post Filter Cutoff" + suffix, "Cutoff", "Hz",
+                                    {20.0f, 20000.0, 0.0f, 1.0f}, 1000.0f,
+                                    0.0f);
+
+    postFilterResonance = p.addExtParam("postFilterResonance" + suffix, "Post Filter Resonance" + suffix, "Res", "",
+                                       {0.01f, 100.0f, 0.0f, 0.2f}, 0.707f,
+                                       0.0f);
+
+    postFilterMode = p.addExtParam("postFilterMode" + suffix, "Post Filter Mode" + suffix, "Mode", "",
+                                  {0.0, 5.0f, 1.0, 1.0f}, 0.0f,
+                                  0.0f, filterTextFunction);
 
     gain = p.addExtParam("gain" + suffix, "Gain" + suffix, "Gain", "dB",
                          {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
                          0.0f);
     gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
-    testParameter = p.addExtParam("testParameter" + suffix, "Test Parameter" + suffix, "Test", "",
-                                  {0.0, 1.0, 0.0, 1.0f}, 0.0f,
-                                  0.0f);
+    // testParameter = p.addExtParam("testParameter" + suffix, "Test Parameter" + suffix, "Test", "",
+    //                               {0.0, 1.0, 0.0, 1.0f}, 0.0f,
+    //                               0.0f);
 }
 
 void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
