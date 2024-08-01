@@ -51,7 +51,7 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
         firDelays[i].reset();
     }
     reset();
-    updateParameters(440.0f);
+    updateParameters(440.0f, 0);
 }
 
 /**
@@ -59,13 +59,13 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
  * Child Resonators are also updated.
  * Frequency is passed as an argument since frequency comes from the MIDI note, not the VST parameters.
  */
-void WaveguideResonatorBank::updateParameters(float newFrequency)
+void WaveguideResonatorBank::updateParameters(float newFrequency, int numSamples)
 {
     this->frequency = newFrequency;
     this->couplingMode = static_cast<CouplingMode>(voice.getValue(params.couplingMode));
     for (auto* r : resonators)
     {
-        r->updateParameters(newFrequency);
+        r->updateParameters(newFrequency, numSamples);
     }
 }
 

@@ -246,7 +246,7 @@ void ResonatorVoice::updateParameters(int numSamples)
                 freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
                     toSeconds(proc.getPlayHead());
             else
-                freq = proc.modMatrix.getValue(params.lfoParams[i].rate);
+                freq = getValue(params.lfoParams[i].rate);
             polyLFOs[i].updateParameters(*this, freq);
             polyLFOs[i].process(numSamples);
             //TODO optimize this call to avoid two searches to getreference
@@ -281,7 +281,8 @@ void ResonatorVoice::updateParameters(int numSamples)
     {
         polyEnvelopes[i].updateParameters(*this);
         polyEnvelopes[i].process(numSamples);
-        proc.modMatrix.setPolyValue(*this, proc.modSrcPolyENV[i], polyEnvelopes[i].getOutput());
+        proc.modMatrix.setPolyValue(*this, proc.modSrcPolyENV[i], polyEnvelopes[i].getOutput(), 0);
+        proc.modMatrix.setPolyValue(*this, proc.modSrcPolyENV[i], polyEnvelopes[i].getOutput(), 1);
     }
 
     for (int i = 0; i < NUM_MSEGS; i++)
@@ -293,7 +294,7 @@ void ResonatorVoice::updateParameters(int numSamples)
                 freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
                     toSeconds(proc.getPlayHead());
             else
-                freq = proc.modMatrix.getValue(params.lfoParams[i].rate);
+                freq = getValue(params.lfoParams[i].rate);
             polyMSEGs.getReference(i).updateParameters(*this, freq);
             polyMSEGs.getReference(i).process(numSamples);
             proc.modMatrix.setPolyValue(*this, proc.modSrcPolyMSEG[i], polyMSEGs.getReference(i).getOutput(0), 0);
@@ -308,7 +309,7 @@ void ResonatorVoice::updateParameters(int numSamples)
 
     for (auto* resonatorBank : resonatorBanks)
     {
-        resonatorBank->updateParameters(frequency);
+        resonatorBank->updateParameters(frequency, numSamples);
     }
 
     for (auto* exciter : exciters)

@@ -14,7 +14,7 @@ public:
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void reset() override;
     void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
-    void updateParameters(float newFrequency) override;
+    void updateParameters(float newFrequency, int numSamples) override;
 
     float frequency;
     float sampleRate;

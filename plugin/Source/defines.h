@@ -37,8 +37,8 @@
 #define KNOB_H_XSMALL 32
 #define KNOB_W_SMALL 42
 #define KNOB_H_SMALL 57
-#define KNOB_W 56
-#define KNOB_H 70
+#define KNOB_W 52
+#define KNOB_H 65
 #define EXCITER_BOX_WIDTH 230
 #define RESONATOR_BANK_BOX_HEIGHT 405
 

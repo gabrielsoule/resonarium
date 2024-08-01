@@ -20,6 +20,8 @@ private:
     ResonariumProcessor& proc;
     UIParams uiParams;
 
+    // juce::TooltipWindow tooltipWindow;
+
     std::vector<SafePointer<WaveguideResonatorBankParamBox>> resonatorBankParamBoxes;
     std::vector<SafePointer<ImpulseExciterParamBox>> impulseExciterParamBoxes;
     std::vector<SafePointer<NoiseExciterParamBox>> noiseExciterParamBoxes;

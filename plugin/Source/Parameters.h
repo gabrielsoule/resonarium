@@ -106,6 +106,7 @@ struct WaveguideResonatorBankParams
     gin::Parameter::Ptr
         noteOffset,
         couplingMode,
+        inputGain,
         outputGain = nullptr;
 
     WaveguideResonatorBankParams() = default;

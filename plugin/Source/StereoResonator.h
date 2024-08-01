@@ -9,6 +9,8 @@
 
 #include "Parameters.h"
 #include "dsp/Filters.h"
+#include "util/InterpolatedParameter.h"
+#include "util/InterpolatedValue.h"
 
 class ResonatorVoice;
 
@@ -42,7 +44,7 @@ class StereoResonator
         void pushSample(float input);
         void reset();
         void prepare(const juce::dsp::ProcessSpec& spec);
-        void updateParameters(float frequency);
+        void updateParameters(float frequency, int numSamples);
         void copyParameters(StereoResonator::Resonator& other);
 
         ResonatorVoice& voice;
@@ -62,6 +64,8 @@ class StereoResonator
         float resonance;
         float gain;
         float svfNormalizationScalar; //the inverse of the max gain point of the multi-mode SVF
+
+        InterpolatedValue delayLengthInterpolator;
 
         chowdsp::DelayLine<float, chowdsp::DelayLineInterpolationTypes::Lagrange3rd> delayLine;
         chowdsp::SVFMultiMode<float, 1> svf;
@@ -97,9 +101,7 @@ public:
     void pushSample(float input, int channel);
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
-    void updateParameters(float frequency, bool force = false);
-    // Resonator& left() {return resonators[0];}
-    // Resonator& right() {return resonators[1];}
+    void updateParameters(float frequency, int numSamples, bool force = false);
 };
 
 

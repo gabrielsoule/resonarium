@@ -24,7 +24,7 @@ public:
     void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void prepare(const juce::dsp::ProcessSpec& spec) override;
-    void updateParameters(float newFrequency) override;
+    void updateParameters(float newFrequency, int numSamples) override;
     void setFeedbackMode(CouplingMode newMode);
 
     WaveguideResonatorBankParams params;

@@ -58,7 +58,7 @@ void ModalResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock, juc
     }
 }
 
-void ModalResonatorBank::updateParameters(float newFrequency)
+void ModalResonatorBank::updateParameters(float newFrequency, int numSamples)
 {
     for(int i = 0; i < NUM_MODAL_RESONATORS; i++)
     {

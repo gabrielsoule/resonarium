@@ -44,13 +44,15 @@ static constexpr float PARAMETER_TEXT_HEIGHT = 14;
 class WaveguideResonatorComponent_V2 : public gin::MultiParamComponent
 {
 public:
-
-    explicit WaveguideResonatorComponent_V2(ResonatorParams resonatorParams, juce::Colour colour) : resonatorParams(resonatorParams), colour(colour)
+    explicit WaveguideResonatorComponent_V2(ResonatorParams resonatorParams, juce::Colour colour) :
+        resonatorParams(resonatorParams), colour(colour)
     {
         enableButton = new gin::SVGPluginButton(resonatorParams.enabled, gin::Assets::power);
         enableButton->setColour(juce::TextButton::buttonOnColourId, colour);
+        enableButton->setColour(juce::TextButton::buttonColourId, colour);
         gainKnob = new gin::Knob(resonatorParams.gain);
         gainKnob->getSlider().setColour(juce::Slider::rotarySliderFillColourId, colour);
+        gainKnob->getSlider().setTooltip("est");
         pitchOffsetKnob = new TextSlider(resonatorParams.harmonicInSemitones, colour);
         pitchOffsetKnob->setReadoutDecimals(2);
         decayTimeKnob = new TextSlider(resonatorParams.decayTime, colour);
@@ -63,6 +65,8 @@ public:
         loopFilterResonanceKnob->setReadoutDecimals(2);
         loopFilterModeKnob = new TextSlider(resonatorParams.loopFilterMode, colour);
         loopFilterModeKnob->setReadoutDecimals(2);
+        loopFilterModeKnob->getSlider().setTooltip(
+            "Determines the type of filter used in the waveguide loop. 0 corresponds to a lowpass filter, 0.5 corresponds to a bandpass filter, and 1 corresponds to a highpass filter. Intermediate values smoothly interpolate between the filter modes");
         postFilterCutoffKnob = new TextSlider(resonatorParams.postFilterCutoff, colour);
         postFilterCutoffKnob->setReadoutDecimals(0);
         postFilterResonanceKnob = new TextSlider(resonatorParams.postFilterResonance, colour);
@@ -91,7 +95,9 @@ public:
         auto bounds = this->getLocalBounds();
         enableButton->setBounds(bounds.removeFromTop(12));
         bounds.removeFromTop(3);
-        gainKnob->setBounds(bounds.removeFromTop(KNOB_W_SMALL).withWidth(KNOB_W_SMALL).translated(bounds.getWidth() / 2 - KNOB_W_SMALL / 2, 0));
+        gainKnob->setBounds(
+            bounds.removeFromTop(KNOB_W_SMALL).withWidth(KNOB_W_SMALL).translated(
+                bounds.getWidth() / 2 - KNOB_W_SMALL / 2, 0));
         bounds.removeFromTop(SPACING_Y_SMALL);
         pitchOffsetKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
         bounds.removeFromTop(SPACING_Y_LARGE);
@@ -110,9 +116,8 @@ public:
         postFilterResonanceKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
         bounds.removeFromTop(SPACING_Y_SMALL);
         postFilterModeKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
-
-
     }
+
     void paramChanged() override
     {
         // for some reason paramChanged() is being called before this component is added to the parent
@@ -496,15 +501,13 @@ public:
         resonatorColors.add(juce::Colour(0xffBDB2FF));
         resonatorColors.add(juce::Colour(0xffFFC6FF));
         jassert(resonatorColors.size() == NUM_WAVEGUIDE_RESONATORS);
-        for(int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+        for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
         {
             resonatorColors.set(i, resonatorColors[i].withSaturation(1.0).withLightness(0.8));
         }
         setName("waveguideResonatorBankParams " + juce::String(resonatorNum));
         this->headerTabButtonWidth = 150;
         addHeader({"MODAL 1", "WAVEGUIDE 1", "MODAL 2", "WAVEGUIDE 2"}, resonatorNum, uiParams.resonatorBankSelect);
-        auto* select = new gin::Select(bankParams.couplingMode);
-        addControl(select);
         for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
         {
             auto* resonatorComponent = new WaveguideResonatorComponent_V2(
@@ -525,6 +528,20 @@ public:
         postFilterLabel->setEditable(false);
         loopFilterLabel->setColour(juce::Label::textColourId, textColour);
         postFilterLabel->setColour(juce::Label::textColourId, textColour);
+
+        couplingModeKnob = new gin::Select(bankParams.couplingMode);
+        addControl(couplingModeKnob);
+        outputGainKnob = new gin::Knob(bankParams.outputGain);
+        addControl(outputGainKnob);
+        inputGainKnob = new gin::Knob(bankParams.inputGain);
+        addControl(inputGainKnob);
+
+        //input gain
+        //input mix
+
+        //resonator feedback mode
+
+        //output gain
     }
 
     void resized() override
@@ -539,27 +556,41 @@ public:
             resonatorsArea.removeFromLeft(7);
             resonatorComponents[i]->setBounds(resonatorsArea.removeFromLeft(55));
         }
+
+        inputGainKnob->setBounds(720, BOX_HEADER_HEIGHT + 10, KNOB_W, KNOB_H);
+        couplingModeKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + KNOB_H, KNOB_W, KNOB_H);
+        outputGainKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 2 * (KNOB_H), KNOB_W, KNOB_H);
+
+        //it's kinda annoying to position rotated text components, since the affine transforms affect the coordinates...
+        //we just do it "by hand" here which isn't ideal
         loopFilterLabel->setBounds(-1, 220, 65, 40);
-        loopFilterLabel->setTransform(juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi, loopFilterLabel->getBounds().getCentreX(), loopFilterLabel->getBounds().getCentreY()));
+        loopFilterLabel->setTransform(juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi,
+                                                                      loopFilterLabel->getBounds().getCentreX(),
+                                                                      loopFilterLabel->getBounds().getCentreY()));
         // loopFilterLabel->setTransform(juce::AffineTransform::rotation(juce::MathConstants<float>::halfPi));
         loopFilterLabel->toFront(false);
 
         postFilterLabel->setBounds(-1, 310, 65, 40);
-        postFilterLabel->setTransform(juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi, postFilterLabel->getBounds().getCentreX(), postFilterLabel->getBounds().getCentreY()));
+        postFilterLabel->setTransform(juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi,
+                                                                      postFilterLabel->getBounds().getCentreX(),
+                                                                      postFilterLabel->getBounds().getCentreY()));
         postFilterLabel->toFront(false);
     }
 
     void paint(juce::Graphics& g) override
     {
         ParamBox::paint(g);
-        juce::Font font = static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont.withHeight(17).withExtraKerningFactor(0.05f);
+        juce::Font font = static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont.withHeight(17).
+            withExtraKerningFactor(0.05f);
         g.setFont(font);
         //draw some attractive background rectangles
-        juce::Rectangle<float> rowBackground = juce::Rectangle<float>(137, BOX_HEADER_HEIGHT + 10 + 55 + 3, 498, PARAMETER_HEIGHT).expanded(0, 1);
-        juce::Rectangle<int> textRect = juce::Rectangle<int>(rowBackground.getX() - 115, rowBackground.getY() + 1, 105, PARAMETER_HEIGHT);
+        juce::Rectangle<float> rowBackground = juce::Rectangle<float>(137, BOX_HEADER_HEIGHT + 10 + 55 + 3, 498,
+                                                                      PARAMETER_HEIGHT).expanded(0, 1);
+        juce::Rectangle<int> textRect = juce::Rectangle<int>(rowBackground.getX() - 115, rowBackground.getY() + 1, 105,
+                                                             PARAMETER_HEIGHT);
 
         g.setColour(textColour);
-        g.drawFittedText("GAIN", textRect.translated(0, -40), juce::Justification::centredRight, 1);
+        g.drawFittedText("GAIN", textRect.translated(0, -35), juce::Justification::centredRight, 1);
 
         g.setColour(juce::Colours::black);
         g.fillRoundedRectangle(rowBackground, 14);
@@ -581,7 +612,11 @@ public:
         g.drawFittedText("DISP.", textRect, juce::Justification::centredRight, 1);
 
         g.setColour(juce::Colours::black);
-        juce::Rectangle filterBlockBackground = juce::Rectangle<float>(rowBackground.getX(), rowBackground.getY() + PARAMETER_HEIGHT + SPACING_Y_LARGE + 1, 498, 3 * PARAMETER_HEIGHT + 2 * SPACING_Y_SMALL).expanded(0, 1);
+        juce::Rectangle filterBlockBackground = juce::Rectangle<float>(rowBackground.getX(),
+                                                                       rowBackground.getY() + PARAMETER_HEIGHT +
+                                                                       SPACING_Y_LARGE + 1, 498,
+                                                                       3 * PARAMETER_HEIGHT + 2 * SPACING_Y_SMALL).
+            expanded(0, 1);
         g.fillRoundedRectangle(filterBlockBackground, 14);
         textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_LARGE);
         g.setColour(textColour);
@@ -613,8 +648,6 @@ public:
         postFilterBracketPath.lineTo(filterBlockBackground.getBottomLeft().translated(-80, -2));
         postFilterBracketPath.lineTo(filterBlockBackground.getBottomLeft().translated(-70, -2));
         g.strokePath(postFilterBracketPath, juce::PathStrokeType(2.0f));
-
-
     }
 
     int resonatorBankIndex;
@@ -625,6 +658,11 @@ public:
     juce::Colour textColour;
     juce::Label* loopFilterLabel;
     juce::Label* postFilterLabel;
+
+    gin::Select* couplingModeKnob;
+    gin::Knob* inputMixKnob;
+    gin::Knob* inputGainKnob;
+    gin::Knob* outputGainKnob;
 };
 
 class WaveguideResonatorBankParamBox : public gin::ParamBox

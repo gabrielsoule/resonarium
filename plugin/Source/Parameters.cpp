@@ -169,7 +169,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
 
     harmonicInSemitones = p.addExtParam("pitchOffsetSemis" + suffix, "Pitch Offset" + suffix, "Pitch", " st",
                                         {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
-                                        0.0f);
+                                        gin::SmoothingType(0.1, gin::SmoothingType::eased));
 
     harmonicMultiplier = p.addExtParam("harmonicMultiplier" + suffix, "Harmonic Multiplier" + suffix, "Mult.", "",
                                        {0.0f, 20.0f, 0.01f, 0.4f}, 1.0f,
@@ -195,12 +195,12 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     //                                  0.0f, 0.0f, filterTextFunction);
 
     loopFilterCutoff = p.addExtParam("decayFilterCutoff" + suffix, "Filter Cutoff" + suffix, "Cutoff", "Hz",
-                                      {20.0f, 20000.0, 0.0f, 1.0f}, 1000.0f,
-                                      0.0f);
+                                     {20.0f, 20000.0, 0.0f, 1.0f}, 1000.0f,
+                                     0.0f);
 
     loopFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Resonance" + suffix, "Res", "",
-                                         {0.01f, 100.0f, 0.0f, 0.2f}, 0.707f,
-                                         0.0f);
+                                        {0.01f, 100.0f, 0.0f, 0.2f}, 0.707f,
+                                        0.0f);
 
     // decayFilterKeytrack = p.addExtParam("filterKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
     //                                     {0.0f, 100.0f, 0.0f, 1.0f}, 0.0f,
@@ -211,20 +211,20 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     //                                     0.0f);
 
     loopFilterMode = p.addExtParam("svfMode" + suffix, "Mode" + suffix, "Mode", "",
-                                  {-1.0, 1.0f, 0.0, 1.0f}, 0.0f,
-                                  0.0f);
+                                   {-1.0, 1.0f, 0.0, 1.0f}, 0.0f,
+                                   0.0f);
 
     postFilterCutoff = p.addExtParam("postFilterCutoff" + suffix, "Post Filter Cutoff" + suffix, "Cutoff", "Hz",
-                                    {20.0f, 20000.0, 0.0f, 1.0f}, 1000.0f,
-                                    0.0f);
+                                     {20.0f, 20000.0, 0.0f, 1.0f}, 1000.0f,
+                                     0.0f);
 
     postFilterResonance = p.addExtParam("postFilterResonance" + suffix, "Post Filter Resonance" + suffix, "Res", "",
-                                       {0.01f, 100.0f, 0.0f, 0.2f}, 0.707f,
-                                       0.0f);
+                                        {0.01f, 100.0f, 0.0f, 0.2f}, 0.707f,
+                                        0.0f);
 
     postFilterMode = p.addExtParam("postFilterMode" + suffix, "Post Filter Mode" + suffix, "Mode", "",
-                                  {0.0, 5.0f, 1.0, 1.0f}, 0.0f,
-                                  0.0f, filterTextFunction);
+                                   {0.0, 5.0f, 1.0, 1.0f}, 0.0f,
+                                   0.0f, filterTextFunction);
 
     gain = p.addExtParam("gain" + suffix, "Gain" + suffix, "Gain", "dB",
                          {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
@@ -248,15 +248,19 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
     juce::String suffix = " wb" + std::to_string(index);
 
     noteOffset = p.addExtParam("noteOffset" + suffix, "Note Offset" + suffix, "Note", "semitones",
-                               {-24.0f, 24.0f, 0.0f, 1.0f}, 0.0f,
+                               {-36.0f, 36.0f, 0.0f, 1.0f}, 0.0f,
                                gin::SmoothingType::linear);
 
     couplingMode = p.addExtParam("couplingMode" + suffix, "Coupling Mode" + suffix, "Coupling", "",
                                  {0.0, 2.0, 1.0, 1.0f}, 0.0f,
                                  gin::SmoothingType::linear, couplingModeTextFunction);
 
+    inputGain = p.addExtParam("inputGain" + suffix, "Input Gain" + suffix, "Gain", "dB",
+                             {-100.0, 100.0, 0.0, 4.0f}, 0.0f,
+                             gin::SmoothingType::linear);
+
     outputGain = p.addExtParam("outputGain" + suffix, "Output Gain" + suffix, "Gain", "dB",
-                               {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
+                               {-100.0, 100.0, 0.0, 4.0f}, 0.0f,
                                gin::SmoothingType::linear);
     outputGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 }
@@ -352,8 +356,8 @@ void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
                                0.0f, impulseTrainExciterModeTextFunction);
 
     this->rate = p.addExtParam(prefix + "rate", prefix + " Rate", "Rate", "Hz",
-                                {0.1f, 1000.0f, 0.01f, 0.4f}, 1.0f,
-                                0.0f);
+                               {0.1f, 1000.0f, 0.01f, 0.4f}, 1.0f,
+                               0.0f);
 
     this->sync = p.addExtParam(prefix + "sync", prefix + " Sync", "Sync", "",
                                {0.0f, 1.0f, 0.01f, 1.0f}, 0.0f,
@@ -516,8 +520,8 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
                            0.0f, 0.0f);
 
     chaos = p.addExtParam(prefix + "chaos", prefix + "chaos", "Chaos", "%",
-                           {0.0f, 1.0f, 0.01f, 1.0f},
-                           1.0f, 0.0f);
+                          {0.0f, 1.0f, 0.01f, 1.0f},
+                          1.0f, 0.0f);
 
     stereo = p.addExtParam(prefix + "stereo", prefix + "Stereo", "Stereo", "",
                            {0.0f, 1.0f, 0.01f, 1.0f},
@@ -617,20 +621,20 @@ void SynthParams::setup(ResonariumProcessor& p)
         voiceParams.lfoParams[i] = lfoParams[i];
     }
 
-    for(int i = 0; i < NUM_RANDOMS; i++)
+    for (int i = 0; i < NUM_RANDOMS; i++)
     {
         randomLfoParams[i].setup(p, i);
         voiceParams.randomLfoParams[i] = randomLfoParams[i];
     }
 
-    for(int i = 0; i < NUM_ENVELOPES; i++)
+    for (int i = 0; i < NUM_ENVELOPES; i++)
     {
         juce::String prefix = "Env " + std::to_string(i + 1);
         adsrParams[i].setup(p, prefix, i);
         voiceParams.adsrParams[i] = adsrParams[i];
     }
 
-    for(int i = 0; i < NUM_MSEGS; i++)
+    for (int i = 0; i < NUM_MSEGS; i++)
     {
         msegParams[i].setup(p, i);
         voiceParams.msegParams[i] = msegParams[i];

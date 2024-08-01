@@ -98,7 +98,7 @@ void ResonariumProcessor::setupModMatrix()
     {
         if (!pp->isInternal())
             DBG("  Adding parameter " + pp->getName(40) + " to mod matrix as a poly parameter");
-        modMatrix.addParameter(pp, true);
+        modMatrix.addParameter(pp, true, 0.02);
     }
     DBG("TOTAL PARAMETERS REGISTERED: " + juce::String(getPluginParameters().size()));
 

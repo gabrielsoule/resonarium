@@ -26,6 +26,7 @@ public:
     {
         float value = p->getUserValue();
         setText(decimals > 0 ? juce::String(value, decimals) : juce::String(static_cast<int>(value)), juce::dontSendNotification);
+        this->toBack();
     }
 
     void resized() override
@@ -114,6 +115,7 @@ public:
     {
         gin::Knob::resized();
         this->knob.toFront(false);
+        this->modDepthSlider.toFront(false);
         auto bounds = getLocalBounds();
         mainReadout.setBounds(this->getLocalBounds());
         mainReadout.setFont(mainReadout.getFont().withHeight(fontSize));
