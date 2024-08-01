@@ -5,14 +5,16 @@ float StereoResonator::Resonator::processSample(float input)
 {
     float outSample = popSample();
     pushSample(outSample + input);
-    // DBG(outSample);
     return outSample;
 }
 
 float StereoResonator::Resonator::popSample()
 {
+    auto delay = delayLengthInterpolator.nextValue();
+    // DBG(delay);
+    delayLine.setDelay(delay);
     float outSample = delayLine.popSample(0);
-    outSample = svf.processSample(0, outSample);
+    outSample = svf.processSample(0, outSample) * svfNormalizationScalar;
     outSample = apf.processSample(outSample);
     return outSample * decayCoefficient;
 }
@@ -25,6 +27,7 @@ void StereoResonator::Resonator::pushSample(float input)
 void StereoResonator::Resonator::reset()
 {
     delayLine.reset();
+    delayLengthInterpolator.snapValue(delayLengthInSamples);
     svf.reset();
     apf.reset();
 }
@@ -38,12 +41,13 @@ void StereoResonator::Resonator::prepare(const juce::dsp::ProcessSpec& spec)
     delayLine.prepare(spec);
 }
 
-void StereoResonator::Resonator::updateParameters(float frequency)
+void StereoResonator::Resonator::updateParameters(float frequency, int numSamples)
 {
     this->gain = voice.getValue(params.gain);
     lastFrequency = nextFrequency;
     nextFrequency = frequency * std::pow(2.0f, voice.getValue(params.harmonicInSemitones, channel) / 12.0f);
     delayLengthInSamples = sampleRate / nextFrequency;
+    delayLengthInterpolator.setTargetValue(delayLengthInSamples, numSamples);
     delayLine.setDelay(delayLengthInSamples);
     decayCoefficient = std::pow(0.001f, 1.0f / (voice.getValue(params.decayTime, channel) * nextFrequency));
 
@@ -52,12 +56,13 @@ void StereoResonator::Resonator::updateParameters(float frequency)
     // if(newCutoff != svfCutoffFrequency || newResonance != svf.getQValue())
     // {
         svf.setCutoffFrequency<false>(newCutoff);
-        // svf.setQValue<false>(newResonance);
+        svf.setQValue<false>(newResonance);
         resonance = newResonance;
         svfCutoffFrequency = newCutoff;
-        svf.setMode(0);
+        svf.setMode(voice.getValue(params.loopFilterMode));
         svf.update();
-        // svfNormalizationScalar = 1.0f / svf.getMultiModeMaxGain();
+        svfNormalizationScalar = 1.0f / svf.getMultiModeMaxGain();
+    // DBG(1.0f / svfNormalizationScalar);
     // }
 
     float newDispersion = voice.getValue(params.dispersion, channel);
@@ -116,13 +121,13 @@ void StereoResonator::prepare(const juce::dsp::ProcessSpec& spec)
     updateParameters(440.0f, true);
 }
 
-void StereoResonator::updateParameters(float frequency, bool force)
+void StereoResonator::updateParameters(float frequency, int numSamples, bool force)
 {
     this->enabled = params.enabled->isOn();
     if(this->enabled || force)
     {
-        resonators[0].updateParameters(frequency);
-        resonators[1].updateParameters(frequency);
+        resonators[0].updateParameters(frequency, numSamples);
+        resonators[1].updateParameters(frequency, numSamples);
 
     } else
     {
