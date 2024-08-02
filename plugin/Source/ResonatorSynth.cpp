@@ -199,3 +199,12 @@ void ResonatorSynth::fillExtInExciterBuffers(const juce::AudioBuffer<float>& buf
         // dynamic_cast<ResonatorVoice*>(v)->extInExciter->fillInputBuffer(buffer);
     }
 }
+
+void ResonatorSynth::panic()
+{
+    //kill voices and reset
+    for(auto v : voices)
+    {
+        stopVoiceFastKill(v, v->getCurrentlyPlayingNote(), false);
+    }
+}

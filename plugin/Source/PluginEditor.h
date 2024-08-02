@@ -21,6 +21,7 @@ private:
     UIParams uiParams;
 
     // juce::TooltipWindow tooltipWindow;
+    juce::ScopedMessageBox loudnessWarningBox;
 
     std::vector<SafePointer<WaveguideResonatorBankParamBox>> resonatorBankParamBoxes;
     std::vector<SafePointer<ImpulseExciterParamBox>> impulseExciterParamBoxes;

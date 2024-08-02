@@ -14,7 +14,7 @@ float StereoResonator::Resonator::popSample()
     // DBG(delay);
     delayLine.setDelay(delay);
     float outSample = delayLine.popSample(0);
-    outSample = svf.processSample(0, outSample) * svfNormalizationScalar;
+    outSample = loopFilter.processSample(0, outSample) * svfNormalizationScalar;
     outSample = apf.processSample(outSample);
     return outSample * decayCoefficient;
 }
@@ -24,11 +24,17 @@ void StereoResonator::Resonator::pushSample(float input)
     delayLine.pushSample(0, input);
 }
 
+float StereoResonator::Resonator::postProcess(float input)
+{
+    jassertfalse;
+    return -1;
+}
+
 void StereoResonator::Resonator::reset()
 {
     delayLine.reset();
     delayLengthInterpolator.snapValue(delayLengthInSamples);
-    svf.reset();
+    loopFilter.reset();
     apf.reset();
 }
 
@@ -36,7 +42,7 @@ void StereoResonator::Resonator::prepare(const juce::dsp::ProcessSpec& spec)
 {
     this->reset();
     this->sampleRate = spec.sampleRate;
-    svf.prepare({spec.sampleRate, spec.maximumBlockSize, 1});
+    loopFilter.prepare({spec.sampleRate, spec.maximumBlockSize, 1});
     apf.prepare(spec);
     delayLine.prepare(spec);
 }
@@ -55,13 +61,13 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
     float newResonance = voice.getValue(params.loopFilterResonance, channel);
     // if(newCutoff != svfCutoffFrequency || newResonance != svf.getQValue())
     // {
-        svf.setCutoffFrequency<false>(newCutoff);
-        svf.setQValue<false>(newResonance);
+        loopFilter.setCutoffFrequency<false>(newCutoff);
+        loopFilter.setQValue<false>(newResonance);
         resonance = newResonance;
         svfCutoffFrequency = newCutoff;
-        svf.setMode(voice.getValue(params.loopFilterMode));
-        svf.update();
-        svfNormalizationScalar = 1.0f / svf.getMultiModeMaxGain();
+        loopFilter.setMode(voice.getValue(params.loopFilterMode));
+        loopFilter.update();
+        svfNormalizationScalar = 1.0f / loopFilter.getMultiModeMaxGain();
     // DBG(1.0f / svfNormalizationScalar);
     // }
 
@@ -106,6 +112,13 @@ void StereoResonator::pushSample(float input, int channel)
     jassert(channel == 0 || channel == 1);
     if (!enabled) return;
     resonators[channel].pushSample(input);
+}
+
+float StereoResonator::postProcess(float sample, int channel)
+{
+    jassert(channel == 0 || channel == 1);
+    if (!enabled) return 0.0f;
+    return resonators[channel].postProcess(sample);
 }
 
 void StereoResonator::reset()

@@ -77,6 +77,7 @@ public:
 
         mainReadout.setColour(juce::Label::textColourId, textColour);
         this->textColour = textColour;
+        getSlider().setColour(juce::Slider::thumbColourId, textColour);
     }
 
     void mouseEnter(const juce::MouseEvent& event) override

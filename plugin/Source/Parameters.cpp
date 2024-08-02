@@ -215,7 +215,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                    0.0f);
 
     postFilterCutoff = p.addExtParam("postFilterCutoff" + suffix, "Post Filter Cutoff" + suffix, "Cutoff", "Hz",
-                                     {20.0f, 20000.0, 0.0f, 1.0f}, 1000.0f,
+                                     {20.0f, 20000.0f, 0.0f, 1.0f}, 4000.0f,
                                      0.0f);
 
     postFilterResonance = p.addExtParam("postFilterResonance" + suffix, "Post Filter Resonance" + suffix, "Res", "",
@@ -223,11 +223,11 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                         0.0f);
 
     postFilterMode = p.addExtParam("postFilterMode" + suffix, "Post Filter Mode" + suffix, "Mode", "",
-                                   {0.0, 5.0f, 1.0, 1.0f}, 0.0f,
+                                   {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                                    0.0f, filterTextFunction);
 
     gain = p.addExtParam("gain" + suffix, "Gain" + suffix, "Gain", "dB",
-                         {-100.0, 0.0, 0.0, 4.0f}, 0.0f,
+                         {-100.0f, 0.0f, 0.0f, 4.0f}, 0.0f,
                          0.0f);
     gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
@@ -263,6 +263,10 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
                                {-100.0, 100.0, 0.0, 4.0f}, 0.0f,
                                gin::SmoothingType::linear);
     outputGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
+
+    cascadeAmount = p.addExtParam("cascadeAmount" + suffix, "Cascade Amount" + suffix, "Amount", "",
+                                  {0.0, 1.0, 0.01, 1.0f}, 0.0f,
+                                  gin::SmoothingType::linear);
 }
 
 void ModalResonatorBankParams::setup(ResonariumProcessor& p, int index)

@@ -4,10 +4,15 @@
 WaveguideResonatorBank::WaveguideResonatorBank(ResonatorVoice& parentVoice, WaveguideResonatorBankParams params) :
     ResonatorBank(parentVoice), params(params)
 {
-    //add some resonators to the OwnedArray
+    dcBlockerCoefficients =
+        new juce::dsp::IIR::Coefficients<float>(1, -1, 1, -0.995f);
     for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
     {
         resonators.add(new StereoResonator(parentVoice, params.resonatorParams[i]));
+        dcBlockersL[i] = juce::dsp::IIR::Filter<float>(dcBlockerCoefficients);
+        dcBlockersR[i] = juce::dsp::IIR::Filter<float>(dcBlockerCoefficients);
+        dcBlockersL[i].coefficients = dcBlockerCoefficients;
+        dcBlockersR[i].coefficients = dcBlockerCoefficients;
     }
     waveguideBankIndex = params.index;
     couplingMode = PARALLEL;
@@ -27,6 +32,8 @@ void WaveguideResonatorBank::reset()
     for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
     {
         resonators[i]->reset();
+        dcBlockersL[i].reset();
+        dcBlockersR[i].reset();
     }
     couplingFilter.reset();
     couplingFilterFIR.reset();
@@ -41,6 +48,7 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
     couplingFilterFIR.coefficients = couplingCoefficientsFIR;
 
 
+
     for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
     {
         jassert(resonators[i]->params.resonatorIndex == i); //ensure that parameters have been correctly distributed
@@ -49,7 +57,15 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
         firDelays[i].setMaximumDelayInSamples(100);
         firDelays[i].setDelay(10);
         firDelays[i].reset();
+        dcBlockersL[i].coefficients = dcBlockerCoefficients;
+        dcBlockersR[i].coefficients = dcBlockerCoefficients;
+        dcBlockersL[i].reset();
+        dcBlockersR[i].reset();
+        dcBlockersL[i].prepare(spec);
+        dcBlockersR[i].prepare(spec);
     }
+
+
     reset();
     updateParameters(440.0f, 0);
 }
@@ -149,6 +165,33 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
     }
     else if (couplingMode == CASCADE)
     {
+        float cascadeAmount = voice.getValue(params.cascadeAmount);
+        for(int i = 0; i < exciterBlock.getNumSamples(); i++)
+        {
+            float previousResonatorSampleL = 0.0f;
+            float previousResonatorSampleR = 0.0f;
+            float outSampleL = 0.0f;
+            float outSampleR = 0.0f;
+            for(int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
+            {
+                if(resonators[j]->enabled)
+                {
+                    const float resonatorOutSampleL = resonators[j]->popSample(0);
+                    const float resonatorOutSampleR = resonators[j]->popSample(1);
+                    resonators[j]->pushSample(resonatorOutSampleL + dcBlockersL[j].processSample(previousResonatorSampleL) * cascadeAmount + exciterBlock.getSample(0, i), 0);
+                    resonators[j]->pushSample(resonatorOutSampleR + dcBlockersR[j].processSample(previousResonatorSampleR) * cascadeAmount + exciterBlock.getSample(1, i), 1);
+                    previousResonatorSampleL = resonatorOutSampleL;
+                    previousResonatorSampleR = resonatorOutSampleR;
+                    outSampleL += resonatorOutSampleL * resonators[j]->resonators[0].gain;
+                    outSampleR += resonatorOutSampleR * resonators[j]->resonators[1].gain;
+                }
+            }
+
+            outputBlock.addSample(0, i, outSampleL);
+            outputBlock.addSample(1, i, outSampleR);
+        }
+
+
         // for (int i = 0; i < exciterBlock.getNumSamples(); i++)
         // {
         //     float resonatorOutSamples[NUM_WAVEGUIDE_RESONATORS];

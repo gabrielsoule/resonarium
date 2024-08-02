@@ -119,6 +119,10 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
     usage.setBounds(WINDOW_WIDTH - 150, 10, 110, 20);
     addAndMakeVisible(usage);
+    usage.panic.onClick = [&]
+    {
+        proc.synth.panic();
+    };
 
 #if JUCE_DEBUG
     addAndMakeVisible(inspectButton);
@@ -152,7 +156,17 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
 #endif
 
+#ifndef JUCE_DEBUG
+     loudnessWarningBox = juce::AlertWindow::showScopedAsync (juce::MessageBoxOptions()
+                                                   .withIconType (juce::MessageBoxIconType::WarningIcon)
+                                                   .withTitle ("WARNING - PROTECT YOUR EARS! ")
+                                                   .withMessage (
+                                                       "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\n\nUnder certain configurations, undesirable positive feedback loops can manifest. These may produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level.")
+                                                   .withButton ("I understand!"),
+                                               nullptr);
+
     this->ResonariumEditor::resized();
+#endif
 
 
 }

@@ -123,17 +123,78 @@ void ResonariumLookAndFeel::drawLinearSlider (juce::Graphics& g, int x, int y, i
 void ResonariumLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height, float sliderPos,
                                        const float rotaryStartAngleIn, const float rotaryEndAngle, juce::Slider& slider)
 {
-    // if(slider.getName() == "MyGainKnob")
-    // {
-    //     DBG("MyGainKnob found...");
-    //     DBG(slider.getProperties()["textOnly"].toString());
-    // }
     if(slider.getProperties()["textOnly"])
     {
-        // g.setFont(this->defaultFont.withPointHeight(15.0f));
-        // g.setColour(findColour (accentColourId));
-        // g.drawFittedText(juce::String(slider.getValue()), x, y, width, height, juce::Justification::centred, 1);
-        // DBG("TextOnly");
+        float value = slider.getValue();
+        float min = slider.getMinimum();
+        float max = slider.getMaximum();
+
+        // Calculate the proportion of the value within its range
+        float proportion = (value - min) / (max - min);
+
+        g.setColour(slider.findColour(juce::Slider::thumbColourId).withAlpha(1.0f));
+        bool showModDepth = slider.getProperties().contains("modDepth");
+        if((slider.isEnabled() && (slider.isMouseOverOrDragging() || showModDepth)))
+        {
+            g.fillRect(x + 3, y + 18, static_cast<int>(juce::jmap<float>(proportion, 0.0f, width - 3.0f)), 2);
+        }
+
+        if (showModDepth)
+        {
+
+            bool bipolar = (bool)slider.getProperties()["modBipolar"];
+            if(bipolar)
+            {
+                auto depth = std::abs((float)slider.getProperties()["modDepth"]);
+                float start = juce::jmax(0.0f, proportion - depth);
+                float end = juce::jmin(1.0f, proportion + depth);
+                g.setColour(juce::Colours::white);
+                float rX = x + 3 + static_cast<int>(juce::jmap<float>(start, 0.0f, width - 3.0f));
+                float rY = y + 16;
+                float rW = proportion == 0 ? 0 : static_cast<int>(juce::jmap<float>(end - start, 0.0f, width - 3.0f));
+                float rH = 2;
+                // g.fillRect(x + 3 + static_cast<int>(juce::jmap<float>(start, 0.0f, width - 3.0f)), y + 16, static_cast<int>(juce::jmap<float>(end - start, 0.0f, width - 3.0f)), 2);
+                g.fillRect(rX, rY, rW, rH);
+            } else
+            {
+                auto depth = (float)slider.getProperties()["modDepth"];
+                float start = proportion;
+                float end = juce::jlimit(0.0f, 1.0f, proportion + depth);
+                g.setColour(juce::Colours::white);
+                float rX = x + 3 + static_cast<int>(juce::jmap<float>(start, 0.0f, width - 3.0f));
+                float rY = y + 16;
+                float rW = proportion == 0 ? 0 : static_cast<int>(juce::jmap<float>(end - start, 0.0f, width - 3.0f));
+                float rH = 2;
+                // g.fillRect(x + 3 + static_cast<int>(juce::jmap<float>(start, 0.0f, width - 3.0f)), y + 16, static_cast<int>(juce::jmap<float>(end - start, 0.0f, width - 3.0f)), 2);
+                g.fillRect(rX, rY, rW, rH);
+            }
+        }
+
+        if (slider.getProperties().contains ("modValues") && slider.isEnabled())
+        {
+            // g.setColour (findColour (GinLookAndFeel::whiteColourId).withAlpha (0.9f));
+            g.setColour(juce::Colours::palevioletred.withLightness(0.7f).withAlpha(1.0f));
+            auto varArray = slider.getProperties()["modValues"];
+            if (varArray.isArray())
+            {
+                for (auto value : *varArray.getArray())
+                {
+                    g.fillEllipse (x + 3 + ((float) value) * (width - 7), y + 17, 4.0f, 4.0f);
+                    DBG(juce::String(value));
+                }
+            }
+
+            g.setColour(juce::Colours::teal.withLightness(0.8f).withAlpha(1.0f));
+            varArray = slider.getProperties()["modValuesR"];
+            if (varArray.isArray())
+            {
+                for (auto value : *varArray.getArray())
+                {
+                    g.fillEllipse (x + 3 + (float) value * (width - 7), y + 17, 4.0f, 4.0f);
+                }
+            }
+        }
+
         return;
     } else
     {
@@ -235,9 +296,24 @@ void ResonariumLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, i
 
     if (slider.getProperties().contains ("modValues") && slider.isEnabled())
     {
-        g.setColour (findColour (GinLookAndFeel::whiteColourId).withAlpha (0.9f));
-
+        // g.setColour (findColour (GinLookAndFeel::whiteColourId).withAlpha (0.9f));
+        g.setColour(juce::Colours::palevioletred.withLightness(0.7f).withAlpha(1.0f));
         auto varArray = slider.getProperties()["modValues"];
+        if (varArray.isArray())
+        {
+            for (auto value : *varArray.getArray())
+            {
+                float modAngle = float (value) * (rotaryEndAngle - rotaryStartAngle) + rotaryStartAngle;
+
+                float modX = centreX + std::sin (modAngle) * radius;
+                float modY = centreY - std::cos (modAngle) * radius;
+
+                g.fillEllipse (modX - 2, modY - 2, 4.0f, 4.0f);
+            }
+        }
+
+        g.setColour(juce::Colours::teal.withLightness(0.8f).withAlpha(1.0f));
+        varArray = slider.getProperties()["modValuesR"];
         if (varArray.isArray())
         {
             for (auto value : *varArray.getArray())

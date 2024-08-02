@@ -107,7 +107,8 @@ struct WaveguideResonatorBankParams
         noteOffset,
         couplingMode,
         inputGain,
-        outputGain = nullptr;
+        outputGain,
+        cascadeAmount = nullptr;
 
     WaveguideResonatorBankParams() = default;
 

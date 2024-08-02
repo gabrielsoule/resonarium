@@ -29,16 +29,22 @@ public:
 
     WaveguideResonatorBankParams params;
     int waveguideBankIndex = -1;
-    juce::dsp::AudioBlock<float> scratchBuffer;
     CouplingMode couplingMode;
     float frequency;
     float sampleRate;
-    // juce::OwnedArray<Resonator> resonators;
     juce::OwnedArray<StereoResonator> resonators;
+    juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients;
+    // std::array<juce::dsp::IIR::Filter<float>, NUM_WAVEGUIDE_RESONATORS> dcBlockersL;
+    juce::dsp::IIR::Filter <float> dcBlockersL[NUM_WAVEGUIDE_RESONATORS];
+    // std::array<juce::dsp::IIR::Filter<float>, NUM_WAVEGUIDE_RESONATORS> dcBlockersR;
+    juce::dsp::IIR::Filter <float> dcBlockersR[NUM_WAVEGUIDE_RESONATORS];
+
+    //experimental shit
     juce::dsp::IIR::Filter<float> couplingFilter;
     juce::dsp::FIR::Filter<float> couplingFilterFIR;
     juce::dsp::FIR::Coefficients<float>::Ptr couplingCoefficientsFIR;
     juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Lagrange3rd> firDelays[NUM_WAVEGUIDE_RESONATORS];
+
 
 };
 

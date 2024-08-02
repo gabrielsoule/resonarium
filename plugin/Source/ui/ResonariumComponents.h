@@ -535,6 +535,8 @@ public:
         addControl(outputGainKnob);
         inputGainKnob = new gin::Knob(bankParams.inputGain);
         addControl(inputGainKnob);
+        cascadeAmountKnob = new gin::Knob(bankParams.cascadeAmount);
+        addControl(cascadeAmountKnob);
 
         //input gain
         //input mix
@@ -560,6 +562,7 @@ public:
         inputGainKnob->setBounds(720, BOX_HEADER_HEIGHT + 10, KNOB_W, KNOB_H);
         couplingModeKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + KNOB_H, KNOB_W, KNOB_H);
         outputGainKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 2 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeAmountKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 3 * (KNOB_H), KNOB_W, KNOB_H);
 
         //it's kinda annoying to position rotated text components, since the affine transforms affect the coordinates...
         //we just do it "by hand" here which isn't ideal
@@ -663,6 +666,7 @@ public:
     gin::Knob* inputMixKnob;
     gin::Knob* inputGainKnob;
     gin::Knob* outputGainKnob;
+    gin::Knob* cascadeAmountKnob;
 };
 
 class WaveguideResonatorBankParamBox : public gin::ParamBox

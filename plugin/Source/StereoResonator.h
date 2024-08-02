@@ -42,6 +42,9 @@ class StereoResonator
          * An invocation of this function should generally be preceeded by an invocation of popSample().
          */
         void pushSample(float input);
+
+        float postProcess(float sample);
+
         void reset();
         void prepare(const juce::dsp::ProcessSpec& spec);
         void updateParameters(float frequency, int numSamples);
@@ -68,7 +71,8 @@ class StereoResonator
         InterpolatedValue delayLengthInterpolator;
 
         chowdsp::DelayLine<float, chowdsp::DelayLineInterpolationTypes::Lagrange3rd> delayLine;
-        chowdsp::SVFMultiMode<float, 1> svf;
+        chowdsp::SVFMultiMode<float, 1> loopFilter;
+        chowdsp::SVFMultiMode<float, 1> postFilter;
         DispersionFilter apf;
     };
 
@@ -99,6 +103,7 @@ public:
      * An invocation of this function should generally be preceeded by an invocation of popSample().
      */
     void pushSample(float input, int channel);
+    float postProcess(float sample, int channel);
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
     void updateParameters(float frequency, int numSamples, bool force = false);

@@ -89,8 +89,9 @@ void NoiseExciter::process(juce::dsp::AudioBlock<float>& block)
     for (int i = 0; i < truncatedBlock.getNumSamples(); i++)
     {
         const float envSample = envelope.process();
-        const float sampleL = noise.nextValue() * gainL * envSample;
-        const float sampleR = noise.nextValue() * gainR * envSample;
+        const float noiseSample = noise.nextValue() * 0.1;
+        const float sampleL = noiseSample * gainL * envSample;
+        const float sampleR = noiseSample * gainR * envSample;
         truncatedBlock.setSample(0, i, sampleL);
         truncatedBlock.setSample(1, i, sampleR);
 
