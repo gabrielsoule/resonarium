@@ -11,22 +11,22 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     //TODO Make this NOT HARD CODED.
     auto* mrb1 = new ModalResonatorBankParamBox(
         "Modal Bank " + std::to_string(1), proc, 0, voiceParams.modalResonatorBankParams[0]);
-    mrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
+    mrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(mrb1);
 
     auto* wrb1 = new WaveguideResonatorBankParamBox_V2(
         "Waveguide Bank " + std::to_string(1), proc, 1, voiceParams.waveguideResonatorBankParams[0]);
-    wrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
+    wrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(wrb1);
 
     auto* mrb2 = new ModalResonatorBankParamBox(
         "Modal Bank " + std::to_string(2), proc, 2, voiceParams.modalResonatorBankParams[1]);
-    mrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
+    mrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(mrb2);
 
     auto* wrb2 = new WaveguideResonatorBankParamBox_V2(
         "Waveguide Bank " + std::to_string(2), proc, 3, voiceParams.waveguideResonatorBankParams[1]);
-    wrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, 800, RESONATOR_BANK_BOX_HEIGHT);
+    wrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
     addAndMakeVisible(wrb2);
 
     for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
@@ -59,12 +59,15 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
     auto* sampleExciterParamBox = new SampleExciterParamBox("Sampler", proc, voiceParams.sampleExciterParams);
     addAndMakeVisible(sampleExciterParamBox);
-    sampleExciterParamBox->setBounds(0, TOP_MENU_BAR_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT,
-                             EXCITER_BOX_WIDTH, PARAM_BOX_XSMALL_HEIGHT);
+    sampleExciterParamBox->setBounds(
+        0, TOP_MENU_BAR_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT,
+        EXCITER_BOX_WIDTH, PARAM_BOX_XSMALL_HEIGHT);
     auto* extInParamBox = new ExternalInputExciterParamBox("External In", proc, voiceParams.externalInputExciterParams);
     addAndMakeVisible(extInParamBox);
-    extInParamBox->setBounds(0, TOP_MENU_BAR_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
-                             EXCITER_BOX_WIDTH, PARAM_BOX_SMALL_HEIGHT);
+    extInParamBox->setBounds(
+        0, TOP_MENU_BAR_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT +
+        PARAM_BOX_XSMALL_HEIGHT,
+        EXCITER_BOX_WIDTH, PARAM_BOX_SMALL_HEIGHT);
 
     for (int i = 0; i < NUM_ENVELOPES; i++)
     {
@@ -72,18 +75,8 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
             "ENV " + std::to_string(i + 1), proc, proc.synth.params.adsrParams[i]);
         envelopeParamBoxes.push_back(ptr);
         addAndMakeVisible(ptr);
-        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT, 400,
+        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT, MODULATION_BOX_WIDTH,
                        PARAM_BOX_XSMALL_HEIGHT);
-    }
-
-    for (int i = 0; i < NUM_LFOS; i++)
-    {
-        SafePointer<LFOParamBox> ptr = new LFOParamBox(
-            "LFO " + std::to_string(i + 1), proc, i, voiceParams.lfoParams[i]);
-        lfoParamBoxes.push_back(ptr);
-        addAndMakeVisible(ptr);
-        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT, 400,
-                       PARAM_BOX_SMALL_HEIGHT);
     }
 
     for (int i = 0; i < NUM_RANDOMS; i++)
@@ -93,9 +86,20 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
         randomLfoParamBoxes.push_back(ptr);
         addAndMakeVisible(ptr);
         ptr->setBounds(
-            EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
-            400,
-            PARAM_BOX_SMALL_HEIGHT);
+            EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
+            MODULATION_BOX_WIDTH,
+            PARAM_BOX_XSMALL_HEIGHT);
+    }
+
+    for (int i = 0; i < NUM_LFOS; i++)
+    {
+        SafePointer<LFOParamBox> ptr = new LFOParamBox(
+            "LFO " + std::to_string(i + 1), proc, i, voiceParams.lfoParams[i]);
+        lfoParamBoxes.push_back(ptr);
+        addAndMakeVisible(ptr);
+        ptr->setBounds(
+            EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
+            MODULATION_BOX_WIDTH, PARAM_BOX_XSMALL_HEIGHT);
     }
 
     for (int i = 0; i < NUM_MSEGS; i++)
@@ -104,18 +108,22 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
             "MSEG " + std::to_string(i + 1), proc, proc.synth.params.msegParams[i]);
         msegParamBoxes.push_back(ptr);
         addAndMakeVisible(ptr);
-        ptr->setBounds(EXCITER_BOX_WIDTH + 1 + 400 + 1, 40 + RESONATOR_BANK_BOX_HEIGHT, 400, PARAM_BOX_MEDIUM_HEIGHT);
+        ptr->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT,
+                       MODULATION_BOX_WIDTH,
+                       PARAM_BOX_XSMALL_HEIGHT * 1.5f);
     }
 
     matrixBox = new MatrixBox("MATRIX", proc);
     addAndMakeVisible(matrixBox);
-    matrixBox->setBounds(EXCITER_BOX_WIDTH + 1 + 400 + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT, 400,
-                         PARAM_BOX_MEDIUM_HEIGHT);
+    matrixBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
+                         40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH,
+                         PARAM_BOX_XSMALL_HEIGHT * 1.5f);
 
     modSrcBox = new ModSrcBox("SOURCES", proc);
     addAndMakeVisible(modSrcBox);
-    modSrcBox->setBounds(EXCITER_BOX_WIDTH + 1 + 400 + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT, 400,
-                         PARAM_BOX_MEDIUM_HEIGHT);
+    modSrcBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
+                         40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH,
+                         PARAM_BOX_XSMALL_HEIGHT * 1.5f);
 
     usage.setBounds(WINDOW_WIDTH - 150, 10, 110, 20);
     addAndMakeVisible(usage);
@@ -167,8 +175,6 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
     this->ResonariumEditor::resized();
 #endif
-
-
 }
 
 ResonariumEditor::~ResonariumEditor()

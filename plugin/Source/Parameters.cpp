@@ -125,7 +125,7 @@ void MultiFilterParams::setup(ResonariumProcessor& p, juce::String prefix)
                               1000.0f, 0.0f);
     resonance = p.addExtParam(prefix + "_resonance", prefix + " Resonance", "Res", "",
                               {0.01f, 100.0f, 0.0f, 0.4f},
-                              0.707f, 0.0f);
+                              1.0f/std::sqrt(2.0f), 0.0f);
 }
 
 void ADSRParams::setup(ResonariumProcessor& p, juce::String prefix, int index)
@@ -195,11 +195,11 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     //                                  0.0f, 0.0f, filterTextFunction);
 
     loopFilterCutoff = p.addExtParam("decayFilterCutoff" + suffix, "Filter Cutoff" + suffix, "Cutoff", "Hz",
-                                     {20.0f, 20000.0, 0.0f, 1.0f}, 1000.0f,
+                                     {20.0f, 20000.0, 0.0f, 0.2f}, 3000.0f,
                                      0.0f);
 
     loopFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Resonance" + suffix, "Res", "",
-                                        {0.01f, 100.0f, 0.0f, 0.2f}, 0.707f,
+                                        {0.01f, 100.0f, 0.0f, 0.2f}, 1.0f/std::sqrt(2.0f),
                                         0.0f);
 
     // decayFilterKeytrack = p.addExtParam("filterKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
@@ -215,11 +215,11 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                    0.0f);
 
     postFilterCutoff = p.addExtParam("postFilterCutoff" + suffix, "Post Filter Cutoff" + suffix, "Cutoff", "Hz",
-                                     {20.0f, 20000.0f, 0.0f, 1.0f}, 4000.0f,
+                                     {20.0f, 20000.0f, 0.0f, 0.2f}, 4000.0f,
                                      0.0f);
 
     postFilterResonance = p.addExtParam("postFilterResonance" + suffix, "Post Filter Resonance" + suffix, "Res", "",
-                                        {0.01f, 100.0f, 0.0f, 0.2f}, 0.707f,
+                                        {0.01f, 100.0f, 0.0f, 0.2f}, 1.0f/std::sqrt(2.0f),
                                         0.0f);
 
     postFilterMode = p.addExtParam("postFilterMode" + suffix, "Post Filter Mode" + suffix, "Mode", "",
@@ -265,7 +265,7 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
     outputGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
     cascadeAmount = p.addExtParam("cascadeAmount" + suffix, "Cascade Amount" + suffix, "Amount", "",
-                                  {0.0, 1.0, 0.01, 1.0f}, 0.0f,
+                                  {-1.0, 1.0, 0.01, 1.0f}, 0.0f,
                                   gin::SmoothingType::linear);
 }
 
@@ -447,7 +447,7 @@ void LFOParams::setup(ResonariumProcessor& p, int index)
                          0.0f, lfoTextFunction);
 
     rate = p.addExtParam(prefix + "rate", prefix + "Rate", "Rate", "Hz",
-                         {0.0f, 50.0f, 0.0f, 0.3f},
+                         {0.0f, 200.0f, 0.0f, 0.3f},
                          1.0f, 0.0f);
 
     beat = p.addIntParam(prefix + "beat", prefix + "Beat", "Beat", "",
@@ -500,7 +500,7 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
                          0.0f, enableTextFunction);
 
     rate = p.addExtParam(prefix + "rate", prefix + "Rate", "Rate", "Hz",
-                         {0.0f, 50.0f, 0.0f, 0.3f},
+                         {0.0f, 200.0f, 0.0f, 0.3f},
                          1.0f, 0.0f);
 
     beat = p.addIntParam(prefix + "beat", prefix + "Beat", "Beat", "",
@@ -516,8 +516,9 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
                            0.0f, 0.0f);
 
     smooth = p.addExtParam(prefix + "smooth", prefix + "Smooth", "Smooth", "%",
-                           {0.0f, 1.0f, 0.01f, 1.0f},
-                           0.0f, 0.0f);
+                           {0.0f, 100.0f, 1.0f, 1.0f},
+                           100.0f, 0.0f);
+    smooth->conversionFunction = [](const float x) { return x / 100.0f; };
 
     jitter = p.addExtParam(prefix + "jitter", prefix + "Jitter", "Jitter", "%",
                            {0.0f, 1.0f, 0.01f, 1.0f},
@@ -548,7 +549,7 @@ void MSEGParams::setup(ResonariumProcessor& p, int index)
                          0.0f, enableTextFunction);
 
     rate = p.addExtParam(prefix + "rate", "MSEG" + std::to_string(index) + "Rate", "Rate", "Hz",
-                         {0.0f, 50.0f, 0.0f, 0.3f},
+                         {0.0f, 200.0f, 0.0f, 0.3f},
                          10.0f, 0.0f);
 
     beat = p.addIntParam(prefix + "beat", "MSEG" + std::to_string(index) + "Beat", "Beat", "",

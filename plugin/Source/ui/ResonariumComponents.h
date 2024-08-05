@@ -383,12 +383,24 @@ public:
     {
         setName("sampleExciterParams");
         addEnable(sampleParams.enabled);
-        gridWidth = gridWidth * 0.9f;
-        gridHeight = gridHeight * 0.9f;
+        gridWidth = KNOB_W_SMALL;
+        gridHeight = KNOB_H_SMALL;
         gridOffsetY += 4;
-        addControl(new gin::Knob(sampleParams.gain), 0, 0);
-        addControl(new gin::Knob(sampleParams.mix), 1, 0);
-        addControl(new gin::Knob(sampleParams.start), 2, 0);
+        auto gain = new gin::Knob(sampleParams.gain);
+        gain->internalKnobReduction = -0;
+        addControl(gain, 0, 0);
+        auto mix = new gin::Knob(sampleParams.mix);
+        mix->internalKnobReduction = -0;
+        addControl(mix, 1, 0);
+        auto start = new gin::Knob(sampleParams.start);
+        start->internalKnobReduction = -0;
+        addControl(start, 2, 0);
+        // auto test1 = new gin::Knob(sampleParams.start);
+        // test1->internalKnobReduction = -0;
+        // addControl(test1, 3, 0);
+        // auto test2 = new gin::Knob(sampleParams.start);
+        // test2->internalKnobReduction = -0;
+        // addControl(test2, 4, 0);
     }
 
     void paint(juce::Graphics& g) override
@@ -734,9 +746,8 @@ public:
         addControl(new gin::Knob(adsrParams.release), 3, 0);
 
         visualizer = new gin::ADSRComponent();
-        auto g = new gin::ADSRComponent();
-        g->setParams(adsrParams.attack, adsrParams.decay, adsrParams.sustain, adsrParams.release);
-        g->phaseCallback = [this, adsrParams]
+        visualizer->setParams(adsrParams.attack, adsrParams.decay, adsrParams.sustain, adsrParams.release);
+        visualizer->phaseCallback = [this, adsrParams]
         {
             std::vector<std::pair<int, float>> res;
 
@@ -749,12 +760,20 @@ public:
 
             return res;
         };
-        addControl(g, 4, 0, 3, 1);
+        // addControl(g, 4, 0, 4, 1);
+        addAndMakeVisible(visualizer);
     }
 
     ResonariumProcessor& proc;
     gin::ADSRComponent* visualizer;
     ADSRParams adsrParams;
+
+    void resized() override
+    {
+        ParamBox::resized();
+        visualizer->setBounds(
+            juce::Rectangle<int>(KNOB_W * 4 + 6, TITLE_BAR_HEIGHT, KNOB_W * 4 - 6, KNOB_H).translated(2, 6));
+    }
 };
 
 class LFOParamBox : public gin::ParamBox
@@ -778,22 +797,22 @@ public:
         addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoLFO[lfoParams.index], false));
         addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcPolyLFO[lfoParams.index], true));
 
-        addControl(r = new gin::Knob(lfoParams.rate), 0, 0);
-        addControl(b = new gin::Select(lfoParams.beat), 0, 0);
-        addControl(new gin::Knob(lfoParams.stereo), 1, 0);
-        addControl(new gin::Knob(lfoParams.depth, true), 2, 0);
-        // addControl(new gin::Knob(lfoParams.fade, true), 3, 0);
-        addControl(new gin::Knob(lfoParams.delay), 3, 0);
+        addControl(r = new gin::Knob(lfoParams.rate), 1, 0);
+        addControl(b = new gin::Select(lfoParams.beat), 1, 0);
+        addControl(new gin::Knob(lfoParams.stereo), 2, 0);
+        addControl(new gin::Knob(lfoParams.depth, true), 3, 0);
+        // addControl(new gin::Knob(lfoParams.fade, true), 6, 0);
+        // addControl(new gin::Knob(lfoParams.delay), 7, 0);
 
-        addControl(new gin::Select(lfoParams.wave), 0, 1);
-        addControl(new gin::Switch(lfoParams.sync), 1, 1);
-        addControl(new gin::Knob(lfoParams.phase, true), 2, 1);
-        addControl(new gin::Knob(lfoParams.offset, true), 3, 1);
+        addControl(new gin::Select(lfoParams.wave), 5, 0);
+        addControl(new gin::Switch(lfoParams.sync), 0, 0);
+        addControl(new gin::Knob(lfoParams.phase, true), 4, 0);
+        // addControl(new gin::Knob(lfoParams.offset, true), 3, 1);
 
         visualizer = new gin::LFOComponent();
         visualizer->setParams(lfoParams.wave, lfoParams.sync, lfoParams.rate, lfoParams.beat, lfoParams.depth,
                               lfoParams.offset,
-                              lfoParams.phase, lfoParams.enabled);
+                              lfoParams.phase, lfoParams.enabled, lfoParams.stereo);
         jassert(lfoParams.enabled != nullptr);
         visualizer->phaseCallback = [this, lfoParams]
         {
@@ -823,7 +842,8 @@ public:
     void resized() override
     {
         ParamBox::resized();
-        visualizer->setBounds(230, 40, 150, 110);
+        visualizer->setBounds(
+            juce::Rectangle<int>(KNOB_W * 6 + 6, TITLE_BAR_HEIGHT, KNOB_W * 2 - 6, KNOB_H).translated(2, 6));
     }
 
     void paramChanged() override
@@ -858,15 +878,15 @@ public:
         addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoRND[randomLfoParams.index], false));
         addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcPolyRND[randomLfoParams.index], true));
 
-        addControl(r = new gin::Knob(randomLfoParams.rate), 0, 0);
-        addControl(b = new gin::Select(randomLfoParams.beat), 0, 0);
-        addControl(new gin::Knob(randomLfoParams.stereo), 1, 0);
-        addControl(new gin::Knob(randomLfoParams.depth, true), 2, 0);
-        addControl(new gin::Knob(randomLfoParams.jitter), 3, 0);
-        addControl(new gin::Knob(randomLfoParams.chaos), 0, 1);
-        addControl(new gin::Switch(randomLfoParams.sync), 1, 1);
-        addControl(new gin::Knob(randomLfoParams.smooth), 2, 1);
-        addControl(new gin::Knob(randomLfoParams.offset), 3, 1);
+        addControl(new gin::Switch(randomLfoParams.sync), 0, 0);
+        addControl(r = new gin::Knob(randomLfoParams.rate), 1, 0);
+        addControl(b = new gin::Select(randomLfoParams.beat), 1, 0);
+        addControl(new gin::Knob(randomLfoParams.stereo), 2, 0);
+        addControl(new gin::Knob(randomLfoParams.depth, true), 3, 0);
+        // addControl(new gin::Knob(randomLfoParams.jitter), 3, 0);
+        addControl(new gin::Knob(randomLfoParams.chaos), 4, 0);
+        addControl(new gin::Knob(randomLfoParams.smooth), 5, 0);
+        // addControl(new gin::Knob(randomLfoParams.offset), 3, 1);
         watchParam(randomLfoParams.sync);
     }
 
@@ -910,14 +930,16 @@ public:
 
         addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcPolyMSEG[msegParams.index], true));
         addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoMSEG[msegParams.index], false));
-        addControl(new gin::Switch(msegParams.sync), 0, 2);
-        addControl(r = new gin::Knob(msegParams.rate), 1, 2);
-        addControl(b = new gin::Select(msegParams.beat), 1, 2);
-        addControl(new gin::Knob(msegParams.xgrid), 5, 2);
-        addControl(new gin::Knob(msegParams.ygrid, true), 6, 2);
+        gridWidth = KNOB_W_SMALL;
+        gridHeight = KNOB_H_SMALL;
+        addControl(new gin::Switch(msegParams.sync), 8, 0);
+        addControl(r = new gin::Knob(msegParams.rate), 9, 0);
+        addControl(b = new gin::Select(msegParams.beat), 9, 0);
+        addControl(new gin::Knob(msegParams.xgrid), 8, 1);
+        addControl(new gin::Knob(msegParams.ygrid, true), 9, 1);
 
 
-        msegComponent = new gin::MSEGComponent(proc.synth.monoMSEGs.getReference(msegParams.index).leftData);
+        msegComponent = new gin::MSEGComponent(*proc.synth.monoMSEGs.getReference(msegParams.index).dataPointer);
         msegComponent->setParams(msegParams.sync, msegParams.rate, msegParams.beat, msegParams.depth, msegParams.offset,
                                  msegParams.phase, msegParams.enabled, msegParams.xgrid, msegParams.ygrid,
                                  msegParams.loop);
@@ -945,9 +967,18 @@ public:
     {
         ParamBox::resized();
         auto bounds = getLocalBounds()
-                      .reduced(2, BOX_HEADER_HEIGHT + 2)
-                      .withTrimmedBottom(55);
+                      .reduced(2, 0)
+                      .withTrimmedTop(BOX_HEADER_HEIGHT + 2)
+                      .withTrimmedBottom(2)
+                      .withTrimmedRight(82);
         msegComponent->setBounds(bounds);
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        gin::ParamBox::paint(g);
+        // g.setColour(juce::Colours::black);
+        // g.fillRoundedRectangle(msegComponent->getBoundsInParent().toFloat(), 5);
     }
 
     void paramChanged() override

@@ -180,11 +180,10 @@ void ResonariumLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, i
                 for (auto value : *varArray.getArray())
                 {
                     g.fillEllipse (x + 3 + ((float) value) * (width - 7), y + 17, 4.0f, 4.0f);
-                    DBG(juce::String(value));
                 }
             }
 
-            g.setColour(juce::Colours::teal.withLightness(0.8f).withAlpha(1.0f));
+            g.setColour(juce::Colours::teal.withLightness(0.7f).withAlpha(1.0f));
             varArray = slider.getProperties()["modValuesR"];
             if (varArray.isArray())
             {

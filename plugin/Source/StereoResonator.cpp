@@ -14,7 +14,7 @@ float StereoResonator::Resonator::popSample()
     // DBG(delay);
     delayLine.setDelay(delay);
     float outSample = delayLine.popSample(0);
-    outSample = loopFilter.processSample(0, outSample) * svfNormalizationScalar;
+    outSample = loopFilter.processSample(0, outSample) * loopFilterNormalizationScalar;
     outSample = apf.processSample(outSample);
     return outSample * decayCoefficient;
 }
@@ -24,10 +24,11 @@ void StereoResonator::Resonator::pushSample(float input)
     delayLine.pushSample(0, input);
 }
 
-float StereoResonator::Resonator::postProcess(float input)
+inline float StereoResonator::Resonator::postProcess(float input)
 {
-    jassertfalse;
-    return -1;
+    float sample = postFilter.processSample(0, input);
+    // float sample = input;
+    return sample;
 }
 
 void StereoResonator::Resonator::reset()
@@ -35,16 +36,24 @@ void StereoResonator::Resonator::reset()
     delayLine.reset();
     delayLengthInterpolator.snapValue(delayLengthInSamples);
     loopFilter.reset();
+    postFilter.reset();
     apf.reset();
+    auto span = delayLine.getRawDelayBuffer().getWriteSpan(0);
+    for(auto& sample : span)
+    {
+        sample = 0.0f;
+    }
+
 }
 
 void StereoResonator::Resonator::prepare(const juce::dsp::ProcessSpec& spec)
 {
-    this->reset();
     this->sampleRate = spec.sampleRate;
     loopFilter.prepare({spec.sampleRate, spec.maximumBlockSize, 1});
+    postFilter.prepare({spec.sampleRate, spec.maximumBlockSize, 1});
     apf.prepare(spec);
     delayLine.prepare(spec);
+    this->reset();
 }
 
 void StereoResonator::Resonator::updateParameters(float frequency, int numSamples)
@@ -59,24 +68,45 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
 
     float newCutoff = voice.getValue(params.loopFilterCutoff, channel);
     float newResonance = voice.getValue(params.loopFilterResonance, channel);
-    // if(newCutoff != svfCutoffFrequency || newResonance != svf.getQValue())
-    // {
+    float newMode = voice.getValue(params.loopFilterMode, channel);
+    if(newCutoff != loopFilterCutoff || newResonance != loopFilterResonance || newMode != loopFilterMode)
+    {
+        loopFilterResonance = newResonance;
+        loopFilterCutoff = newCutoff;
+        loopFilterMode = newMode;
         loopFilter.setCutoffFrequency<false>(newCutoff);
         loopFilter.setQValue<false>(newResonance);
-        resonance = newResonance;
-        svfCutoffFrequency = newCutoff;
-        loopFilter.setMode(voice.getValue(params.loopFilterMode));
+        loopFilter.setMode(newMode);
         loopFilter.update();
-        svfNormalizationScalar = 1.0f / loopFilter.getMultiModeMaxGain();
-    // DBG(1.0f / svfNormalizationScalar);
-    // }
+        loopFilterNormalizationScalar = 1.0f / loopFilter.getMultiModeMaxGain();
+    }
+
+    newCutoff = voice.getValue(params.postFilterCutoff, channel);
+    newResonance = voice.getValue(params.postFilterResonance, channel);
+    newMode = voice.getValue(params.postFilterMode, channel);
+    if(newCutoff != postFilterCutoff || newResonance != postFilterResonance || newMode != postFilterMode)
+    {
+        postFilterResonance = newResonance;
+        postFilterCutoff = newCutoff;
+        postFilterMode = newMode;
+        postFilter.setCutoffFrequency<false>(newCutoff);
+        postFilter.setQValue<false>(newResonance);
+        postFilter.setMode(newMode);
+        postFilter.update();
+        postFilterNormalizationScalar = 1.0f / postFilter.getMultiModeMaxGain();
+    }
 
     float newDispersion = voice.getValue(params.dispersion, channel);
     // if(newDispersion != dispersion)
     // {
-        apf.setDispersionAmount(newDispersion);
         dispersion = newDispersion;
+        apf.setDispersionAmount(newDispersion);
     // }
+
+#if JUCE_SNAP_TO_ZERO
+    postFilter.snapToZero();
+    loopFilter.snapToZero();
+#endif
 }
 
 /**

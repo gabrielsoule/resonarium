@@ -45,7 +45,7 @@ public:
      */
     void reset();
     void noteOn(float phase);
-    float process(int numSamples);
+    void process(int numSamples);
     float getOutput();
     float getOutputUnclamped();
     float getOutput(int channel);

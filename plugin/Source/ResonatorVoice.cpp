@@ -194,6 +194,9 @@ void ResonatorVoice::noteStarted()
         mseg.noteOn();
     }
 
+    exciterBuffer.clear();
+    resonatorBankBuffer.clear();
+
     dcBlocker.reset();
 }
 
@@ -351,6 +354,20 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     {
         exciter->process(exciterBlock);
     }
+
+// #if JUCE_DEBUG
+//
+//     juce::Range minmax = exciterBlock.findMinAndMax();
+//     if(minmax.getEnd() == 0 || minmax.getStart() == 0)
+//     {
+//         DBG("Exciter block is empty");
+//     }
+//     else
+//     {
+//         DBG("Exciter block min: " + juce::String(minmax.getStart()) + " max: " + juce::String(minmax.getEnd()));
+//     }
+// #endif
+
 
     if (!bypassResonators)
     {

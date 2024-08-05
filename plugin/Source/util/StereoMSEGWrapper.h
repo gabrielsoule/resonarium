@@ -8,9 +8,9 @@
 class StereoMSEGWrapper
 {
 public:
-    StereoMSEGWrapper(MSEGParams params) : params(params), left(*params.msegData), right(*params.msegData)
+    StereoMSEGWrapper(MSEGParams params) : params(params), dataPointer(params.msegData), left(*dataPointer), right(*dataPointer)
     {
-        DBG("C...");
+
     }
 
     void prepare(const juce::dsp::ProcessSpec& spec);
@@ -37,8 +37,7 @@ public:
     float getOutputUnclamped(int channel);
     float getCurrentPhase(int channel);
 
-    gin::MSEG::Data leftData;
-    gin::MSEG::Data rightData;
+    std::shared_ptr<gin::MSEG::Data> dataPointer;
     gin::MSEG left;
     gin::MSEG right;
     MSEGParams params;

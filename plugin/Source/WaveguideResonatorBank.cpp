@@ -115,8 +115,8 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
             {
                 if (r->enabled)
                 {
-                    outSampleL += r->processSample(exciterBlock.getSample(0, i), 0) * r->left.gain;
-                    outSampleR += r->processSample(exciterBlock.getSample(1, i), 1) * r->right.gain;
+                    outSampleL += r->postProcess(r->processSample(exciterBlock.getSample(0, i), 0), 0) * r->left.gain;
+                    outSampleR += r->postProcess(r->processSample(exciterBlock.getSample(1, i), 1), 1) * r->right.gain;
                 }
             }
             outSampleL = outSampleL / totalGainL;
@@ -142,8 +142,8 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                 resonatorOutSamplesR[j] = resonators[j]->popSample(1);
                 feedbackSampleL += resonatorOutSamplesL[j] * (resonators[j]->resonators[0].gain / totalGainL);
                 feedbackSampleR += resonatorOutSamplesR[j] * (resonators[j]->resonators[1].gain / totalGainR);
-                outSampleL += resonatorOutSamplesL[j] * resonators[j]->resonators[0].gain;
-                outSampleR += resonatorOutSamplesR[j] * resonators[j]->resonators[1].gain;
+                outSampleL += resonators[j]->postProcess(resonatorOutSamplesL[j], 0) * resonators[j]->resonators[0].gain;
+                outSampleR += resonators[j]->postProcess(resonatorOutSamplesL[j], 1) * resonators[j]->resonators[1].gain;
             }
 
             //apply the bridge filter H(z) = -2.
@@ -182,8 +182,8 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                     resonators[j]->pushSample(resonatorOutSampleR + dcBlockersR[j].processSample(previousResonatorSampleR) * cascadeAmount + exciterBlock.getSample(1, i), 1);
                     previousResonatorSampleL = resonatorOutSampleL;
                     previousResonatorSampleR = resonatorOutSampleR;
-                    outSampleL += resonatorOutSampleL * resonators[j]->resonators[0].gain;
-                    outSampleR += resonatorOutSampleR * resonators[j]->resonators[1].gain;
+                    outSampleL += resonators[j]->postProcess(resonatorOutSampleL, 0) * resonators[j]->resonators[0].gain;
+                    outSampleR += resonators[j]->postProcess(resonatorOutSampleR, 1) * resonators[j]->resonators[1].gain;
                 }
             }
 

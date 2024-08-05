@@ -20,7 +20,7 @@ class StereoResonator
     {
     public:
         Resonator(ResonatorVoice& voice, ResonatorParams params, int channel) : voice(voice), params(params),
-                                                                               channel(channel), delayLine(50000)
+                                                                               channel(channel), delayLine(21000)
         {
             jassert(channel == 0 || channel == 1);
         }
@@ -60,13 +60,19 @@ class StereoResonator
         float decayTime;
         float sampleRate;
 
+        float gain;
         float lastFrequency;
         float nextFrequency;
-        float svfCutoffFrequency;
         float dispersion;
-        float resonance;
-        float gain;
-        float svfNormalizationScalar; //the inverse of the max gain point of the multi-mode SVF
+        float loopFilterCutoff;
+        float loopFilterResonance;
+        float loopFilterMode;
+        float loopFilterNormalizationScalar = 1; //the inverse of the max gain point of the multi-mode SVF
+
+        float postFilterCutoff;
+        float postFilterResonance;
+        float postFilterMode;
+        float postFilterNormalizationScalar = 1;
 
         InterpolatedValue delayLengthInterpolator;
 

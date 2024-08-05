@@ -8,7 +8,6 @@ void ImpulseExciter::prepare(const juce::dsp::ProcessSpec& spec)
     filter.prepare(spec);
     filter.normalize = false;
     scratchBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
-    scratchBuffer.clear();
     scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
     reset();
 }
@@ -43,7 +42,7 @@ void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block)
 void ImpulseExciter::reset()
 {
     filter.reset();
-    scratchBlock.clear();
+    scratchBuffer.clear();
     impulsesRemaining = voice.getValue(params.thickness);
 }
 
@@ -105,6 +104,7 @@ void NoiseExciter::reset()
     noise.reset();
     envelope.reset();
     filter.reset();
+    scratchBuffer.clear();
 }
 
 void NoiseExciter::noteStarted()
@@ -225,6 +225,7 @@ void ImpulseTrainExciter::reset()
     samplesSinceLastImpulse = 0;
     rng.setSeedRandomly();
     impulsesLeft = impulseLength;
+    scratchBuffer.clear();
 }
 
 void ImpulseTrainExciter::noteStarted()
@@ -298,6 +299,7 @@ void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& block)
 
 void ExternalInputExciter::reset()
 {
+    extInBuffer.clear();
 }
 
 void ExternalInputExciter::noteStarted()

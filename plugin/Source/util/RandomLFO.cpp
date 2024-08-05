@@ -29,7 +29,7 @@ void RandomLFO::prepare(const juce::dsp::ProcessSpec& spec)
     this->oneOverSampleRate = 1.0f / sampleRate;
     centerState.rng.setSeed(params.seed);
     leftState.rng.setSeed(centerState.rng.nextInt());
-    rightState.rng.setSeed(leftState.rng.nextInt());
+    rightState.rng.setSeed(centerState.rng.nextInt());
     centerState.lastRandomValue = centerState.rng.nextFloat();
     centerState.nextRandomValue = centerState.rng.nextFloat();
     leftState.lastRandomValue = leftState.rng.nextFloat();
@@ -41,7 +41,7 @@ void RandomLFO::prepare(const juce::dsp::ProcessSpec& spec)
 void RandomLFO::updateParameters(float frequency)
 {
     this->rate = frequency;
-    this->sync = voice->getValue(params.sync);
+    this->sync = params.sync->isOn();
     this->mode = static_cast<Mode>(static_cast<int>(voice->getValue(params.mode)));
     this->depth = voice->getValue(params.depth);
     this->offset = voice->getValue(params.offset);
@@ -74,11 +74,11 @@ void RandomLFO::noteOn(float phase)
 
 void RandomLFO::processInternal(int numSamples, RandomState& state)
 {
-    phaseDelta = rate * oneOverSampleRate * numSamples;
-    currentPhase += phaseDelta;
-    if (currentPhase >= 1.0f)
-    {
-        currentPhase -= 1.0f;
+    // phaseDelta = rate * oneOverSampleRate * numSamples;
+    // currentPhase += phaseDelta;
+    // if (currentPhase >= 1.0f)
+    // {
+    //     currentPhase -= 1.0f;
         float min = std::max(0.0f, state.lastRandomValue - state.lastRandomValue * chaos);
         float max = std::min(1.0f, state.lastRandomValue + (1.0f - state.lastRandomValue) * chaos);
 
@@ -88,17 +88,33 @@ void RandomLFO::processInternal(int numSamples, RandomState& state)
         // Convert signed int to unsigned int before casting to float
         uint32_t unsignedRandom = static_cast<uint32_t>(state.rng.nextInt()) + 0x80000000;
         state.nextRandomValue = min + (static_cast<float>(unsignedRandom) / static_cast<float>(MAX_UINT)) * (max - min);
-    }
+    // }
 
     jassert(state.lastRandomValue >= 0.0f && state.lastRandomValue <= 1.0f);
     jassert(state.nextRandomValue >= 0.0f && state.nextRandomValue <= 1.0f);
-
-    state.currentRandomValue = perlinInterpolate(state.lastRandomValue, state.nextRandomValue, currentPhase);
+    //
+    // // float modifiedPhase = smooth == 0 ? 1 : juce::jmin(1.0f, ((1.0f / smooth) * currentPhase));
+    // auto modifiedPhase = currentPhase;
+    // state.currentRandomValue = perlinInterpolate(state.lastRandomValue, state.nextRandomValue, modifiedPhase);
 }
 
-float RandomLFO::process(int numSamples)
+void RandomLFO::process(int numSamples)
 {
-    processInternal(numSamples, centerState);
+    phaseDelta = rate * oneOverSampleRate * numSamples;
+    currentPhase += phaseDelta;
+    if (currentPhase >= 1.0f)
+    {
+        currentPhase -= 1.0f;
+        processInternal(numSamples, centerState);
+        processInternal(numSamples, leftState);
+        processInternal(numSamples, rightState);
+    }
+
+    auto modifiedPhase = currentPhase;
+    modifiedPhase = smooth == 0 ? 1 : juce::jmin(1.0f, ((1.0f / smooth) * currentPhase));
+    centerState.currentRandomValue = perlinInterpolate(centerState.lastRandomValue, centerState.nextRandomValue, modifiedPhase);
+    leftState.currentRandomValue = perlinInterpolate(leftState.lastRandomValue, leftState.nextRandomValue, modifiedPhase);
+    rightState.currentRandomValue = perlinInterpolate(rightState.lastRandomValue, rightState.nextRandomValue, modifiedPhase);
 }
 
 float RandomLFO::getOutput()
