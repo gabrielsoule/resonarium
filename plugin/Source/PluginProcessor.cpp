@@ -108,12 +108,44 @@ void ResonariumProcessor::setupModMatrix()
 //==============================================================================
 void ResonariumProcessor::stateUpdated()
 {
+    DBG("Updating state FROM disk");
     modMatrix.stateUpdated(state);
+
+    for(int i = 0; i < NUM_MSEGS; i++)
+    {
+        juce::String msegName = "MSEG" + juce::String(i + 1);
+        auto msegTree = state.getChildWithName(msegName);
+
+        if (msegTree.isValid())
+        {
+            try
+            {
+                synth.params.msegParams[i].msegData->reset();
+                synth.params.msegParams[i].msegData->fromValueTree(msegTree);
+            }
+            catch (const std::exception& e)
+            {
+                DBG("Error loading MSEG " << (i+1) << ": " << e.what());
+                synth.params.msegParams[i].msegData->reset();
+            }
+        }
+        else
+        {
+            synth.params.msegParams[i].msegData->reset();
+        }
+    }
+
 }
 
 void ResonariumProcessor::updateState()
 {
+    DBG("Updating plugin state TO disk");
     modMatrix.updateState(state);
+    for(int i = 0; i < NUM_MSEGS; i++)
+    {
+        auto msegTree = state.getOrCreateChildWithName ("MSEG" + juce::String(i + 1), nullptr);
+        synth.params.msegParams[i].msegData->toValueTree(msegTree);
+    }
 }
 
 void ResonariumProcessor::reset()
