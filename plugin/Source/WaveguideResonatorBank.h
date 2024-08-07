@@ -45,7 +45,7 @@ public:
     float cascadeFilterResonanceL;
     float cascadeFilterModeL;
     float cascadeFilterNormalizationScalarL;
-    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS> cascadeFilterR;
+    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, true> cascadeFilterR;
     float cascadeFilterCutoffR;
     float cascadeFilterResonanceR;
     float cascadeFilterModeR;

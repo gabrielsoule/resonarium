@@ -77,8 +77,8 @@ class StereoResonator
         InterpolatedValue delayLengthInterpolator;
 
         chowdsp::DelayLine<float, chowdsp::DelayLineInterpolationTypes::Lagrange3rd> delayLine;
-        chowdsp::SVFMultiMode<float, 1> loopFilter;
-        chowdsp::SVFMultiMode<float, 1> postFilter;
+        chowdsp::SVFMultiMode<float, 1, true> loopFilter;
+        chowdsp::SVFMultiMode<float, 1, true> postFilter;
         DispersionFilter apf;
     };
 

@@ -5,6 +5,7 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
 {
     frequency = 440.0f;
     int resonatorBankIndex = 0;
+    this->disableSmoothing = true;
 
     polyMSEGs.clear();
 
@@ -152,10 +153,8 @@ void ResonatorVoice::noteStarted()
     silenceCount = 0;
     numBlocksSinceNoteOn = 0;
 
-    updateParameters(0);
     snapParams();
     updateParameters(0);
-    snapParams();
 
     for (auto* exciter : exciters)
     {

@@ -167,37 +167,28 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
     }
     else if (couplingMode == CASCADE)
     {
-        float cascadeAmount = voice.getValue(params.cascadeLevel);
+        const float cascadeAmount = voice.getValue(params.cascadeLevel);
 
-        float newCutoffL = voice.getValue(params.cascadeFilterCutoff, 0);
-        float newResonanceL = voice.getValue(params.cascadeFilterResonance, 0);
-        float newModeL = voice.getValue(params.cascadeFilterMode, 0);
-        if(newCutoffL != cascadeFilterCutoffL || newResonanceL != cascadeFilterResonanceL || newModeL != cascadeFilterModeL)
-        {
-            cascadeFilterCutoffL = newCutoffL;
-            cascadeFilterResonanceL = newResonanceL;
-            cascadeFilterModeL = newModeL;
-            cascadeFilterL.setCutoffFrequency<false>(newCutoffL);
-            cascadeFilterL.setQValue<false>(newResonanceL);
-            cascadeFilterL.setMode(newModeL);
-            cascadeFilterL.update();
-            cascadeFilterNormalizationScalarL = 1.0f / cascadeFilterL.getMultiModeMaxGain();
-        }
+        const float newCutoffL = voice.getValue(params.cascadeFilterCutoff, 0);
+        const float newResonanceL = voice.getValue(params.cascadeFilterResonance, 0);
+        const float newModeL = voice.getValue(params.cascadeFilterMode, 0);
+        cascadeFilterL.updateParameters(newCutoffL, newResonanceL, newModeL);
 
-        float newCutoffR = voice.getValue(params.cascadeFilterCutoff, 1);
-        float newResonanceR = voice.getValue(params.cascadeFilterResonance, 1);
-        float newModeR = voice.getValue(params.cascadeFilterMode, 1);
-        if(newCutoffR != cascadeFilterCutoffR || newResonanceR != cascadeFilterResonanceR || newModeR != cascadeFilterModeR)
-        {
-            cascadeFilterCutoffR = newCutoffR;
-            cascadeFilterResonanceR = newResonanceR;
-            cascadeFilterModeR = newModeR;
-            cascadeFilterR.setCutoffFrequency<false>(newCutoffR);
-            cascadeFilterR.setQValue<false>(newResonanceR);
-            cascadeFilterR.setMode(newModeR);
-            cascadeFilterR.update();
-            cascadeFilterNormalizationScalarR = 1.0f / cascadeFilterR.getMultiModeMaxGain();
-        }
+        const float newCutoffR = voice.getValue(params.cascadeFilterCutoff, 1);
+        const float newResonanceR = voice.getValue(params.cascadeFilterResonance, 1);
+        const float newModeR = voice.getValue(params.cascadeFilterMode, 1);
+        cascadeFilterR.updateParameters(newCutoffR, newResonanceR, newModeR);
+        // if(newCutoffR != cascadeFilterCutoffR || newResonanceR != cascadeFilterResonanceR || newModeR != cascadeFilterModeR)
+        // {
+        //     cascadeFilterCutoffR = newCutoffR;
+        //     cascadeFilterResonanceR = newResonanceR;
+        //     cascadeFilterModeR = newModeR;
+        //     cascadeFilterR.setCutoffFrequency<false>(newCutoffR);
+        //     cascadeFilterR.setQValue<false>(newResonanceR);
+        //     cascadeFilterR.setMode(newModeR);
+        //     cascadeFilterR.update();
+        //     // cascadeFilterNormalizationScalarR = 1.0f / cascadeFilterR.getMultiModeMaxGain();
+        // }
 
         for(int i = 0; i < exciterBlock.getNumSamples(); i++)
         {

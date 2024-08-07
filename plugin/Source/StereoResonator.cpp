@@ -26,7 +26,7 @@ void StereoResonator::Resonator::pushSample(float input)
 
 inline float StereoResonator::Resonator::postProcess(float input)
 {
-    float sample = postFilter.processSample(0, input);
+    const float sample = postFilter.processSample(0, input);
     // float sample = input;
     return sample;
 }
@@ -64,37 +64,54 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
     delayLengthInSamples = sampleRate / nextFrequency;
     delayLengthInterpolator.setTargetValue(delayLengthInSamples, numSamples);
     delayLine.setDelay(delayLengthInSamples);
-    decayCoefficient = std::pow(0.001f, 1.0f / (voice.getValue(params.decayTime, channel) * nextFrequency));
+    const float decayInSeconds = voice.getValue(params.decayTime, channel);
+    if(decayInSeconds == 60.0f)
+    {
+        decayCoefficient = 1.0f;
+    }
+    else
+    {
+        decayCoefficient = std::pow(0.001f, 1.0f / (decayInSeconds * nextFrequency));
+    }
 
     float newCutoff = voice.getValue(params.loopFilterCutoff, channel);
     float newResonance = voice.getValue(params.loopFilterResonance, channel);
     float newMode = voice.getValue(params.loopFilterMode, channel);
-    if(newCutoff != loopFilterCutoff || newResonance != loopFilterResonance || newMode != loopFilterMode)
-    {
-        loopFilterResonance = newResonance;
-        loopFilterCutoff = newCutoff;
-        loopFilterMode = newMode;
-        loopFilter.setCutoffFrequency<false>(newCutoff);
-        loopFilter.setQValue<false>(newResonance);
-        loopFilter.setMode(newMode);
-        loopFilter.update();
-        loopFilterNormalizationScalar = 1.0f / loopFilter.getMultiModeMaxGain();
-    }
+    // if(newCutoff != loopFilterCutoff || newResonance != loopFilterResonance || newMode != loopFilterMode)
+    // {
+    //     loopFilterResonance = newResonance;
+    //     loopFilterCutoff = newCutoff;
+    //     loopFilterMode = newMode;
+    //     loopFilter.setCutoffFrequency<false>(newCutoff);
+    //     loopFilter.setQValue<false>(newResonance);
+    //     loopFilter.setMode(newMode);
+    //     loopFilter.update();
+    //     // loopFilterNormalizationScalar = 1.0f / loopFilter.getMultiModeMaxGain();
+    // }
+    // if(this->voice.id > -1)
+    // {
+    //     DBG("Updating parameters for " + juce::String(this->voice.id));
+    //     DBG("Cutoff: " + juce::String(newCutoff));
+    //     DBG("Resonance: " + juce::String(newResonance));
+    //     DBG("Mode: " + juce::String(newMode));
+    // }
+    loopFilter.updateParameters(newCutoff, newResonance, newMode);
 
     newCutoff = voice.getValue(params.postFilterCutoff, channel);
     newResonance = voice.getValue(params.postFilterResonance, channel);
     newMode = voice.getValue(params.postFilterMode, channel);
-    if(newCutoff != postFilterCutoff || newResonance != postFilterResonance || newMode != postFilterMode)
-    {
-        postFilterResonance = newResonance;
-        postFilterCutoff = newCutoff;
-        postFilterMode = newMode;
-        postFilter.setCutoffFrequency<false>(newCutoff);
-        postFilter.setQValue<false>(newResonance);
-        postFilter.setMode(newMode);
-        postFilter.update();
-        postFilterNormalizationScalar = 1.0f / postFilter.getMultiModeMaxGain();
-    }
+    // if(newCutoff != postFilterCutoff || newResonance != postFilterResonance || newMode != postFilterMode)
+    // {
+    //     postFilterResonance = newResonance;
+    //     postFilterCutoff = newCutoff;
+    //     postFilterMode = newMode;
+    //     postFilter.setCutoffFrequency<false>(newCutoff);
+    //     postFilter.setQValue<false>(newResonance);
+    //     postFilter.setMode(newMode);
+    //     postFilter.update();
+    //     // postFilterNormalizationScalar = 1.0f / postFilter.getMultiModeMaxGain();
+    // }
+    postFilter.updateParameters(newCutoff, newResonance, newMode);
 
     float newDispersion = voice.getValue(params.dispersion, channel);
     // if(newDispersion != dispersion)
