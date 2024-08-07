@@ -39,6 +39,18 @@ public:
     // std::array<juce::dsp::IIR::Filter<float>, NUM_WAVEGUIDE_RESONATORS> dcBlockersR;
     juce::dsp::IIR::Filter <float> dcBlockersR[NUM_WAVEGUIDE_RESONATORS];
 
+    // chowdsp::SVFLowpass<float, 2> testCascadeFilters[NUM_WAVEGUIDE_RESONATORS];
+    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS> cascadeFilterL;
+    float cascadeFilterCutoffL;
+    float cascadeFilterResonanceL;
+    float cascadeFilterModeL;
+    float cascadeFilterNormalizationScalarL;
+    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS> cascadeFilterR;
+    float cascadeFilterCutoffR;
+    float cascadeFilterResonanceR;
+    float cascadeFilterModeR;
+    float cascadeFilterNormalizationScalarR;
+
     //experimental shit
     juce::dsp::IIR::Filter<float> couplingFilter;
     juce::dsp::FIR::Filter<float> couplingFilterFIR;

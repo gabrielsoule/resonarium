@@ -125,7 +125,7 @@ void MultiFilterParams::setup(ResonariumProcessor& p, juce::String prefix)
                               1000.0f, 0.0f);
     resonance = p.addExtParam(prefix + "_resonance", prefix + " Resonance", "Res", "",
                               {0.01f, 100.0f, 0.0f, 0.4f},
-                              1.0f/std::sqrt(2.0f), 0.0f);
+                              1.0f / std::sqrt(2.0f), 0.0f);
 }
 
 void ADSRParams::setup(ResonariumProcessor& p, juce::String prefix, int index)
@@ -199,7 +199,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                      0.0f);
 
     loopFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Resonance" + suffix, "Res", "",
-                                        {0.01f, 100.0f, 0.0f, 0.2f}, 1.0f/std::sqrt(2.0f),
+                                        {0.01f, 100.0f, 0.0f, 0.2f}, 1.0f / std::sqrt(2.0f),
                                         0.0f);
 
     // decayFilterKeytrack = p.addExtParam("filterKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
@@ -211,7 +211,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     //                                     0.0f);
 
     loopFilterMode = p.addExtParam("svfMode" + suffix, "Mode" + suffix, "Mode", "",
-                                   {-1.0, 1.0f, 0.0, 1.0f}, 0.0f,
+                                   {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
                                    0.0f);
 
     postFilterCutoff = p.addExtParam("postFilterCutoff" + suffix, "Post Filter Cutoff" + suffix, "Cutoff", "Hz",
@@ -219,12 +219,12 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                      0.0f);
 
     postFilterResonance = p.addExtParam("postFilterResonance" + suffix, "Post Filter Resonance" + suffix, "Res", "",
-                                        {0.01f, 100.0f, 0.0f, 0.2f}, 1.0f/std::sqrt(2.0f),
+                                        {0.01f, 100.0f, 0.0f, 0.2f}, 1.0f / std::sqrt(2.0f),
                                         0.0f);
 
     postFilterMode = p.addExtParam("postFilterMode" + suffix, "Post Filter Mode" + suffix, "Mode", "",
-                                   {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                                   0.0f, filterTextFunction);
+                                   {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
+                                   0.0f);
 
     gain = p.addExtParam("gain" + suffix, "Gain" + suffix, "Gain", "dB",
                          {-100.0f, 0.0f, 0.0f, 4.0f}, 0.0f,
@@ -256,17 +256,32 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
                                  gin::SmoothingType::linear, couplingModeTextFunction);
 
     inputGain = p.addExtParam("inputGain" + suffix, "Input Gain" + suffix, "Gain", "dB",
-                             {-100.0, 100.0, 0.0, 4.0f}, 0.0f,
-                             gin::SmoothingType::linear);
+                              {-100.0, 100.0, 0.0, 4.0f}, 0.0f,
+                              gin::SmoothingType::linear);
 
     outputGain = p.addExtParam("outputGain" + suffix, "Output Gain" + suffix, "Gain", "dB",
                                {-100.0, 100.0, 0.0, 4.0f}, 0.0f,
                                gin::SmoothingType::linear);
     outputGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
-    cascadeAmount = p.addExtParam("cascadeAmount" + suffix, "Cascade Amount" + suffix, "Amount", "",
-                                  {-1.0, 1.0, 0.01, 1.0f}, 0.0f,
-                                  gin::SmoothingType::linear);
+    cascadeLevel = p.addExtParam("cascadeAmount" + suffix, "Cascade Amount" + suffix, "Amount", "",
+                                 {-1.0, 1.0, 0.01, 1.0f}, 0.0f,
+                                 gin::SmoothingType::linear);
+
+    //cutoff
+    cascadeFilterCutoff = p.addExtParam("cascadeFilterCutoff" + suffix, "Cascade Filter Cutoff" + suffix, "Cutoff",
+                                        "Hz",
+                                        {20.0f, 20000.0f, 0.0f, 0.4f}, 3000.0f,
+                                        gin::SmoothingType::linear);
+
+    cascadeFilterResonance = p.addExtParam("cascadeFilterResonance" + suffix, "Cascade Filter Resonance" + suffix,
+                                           "Res", "",
+                                           {0.01f, 100.0f, 0.0f, 0.4f}, 1.0f / std::sqrt(2.0f),
+                                           gin::SmoothingType::linear);
+
+    cascadeFilterMode = p.addExtParam("cascadeFilterMode" + suffix, "Cascade Filter Mode" + suffix, "Mode", "",
+                                      {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
+                                      0.0f);
 }
 
 void ModalResonatorBankParams::setup(ResonariumProcessor& p, int index)

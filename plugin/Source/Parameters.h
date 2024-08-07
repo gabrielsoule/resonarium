@@ -108,7 +108,10 @@ struct WaveguideResonatorBankParams
         couplingMode,
         inputGain,
         outputGain,
-        cascadeAmount = nullptr;
+        cascadeLevel,
+        cascadeFilterCutoff,
+        cascadeFilterResonance,
+        cascadeFilterMode = nullptr;
 
     WaveguideResonatorBankParams() = default;
 

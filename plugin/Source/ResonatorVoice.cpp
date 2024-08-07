@@ -424,7 +424,8 @@ void ResonatorVoice::notePressureChanged()
 void ResonatorVoice::noteTimbreChanged()
 {
     auto note = getCurrentlyPlayingNote();
-    proc.modMatrix.setPolyValue(*this, proc.modSrcTimbre, note.timbre.asUnsignedFloat());
+    proc.modMatrix.setPolyValue(*this, proc.modSrcTimbre, note.timbre.asUnsignedFloat(), 0);
+    proc.modMatrix.setPolyValue(*this, proc.modSrcTimbre, note.timbre.asUnsignedFloat(), 1);
 }
 
 void ResonatorVoice::notePitchbendChanged()

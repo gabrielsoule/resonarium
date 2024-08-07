@@ -4,6 +4,7 @@
 #include "PluginProcessor.h"
 #include "melatonin_inspector/melatonin_inspector.h"
 #include "ui/ResonariumComponents.h"
+#include "ui/Panels.h"
 
 class ResonariumEditor : public gin::ProcessorEditor,
                          public juce::DragAndDropContainer
