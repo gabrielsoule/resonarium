@@ -12,6 +12,7 @@
 [submodule "modules/chowdsp_utils"]
 	path = modules/chowdsp_utils
 	url = git@github.com:gabrielsoule/chowdsp_utils.git
+	branch = main
 [submodule "modules/melatonin_perfetto"]
 	path = modules/melatonin_perfetto
 	url = https://github.com/sudara/melatonin_perfetto.git
