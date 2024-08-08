@@ -3,6 +3,10 @@
 
 float StereoResonator::Resonator::processSample(float input)
 {
+    if (passthrough)
+    {
+        return input;
+    }
     float outSample = popSample();
     pushSample(outSample + input);
     return outSample;
@@ -10,8 +14,11 @@ float StereoResonator::Resonator::processSample(float input)
 
 float StereoResonator::Resonator::popSample()
 {
+    if (passthrough)
+    {
+        return passthroughSample;
+    }
     auto delay = delayLengthInterpolator.nextValue();
-    // DBG(delay);
     delayLine.setDelay(delay);
     float outSample = delayLine.popSample(0);
     outSample = loopFilter.processSample(0, outSample) * loopFilterNormalizationScalar;
@@ -21,6 +28,11 @@ float StereoResonator::Resonator::popSample()
 
 void StereoResonator::Resonator::pushSample(float input)
 {
+    if (passthrough)
+    {
+        passthroughSample = input;
+        return;
+    }
     delayLine.pushSample(0, input);
 }
 
@@ -39,11 +51,10 @@ void StereoResonator::Resonator::reset()
     postFilter.reset();
     apf.reset();
     auto span = delayLine.getRawDelayBuffer().getWriteSpan(0);
-    for(auto& sample : span)
+    for (auto& sample : span)
     {
         sample = 0.0f;
     }
-
 }
 
 void StereoResonator::Resonator::prepare(const juce::dsp::ProcessSpec& spec)
@@ -59,48 +70,61 @@ void StereoResonator::Resonator::prepare(const juce::dsp::ProcessSpec& spec)
 void StereoResonator::Resonator::updateParameters(float frequency, int numSamples)
 {
     this->gain = voice.getValue(params.gain);
-    lastFrequency = nextFrequency;
-    keytrack = params.resonatorKeytrack->isOn();
-    if(keytrack)
-    {
-        nextFrequency = frequency * std::pow(2.0f, voice.getValue(params.pitchInSemis, channel) / 12.0f);
-    }
-    else
-    {
-        nextFrequency = voice.getValue(params.resonatorFrequency, channel);
-    }
-    delayLengthInSamples = sampleRate / nextFrequency;
-    delayLengthInterpolator.setTargetValue(delayLengthInSamples, numSamples);
-    delayLine.setDelay(delayLengthInSamples);
-
-    const float decayInSeconds = voice.getValue(params.decayTime, channel);
-    if(decayInSeconds == 60.0f)
-    {
-        decayCoefficient = 1.0f;
-    }
-    else
-    {
-        decayCoefficient = std::pow(0.001f, 1.0f / (decayInSeconds * nextFrequency));
-    }
-
-    loopFilterKeytrack = params.loopFilterKeytrack->isOn();
-    float newCutoff = loopFilterKeytrack ? frequency * std::pow(2.0f, voice.getValue(params.loopFilterPitchInSemis, channel) / 12.0f) : voice.getValue(params.loopFilterCutoff, channel);
-    float newResonance = voice.getValue(params.loopFilterResonance, channel);
-    float newMode = voice.getValue(params.loopFilterMode, channel);
-    loopFilter.updateParameters(newCutoff, newResonance, newMode);
 
     postFilterKeytrack = params.postFilterKeytrack->isOn();
-    newCutoff = postFilterKeytrack ? frequency * std::pow(2.0f, voice.getValue(params.postFilterPitchInSemis, channel) / 12.0f) : voice.getValue(params.postFilterCutoff, channel);
-    newResonance = voice.getValue(params.postFilterResonance, channel);
-    newMode = voice.getValue(params.postFilterMode, channel);
-    postFilter.updateParameters(newCutoff, newResonance, newMode);
+    const float newPostFilterCutoff = postFilterKeytrack
+                    ? frequency * std::pow(2.0f, voice.getValue(params.postFilterPitchInSemis, channel) / 12.0f)
+                    : voice.getValue(params.postFilterCutoff, channel);
+    const float newPostFilterResonance = voice.getValue(params.postFilterResonance, channel);
+    const float newPostFilterMode = voice.getValue(params.postFilterMode, channel);
+    postFilter.updateParameters(newPostFilterCutoff, newPostFilterResonance, newPostFilterMode);
 
-    float newDispersion = voice.getValue(params.dispersion, channel);
-    // if(newDispersion != dispersion)
-    // {
+    const float decayInSeconds = voice.getValue(params.decayTime, channel);
+    if (decayInSeconds < 0.05f)
+    {
+        passthrough = true;
+        DBG("Passthrough!");
+    }
+    else
+    {
+        lastFrequency = nextFrequency;
+        keytrack = params.resonatorKeytrack->isOn();
+        if (keytrack)
+        {
+            nextFrequency = frequency * std::pow(2.0f, voice.getValue(params.pitchInSemis, channel) / 12.0f);
+        }
+        else
+        {
+            nextFrequency = voice.getValue(params.resonatorFrequency, channel);
+        }
+        delayLengthInSamples = sampleRate / nextFrequency;
+        delayLengthInterpolator.setTargetValue(delayLengthInSamples, numSamples);
+        delayLine.setDelay(delayLengthInSamples);
+
+        if (decayInSeconds == 60.0f)
+        {
+            decayCoefficient = 1.0f;
+        }
+        else
+        {
+            decayCoefficient = std::pow(0.001f, 1.0f / (decayInSeconds * nextFrequency));
+        }
+
+        loopFilterKeytrack = params.loopFilterKeytrack->isOn();
+        const float newCutoff = loopFilterKeytrack
+                              ? frequency * std::pow(2.0f, voice.getValue(params.loopFilterPitchInSemis, channel) / 12.0f)
+                              : voice.getValue(params.loopFilterCutoff, channel);
+        const float newResonance = voice.getValue(params.loopFilterResonance, channel);
+        const float newMode = voice.getValue(params.loopFilterMode, channel);
+        loopFilter.updateParameters(newCutoff, newResonance, newMode);
+
+        float newDispersion = voice.getValue(params.dispersion, channel);
+        // if(newDispersion != dispersion)
+        // {
         dispersion = newDispersion;
         apf.setDispersionAmount(newDispersion);
-    // }
+        // }
+    }
 
 #if JUCE_SNAP_TO_ZERO
     postFilter.snapToZero();
@@ -166,12 +190,12 @@ void StereoResonator::prepare(const juce::dsp::ProcessSpec& spec)
 void StereoResonator::updateParameters(float frequency, int numSamples, bool force)
 {
     this->enabled = params.enabled->isOn();
-    if(this->enabled || force)
+    if (this->enabled || force)
     {
         resonators[0].updateParameters(frequency, numSamples);
         resonators[1].updateParameters(frequency, numSamples);
-
-    } else
+    }
+    else
     {
         resonators[0].gain = 0;
         resonators[1].gain = 0;

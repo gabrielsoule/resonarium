@@ -207,7 +207,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                           0.0f);
 
     loopFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Loop Filter Resonance" + suffix, "Res", "",
-                                        {0.01f, 100.0f, 0.0f, 0.2f}, 1.0f / std::sqrt(2.0f),
+                                        {0.01f, 800.0f, 0.0f, 0.2f}, 1.0f / std::sqrt(2.0f),
                                         0.0f);
 
     loopFilterKeytrack = p.addIntParam("decayFilterKeytrack" + suffix, "Loop Filter Keytrack" + suffix, "Key Track", "",
@@ -235,7 +235,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                           0.0f);
 
     postFilterResonance = p.addExtParam("postFilterResonance" + suffix, "Post Filter Resonance" + suffix, "Res", "",
-                                        {0.01f, 100.0f, 0.0f, 0.2f}, 1.0f / std::sqrt(2.0f),
+                                        {0.01f, 800.0f, 0.0f, 0.2f}, 1.0f / std::sqrt(2.0f),
                                         0.0f);
 
     postFilterMode = p.addExtParam("postFilterMode" + suffix, "Post Filter Mode" + suffix, "Mode", "",
@@ -296,7 +296,7 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
 
     cascadeFilterResonance = p.addExtParam("cascadeFilterResonance" + suffix, "Cascade Filter Resonance" + suffix,
                                            "Res", "",
-                                           {0.01f, 100.0f, 0.0f, 0.4f}, 1.0f / std::sqrt(2.0f),
+                                           {0.01f, 800.0f, 0.0f, 0.4f}, 1.0f / std::sqrt(2.0f),
                                            gin::SmoothingType::linear);
 
     cascadeFilterMode = p.addExtParam("cascadeFilterMode" + suffix, "Cascade Filter Mode" + suffix, "Mode", "",

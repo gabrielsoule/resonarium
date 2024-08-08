@@ -5,6 +5,7 @@
 [submodule "modules/gin"]
 	path = modules/gin
 	url = https://github.com/gabrielsoule/Gin.git
+	branch = master
 [submodule "modules/melatonin_inspector"]
 	path = modules/melatonin_inspector
 	url = https://github.com/sudara/melatonin_inspector.git

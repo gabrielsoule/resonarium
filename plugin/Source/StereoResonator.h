@@ -60,8 +60,10 @@ class StereoResonator
         float decayTime;
         float sampleRate;
 
-        float gain;
         bool passthrough = false;
+        float passthroughSample;
+
+        float gain;
         bool keytrack = true;
         float lastFrequency;
         float nextFrequency;
