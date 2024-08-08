@@ -37,17 +37,11 @@ void WaveguideResonatorBank::reset()
     }
     cascadeFilterL.reset();
     cascadeFilterR.reset();
-    couplingFilter.reset();
-    couplingFilterFIR.reset();
 }
 
 void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
 {
     sampleRate = spec.sampleRate;
-    couplingCoefficientsFIR = juce::dsp::FilterDesign<float>::designFIRLowpassWindowMethod(
-        10000, sampleRate, 21, juce::dsp::WindowingFunction<float>::hamming);
-    // couplingFilterFIR.prepare(spec);
-    couplingFilterFIR.coefficients = couplingCoefficientsFIR;
     cascadeFilterL.prepare(spec);
     cascadeFilterR.prepare(spec);
 
@@ -55,10 +49,6 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
     {
         jassert(resonators[i]->params.resonatorIndex == i); //ensure that parameters have been correctly distributed
         resonators[i]->prepare(spec);
-        firDelays[i].prepare(spec);
-        firDelays[i].setMaximumDelayInSamples(100);
-        firDelays[i].setDelay(10);
-        firDelays[i].reset();
         dcBlockersL[i].coefficients = dcBlockerCoefficients;
         dcBlockersR[i].coefficients = dcBlockerCoefficients;
         dcBlockersL[i].reset();
@@ -167,7 +157,8 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
     }
     else if (couplingMode == CASCADE)
     {
-        const float cascadeAmount = voice.getValue(params.cascadeLevel);
+        const float cascadeAmountL = voice.getValue(params.cascadeLevel, 0);
+        const float cascadeAmountR = voice.getValue(params.cascadeLevel, 1);
 
         const float newCutoffL = voice.getValue(params.cascadeFilterCutoff, 0);
         const float newResonanceL = voice.getValue(params.cascadeFilterResonance, 0);
@@ -178,17 +169,6 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
         const float newResonanceR = voice.getValue(params.cascadeFilterResonance, 1);
         const float newModeR = voice.getValue(params.cascadeFilterMode, 1);
         cascadeFilterR.updateParameters(newCutoffR, newResonanceR, newModeR);
-        // if(newCutoffR != cascadeFilterCutoffR || newResonanceR != cascadeFilterResonanceR || newModeR != cascadeFilterModeR)
-        // {
-        //     cascadeFilterCutoffR = newCutoffR;
-        //     cascadeFilterResonanceR = newResonanceR;
-        //     cascadeFilterModeR = newModeR;
-        //     cascadeFilterR.setCutoffFrequency<false>(newCutoffR);
-        //     cascadeFilterR.setQValue<false>(newResonanceR);
-        //     cascadeFilterR.setMode(newModeR);
-        //     cascadeFilterR.update();
-        //     // cascadeFilterNormalizationScalarR = 1.0f / cascadeFilterR.getMultiModeMaxGain();
-        // }
 
         for(int i = 0; i < exciterBlock.getNumSamples(); i++)
         {
@@ -202,8 +182,8 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                 {
                     const float resonatorOutSampleL = resonators[j]->popSample(0);
                     const float resonatorOutSampleR = resonators[j]->popSample(1);
-                    const float processedFwdSampleL = cascadeFilterL.processSample(j, dcBlockersL[j].processSample(previousResonatorSampleL) * cascadeAmount);
-                    const float processedFwdSampleR = cascadeFilterR.processSample(j, dcBlockersR[j].processSample(previousResonatorSampleR) * cascadeAmount);
+                    const float processedFwdSampleL = cascadeFilterL.processSample(j, dcBlockersL[j].processSample(previousResonatorSampleL) * cascadeAmountL);
+                    const float processedFwdSampleR = cascadeFilterR.processSample(j, dcBlockersR[j].processSample(previousResonatorSampleR) * cascadeAmountR);
                     resonators[j]->pushSample(resonatorOutSampleL + processedFwdSampleL + exciterBlock.getSample(0, i), 0);
                     resonators[j]->pushSample(resonatorOutSampleR + processedFwdSampleR + exciterBlock.getSample(1, i), 1);
                     previousResonatorSampleL = resonatorOutSampleL;
@@ -216,41 +196,6 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
             outputBlock.addSample(0, i, outSampleL);
             outputBlock.addSample(1, i, outSampleR);
         }
-
-
-        // const float processedFwdSampleL = dcBlockersL[j].processSample(resonatorOutSampleL) * cascadeAmount;
-        // const float processedFwdSampleR = dcBlockersR[j].processSample(resonatorOutSampleR) * cascadeAmount;
-        // resonators[j]->pushSample(resonatorOutSampleL + processedFwdSampleL + exciterBlock.getSample(0, i), 0);
-        // resonators[j]->pushSample(resonatorOutSampleR + processedFwdSampleR + exciterBlock.getSample(1, i), 1);
-
-        // for (int i = 0; i < exciterBlock.getNumSamples(); i++)
-        // {
-        //     float resonatorOutSamples[NUM_WAVEGUIDE_RESONATORS];
-        //     float outSample = 0.0f;
-        //     float feedbackSample = 0.0f;
-        //
-        //     for (int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
-        //     {
-        //         resonatorOutSamples[j] = resonators[j]->popSample();
-        //         feedbackSample += resonatorOutSamples[j] * (resonators[j]->gain / totalGain);
-        //         outSample += resonatorOutSamples[j] * resonators[j]->gain;
-        //     }
-        //
-        //     //apply the bridge filter H(z) = -2
-        //     //This is a necessary criterion for stability
-        //     feedbackSample = -2.0f * feedbackSample;
-        //     feedbackSample = couplingFilterFIR.processSample(feedbackSample);
-        //
-        //     for (int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
-        //     {
-        //         float resonatorOutSample = firDelays[j].popSample(0);
-        //         firDelays[j].pushSample(0, resonatorOutSamples[j]);
-        //         resonators[j]->pushSample(feedbackSample + resonatorOutSample + exciterBlock.getSample(0, i));
-        //     }
-        //
-        //     outputBlock.addSample(0, i, outSample);
-        //     outputBlock.addSample(1, i, outSample);
-        // }
     }
     else
     {

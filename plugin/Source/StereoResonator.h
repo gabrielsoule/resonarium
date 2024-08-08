@@ -61,6 +61,7 @@ class StereoResonator
         float sampleRate;
 
         float gain;
+        bool passthrough = false;
         bool keytrack = true;
         float lastFrequency;
         float nextFrequency;
@@ -80,7 +81,7 @@ class StereoResonator
 
         chowdsp::DelayLine<float, chowdsp::DelayLineInterpolationTypes::Lagrange3rd> delayLine;
         chowdsp::SVFMultiMode<float, 1, true> loopFilter;
-        chowdsp::SVFMultiMode<float, 1, true> postFilter;
+        chowdsp::SVFMultiMode<float, 1, false> postFilter;
         DispersionFilter apf;
     };
 
