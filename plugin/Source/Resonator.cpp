@@ -177,7 +177,7 @@ void Resonator::updateParameters(float frequency)
         return;
     }
 
-    this->harmonicMultiplier = std::pow(2.0f, voice.getValue(params.harmonicInSemitones) / 12.0f);
+    this->harmonicMultiplier = std::pow(2.0f, voice.getValue(params.pitchInSemis) / 12.0f);
     this->frequency = frequency;
 
     delayLengthInSamples = sampleRate / (frequency * harmonicMultiplier);

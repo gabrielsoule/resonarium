@@ -183,7 +183,7 @@ public:
         ParamBox::resized();
         juce::Rectangle<int> resonatorsArea = getLocalBounds();
         resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
-        resonatorsArea.setHeight(350);
+        resonatorsArea.setHeight(RESONATOR_BANK_BOX_HEIGHT);
         resonatorsArea.removeFromLeft(100);
         for (int i = 0; i < NUM_MODAL_RESONATORS; i++)
         {
@@ -245,12 +245,12 @@ public:
 
         textColour = juce::Colours::white.withAlpha(0.5f);
 
-        addAndMakeVisible(loopFilterLabel = new juce::Label("loopFilterLabel", "LOOP\nFILTER"));
-        addAndMakeVisible(postFilterLabel = new juce::Label("postFilterLabel", "POST\nFILTER"));
+        addAndMakeVisible(loopFilterLabel = new juce::Label("loopFilterLabel", "LOOP FILTER"));
+        addAndMakeVisible(postFilterLabel = new juce::Label("postFilterLabel", "POST FILTER"));
         loopFilterLabel->setJustificationType(juce::Justification::centred);
         postFilterLabel->setJustificationType(juce::Justification::centred);
-        loopFilterLabel->setFont(loopFilterLabel->getFont().withHeight(17).withExtraKerningFactor(0.05f));
-        postFilterLabel->setFont(postFilterLabel->getFont().withHeight(17).withExtraKerningFactor(0.05f));
+        loopFilterLabel->setFont(loopFilterLabel->getFont().withHeight(17).withExtraKerningFactor(0.07f));
+        postFilterLabel->setFont(postFilterLabel->getFont().withHeight(17).withExtraKerningFactor(0.07f));
         loopFilterLabel->setEditable(false);
         postFilterLabel->setEditable(false);
         loopFilterLabel->setColour(juce::Label::textColourId, textColour);
@@ -285,12 +285,12 @@ public:
         ParamBox::resized();
         juce::Rectangle<int> resonatorsArea = getLocalBounds();
         resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
-        resonatorsArea.setHeight(350);
-        resonatorsArea.removeFromLeft(135);
+        resonatorsArea.setHeight(RESONATOR_BANK_BOX_HEIGHT);
+        resonatorsArea.removeFromLeft(155);
         for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
         {
-            resonatorsArea.removeFromLeft(7);
-            resonatorComponents[i]->setBounds(resonatorsArea.removeFromLeft(55));
+            resonatorComponents[i]->setBounds(resonatorsArea.removeFromLeft(62));
+            resonatorsArea.removeFromLeft(4);
         }
 
         inputGainKnob->setBounds(720, BOX_HEADER_HEIGHT + 10, KNOB_W, KNOB_H);
@@ -301,16 +301,16 @@ public:
         cascadeFilterResonanceKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 5 * (KNOB_H), KNOB_W, KNOB_H);
         cascadeFilterModeKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 6 * (KNOB_H), KNOB_W, KNOB_H);
 
-        //it's kinda annoying to position rotated text components, since the affine transforms affect the coordinates...
-        //we just do it "by hand" here which isn't ideal
-        loopFilterLabel->setBounds(-1, 220, 65, 40);
+        //it's really annoying to position rotated text components, since the affine transforms affect the coordinates...
+        //we just do it "by hand" here which is... also really annoying
+        loopFilterLabel->setBounds(-5, 260, 115, 30);
         loopFilterLabel->setTransform(juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi,
                                                                       loopFilterLabel->getBounds().getCentreX(),
                                                                       loopFilterLabel->getBounds().getCentreY()));
         // loopFilterLabel->setTransform(juce::AffineTransform::rotation(juce::MathConstants<float>::halfPi));
         loopFilterLabel->toFront(false);
 
-        postFilterLabel->setBounds(-1, 310, 65, 40);
+        postFilterLabel->setBounds(-5, 375, 115, 30);
         postFilterLabel->setTransform(juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi,
                                                                       postFilterLabel->getBounds().getCentreX(),
                                                                       postFilterLabel->getBounds().getCentreY()));
@@ -324,7 +324,7 @@ public:
             withExtraKerningFactor(0.05f);
         g.setFont(font);
         //draw some attractive background rectangles
-        juce::Rectangle<float> rowBackground = juce::Rectangle<float>(137, BOX_HEADER_HEIGHT + 10 + 55 + 3, 498,
+        juce::Rectangle<float> rowBackground = juce::Rectangle<float>(157, BOX_HEADER_HEIGHT + 10 + 55 + 3, 518,
                                                                       PARAMETER_HEIGHT).expanded(0, 1);
         juce::Rectangle<int> textRect = juce::Rectangle<int>(rowBackground.getX() - 115, rowBackground.getY() + 1, 105,
                                                              PARAMETER_HEIGHT);
@@ -332,10 +332,18 @@ public:
         g.setColour(textColour);
         g.drawFittedText("GAIN", textRect.translated(0, -35), juce::Justification::centredRight, 1);
 
+
         g.setColour(juce::Colours::black);
-        g.fillRoundedRectangle(rowBackground, 14);
+        juce::Rectangle resonatorPitchBlockBackground = juce::Rectangle<float>(rowBackground.getX(),
+                                                               rowBackground.getY(), 518,
+                                                               2 * PARAMETER_HEIGHT + 1 * SPACING_Y_SMALL).
+    expanded(0, 1);
+        g.fillRoundedRectangle(resonatorPitchBlockBackground, 14);
         g.setColour(textColour);
+        g.drawFittedText("KEYTRACK", textRect, juce::Justification::centredRight, 1);
+        textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
         g.drawFittedText("PITCH", textRect, juce::Justification::centredRight, 1);
+        rowBackground.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
 
         g.setColour(juce::Colours::black);
         rowBackground.translate(0, PARAMETER_HEIGHT + SPACING_Y_LARGE);
@@ -354,12 +362,14 @@ public:
         g.setColour(juce::Colours::black);
         juce::Rectangle filterBlockBackground = juce::Rectangle<float>(rowBackground.getX(),
                                                                        rowBackground.getY() + PARAMETER_HEIGHT +
-                                                                       SPACING_Y_LARGE + 1, 498,
-                                                                       3 * PARAMETER_HEIGHT + 2 * SPACING_Y_SMALL).
+                                                                       SPACING_Y_LARGE + 1, 518,
+                                                                       4 * PARAMETER_HEIGHT + 3 * SPACING_Y_SMALL).
             expanded(0, 1);
         g.fillRoundedRectangle(filterBlockBackground, 14);
         textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_LARGE);
         g.setColour(textColour);
+        g.drawFittedText("KEYTRACK", textRect, juce::Justification::centredRight, 1);
+        textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
         g.drawFittedText("CUTOFF", textRect, juce::Justification::centredRight, 1);
         textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
         g.drawFittedText("RES.", textRect, juce::Justification::centredRight, 1);
@@ -373,15 +383,17 @@ public:
         // g.strokePath(loopFilterBracketPath, juce::PathStrokeType(2.0f));
         // DBG(loopFilterBracketPath.toString());
 
-        GraphicsUtils::drawBracket(g, filterBlockBackground.getTopLeft().x - 70,
+        GraphicsUtils::drawBracket(g, filterBlockBackground.getTopLeft().x - 80,
                                    filterBlockBackground.getTopLeft().y + 2,
                                    filterBlockBackground.getBottomLeft().y - 2);
 
         g.setColour(juce::Colours::black);
-        filterBlockBackground.translate(0, 3 * PARAMETER_HEIGHT + 2 * SPACING_Y_SMALL + SPACING_Y_LARGE);
+        filterBlockBackground.translate(0, 4 * PARAMETER_HEIGHT + 3 * SPACING_Y_SMALL + SPACING_Y_LARGE);
         g.fillRoundedRectangle(filterBlockBackground, 14);
         textRect.translate(0, SPACING_Y_LARGE + PARAMETER_HEIGHT);
         g.setColour(textColour);
+        g.drawFittedText("KEYTRACK", textRect, juce::Justification::centredRight, 1);
+        textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
         g.drawFittedText("CUTOFF", textRect, juce::Justification::centredRight, 1);
         textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
         g.drawFittedText("RES", textRect, juce::Justification::centredRight, 1);
@@ -395,7 +407,7 @@ public:
         // postFilterBracketPath.lineTo(filterBlockBackground.getBottomLeft().translated(-70, -2));
         // g.strokePath(postFilterBracketPath, juce::PathStrokeType(2.0f));
 
-        GraphicsUtils::drawBracket(g, filterBlockBackground.getTopLeft().x - 70,
+        GraphicsUtils::drawBracket(g, filterBlockBackground.getTopLeft().x - 80,
                                    filterBlockBackground.getTopLeft().y + 2,
                                    filterBlockBackground.getBottomLeft().y - 2);
     }
@@ -445,7 +457,7 @@ public:
         ParamBox::resized();
         juce::Rectangle<int> resonatorsArea = getLocalBounds();
         resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
-        resonatorsArea.setHeight(350);
+        resonatorsArea.setHeight(RESONATOR_BANK_BOX_HEIGHT);
         resonatorsArea.removeFromLeft(100);
         for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
         {

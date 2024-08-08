@@ -61,14 +61,16 @@ class StereoResonator
         float sampleRate;
 
         float gain;
+        bool keytrack = true;
         float lastFrequency;
         float nextFrequency;
         float dispersion;
+        bool loopFilterKeytrack = false;
         float loopFilterCutoff;
         float loopFilterResonance;
         float loopFilterMode;
         float loopFilterNormalizationScalar = 1; //the inverse of the max gain point of the multi-mode SVF
-
+        bool postFilterKeytrack = false;
         float postFilterCutoff;
         float postFilterResonance;
         float postFilterMode;

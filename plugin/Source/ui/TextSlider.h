@@ -20,19 +20,32 @@ public:
     CustomizableReadout(gin::Parameter* parameter) : gin::Readout(parameter), p(parameter)
     {
         this->getProperties().set("customFont", true);
+        this->setFont(this->getLookAndFeel().getLabelFont(*this).withHeight(fontSize));
     }
 
     void valueUpdated(gin::Parameter*) override
     {
         float value = p->getUserValue();
         setText(decimals > 0 ? juce::String(value, decimals) : juce::String(static_cast<int>(value)), juce::dontSendNotification);
+        this->onTextChange();
         this->toBack();
     }
 
     void resized() override
     {
         gin::Readout::resized();
-        this->setFont(this->getLookAndFeel().getLabelFont(*this).withHeight(fontSize));
+
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        if (! isBeingEdited())
+            Label::paint (g);
+        auto textBounds = getBorderSize().subtractedFrom(getLocalBounds()).toFloat();
+
+        // Measure the width of the current text
+
+        //compute the length of the label text, and add the unit "s"
     }
 
     // juce::TextEditor* createEditorComponent() override
@@ -54,6 +67,7 @@ public:
     }
 
     float fontSize = 21.0f;
+    float unitFontSize = 12.0f;
     size_t decimals = 2;
     gin::Parameter* p;
 };
@@ -65,11 +79,30 @@ public:
     TextSlider(gin::Parameter* parameter, bool fromCentre = false) : gin::Knob(parameter, fromCentre), mainReadout(parameter)
     {
         //instruct the LookAndFeel not to draw this knob; only works with the custom ResonariumLookAndFeel
-        this->getSlider().getProperties().set("textOnly", true);
+        getSlider().getProperties().set("textOnly", true);
         addAndMakeVisible(mainReadout);
-        this->knob.toFront(false);
-        this->knob.setDoubleClickReturnValue(false, 0);
+        addAndMakeVisible(unitLabel);
+        unitLabel.setVisible(false);
+        knob.toFront(false);
+        knob.setDoubleClickReturnValue(false, 0);
+        unitLabel.setInterceptsMouseClicks(false, false);
+        unitLabel.toFront(false);
+        unitLabel.setEditable(false);
+        //capitalize first letter or parameter.getLabel()
+        juce::String unitText = parameter->getLabel().substring(0, 1).toUpperCase() + parameter->getLabel().substring(1);
+        unitLabel.setText(unitText, juce::dontSendNotification);
+        unitLabel.setFont(mainReadout.getFont().withHeight(11.0f));
+        unitLabel.setJustificationType(juce::Justification::bottomLeft);
         setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
+        mainReadout.setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
+        knob.setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
+        mainReadout.onTextChange = [this] {
+            mainReadoutTextWidth = mainReadout.getFont().getStringWidthFloat(mainReadout.getText());
+            int unitWidth = 20;
+            int unitHeight = 15;
+            unitLabel.setBounds(juce::jmin(mainReadout.getBounds().getCentreX() + mainReadoutTextWidth / 2, static_cast<float>(mainReadout.getBounds().getRight())), getHeight() - unitHeight, unitWidth, unitHeight);
+            unitLabel.setBounds(unitLabel.getBounds().translated(-3, -3));
+        };
     }
 
     TextSlider(gin::Parameter* parameter, juce::Colour textColour, bool fromCentre = false) : TextSlider(parameter, fromCentre)
@@ -83,7 +116,13 @@ public:
     void mouseEnter(const juce::MouseEvent& event) override
     {
         Knob::mouseEnter(event);
-        setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
+        unitLabel.setVisible(true);
+    }
+
+    void mouseExit(const juce::MouseEvent& event) override
+    {
+        Knob::mouseExit(event);
+        unitLabel.setVisible(false);
     }
 
     //can't pass click events through the knob area (otherwise the knob wouldn't work)
@@ -99,6 +138,16 @@ public:
         getReadout().setVisible(false);
         name.setVisible(false);
         gin::Knob::paint(g);
+        // float textWidth = mainReadout.getFont().getStringWidthFloat(mainReadout.getText());
+        //
+        // // Set up the font for the unit
+        // g.setFont(mainReadout.getFont().withHeight(8.0f));
+        // g.setColour(mainReadout.findColour(juce::Label::textColourId));
+        //
+        // // Draw the unit
+        // g.drawText(parameter->getLabel(), getLocalBounds().getCentreX() + textWidth / 2.0f - 2.0f, getLocalBounds().getBottom() - 2.0f, 30, 30,
+        //            juce::Justification::bottomLeft, true);
+
     }
 
     void enablementChanged() override
@@ -106,9 +155,11 @@ public:
         if(this->isEnabled())
         {
             mainReadout.setColour(juce::Label::textColourId, textColour);
+            unitLabel.setColour(juce::Label::textColourId, textColour);
         } else
         {
             mainReadout.setColour(juce::Label::textColourId, juce::Colours::darkgrey);
+            unitLabel.setColour(juce::Label::textColourId, juce::Colours::darkgrey);
         }
     }
 
@@ -118,11 +169,13 @@ public:
         this->knob.toFront(false);
         this->modDepthSlider.toFront(false);
         auto bounds = getLocalBounds();
-        mainReadout.setBounds(this->getLocalBounds());
+        mainReadout.setBounds(this->getLocalBounds().reduced(10, 0));
         mainReadout.setFont(mainReadout.getFont().withHeight(fontSize));
         mainReadout.setJustificationType(juce::Justification::centred);
         getReadout().setVisible(false);
         mainReadout.valueUpdated(this->parameter);
+        //set the unit label to be on the right edge of the main readout's text bounds
+        mainReadout.onTextChange();
     }
 
     void setReadoutDecimals(size_t decimals)
@@ -133,6 +186,8 @@ public:
     float fontSize = 21.0f;
     size_t decimals = 2.0f;
     CustomizableReadout mainReadout;
+    float mainReadoutTextWidth;
+    juce::Label unitLabel;
     juce::Colour textColour;
 };
 

@@ -167,13 +167,17 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                             {0.0, 1.0, 1.0, 1.0f}, 0.0f,
                             0.0f);
 
-    harmonicInSemitones = p.addExtParam("pitchOffsetSemis" + suffix, "Pitch Offset" + suffix, "Pitch", " st",
+    pitchInSemis = p.addExtParam("pitchOffsetSemis" + suffix, "Pitch Offset" + suffix, "Pitch", "ST",
                                         {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
                                         0.0f);
 
-    harmonicMultiplier = p.addExtParam("harmonicMultiplier" + suffix, "Harmonic Multiplier" + suffix, "Mult.", "",
-                                       {0.0f, 20.0f, 0.01f, 0.4f}, 1.0f,
-                                       0.0f);
+    resonatorFrequency = p.addExtParam("resonatorFrequency" + suffix, "Frequency" + suffix, "Freq", "Hz",
+                                      {20.0f, 20000.0f, 0.0f, 0.4f}, 1000.0f,
+                                      0.0f);
+
+    resonatorKeytrack = p.addExtParam("resonatorKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
+                                      {0.0f, 100.0f, 0.0f, 1.0f}, 1.0f,
+                                      0.0f);
 
     decayTime = p.addExtParam("decayTime" + suffix, "Decay Time" + suffix, "Decay", "s",
                               {0.0f, 60.0f, 0.0f, 0.2f}, 3.0f,
@@ -194,13 +198,25 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     //                                  {0.0f, 5.0f, 1.0f, 1.0f},
     //                                  0.0f, 0.0f, filterTextFunction);
 
-    loopFilterCutoff = p.addExtParam("decayFilterCutoff" + suffix, "Filter Cutoff" + suffix, "Cutoff", "Hz",
+    loopFilterCutoff = p.addExtParam("decayFilterCutoff" + suffix, "Loop Filter Cutoff" + suffix, "Cutoff", "Hz",
                                      {20.0f, 20000.0, 0.0f, 0.2f}, 3000.0f,
                                      0.0f);
 
-    loopFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Resonance" + suffix, "Res", "",
+    loopFilterPitchInSemis = p.addExtParam("decayFilterPitch" + suffix, "Loop Filter Pitch" + suffix, "Pitch", "ST",
+                                          {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
+                                          0.0f);
+
+    loopFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Loop Filter Resonance" + suffix, "Res", "",
                                         {0.01f, 100.0f, 0.0f, 0.2f}, 1.0f / std::sqrt(2.0f),
                                         0.0f);
+
+    loopFilterKeytrack = p.addIntParam("decayFilterKeytrack" + suffix, "Loop Filter Keytrack" + suffix, "Key Track", "",
+                                      {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
+                                      0.0f);
+
+    loopFilterMode = p.addExtParam("svfMode" + suffix, "Mode" + suffix, "Loop Filter Mode", "",
+                               {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
+                               0.0f);
 
     // decayFilterKeytrack = p.addExtParam("filterKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
     //                                     {0.0f, 100.0f, 0.0f, 1.0f}, 0.0f,
@@ -210,13 +226,13 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     //                                     {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
     //                                     0.0f);
 
-    loopFilterMode = p.addExtParam("svfMode" + suffix, "Mode" + suffix, "Mode", "",
-                                   {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
-                                   0.0f);
-
     postFilterCutoff = p.addExtParam("postFilterCutoff" + suffix, "Post Filter Cutoff" + suffix, "Cutoff", "Hz",
                                      {20.0f, 20000.0f, 0.0f, 0.2f}, 4000.0f,
                                      0.0f);
+
+    postFilterPitchInSemis = p.addExtParam("postFilterPitch" + suffix, "Post Filter Pitch" + suffix, "Pitch", "ST",
+                                          {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
+                                          0.0f);
 
     postFilterResonance = p.addExtParam("postFilterResonance" + suffix, "Post Filter Resonance" + suffix, "Res", "",
                                         {0.01f, 100.0f, 0.0f, 0.2f}, 1.0f / std::sqrt(2.0f),
@@ -225,6 +241,10 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     postFilterMode = p.addExtParam("postFilterMode" + suffix, "Post Filter Mode" + suffix, "Mode", "",
                                    {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
                                    0.0f);
+
+    postFilterKeytrack = p.addIntParam("postFilterKeytrack" + suffix, "Post Filter Keytrack" + suffix, "Key Track", "",
+                                      {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
+                                      0.0f);
 
     gain = p.addExtParam("gain" + suffix, "Gain" + suffix, "Gain", "dB",
                          {-100.0f, 0.0f, 0.0f, 4.0f}, 0.0f,

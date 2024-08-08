@@ -141,7 +141,6 @@ void ResonariumLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, i
 
         if (showModDepth)
         {
-
             bool bipolar = (bool)slider.getProperties()["modBipolar"];
             if(bipolar)
             {
@@ -343,7 +342,15 @@ void ResonariumLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton&
 
     if (auto svg = dynamic_cast<gin::SVGButton*> (&b))
     {
-        auto path = gin::parseSVGPath (svg->rawSVG);
+        juce::Path path;
+        if(b.getToggleState() && svg->rawSVGEnabled.isNotEmpty())
+        {
+            path = gin::parseSVGPath(svg->rawSVGEnabled);
+        }
+        else
+        {
+            path = gin::parseSVGPath (svg->rawSVG);
+        }
         auto font = getTextButtonFont (b, b.getHeight());
 
         int sz = std::min (b.getHeight(), b.getWidth()) - svg->inset;
