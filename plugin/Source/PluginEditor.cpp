@@ -8,26 +8,13 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
     auto voiceParams = proc.synth.params.voiceParams;
 
-    //TODO Make this NOT HARD CODED.
-    auto* mrb1 = new ModalResonatorBankParamBox(
-        "Modal Bank " + std::to_string(1), proc, 0, voiceParams.modalResonatorBankParams[0]);
-    mrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
-    addAndMakeVisible(mrb1);
-
-    auto* wrb1 = new WaveguideResonatorBankParamBox_V2(
-        "Waveguide Bank " + std::to_string(1), proc, 1, voiceParams.waveguideResonatorBankParams[0]);
-    wrb1->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
-    addAndMakeVisible(wrb1);
-
-    auto* mrb2 = new ModalResonatorBankParamBox(
-        "Modal Bank " + std::to_string(2), proc, 2, voiceParams.modalResonatorBankParams[1]);
-    mrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
-    addAndMakeVisible(mrb2);
-
-    auto* wrb2 = new WaveguideResonatorBankParamBox_V2(
-        "Waveguide Bank " + std::to_string(2), proc, 3, voiceParams.waveguideResonatorBankParams[1]);
-    wrb2->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
-    addAndMakeVisible(wrb2);
+    for(int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
+    {
+        auto* wrb = new WaveguideResonatorBankParamBox_V2(
+            "Waveguide Bank " + std::to_string(i + 1), proc, i, voiceParams.waveguideResonatorBankParams[i]);
+        wrb->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
+        addAndMakeVisible(wrb);
+    }
 
     for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
     {

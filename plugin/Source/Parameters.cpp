@@ -250,10 +250,6 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                          {-100.0f, 0.0f, 0.0f, 4.0f}, 0.0f,
                          0.0f);
     gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
-
-    // testParameter = p.addExtParam("testParameter" + suffix, "Test Parameter" + suffix, "Test", "",
-    //                               {0.0, 1.0, 0.0, 1.0f}, 0.0f,
-    //                               0.0f);
 }
 
 void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
@@ -278,6 +274,11 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
     inputGain = p.addExtParam("inputGain" + suffix, "Input Gain" + suffix, "Gain", "dB",
                               {-100.0, 100.0, 0.0, 4.0f}, 0.0f,
                               gin::SmoothingType::linear);
+
+    //input mix between the exciter and the previous resonator bank
+    inputMix = p.addExtParam("inputMix" + suffix, "Input Mix" + suffix, "Mix", "",
+                             {0.0, 1.0, 0.01, 1.0f}, 0.0f,
+                             gin::SmoothingType::linear);
 
     outputGain = p.addExtParam("outputGain" + suffix, "Output Gain" + suffix, "Gain", "dB",
                                {-100.0, 100.0, 0.0, 4.0f}, 0.0f,
@@ -646,6 +647,33 @@ void VoiceParams::setup(ResonariumProcessor& p)
     externalInputExciterParams.setup(p);
     sampleExciterParams.setup(p);
     //Do NOT set up LFO params; these are set later by the enclosing synth
+}
+
+void ChorusParams::setup(ResonariumProcessor& p)
+{
+    rate = p.addExtParam("chorusRate", "Chorus Rate", "Rate", "Hz",
+                         {0.0f, 100.0f, 0.0f, 0.3f},
+                         0.5f, 0.0f);
+
+    sync = p.addIntParam("chorusSync", "Chorus Sync", "Sync", "",
+                         {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                         0.0f, enableTextFunction);
+
+    depth = p.addExtParam("chorusDepth", "Chorus Depth", "Depth", "",
+                          {0.0f, 1.0f, 0.0f, 1.0f},
+                          0.5f, 0.0f);
+
+    delay = p.addExtParam("chorusDelay", "Chorus Delay", "Delay", "s",
+                          {0.0f, 0.1f, 0.0f, 0.001f},
+                          0.0f, 0.0f);
+
+    feedback = p.addExtParam("chorusFeedback", "Chorus Feedback", "Feedback", "",
+                             {-1.0f, 1.0f, 0.0f, 1.0f},
+                             0.0f, 0.0f);
+
+    mix = p.addExtParam("chorusMix", "Chorus Mix", "Mix", "",
+                        {0.0f, 1.0f, 0.01f, 1.0f},
+                        0.5f, 0.0f);
 }
 
 void SynthParams::setup(ResonariumProcessor& p)

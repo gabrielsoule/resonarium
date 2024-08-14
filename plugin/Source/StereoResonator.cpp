@@ -83,10 +83,11 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
     if (decayInSeconds < 0.05f)
     {
         passthrough = true;
-        DBG("Passthrough!");
     }
     else
     {
+        passthrough = false;
+        passthroughSample = 0;
         lastFrequency = nextFrequency;
         keytrack = params.resonatorKeytrack->isOn();
         if (keytrack)

@@ -18,14 +18,21 @@ class ResonariumEffectChain {
 
     }
 
+    void process (juce::AudioBuffer<float>& buffer) noexcept
+    {
+        juce::dsp::AudioBlock<float> block = juce::dsp::AudioBlock<float> (buffer);
+        juce::dsp::ProcessContextReplacing context (block);
+        chorus.process(context);
+    }
+
     juce::dsp::Chorus<float> chorus;
-    juce::dsp::Reverb reverb;
     gin::StereoDelay delay;
-    juce::dsp::Gain<float> gain;
-    juce::dsp::Phaser<float> phaser;
+    Distortion distortion;
     MultiFilter filter1;
     MultiFilter filter2;
-    Distortion distortion;
+    juce::dsp::Phaser<float> phaser;
+    juce::dsp::Reverb reverb;
+    juce::dsp::Gain<float> gain;
 };
 
 

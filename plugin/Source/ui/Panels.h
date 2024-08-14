@@ -230,11 +230,11 @@ public:
         jassert(resonatorColors.size() == NUM_WAVEGUIDE_RESONATORS);
         for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
         {
-            resonatorColors.set(i, resonatorColors[i].withSaturation(1.0).withLightness(0.8));
+            resonatorColors.set(i, resonatorColors[i].withSaturation(1.0).withLightness(0.7));
         }
         setName("waveguideResonatorBankParams " + juce::String(resonatorNum));
         this->headerTabButtonWidth = 150;
-        addHeader({"MODAL 1", "WAVEGUIDE 1", "MODAL 2", "WAVEGUIDE 2"}, resonatorNum, uiParams.resonatorBankSelect);
+        addHeader({"WAVEGUIDE 1", "WAVEGUIDE 2", "WAVEGUIDE 3", "WAVEGUIDE 4"}, resonatorNum, uiParams.resonatorBankSelect);
         for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
         {
             auto* resonatorComponent = new WaveguideResonatorComponent_V2(
@@ -262,6 +262,8 @@ public:
         addControl(outputGainKnob);
         inputGainKnob = new gin::Knob(bankParams.inputGain);
         addControl(inputGainKnob);
+        inputMixKnob = new gin::Knob(bankParams.inputMix);
+        addControl(inputMixKnob);
         cascadeAmountKnob = new gin::Knob(bankParams.cascadeLevel);
         addControl(cascadeAmountKnob);
         cascadeFilterKnob = new gin::Knob(bankParams.cascadeFilterCutoff);
@@ -300,6 +302,8 @@ public:
         cascadeFilterKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 4 * (KNOB_H), KNOB_W, KNOB_H);
         cascadeFilterResonanceKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 5 * (KNOB_H), KNOB_W, KNOB_H);
         cascadeFilterModeKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 6 * (KNOB_H), KNOB_W, KNOB_H);
+        inputMixKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 7 * KNOB_H, KNOB_W, KNOB_H);
+
 
         //it's really annoying to position rotated text components, since the affine transforms affect the coordinates...
         //we just do it "by hand" here which is... also really annoying
@@ -375,13 +379,6 @@ public:
         g.drawFittedText("RES.", textRect, juce::Justification::centredRight, 1);
         textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
         g.drawFittedText("MODE", textRect, juce::Justification::centredRight, 1);
-        // juce::Path loopFilterBracketPath;
-        // loopFilterBracketPath.startNewSubPath(filterBlockBackground.getTopLeft().translated(-70, 2));
-        // loopFilterBracketPath.lineTo(filterBlockBackground.getTopLeft().translated(-80, 2));
-        // loopFilterBracketPath.lineTo(filterBlockBackground.getBottomLeft().translated(-80, -2));
-        // loopFilterBracketPath.lineTo(filterBlockBackground.getBottomLeft().translated(-70, -2));
-        // g.strokePath(loopFilterBracketPath, juce::PathStrokeType(2.0f));
-        // DBG(loopFilterBracketPath.toString());
 
         GraphicsUtils::drawBracket(g, filterBlockBackground.getTopLeft().x - 80,
                                    filterBlockBackground.getTopLeft().y + 2,
@@ -399,13 +396,6 @@ public:
         g.drawFittedText("RES", textRect, juce::Justification::centredRight, 1);
         textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
         g.drawFittedText("MODE", textRect, juce::Justification::centredRight, 1);
-
-        // juce::Path postFilterBracketPath;
-        // postFilterBracketPath.startNewSubPath(filterBlockBackground.getTopLeft().translated(-70, 2));
-        // postFilterBracketPath.lineTo(filterBlockBackground.getTopLeft().translated(-80, 2));
-        // postFilterBracketPath.lineTo(filterBlockBackground.getBottomLeft().translated(-80, -2));
-        // postFilterBracketPath.lineTo(filterBlockBackground.getBottomLeft().translated(-70, -2));
-        // g.strokePath(postFilterBracketPath, juce::PathStrokeType(2.0f));
 
         GraphicsUtils::drawBracket(g, filterBlockBackground.getTopLeft().x - 80,
                                    filterBlockBackground.getTopLeft().y + 2,

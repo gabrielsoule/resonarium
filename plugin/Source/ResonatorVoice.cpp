@@ -9,9 +9,9 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
 
     polyMSEGs.clear();
 
-    //each resonator bank has two indices:
-    //its index among all resonator banks,
-    //and its index among its particular type of resonator bank
+    juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients =
+        new juce::dsp::IIR::Coefficients<float>(1, -1, 1, -0.995f);
+
     for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
     {
         auto* waveguideBank = new WaveguideResonatorBank(*this, params.waveguideResonatorBankParams[i]);
@@ -19,14 +19,7 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
         // waveguideResonatorBanks.add(waveguideBank);
         resonatorBanks.add(waveguideBank);
         resonatorBankIndex++;
-    }
-    for (int i = 0; i < NUM_MODAL_RESONATOR_BANKS; i++)
-    {
-        auto* modalBank = new ModalResonatorBank(*this, params.modalResonatorBankParams[i]);
-        modalBank->resonatorBankIndex = resonatorBankIndex;
-        // modalResonatorBanks.add(modalBank);
-        resonatorBanks.add(modalBank);
-        resonatorBankIndex++;
+        dcBlockers[i].state = dcBlockerCoefficients;
     }
 
     for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
@@ -80,8 +73,10 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     noteSmoother.setSampleRate(spec.sampleRate);
     exciterBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     resonatorBankBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
+    tempBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     exciterBuffer.clear();
     resonatorBankBuffer.clear();
+    tempBuffer.clear();
     for (auto* exciter : exciters)
     {
         exciter->prepare(spec);
@@ -90,6 +85,11 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     for (auto* resonatorBank : resonatorBanks)
     {
         resonatorBank->prepare(spec);
+    }
+
+    for (auto& dcBlocker : dcBlockers)
+    {
+        dcBlocker.prepare(spec);
     }
 
     for (auto& l : polyLFOs)
@@ -116,11 +116,6 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
         m.reset();
         m.prepare(spec);
     }
-
-    juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients =
-        new juce::dsp::IIR::Coefficients<float>(1, -1, 1, -0.995f);
-    dcBlocker.state = dcBlockerCoefficients;
-    dcBlocker.prepare(spec);
 }
 
 void ResonatorVoice::noteStarted()
@@ -193,10 +188,13 @@ void ResonatorVoice::noteStarted()
         mseg.noteOn();
     }
 
+    for (auto& dcBlocker : dcBlockers)
+    {
+        dcBlocker.reset();
+    }
+
     exciterBuffer.clear();
     resonatorBankBuffer.clear();
-
-    dcBlocker.reset();
 }
 
 void ResonatorVoice::noteRetriggered()
@@ -329,23 +327,12 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 {
     this->startSample = startSample;
     this->numSamples = numSamples;
-    //reminder: the output buffer/block is SHARED between voices and may NOT be empty; must ADD only
-    updateParameters(numSamples); //important!
+    updateParameters(numSamples);
 
-    //this block holds the exciter samples. The exciters fill it, then is routed to the resonator banks.
     juce::dsp::AudioBlock<float> exciterBlock = juce::dsp::AudioBlock<float>(exciterBuffer)
         .getSubBlock(startSample, numSamples);
     exciterBlock.clear();
 
-    //extInExciter.fillExtBufferFromProcessor
-
-    //this block holds the output from the resonator banks. It is added to the main output buffer.
-    juce::dsp::AudioBlock<float> resonatorBankOutputBlock = juce::dsp::AudioBlock<float>(resonatorBankBuffer)
-        .getSubBlock(startSample, numSamples);
-    resonatorBankOutputBlock.clear();
-
-    //this block points to the main output buffer supplied by the synthesizer code.
-    //important to NOT clear this block, since it contains audio from the other voices
     juce::dsp::AudioBlock<float> outputBlock = juce::dsp::AudioBlock<float>(outputBuffer)
         .getSubBlock(startSample, numSamples);
 
@@ -354,39 +341,45 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
         exciter->process(exciterBlock);
     }
 
-// #if JUCE_DEBUG
-//
-//     juce::Range minmax = exciterBlock.findMinAndMax();
-//     if(minmax.getEnd() == 0 || minmax.getStart() == 0)
-//     {
-//         DBG("Exciter block is empty");
-//     }
-//     else
-//     {
-//         DBG("Exciter block min: " + juce::String(minmax.getStart()) + " max: " + juce::String(minmax.getEnd()));
-//     }
-// #endif
-
-
     if (!bypassResonators)
     {
-        for (auto* resonatorBank : resonatorBanks)
-        {
-            resonatorBank->process(exciterBlock, resonatorBankOutputBlock);
-        }
+        juce::dsp::AudioBlock<float> previousBankBlock = juce::dsp::AudioBlock<float>(resonatorBankBuffer)
+            .getSubBlock(startSample, numSamples);
+        previousBankBlock.clear();
 
-        //add the resonator banks' output to the main synth output
-        dcBlocker.process(juce::dsp::ProcessContextReplacing<float>(resonatorBankOutputBlock));
-        outputBlock.add(resonatorBankOutputBlock);
+        juce::dsp::AudioBlock<float> tempBlock = juce::dsp::AudioBlock<float>(tempBuffer)
+            .getSubBlock(startSample, numSamples);
+
+        for (int i = 0; i < resonatorBanks.size(); i++)
+        {
+            auto* resonatorBank = resonatorBanks[i];
+
+            // Mix exciter and previous bank output
+            tempBlock.copyFrom(exciterBlock);
+            if (i > 0)
+            {
+                // Adjust these mix ratios as needed
+                float previousBankMix = getValue(resonatorBank->params.inputMix);
+                float exciterMix = 1.0f - previousBankMix;
+
+                previousBankMix *= 0.5;
+
+                tempBlock.multiplyBy(exciterMix);
+                tempBlock.add(previousBankBlock.multiplyBy(previousBankMix));
+            }
+
+            resonatorBank->process(tempBlock, previousBankBlock);
+            dcBlockers[i].process(juce::dsp::ProcessContextReplacing<float>(previousBankBlock));
+            outputBlock.add(previousBankBlock);
+        }
     }
     else
     {
-        //add the raw exciter output to the output buffer without the DC blocker
         outputBlock.add(exciterBlock);
     }
 
-    //do silence detection, since the resonators can be unpredictable
-    float maxAmplitude = resonatorBankBuffer.getMagnitude(0, startSample, numSamples);
+    // Silence detection code
+    float maxAmplitude = outputBuffer.getMagnitude(startSample, numSamples);
     if (killIfSilent && numBlocksSinceNoteOn > 10)
     {
         if (maxAmplitude < 0.0002f)
@@ -411,6 +404,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
         }
     }
     numBlocksSinceNoteOn++;
+
     finishBlock(numSamples);
 }
 

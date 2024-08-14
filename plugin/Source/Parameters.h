@@ -112,6 +112,7 @@ struct WaveguideResonatorBankParams
         noteOffset,
         couplingMode,
         inputGain,
+        inputMix,
         outputGain,
         cascadeLevel,
         cascadeFilterCutoff,
@@ -310,6 +311,71 @@ struct VoiceParams
     std::array<MSEGParams, NUM_MSEGS> msegParams;
 
     VoiceParams() = default;
+
+    void setup(ResonariumProcessor& p);
+};
+
+struct ChorusParams
+{
+    gin::Parameter::Ptr
+        rate,
+        sync,
+        depth,
+        delay,
+        feedback,
+        mix = nullptr;
+
+    ChorusParams() = default;
+
+    void setup(ResonariumProcessor& p);
+};
+
+struct DelayParams
+{
+    void setup(ResonariumProcessor& p);
+};
+
+struct DistortionParams
+{
+    void setup(ResonariumProcessor& p);
+};
+
+struct PhaserParams
+{
+    gin::Parameter::Ptr
+        rate,
+        sync,
+        depth,
+        frequency,
+        feedback,
+        mix = nullptr;
+    void setup(ResonariumProcessor& p);
+};
+
+struct ReverbParams
+{
+    void setup(ResonariumProcessor& p);
+};
+
+struct SVFParams
+{
+    void setup(ResonariumProcessor& p);
+};
+
+struct EffectChainParams
+{
+    ChorusParams chorusParams;
+    DelayParams delayParams;
+    DistortionParams distortionParams;
+    SVFParams filterParams[2];
+    PhaserParams phaserParams;
+    ReverbParams reverbParams;
+
+    gin::Parameter::Ptr
+        poly,
+        gain;
+
+    EffectChainParams() = default;
 
     void setup(ResonariumProcessor& p);
 };

@@ -44,7 +44,8 @@ public:
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote;
     int id = 0;
-    juce::OwnedArray<ResonatorBank> resonatorBanks;
+    // juce::OwnedArray<ResonatorBank> resonatorBanks;
+    juce::OwnedArray<WaveguideResonatorBank> resonatorBanks;
     bool killIfSilent = false;
     int silenceCount = 0;
     int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
@@ -52,8 +53,9 @@ public:
     int startSample; //start sample of the current block
     int numSamples; //num samples in the current block
     juce::AudioBuffer<float> exciterBuffer; // buffer for exciters to write to, is routed to resonator banks
-    juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to output
-    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlocker;
+    juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to outpu
+    juce::AudioBuffer<float> tempBuffer; // temporary buffer for processing
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlockers[NUM_WAVEGUIDE_RESONATORS];
     juce::OwnedArray<Exciter> exciters;
     ExternalInputExciter* extInExciter; //alias for the external input exciter which requires some special treatment
     // StereoLFOWrapper polyLFOs[NUM_LFOS];
