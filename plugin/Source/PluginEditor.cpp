@@ -112,12 +112,29 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                          40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH,
                          PARAM_BOX_XSMALL_HEIGHT * 1.5f);
 
+    juce::Rectangle <int> effectsColumn = juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
+                                                               40,
+                                                               EXCITER_BOX_WIDTH,
+                                                               WINDOW_HEIGHT);
+    chorusParamBox = new ChorusParamBox("Chorus", proc, proc.synth.params.effectChainParams.chorusParams);
+    chorusParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    addAndMakeVisible(chorusParamBox);
+
+    phaserParamBox = new PhaserParamBox("Phaser", proc, proc.synth.params.effectChainParams.phaserParams);
+    phaserParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    addAndMakeVisible(phaserParamBox);
+
+    reverbParamBox = new ReverbParamBox("Reverb", proc, proc.synth.params.effectChainParams.reverbParams);
+    reverbParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    addAndMakeVisible(reverbParamBox);
+
     usage.setBounds(WINDOW_WIDTH - 150, 10, 110, 20);
     addAndMakeVisible(usage);
     usage.panic.onClick = [&]
     {
         proc.synth.panic();
     };
+
 
 #if JUCE_DEBUG
     addAndMakeVisible(inspectButton);

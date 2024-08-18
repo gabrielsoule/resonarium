@@ -36,7 +36,7 @@ void StereoResonator::Resonator::pushSample(float input)
     delayLine.pushSample(0, input);
 }
 
-inline float StereoResonator::Resonator::postProcess(float input)
+float StereoResonator::Resonator::postProcess(float input)
 {
     const float sample = postFilter.processSample(0, input);
     // float sample = input;

@@ -651,13 +651,22 @@ void VoiceParams::setup(ResonariumProcessor& p)
 
 void ChorusParams::setup(ResonariumProcessor& p)
 {
-    rate = p.addExtParam("chorusRate", "Chorus Rate", "Rate", "Hz",
-                         {0.0f, 100.0f, 0.0f, 0.3f},
-                         0.5f, 0.0f);
+    enabled = p.addExtParam("chorusEnable", "Chorus Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, enableTextFunction);
+
 
     sync = p.addIntParam("chorusSync", "Chorus Sync", "Sync", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                          0.0f, enableTextFunction);
+
+    beat = p.addExtParam("chorusBeat", "Chorus Beat", "Beat", "",
+                         {0.0f, 13.0f, 1.0f, 1.0f},
+                         13.0f, 0.0f, durationTextFunction);
+
+    rate = p.addExtParam("chorusRate", "Chorus Rate", "Rate", "Hz",
+                         {0.0f, 100.0f, 0.0f, 0.3f},
+                         0.5f, 0.0f);
 
     depth = p.addExtParam("chorusDepth", "Chorus Depth", "Depth", "",
                           {0.0f, 1.0f, 0.0f, 1.0f},
@@ -676,9 +685,76 @@ void ChorusParams::setup(ResonariumProcessor& p)
                         0.5f, 0.0f);
 }
 
+void PhaserParams::setup(ResonariumProcessor& p)
+{
+    enabled = p.addIntParam("phaserEnable", "Phaser Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, enableTextFunction);
+
+    sync = p.addIntParam("phaserSync", "Phaser Sync", "Sync", "",
+                         {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                         0.0f, enableTextFunction);
+
+    beat = p.addExtParam("phaserBeat", "Phaser Beat", "Beat", "",
+                         {0.0f, 13.0f, 1.0f, 1.0f},
+                         13.0f, 0.0f, durationTextFunction);
+
+    rate = p.addExtParam("phaserRate", "Phaser Rate", "Rate", "Hz",
+                         {0.0f, 100.0f, 0.0f, 0.3f},
+                         0.5f, 0.0f);
+
+    depth = p.addExtParam("phaserDepth", "Phaser Depth", "Depth", "",
+                          {0.0f, 1.0f, 0.0f, 1.0f},
+                          0.5f, 0.0f);
+
+    centreFrequency = p.addExtParam("phaserCentreFreq", "Phaser Centre Freq", "Centre Freq", "Hz",
+                                   {20.0f, 20000.0f, 0.0f, 0.4f}, 3000.0f,
+                                   0.0f);
+
+    feedback = p.addExtParam("phaserFeedback", "Phaser Feedback", "Feedback", "",
+                             {-1.0f, 1.0f, 0.0f, 1.0f},
+                             0.0f, 0.0f);
+
+    mix = p.addExtParam("phaserMix", "Phaser Mix", "Mix", "",
+                        {0.0f, 1.0f, 0.01f, 1.0f},
+                        0.5f, 0.0f);
+}
+
+void ReverbParams::setup(ResonariumProcessor& p)
+{
+    enabled = p.addIntParam("reverbEnable", "Reverb Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, enableTextFunction);
+
+    roomSize = p.addExtParam("roomSize", "Reverb Size", "Size", "",
+                             {0.0f, 1.0f, 0.0f, 1.0f},
+                             0.5f, 0.0f);
+
+    damping = p.addExtParam("damping", "Reverb Damping", "Damping", "",
+                            {0.0f, 1.0f, 0.0f, 1.0f},
+                            0.5f, 0.0f);
+
+    width = p.addExtParam("width", "Reverb Width", "Width", "",
+                          {0.0f, 1.0f, 0.0f, 1.0f},
+                          1.0f, 0.0f);
+
+    mix = p.addExtParam("reverbMix", "Reverb Mix", "Mix", "",
+                        {0.0f, 1.0f, 0.01f, 1.0f},
+                        0.5f, 0.0f);
+}
+
+void EffectChainParams::setup(ResonariumProcessor& p)
+{
+    chorusParams.setup(p);
+    phaserParams.setup(p);
+    reverbParams.setup(p);
+}
+
 void SynthParams::setup(ResonariumProcessor& p)
 {
     voiceParams.setup(p);
+    effectChainParams.setup(p);
+    voiceParams.effectChainParams = effectChainParams;
     for (int i = 0; i < NUM_LFOS; i++)
     {
         lfoParams[i].setup(p, i);

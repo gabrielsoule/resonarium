@@ -234,7 +234,8 @@ public:
         }
         setName("waveguideResonatorBankParams " + juce::String(resonatorNum));
         this->headerTabButtonWidth = 150;
-        addHeader({"WAVEGUIDE 1", "WAVEGUIDE 2", "WAVEGUIDE 3", "WAVEGUIDE 4"}, resonatorNum, uiParams.resonatorBankSelect);
+        addHeader({"WAVEGUIDE 1", "WAVEGUIDE 2", "WAVEGUIDE 3", "WAVEGUIDE 4"}, resonatorNum,
+                  uiParams.resonatorBankSelect);
         for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
         {
             auto* resonatorComponent = new WaveguideResonatorComponent_V2(
@@ -339,9 +340,10 @@ public:
 
         g.setColour(juce::Colours::black);
         juce::Rectangle resonatorPitchBlockBackground = juce::Rectangle<float>(rowBackground.getX(),
-                                                               rowBackground.getY(), 518,
-                                                               2 * PARAMETER_HEIGHT + 1 * SPACING_Y_SMALL).
-    expanded(0, 1);
+                                                                               rowBackground.getY(), 518,
+                                                                               2 * PARAMETER_HEIGHT + 1 *
+                                                                               SPACING_Y_SMALL).
+            expanded(0, 1);
         g.fillRoundedRectangle(resonatorPitchBlockBackground, 14);
         g.setColour(textColour);
         g.drawFittedText("KEYTRACK", textRect, juce::Justification::centredRight, 1);
@@ -782,6 +784,96 @@ public:
 
     gin::ModMatrixBox* modMatrixComponent = nullptr;
     ResonariumProcessor& proc;
+};
+
+class ChorusParamBox : public gin::ParamBox
+{
+public:
+    ChorusParamBox(const juce::String& name, ResonariumProcessor& proc, ChorusParams chorusParams) :
+        gin::ParamBox(name), proc(proc), chorusParams(chorusParams)
+    {
+        setName("chorus");
+        addEnable(chorusParams.enabled);
+        addControl(new gin::Select(chorusParams.sync), 0, 0);
+        addControl(r = new gin::Knob(chorusParams.rate), 1, 0);
+        addControl(b = new gin::Select(chorusParams.beat), 1, 0);
+        addControl(new gin::Knob(chorusParams.depth), 2, 0);
+        addControl(new gin::Knob(chorusParams.feedback), 0, 1);
+        addControl(new gin::Knob(chorusParams.delay), 1, 1);
+        addControl(new gin::Knob(chorusParams.mix), 2, 1);
+
+        watchParam(chorusParams.sync);
+    }
+
+    ChorusParams chorusParams;
+    ResonariumProcessor& proc;
+
+    gin::Knob* r = nullptr;
+    gin::Select* b = nullptr;
+
+    void paramChanged() override
+    {
+        gin::ParamBox::paramChanged();
+        if (r && b)
+        {
+            r->setVisible(!chorusParams.sync->isOn());
+            b->setVisible(chorusParams.sync->isOn());
+        }
+    }
+};
+
+class PhaserParamBox : public gin::ParamBox
+{
+public:
+    PhaserParamBox(const juce::String& name, ResonariumProcessor& proc, PhaserParams phaserParams) :
+        gin::ParamBox(name), proc(proc), phaserParams(phaserParams)
+    {
+        setName("phaser");
+        addEnable(phaserParams.enabled);
+        addControl(new gin::Select(phaserParams.sync), 0, 0);
+        addControl(r = new gin::Knob(phaserParams.rate), 1, 0);
+        addControl(b = new gin::Select(phaserParams.beat), 1, 0);
+        addControl(new gin::Knob(phaserParams.depth), 2, 0);
+        addControl(new gin::Knob(phaserParams.feedback), 0, 1);
+        addControl(new gin::Knob(phaserParams.centreFrequency), 1, 1);
+        addControl(new gin::Knob(phaserParams.mix), 2, 1);
+
+        watchParam(phaserParams.sync);
+    }
+
+    ResonariumProcessor& proc;
+    PhaserParams phaserParams;
+
+    gin::Knob* r;
+    gin::Select* b;
+
+    void paramChanged() override
+    {
+        gin::ParamBox::paramChanged();
+        if (r && b)
+        {
+            r->setVisible(!phaserParams.sync->isOn());
+            b->setVisible(phaserParams.sync->isOn());
+        }
+    }
+};
+
+class ReverbParamBox : public gin::ParamBox
+{
+public:
+    ReverbParamBox(const juce::String& name, ResonariumProcessor& proc, ReverbParams reverbParams) :
+        gin::ParamBox(name), proc(proc), reverbParams(reverbParams)
+    {
+        setName("reverb");
+        addEnable(reverbParams.enabled);
+        addControl(new gin::Knob(reverbParams.roomSize), 0, 0);
+        addControl(new gin::Knob(reverbParams.width), 1, 0);
+        addControl(new gin::Knob(reverbParams.damping), 2, 0);
+        addControl(new gin::Knob(reverbParams.mix), 3, 0);
+    }
+
+    ResonariumProcessor& proc;
+    ReverbParams reverbParams;
 };
 
 #endif //PANELS_H

@@ -284,41 +284,12 @@ struct MSEGParams
     void setup(ResonariumProcessor& p, int index);
 };
 
-/**
- * This parameter struct encapsulates everything needed to set up a resonator voice.
- * The setup function should only ever be called once, during initialization.
- * However, once set up, the struct is safe to duplicate and pass around.
- * When the plugin is loaded, each ResonatorVoice will copy the contents of this struct to
- * the appropriate child DSP components.
- * These structs are super cheap to copy, plus we only do this once at setup,
- * so it's not a big deal to pass-by-value.
- *
- * It's important to note that there is only one VoiceParams object per plugin instance,
- * which is shared by all voices.
- */
-struct VoiceParams
-{
-    std::array<WaveguideResonatorBankParams, NUM_WAVEGUIDE_RESONATOR_BANKS> waveguideResonatorBankParams;
-    std::array<ModalResonatorBankParams, NUM_MODAL_RESONATOR_BANKS> modalResonatorBankParams;
-    std::array<ImpulseExciterParams, NUM_IMPULSE_EXCITERS> impulseExciterParams;
-    std::array<NoiseExciterParams, NUM_NOISE_EXCITERS> noiseExciterParams;
-    std::array<ImpulseTrainExciterParams, NUM_IMPULSE_TRAIN_EXCITERS> impulseTrainExciterParams;
-    ExternalInputExciterParams externalInputExciterParams;
-    SampleExciterParams sampleExciterParams;
-    std::array<LFOParams, NUM_LFOS> lfoParams;
-    std::array<RandomLFOParams, NUM_RANDOMS> randomLfoParams;
-    std::array<ADSRParams, NUM_ENVELOPES> adsrParams;
-    std::array<MSEGParams, NUM_MSEGS> msegParams;
-
-    VoiceParams() = default;
-
-    void setup(ResonariumProcessor& p);
-};
-
 struct ChorusParams
 {
     gin::Parameter::Ptr
+        enabled,
         rate,
+        beat,
         sync,
         depth,
         delay,
@@ -343,17 +314,27 @@ struct DistortionParams
 struct PhaserParams
 {
     gin::Parameter::Ptr
+        enabled,
         rate,
         sync,
+        beat,
         depth,
-        frequency,
+        centreFrequency,
         feedback,
         mix = nullptr;
+
     void setup(ResonariumProcessor& p);
 };
 
 struct ReverbParams
 {
+    gin::Parameter::Ptr
+    enabled,
+    roomSize,
+    damping,
+    width,
+    mix = nullptr;
+
     void setup(ResonariumProcessor& p);
 };
 
@@ -381,6 +362,41 @@ struct EffectChainParams
 };
 
 /**
+ * This parameter struct encapsulates everything needed to set up a resonator voice.
+ * The setup function should only ever be called once, during initialization.
+ * However, once set up, the struct is safe to duplicate and pass around.
+ * When the plugin is loaded, each ResonatorVoice will copy the contents of this struct to
+ * the appropriate child DSP components.
+ * These structs are super cheap to copy, plus we only do this once at setup,
+ * so it's not a big deal to pass-by-value.
+ *
+ * It's important to note that there is only one VoiceParams object per plugin instance,
+ * which is shared by all voices.
+ */
+struct VoiceParams
+{
+    std::array<ImpulseExciterParams, NUM_IMPULSE_EXCITERS> impulseExciterParams;
+    std::array<NoiseExciterParams, NUM_NOISE_EXCITERS> noiseExciterParams;
+    std::array<ImpulseTrainExciterParams, NUM_IMPULSE_TRAIN_EXCITERS> impulseTrainExciterParams;
+    ExternalInputExciterParams externalInputExciterParams;
+    SampleExciterParams sampleExciterParams;
+
+    std::array<WaveguideResonatorBankParams, NUM_WAVEGUIDE_RESONATOR_BANKS> waveguideResonatorBankParams;
+    std::array<ModalResonatorBankParams, NUM_MODAL_RESONATOR_BANKS> modalResonatorBankParams;
+
+    std::array<LFOParams, NUM_LFOS> lfoParams;
+    std::array<RandomLFOParams, NUM_RANDOMS> randomLfoParams;
+    std::array<ADSRParams, NUM_ENVELOPES> adsrParams;
+    std::array<MSEGParams, NUM_MSEGS> msegParams;
+
+    EffectChainParams effectChainParams;
+
+    VoiceParams() = default;
+
+    void setup(ResonariumProcessor& p);
+};
+
+/**
  * Parameters for the synthesizer as a whole. These parameters by definition
  * must be monophonic, as they apply to the entire synthesizer.
  */
@@ -391,6 +407,8 @@ struct SynthParams
     std::array<RandomLFOParams, NUM_LFOS> randomLfoParams;
     std::array<ADSRParams, NUM_ENVELOPES> adsrParams;
     std::array<MSEGParams, NUM_MSEGS> msegParams;
+
+    EffectChainParams effectChainParams;
 
     SynthParams() = default;
 

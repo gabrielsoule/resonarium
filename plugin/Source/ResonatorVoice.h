@@ -1,7 +1,3 @@
-//
-// Created by Gabriel Soule on 5/1/24.
-//
-
 #ifndef RESONATORVOICE_H
 #define RESONATORVOICE_H
 
@@ -11,6 +7,7 @@
 #include "Exciters.h"
 #include "ModalResonatorBank.h"
 #include "WaveguideResonatorBank.h"
+#include "dsp/ResonariumEffectChain.h"
 #include "util/RandomLFO.h"
 #include "util/StereoLFOWrapper.h"
 #include "util/StereoMSEGWrapper.h"
@@ -52,20 +49,22 @@ public:
     int numBlocksSinceNoteOn; // what it says on the tin.
     int startSample; //start sample of the current block
     int numSamples; //num samples in the current block
+
     juce::AudioBuffer<float> exciterBuffer; // buffer for exciters to write to, is routed to resonator banks
     juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to outpu
     juce::AudioBuffer<float> tempBuffer; // temporary buffer for processing
+
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlockers[NUM_WAVEGUIDE_RESONATORS];
+
     juce::OwnedArray<Exciter> exciters;
     ExternalInputExciter* extInExciter; //alias for the external input exciter which requires some special treatment
-    // StereoLFOWrapper polyLFOs[NUM_LFOS];
+
     std::array<StereoLFOWrapper, NUM_LFOS> polyLFOs;
-    // RandomLFO polyRandomLFOs[NUM_RANDOMS];
     std::array<RandomLFO, NUM_RANDOMS> polyRandomLFOs;
-    // WrappedEnvelope polyEnvelopes[NUM_ENVELOPES];
     std::array<WrappedEnvelope, NUM_ENVELOPES> polyEnvelopes;
-    // StereoMSEGWrapper polyMSEGs[NUM_MSEGS];
     juce::Array<StereoMSEGWrapper> polyMSEGs; //have to use heap array since mseg has no default constructor,
+
+    ResonariumEffectChain effectChain;
     bool bypassResonators = false;
 };
 

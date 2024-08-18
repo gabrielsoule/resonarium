@@ -35,6 +35,10 @@ private:
     SafePointer<MatrixBox> matrixBox;
     SafePointer<ModSrcBox> modSrcBox;
 
+    SafePointer<ChorusParamBox> chorusParamBox;
+    SafePointer<ReverbParamBox> reverbParamBox;
+    SafePointer<PhaserParamBox> phaserParamBox;
+
     std::unique_ptr<melatonin::Inspector> inspector;
     gin::SynthesiserUsage usage { proc.synth };
 

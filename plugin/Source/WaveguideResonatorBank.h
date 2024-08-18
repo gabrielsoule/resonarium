@@ -9,7 +9,7 @@ class ResonatorVoice;
 /**
  * A bank of several Resonators, with support for different intra-resonator feedback modes.
  */
-class WaveguideResonatorBank : public ResonatorBank
+class WaveguideResonatorBank
 {
 public:
     enum CouplingMode
@@ -21,18 +21,24 @@ public:
 
     WaveguideResonatorBank(ResonatorVoice& parentVoice, WaveguideResonatorBankParams params);
     ~WaveguideResonatorBank();
-    void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
-    void reset() override;
-    void prepare(const juce::dsp::ProcessSpec& spec) override;
-    void updateParameters(float newFrequency, int numSamples) override;
+    void process(
+        juce::dsp::AudioBlock<float>& exciterBlock,
+        juce::dsp::AudioBlock <float>& previousResonatorBankBlock);
+    void reset();
+    void prepare(const juce::dsp::ProcessSpec& spec);
+    void updateParameters(float newFrequency, int numSamples);
     void setFeedbackMode(CouplingMode newMode);
 
+    ResonatorVoice& voice;
     WaveguideResonatorBankParams params;
-    int waveguideBankIndex = -1;
+    int index = -1;
     CouplingMode couplingMode;
     float frequency;
     float sampleRate;
     juce::OwnedArray<StereoResonator> resonators;
+
+    float previousResonatorMix = 0.0f; //how much of the previous resonator bank's output should we mix in?
+    float exciterMix = 1.0f; //how much of the exciter signal should we mix in?
 
     //the below is for cascade mode
     juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients;

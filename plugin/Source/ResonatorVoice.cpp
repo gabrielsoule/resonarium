@@ -1,7 +1,8 @@
 #include "ResonatorVoice.h"
 #include "PluginProcessor.h"
 
-ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : proc(p), params(params)
+ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : proc(p), params(params),
+                                                                             effectChain(0, params.effectChainParams)
 {
     frequency = 440.0f;
     int resonatorBankIndex = 0;
@@ -15,7 +16,6 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
     for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
     {
         auto* waveguideBank = new WaveguideResonatorBank(*this, params.waveguideResonatorBankParams[i]);
-        waveguideBank->resonatorBankIndex = resonatorBankIndex;
         // waveguideResonatorBanks.add(waveguideBank);
         resonatorBanks.add(waveguideBank);
         resonatorBankIndex++;
@@ -77,6 +77,7 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     exciterBuffer.clear();
     resonatorBankBuffer.clear();
     tempBuffer.clear();
+
     for (auto* exciter : exciters)
     {
         exciter->prepare(spec);
@@ -116,6 +117,8 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
         m.reset();
         m.prepare(spec);
     }
+
+    effectChain.prepare(spec);
 }
 
 void ResonatorVoice::noteStarted()
@@ -320,6 +323,8 @@ void ResonatorVoice::updateParameters(int numSamples)
         exciter->updateParameters();
     }
 
+    effectChain.updateParameters(*this, frequency);
+
     bypassResonators = proc.uiParams.bypassResonators->isOn();
 }
 
@@ -347,31 +352,22 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
             .getSubBlock(startSample, numSamples);
         previousBankBlock.clear();
 
-        juce::dsp::AudioBlock<float> tempBlock = juce::dsp::AudioBlock<float>(tempBuffer)
+        //the output of all banks is summed into this block, which is sent to the effect chain
+        juce::dsp::AudioBlock<float> tempOutputBlock = juce::dsp::AudioBlock<float>(tempBuffer)
             .getSubBlock(startSample, numSamples);
+        tempOutputBlock.clear();
 
         for (int i = 0; i < resonatorBanks.size(); i++)
         {
             auto* resonatorBank = resonatorBanks[i];
 
-            // Mix exciter and previous bank output
-            tempBlock.copyFrom(exciterBlock);
-            if (i > 0)
-            {
-                // Adjust these mix ratios as needed
-                float previousBankMix = getValue(resonatorBank->params.inputMix);
-                float exciterMix = 1.0f - previousBankMix;
-
-                previousBankMix *= 0.5;
-
-                tempBlock.multiplyBy(exciterMix);
-                tempBlock.add(previousBankBlock.multiplyBy(previousBankMix));
-            }
-
-            resonatorBank->process(tempBlock, previousBankBlock);
+            resonatorBank->process(exciterBlock, previousBankBlock);
             dcBlockers[i].process(juce::dsp::ProcessContextReplacing<float>(previousBankBlock));
-            outputBlock.add(previousBankBlock);
+            tempOutputBlock.add(previousBankBlock);
         }
+
+        effectChain.process(tempOutputBlock);
+        outputBlock.add(tempOutputBlock);
     }
     else
     {
