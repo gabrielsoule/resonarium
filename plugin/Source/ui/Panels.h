@@ -866,10 +866,14 @@ public:
     {
         setName("reverb");
         addEnable(reverbParams.enabled);
-        addControl(new gin::Knob(reverbParams.roomSize), 0, 0);
-        addControl(new gin::Knob(reverbParams.width), 1, 0);
-        addControl(new gin::Knob(reverbParams.damping), 2, 0);
-        addControl(new gin::Knob(reverbParams.mix), 3, 0);
+        addControl(new gin::Knob(reverbParams.size), 0, 0);
+        addControl(new gin::Knob(reverbParams.density), 1, 0);
+        addControl(new gin::Knob(reverbParams.decay), 2, 0);
+        addControl(new gin::Knob(reverbParams.dampingFreq), 3, 0);
+        addControl(new gin::Knob(reverbParams.bandwidthFreq), 0, 1);
+        addControl(new gin::Knob(reverbParams.predelay), 1, 1);
+        addControl(new gin::Knob(reverbParams.earlyMix), 2, 1);
+        addControl(new gin::Knob(reverbParams.mix), 3, 1);
     }
 
     ResonariumProcessor& proc;

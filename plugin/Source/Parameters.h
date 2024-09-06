@@ -330,9 +330,14 @@ struct ReverbParams
 {
     gin::Parameter::Ptr
     enabled,
-    roomSize,
-    damping,
-    width,
+    dampingFreq,
+    density,
+    bandwidthFreq,
+    decay,
+    predelay,
+    size,
+    gain,
+    earlyMix,
     mix = nullptr;
 
     void setup(ResonariumProcessor& p);

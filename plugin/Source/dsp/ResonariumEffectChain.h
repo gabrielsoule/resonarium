@@ -14,6 +14,8 @@ public:
 
     void prepare(const juce::dsp::ProcessSpec& spec);
 
+    void reset();
+
     template <typename T>
     void updateParameters(T& source, float frequency);
 
@@ -40,7 +42,7 @@ public:
 
     juce::dsp::Reverb reverb;
     gin::PlateReverb<float, int> reverb2;
-    MVerb<float> reverb3;
+    MVerb<float> mverb;
     ReverbParams reverbParams;
 
 

@@ -726,17 +726,33 @@ void ReverbParams::setup(ResonariumProcessor& p)
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                             0.0f, enableTextFunction);
 
-    roomSize = p.addExtParam("roomSize", "Reverb Size", "Size", "",
-                             {0.0f, 1.0f, 0.0f, 1.0f},
-                             0.5f, 0.0f);
+    dampingFreq = p.addExtParam("reverbDampingFreq", "Reverb Damping Freq", "Damping Freq", "Hz",
+                                {0.0f, 1.0f, 0.0f, 1.0f}, 0.2f,
+                                0.0f);
 
-    damping = p.addExtParam("damping", "Reverb Damping", "Damping", "",
-                            {0.0f, 1.0f, 0.0f, 1.0f},
-                            0.5f, 0.0f);
+    density = p.addExtParam("reverbDensity", "Reverb Density", "Density", "",
+                            {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+                            0.0f);
 
-    width = p.addExtParam("width", "Reverb Width", "Width", "",
-                          {0.0f, 1.0f, 0.0f, 1.0f},
-                          1.0f, 0.0f);
+    bandwidthFreq = p.addExtParam("reverbBandwidthFreq", "Reverb Bandwidth Freq", "Bandwidth Freq", "Hz",
+                                  {0.0f, 1.0f, 0.0f, 1.0f}, 0.2f,
+                                  0.0f);
+
+    decay = p.addExtParam("reverbDecay", "Reverb Decay", "Decay", "",
+                          {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+                          0.0f);
+
+    predelay = p.addExtParam("reverbPredelay", "Reverb Predelay", "Predelay", "s",
+                             {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
+                             0.0f);
+
+    size = p.addExtParam("reverbSize", "Reverb Size", "Size", "",
+                         {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+                         0.0f);
+
+    earlyMix = p.addExtParam("reverbEarlyMix", "Reverb Early Mix", "Early Mix", "",
+                             {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+                             0.0f);
 
     mix = p.addExtParam("reverbMix", "Reverb Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f},

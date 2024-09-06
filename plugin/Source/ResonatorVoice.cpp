@@ -196,6 +196,7 @@ void ResonatorVoice::noteStarted()
         dcBlocker.reset();
     }
 
+    effectChain.reset();
     exciterBuffer.clear();
     resonatorBankBuffer.clear();
 }

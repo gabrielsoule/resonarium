@@ -57,28 +57,6 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
     {
         monoMSEGs.getReference(i).prepare(spec);
     }
-
-    chowdsp::SVFMultiMode<float, 2, true> testFilter;
-    testFilter.prepare(spec);
-    DBG("Testing with parameters " << testFilter.getCutoffFrequency() << " " << testFilter.getQValue());
-    DBG("Peak gain " << testFilter.getPeakGain());
-    DBG("Setting mode to 0.3, frequency to 2000, and Q to 1.8");
-    testFilter.updateParameters(2000, 1.8, 0.3);
-    DBG("Testing with parameters " << testFilter.getCutoffFrequency() << " " << testFilter.getQValue());
-    DBG("Peak gain " << testFilter.getPeakGain());
-    DBG("Setting mode to 0.5, frequency to 1000, and Q to 1.2");
-    testFilter.updateParameters(1000, 1.2, 0.5);
-    DBG("Testing with parameters " << testFilter.getCutoffFrequency() << " " << testFilter.getQValue());
-    DBG("Peak gain " << testFilter.getPeakGain());
-    DBG("Setting mode to 0.7, frequency to 500, and Q to 0.8");
-    testFilter.updateParameters(500, 0.8, 0.7);
-    DBG("Testing with parameters " << testFilter.getCutoffFrequency() << " " << testFilter.getQValue());
-    DBG("Peak gain " << testFilter.getPeakGain());
-    testFilter.updateParameters(400, 1, 0);
-    DBG("Setting mode to 0, frequency to 400, and Q to 1");
-    DBG("Testing with parameters " << testFilter.getCutoffFrequency() << " " << testFilter.getQValue());
-    DBG("Peak gain " << testFilter.getPeakGain());
-
 }
 
 void ResonatorSynth::updateParameters()

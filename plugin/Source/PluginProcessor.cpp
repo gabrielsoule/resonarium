@@ -32,6 +32,20 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
 
     setupModMatrix(); //set up the modulation matrix
     init(); //internal init
+    testFilter(0.2,0.1, true);
+
+    testFilter(0.5, 0.5, false);
+    testFilter(0.5, 1, false);
+    testFilter(0.5, 2, false);
+    testFilter(0.5, 3, false);
+    testFilter(0.48, 3, false);
+    for(float m = 0; m <= 1; m += 0.2)
+    {
+        for (float q = 0.1; q <= 10; q *= 2)
+        {
+            testFilter(m, q, false);
+        }
+    }
 }
 
 ResonariumProcessor::~ResonariumProcessor()
