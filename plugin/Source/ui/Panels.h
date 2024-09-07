@@ -102,13 +102,13 @@ public:
         gridHeight = KNOB_H_SMALL;
         gridOffsetY += 4;
         auto gain = new gin::Knob(sampleParams.gain);
-        gain->internalKnobReduction = -0;
+        gain->internalKnobReduction = 0;
         addControl(gain, 0, 0);
         auto mix = new gin::Knob(sampleParams.mix);
-        mix->internalKnobReduction = -0;
+        mix->internalKnobReduction = 0;
         addControl(mix, 1, 0);
         auto start = new gin::Knob(sampleParams.start);
-        start->internalKnobReduction = -0;
+        start->internalKnobReduction = 0;
         addControl(start, 2, 0);
         // auto test1 = new gin::Knob(sampleParams.start);
         // test1->internalKnobReduction = -0;
@@ -878,6 +878,80 @@ public:
 
     ResonariumProcessor& proc;
     ReverbParams reverbParams;
+};
+
+class DelayParamBox : public gin::ParamBox
+{
+public:
+    DelayParamBox(const juce::String& name, ResonariumProcessor& proc, DelayParams delayParams) :
+        gin::ParamBox(name), proc(proc), delayParams(delayParams)
+    {
+        setName("delay");
+        gridWidth = KNOB_W_SMALL;
+        gridHeight = KNOB_H_SMALL;
+        gridOffsetY += 4;
+        addEnable(delayParams.enabled);
+        addControl(syncLKnob = new gin::Select(delayParams.syncL), 0, 0);
+        addControl(timeLKnob = new gin::Knob(delayParams.timeL), 1, 0);
+        addControl(beatLKnob = new gin::Select(delayParams.beatL), 1, 0);
+        addControl(lockKnob = new gin::Select(delayParams.lock), 2, 0);
+        addControl(timeLCopyKnob = new gin::Knob(delayParams.timeL), 3, 0);
+        addControl(beatLCopyKnob = new gin::Select(delayParams.beatL), 3, 0);
+        addControl(timeRKnob = new gin::Knob(delayParams.timeR), 3, 0);
+        addControl(beatRKnob = new gin::Select(delayParams.beatR), 3, 0);
+        addControl(syncRKnob = new gin::Select(delayParams.syncR), 4, 0);
+        addControl(new gin::Knob(delayParams.pingPongAmount), 1, 1);
+        addControl(new gin::Knob(delayParams.feedback), 2, 1);
+        addControl(new gin::Knob(delayParams.mix), 3, 1);
+
+        watchParam(delayParams.syncL);
+        watchParam(delayParams.syncR);
+        watchParam(delayParams.lock);
+
+        for (int i = 0; i < controls.size(); i++)
+        {
+            DBG("child component: " + juce::String(i));
+            if (auto* knob = dynamic_cast<gin::Knob*>(controls[i]))
+            {
+                DBG("setting knob padding!");
+                knob->internalKnobReduction = 0;
+                knob->resized();
+            }
+        }
+
+        //iterate through all components, if component is instance of Knob, change internal knob padding
+
+    }
+
+    void paramChanged() override
+    {
+        gin::ParamBox::paramChanged();
+        if (timeLKnob && timeLCopyKnob && timeRKnob && beatLKnob && beatLCopyKnob && beatRKnob)
+        {
+            timeLKnob->setVisible(!delayParams.syncL->isOn());
+            beatLKnob->setVisible(delayParams.syncL->isOn());
+            timeLCopyKnob->setVisible(delayParams.lock->isOn() && !delayParams.syncL->isOn());
+            beatLCopyKnob->setVisible(delayParams.lock->isOn() && delayParams.syncL->isOn());
+            timeRKnob->setVisible(!delayParams.lock->isOn() && !delayParams.syncR->isOn());
+            beatRKnob->setVisible(!delayParams.lock->isOn() && delayParams.syncR->isOn());
+        }
+    }
+
+    //we want to simulate the left and right knobs moving in concert when the lock toggle is on
+    //to do this, we show and hide a copy of the left time or beat knob when the lock is on
+    gin::Select* syncLKnob;
+    gin::Select* syncRKnob;
+    gin::Knob* timeLKnob;
+    gin::Knob* timeLCopyKnob;
+    gin::Knob* timeRKnob;
+    gin::Select* beatLKnob;
+    gin::Select* beatLCopyKnob;
+    gin::Select* beatRKnob;
+    gin::Select* lockKnob;
+
+    ResonariumProcessor& proc;
+    DelayParams delayParams;
+
 };
 
 #endif //PANELS_H

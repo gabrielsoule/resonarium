@@ -4,13 +4,14 @@
 #include <JuceHeader.h>
 
 #include "Distortion.h"
+#include "MultiDelay.h"
 #include "MultiFilter.h"
 #include "MVerb.h"
 
 class ResonariumEffectChain
 {
 public:
-    ResonariumEffectChain(int channel, EffectChainParams params);
+    ResonariumEffectChain(ResonariumProcessor& p, int channel, EffectChainParams params);
 
     void prepare(const juce::dsp::ProcessSpec& spec);
 
@@ -26,7 +27,7 @@ public:
     juce::dsp::Chorus<float> chorus;
     ChorusParams chorusParams;
 
-    gin::StereoDelay delay;
+    MultiDelay delay;
     DelayParams delayParams;
 
     Distortion distortion;
@@ -45,9 +46,11 @@ public:
     MVerb<float> mverb;
     ReverbParams reverbParams;
 
-
     juce::dsp::Gain<float> gain;
+
     EffectChainParams effectChainParams;
+
+    ResonariumProcessor& proc;
 
 };
 

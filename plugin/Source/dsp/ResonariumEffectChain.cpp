@@ -1,8 +1,10 @@
 #include "ResonariumEffectChain.h"
 
 #include "../ResonatorVoice.h"
+#include "../PluginProcessor.h"
+#include "../defines.h"
 
-ResonariumEffectChain::ResonariumEffectChain(int channel, EffectChainParams params)
+ResonariumEffectChain::ResonariumEffectChain(ResonariumProcessor& p, int channel, EffectChainParams params)
     : chorusParams(params.chorusParams),
       delayParams(params.delayParams),
       distortionParams(params.distortionParams),
@@ -10,7 +12,9 @@ ResonariumEffectChain::ResonariumEffectChain(int channel, EffectChainParams para
       filter2Params(params.filterParams[1]),
       phaserParams(params.phaserParams),
       reverbParams(params.reverbParams),
-      effectChainParams(params)
+      effectChainParams(params),
+      delay(MAX_DELAY_IN_SECONDS),
+      proc(p)
 {
     this->channel = channel;
 }
@@ -18,7 +22,7 @@ ResonariumEffectChain::ResonariumEffectChain(int channel, EffectChainParams para
 void ResonariumEffectChain::prepare(const juce::dsp::ProcessSpec& spec)
 {
     chorus.prepare(spec);
-    delay.setSampleRate(spec.sampleRate);
+    delay.prepare(spec);
     // distortion.prepare(spec);
     filter1.prepare(spec);
     filter2.prepare(spec);
@@ -89,32 +93,75 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
     jassert(mverbMix >= 0 && mverbMix <= 1);
     jassert(mverbEarlyMix >= 0 && mverbEarlyMix <= 1);
 
-    mverb.setParameter (MVerb<float>::DAMPINGFREQ, mverbDampingFreq);
-    mverb.setParameter (MVerb<float>::DENSITY, mverbDensity);
-    mverb.setParameter (MVerb<float>::BANDWIDTHFREQ, mverbBandwidthFreq);
-    mverb.setParameter (MVerb<float>::DECAY, mverbDecay);
-    mverb.setParameter (MVerb<float>::PREDELAY, mverbPredelay);
-    mverb.setParameter (MVerb<float>::SIZE, mverbRoomSize);
-    mverb.setParameter (MVerb<float>::GAIN, 1);
-    mverb.setParameter (MVerb<float>::MIX, mverbMix);
-    mverb.setParameter (MVerb<float>::EARLYMIX, mverbEarlyMix);
+    mverb.setParameter(MVerb<float>::DAMPINGFREQ, mverbDampingFreq);
+    mverb.setParameter(MVerb<float>::DENSITY, mverbDensity);
+    mverb.setParameter(MVerb<float>::BANDWIDTHFREQ, mverbBandwidthFreq);
+    mverb.setParameter(MVerb<float>::DECAY, mverbDecay);
+    mverb.setParameter(MVerb<float>::PREDELAY, mverbPredelay);
+    mverb.setParameter(MVerb<float>::SIZE, mverbRoomSize);
+    mverb.setParameter(MVerb<float>::GAIN, 1);
+    mverb.setParameter(MVerb<float>::MIX, mverbMix);
+    mverb.setParameter(MVerb<float>::EARLYMIX, mverbEarlyMix);
+
+    float delayTimeL = 0;
+    float delayTimeR = 0;
+    if (delayParams.syncL->getProcValue() > 0.0f)
+    {
+        delayTimeL = gin::NoteDuration::getNoteDurations()[size_t(delayParams.beatL->getProcValue())].
+            toSeconds(proc.getPlayHead());
+
+    }
+    else
+    {
+        delayTimeL = source.getValue(delayParams.timeL, 0);
+    }
+
+    delay.setDelayTime(0, delayTimeL);
+
+    if(delayParams.lock->isOn())
+    {
+        delayTimeR = delayTimeL;
+    }
+    else
+    {
+        if (delayParams.syncR->getProcValue() > 0.0f)
+        {
+            delayTimeR = gin::NoteDuration::getNoteDurations()[size_t(delayParams.beatR->getProcValue())].
+                toSeconds(proc.getPlayHead());
+        }
+        else
+        {
+            delayTimeR = source.getValue(delayParams.timeR, 1);
+        }
+    }
+
+    delay.setDelayTime(1, delayTimeR);
+
+
+    delay.setDelayTime(1, delayTimeR);
+    delay.setFeedback(0, source.getValue(delayParams.feedback, 0));
+    delay.setFeedback(1, source.getValue(delayParams.feedback, 1));
+    delay.setPingPongAmount(0, source.getValue(delayParams.pingPongAmount, 0));
+    delay.setPingPongAmount(1, source.getValue(delayParams.pingPongAmount, 1));
+    delay.setMix(0, source.getValue(delayParams.mix, 0));
+    delay.setMix(1, source.getValue(delayParams.mix, 1));
+
 }
 
 void ResonariumEffectChain::process(juce::dsp::AudioBlock<float> block) noexcept
 {
     const juce::dsp::ProcessContextReplacing context(block);
-    if(chorusParams.enabled->isOn()) chorus.process(context);
-    if(phaserParams.enabled->isOn()) phaser.process(context);
-    if(reverbParams.enabled->isOn())
+    if (chorusParams.enabled->isOn()) chorus.process(context);
+    if (phaserParams.enabled->isOn()) phaser.process(context);
+    if (reverbParams.enabled->isOn())
     {
-        float* data[2] = { block.getChannelPointer(0), block.getChannelPointer(1) };
-        mverb.process (data, data, block.getNumSamples());
+        float* data[2] = {block.getChannelPointer(0), block.getChannelPointer(1)};
+        mverb.process(data, data, block.getNumSamples());
     }
+    if(delayParams.enabled->isOn()) delay.process(context);
 }
 
 
 template void ResonariumEffectChain::updateParameters<gin::ModVoice>(gin::ModVoice&, float);
 template void ResonariumEffectChain::updateParameters<gin::ModMatrix>(gin::ModMatrix&, float);
 template void ResonariumEffectChain::updateParameters<ResonatorVoice>(ResonatorVoice&, float);
-
-// Explicit template instantiation for any types you'll use with updateParameters

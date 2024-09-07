@@ -685,6 +685,55 @@ void ChorusParams::setup(ResonariumProcessor& p)
                         0.5f, 0.0f);
 }
 
+void DelayParams::setup(ResonariumProcessor& p)
+{
+    enabled = p.addIntParam("delayEnable", "Delay Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, enableTextFunction);
+
+    timeL = p.addExtParam("delayTimeL", "Delay Time L", "Time L", "s",
+                          {0.01f, 4.0f, 0.0f, 0.4f},
+                          0.5f, 0.0f);
+
+    timeR = p.addExtParam("delayTimeR", "Delay Time R", "Time R", "s",
+                          {0.01f, 4.0f, 0.0f, 0.4f},
+                          0.5f, 0.0f);
+
+    beatL = p.addExtParam("delayBeatL", "Delay Beat L", "Beat L", "",
+                          {0.0f, 13.0f, 1.0f, 1.0f},
+                          13.0f, 0.0f, durationTextFunction);
+
+    beatR = p.addExtParam("delayBeatR", "Delay Beat R", "Beat R", "",
+                          {0.0f, 13.0f, 1.0f, 1.0f},
+                          13.0f, 0.0f, durationTextFunction);
+
+    pingPongAmount = p.addExtParam("delayPingPong", "Delay PingPong", "PingPong", "",
+                                   {0.0f, 1.0f, 0.01f, 1.0f},
+                                   0.0f, 0.0f);
+
+    syncL = p.addIntParam("delaySyncL", "Delay Sync L", "Sync L", "",
+                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                          0.0f, enableTextFunction);
+
+    syncR = p.addIntParam("delaySyncR", "Delay Sync R", "Sync R", "",
+                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                          0.0f, enableTextFunction);
+
+    feedback = p.addExtParam("delayFeedback", "Delay Feedback", "Feedback", "",
+                             {0.0f, 1.0f, 0.0f, 1.0f},
+                             0.5f, 0.0f);
+
+    lock = p.addIntParam("delayLock", "Delay Stereo Lock", "Lock", "",
+                         {0.0f, 1.0f, 1.0f, 1.0f}, 1.0f,
+                         0.0f, enableTextFunction);
+
+    mix = p.addExtParam("delayMix", "Delay Mix", "Mix", "",
+                        {0.0f, 1.0f, 0.01f, 1.0f},
+                        0.5f, 0.0f);
+
+
+}
+
 void PhaserParams::setup(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("phaserEnable", "Phaser Enable", "Enable", "",
@@ -764,6 +813,7 @@ void EffectChainParams::setup(ResonariumProcessor& p)
     chorusParams.setup(p);
     phaserParams.setup(p);
     reverbParams.setup(p);
+    delayParams.setup(p);
 }
 
 void SynthParams::setup(ResonariumProcessor& p)

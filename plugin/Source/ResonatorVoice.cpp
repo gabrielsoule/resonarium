@@ -2,7 +2,7 @@
 #include "PluginProcessor.h"
 
 ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : proc(p), params(params),
-                                                                             effectChain(0, params.effectChainParams)
+                                                                             effectChain(p, 0, params.effectChainParams)
 {
     frequency = 440.0f;
     int resonatorBankIndex = 0;

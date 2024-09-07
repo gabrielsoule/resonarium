@@ -25,6 +25,9 @@
 #define NUM_RANDOMS 4
 #define NUM_MSEGS 4
 
+//effects
+#define MAX_DELAY_IN_SECONDS 4.0f
+
 //misc. UI stuff
 #define WINDOW_WIDTH 1300
 #define WINDOW_HEIGHT 900

@@ -128,6 +128,10 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     reverbParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
     addAndMakeVisible(reverbParamBox);
 
+    delayParamBox = new DelayParamBox("Delay", proc, proc.synth.params.effectChainParams.delayParams);
+    delayParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    addAndMakeVisible(delayParamBox);
+
     usage.setBounds(WINDOW_WIDTH - 150, 10, 110, 20);
     addAndMakeVisible(usage);
     usage.panic.onClick = [&]

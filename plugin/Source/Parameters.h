@@ -303,6 +303,18 @@ struct ChorusParams
 
 struct DelayParams
 {
+    gin::Parameter::Ptr
+        enabled,
+        timeL,
+        timeR,
+        beatL,
+        beatR,
+        pingPongAmount,
+        syncL,
+        syncR,
+        feedback,
+        lock,
+        mix = nullptr;
     void setup(ResonariumProcessor& p);
 };
 
