@@ -6,7 +6,7 @@ As of writing it's still in a half-baked developmental state, so I'll update thi
 # Installation and Usage
 
 > [!NOTE]
-> As of writing, this software has only been tested on Apple Silicon machines. I have not been able to test it on a Windows device. If anyone is able to successfully compile on Windows, or runs into any trouble while trying to do so, please let me know.
+> This software has only been tested on Apple Silicon machines running MacOS. It should be able to compile fine on Windows/x86 machines, but this has not been tested. The instructions below only apply to MacOS devices.
 
 At present no pre-compiled binaries are available, so you'll have to build Resonarium from source. Fortunately, this is easy: the project is entirely self-contained, and bundles all its dependencies as submodules. Resonarium uses the JUCE CMake API, so the Projucer is not needed. 
 
@@ -29,7 +29,7 @@ If you'd rather cut right to the chase and explore Resonarium without all the ha
 ```
 cmake --build build --target Resonarium_Standalone
 ```
-When the standalone application is first run, you may have to configure your audio settings in the `Options` menu before any sound can be produced.
+When the standalone application is first run, you may need to configure your audio settings in the `Options` menu before any sound can be produced. You'll also need a MIDI input source, since the plugin doesn't include a virtual on-screen keyboard. 
 
 Enjoy!
 
