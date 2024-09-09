@@ -3,13 +3,15 @@
 
 #include <JuceHeader.h>
 
+#include "../PluginProcessor.h"
+
 /**
 * A delay effect with a continuous blend between stereo and ping-pong modes.
 */
 class MultiDelay
 {
 public:
-    MultiDelay(float maxDelayInSeconds);
+    MultiDelay(ResonariumProcessor& p, float maxDelayInSeconds);
 
     void prepare(const juce::dsp::ProcessSpec& spec);
     void reset();
@@ -18,6 +20,12 @@ public:
     void setFeedback(int channel, float feedback);
     void setDelayTime(int channel, float time);
     void setMix(int channel, float mix);
+
+    template <typename T>
+    void updateParameters(T& source, int channel)
+    {
+
+    }
 
     template <typename ProcessContext>
     void process(ProcessContext& context) noexcept
@@ -59,6 +67,8 @@ public:
             outputBlock.setSample(1, i, rightOut);
         }
     }
+
+    ResonariumProcessor& proc;
 
     float sampleRate;
     float maxDelayInSeconds;

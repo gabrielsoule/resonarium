@@ -315,11 +315,24 @@ struct DelayParams
         feedback,
         lock,
         mix = nullptr;
+
+    DelayParams() = default;
+
     void setup(ResonariumProcessor& p);
 };
 
 struct DistortionParams
 {
+    gin::Parameter::Ptr
+        enabled,
+        mode,
+        paramA,
+        paramB,
+        paramC,
+        paramD = nullptr;
+
+    DistortionParams() = default;
+
     void setup(ResonariumProcessor& p);
 };
 
@@ -341,16 +354,16 @@ struct PhaserParams
 struct ReverbParams
 {
     gin::Parameter::Ptr
-    enabled,
-    dampingFreq,
-    density,
-    bandwidthFreq,
-    decay,
-    predelay,
-    size,
-    gain,
-    earlyMix,
-    mix = nullptr;
+        enabled,
+        dampingFreq,
+        density,
+        bandwidthFreq,
+        decay,
+        predelay,
+        size,
+        gain,
+        earlyMix,
+        mix = nullptr;
 
     void setup(ResonariumProcessor& p);
 };

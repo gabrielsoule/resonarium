@@ -100,7 +100,7 @@ public:
         addEnable(sampleParams.enabled);
         gridWidth = KNOB_W_SMALL;
         gridHeight = KNOB_H_SMALL;
-        gridOffsetY += 4;
+
         auto gain = new gin::Knob(sampleParams.gain);
         gain->internalKnobReduction = 0;
         addControl(gain, 0, 0);
@@ -910,10 +910,8 @@ public:
 
         for (int i = 0; i < controls.size(); i++)
         {
-            DBG("child component: " + juce::String(i));
             if (auto* knob = dynamic_cast<gin::Knob*>(controls[i]))
             {
-                DBG("setting knob padding!");
                 knob->internalKnobReduction = 0;
                 knob->resized();
             }
@@ -952,6 +950,55 @@ public:
     ResonariumProcessor& proc;
     DelayParams delayParams;
 
+};
+
+class DistortionParamBox : public gin::ParamBox
+{
+public:
+    DistortionParamBox(const juce::String& name, ResonariumProcessor& proc, DistortionParams distortionParams) :
+        gin::ParamBox(name), proc(proc), distortionParams(distortionParams)
+    {
+        setName("distortion");
+        addEnable(distortionParams.enabled);
+        gridWidth = KNOB_W_SMALL;
+        gridHeight = KNOB_H_SMALL;
+        gridOffsetY += 4;
+        addControl(new gin::Select(distortionParams.mode), 0, 0);
+        addControl(paramAKnob = new gin::Knob(distortionParams.paramA), 1, 0);
+        addControl(paramBKnob = new gin::Knob(distortionParams.paramB), 2, 0);
+        addControl(paramCKnob = new gin::Knob(distortionParams.paramC), 3, 0);
+        addControl(paramDKnob = new gin::Knob(distortionParams.paramD), 4, 0);
+
+        watchParam(distortionParams.mode);
+
+        for (int i = 0; i < controls.size(); i++)
+        {
+            if (auto* knob = dynamic_cast<gin::Knob*>(controls[i]))
+            {
+                knob->internalKnobReduction = 0;
+                knob->resized();
+            }
+        }
+    }
+
+    void paramChanged() override
+    {
+        gin::ParamBox::paramChanged();
+        const auto value = distortionParams.mode->getProcValue();
+        const auto mode = static_cast<Distortion::Mode>(distortionParams.mode->getProcValue());
+        paramAKnob->setDisplayName(Distortion::getParameterName(mode, 0));
+        paramBKnob->setDisplayName(Distortion::getParameterName(mode, 1));
+        paramCKnob->setDisplayName(Distortion::getParameterName(mode, 2));
+        paramDKnob->setDisplayName(Distortion::getParameterName(mode, 3));
+    }
+
+    gin::Knob* paramAKnob;
+    gin::Knob* paramBKnob;
+    gin::Knob* paramCKnob;
+    gin::Knob* paramDKnob;
+
+    ResonariumProcessor& proc;
+    DistortionParams distortionParams;
 };
 
 #endif //PANELS_H

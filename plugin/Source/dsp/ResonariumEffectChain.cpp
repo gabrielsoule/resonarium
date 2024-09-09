@@ -13,7 +13,8 @@ ResonariumEffectChain::ResonariumEffectChain(ResonariumProcessor& p, int channel
       phaserParams(params.phaserParams),
       reverbParams(params.reverbParams),
       effectChainParams(params),
-      delay(MAX_DELAY_IN_SECONDS),
+      delay(p, MAX_DELAY_IN_SECONDS),
+      distortion(p, params.distortionParams),
       proc(p)
 {
     this->channel = channel;
@@ -58,22 +59,6 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
     phaser.setCentreFrequency(source.getValue(phaserParams.centreFrequency, channel));
     phaser.setMix(source.getValue(phaserParams.mix, channel));
 
-    // float reverbMix = source.getValue(reverbParams.mix, channel);
-    // reverb.setParameters({
-    //     source.getValue(reverbParams.roomSize, channel),
-    //     source.getValue(reverbParams.damping, channel),
-    //     reverbMix,
-    //     1 - reverbMix,
-    //     source.getValue(reverbParams.width, channel)
-    // });
-
-    // reverb2.setDamping(juce::jmap(source.getValue(reverbParams.damping), 0.0f, 20000.0f));
-    // reverb2.setDecay(0);
-    // reverb2.setSize(source.getValue(reverbParams.roomSize));
-    // reverb2.setLowpass(0);
-    // reverb2.setPredelay(0);
-    // reverb2.setMix(reverbMix);
-
     const float mverbDampingFreq = source.getValue(reverbParams.dampingFreq);
     const float mverbDensity = source.getValue(reverbParams.density);
     const float mverbBandwidthFreq = source.getValue(reverbParams.bandwidthFreq);
@@ -109,7 +94,6 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
     {
         delayTimeL = gin::NoteDuration::getNoteDurations()[size_t(delayParams.beatL->getProcValue())].
             toSeconds(proc.getPlayHead());
-
     }
     else
     {
@@ -118,7 +102,7 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
 
     delay.setDelayTime(0, delayTimeL);
 
-    if(delayParams.lock->isOn())
+    if (delayParams.lock->isOn())
     {
         delayTimeR = delayTimeL;
     }
@@ -136,9 +120,6 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
     }
 
     delay.setDelayTime(1, delayTimeR);
-
-
-    delay.setDelayTime(1, delayTimeR);
     delay.setFeedback(0, source.getValue(delayParams.feedback, 0));
     delay.setFeedback(1, source.getValue(delayParams.feedback, 1));
     delay.setPingPongAmount(0, source.getValue(delayParams.pingPongAmount, 0));
@@ -146,6 +127,7 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
     delay.setMix(0, source.getValue(delayParams.mix, 0));
     delay.setMix(1, source.getValue(delayParams.mix, 1));
 
+    distortion.updateParameters(source);
 }
 
 void ResonariumEffectChain::process(juce::dsp::AudioBlock<float> block) noexcept
@@ -158,7 +140,8 @@ void ResonariumEffectChain::process(juce::dsp::AudioBlock<float> block) noexcept
         float* data[2] = {block.getChannelPointer(0), block.getChannelPointer(1)};
         mverb.process(data, data, block.getNumSamples());
     }
-    if(delayParams.enabled->isOn()) delay.process(context);
+    if (delayParams.enabled->isOn()) delay.process(context);
+    if(distortionParams.enabled->isOn()) distortion.process(context);
 }
 
 

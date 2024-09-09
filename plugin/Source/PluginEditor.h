@@ -39,6 +39,7 @@ private:
     SafePointer<ReverbParamBox> reverbParamBox;
     SafePointer<PhaserParamBox> phaserParamBox;
     SafePointer<DelayParamBox> delayParamBox;
+    SafePointer<DistortionParamBox> distortionParamBox;
 
     std::unique_ptr<melatonin::Inspector> inspector;
     gin::SynthesiserUsage usage { proc.synth };

@@ -132,6 +132,10 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     delayParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
     addAndMakeVisible(delayParamBox);
 
+    distortionParamBox = new DistortionParamBox("Distortion", proc, proc.synth.params.effectChainParams.distortionParams);
+    distortionParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
+    addAndMakeVisible(distortionParamBox);
+
     usage.setBounds(WINDOW_WIDTH - 150, 10, 110, 20);
     addAndMakeVisible(usage);
     usage.panic.onClick = [&]

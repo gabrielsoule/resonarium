@@ -4,6 +4,7 @@
 
 #include "Parameters.h"
 #include "PluginProcessor.h"
+#include "dsp/Distortion.h"
 
 static juce::String filterTextFunction(const gin::Parameter&, float v)
 {
@@ -113,6 +114,22 @@ static juce::String lfoTextFunction(const gin::Parameter&, float v)
     }
 }
 
+static juce::String distortionModeTextFunction(const gin::Parameter&, float v)
+{
+    switch (Distortion::Mode(int(v)))
+    {
+    case Distortion::Mode::BIG: return "Big";
+    case Distortion::Mode::BASS: return "Bass";
+    case Distortion::Mode::FIRE: return "Fire";
+    case Distortion::Mode::LEAD: return "Lead";
+    case Distortion::Mode::GRIND: return "Grind";
+    case Distortion::Mode::DEREZ: return "Bitcrush";
+    default:
+        jassertfalse;
+        return {};
+    }
+}
+
 void MultiFilterParams::setup(ResonariumProcessor& p, juce::String prefix)
 {
     this->prefix = prefix;
@@ -168,12 +185,12 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                             0.0f);
 
     pitchInSemis = p.addExtParam("pitchOffsetSemis" + suffix, "Pitch Offset" + suffix, "Pitch", "ST",
-                                        {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
-                                        0.0f);
+                                 {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
+                                 0.0f);
 
     resonatorFrequency = p.addExtParam("resonatorFrequency" + suffix, "Frequency" + suffix, "Freq", "Hz",
-                                      {20.0f, 20000.0f, 0.0f, 0.4f}, 1000.0f,
-                                      0.0f);
+                                       {20.0f, 20000.0f, 0.0f, 0.4f}, 1000.0f,
+                                       0.0f);
 
     resonatorKeytrack = p.addExtParam("resonatorKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
                                       {0.0f, 100.0f, 0.0f, 1.0f}, 1.0f,
@@ -203,20 +220,20 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                      0.0f);
 
     loopFilterPitchInSemis = p.addExtParam("decayFilterPitch" + suffix, "Loop Filter Pitch" + suffix, "Pitch", "ST",
-                                          {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
-                                          0.0f);
+                                           {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
+                                           0.0f);
 
     loopFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Loop Filter Resonance" + suffix, "Res", "",
                                         {0.01f, 800.0f, 0.0f, 0.2f}, 1.0f / std::sqrt(2.0f),
                                         0.0f);
 
     loopFilterKeytrack = p.addIntParam("decayFilterKeytrack" + suffix, "Loop Filter Keytrack" + suffix, "Key Track", "",
-                                      {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
-                                      0.0f);
+                                       {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
+                                       0.0f);
 
     loopFilterMode = p.addExtParam("svfMode" + suffix, "Mode" + suffix, "Loop Filter Mode", "",
-                               {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
-                               0.0f);
+                                   {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
+                                   0.0f);
 
     // decayFilterKeytrack = p.addExtParam("filterKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
     //                                     {0.0f, 100.0f, 0.0f, 1.0f}, 0.0f,
@@ -231,8 +248,8 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                      0.0f);
 
     postFilterPitchInSemis = p.addExtParam("postFilterPitch" + suffix, "Post Filter Pitch" + suffix, "Pitch", "ST",
-                                          {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
-                                          0.0f);
+                                           {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
+                                           0.0f);
 
     postFilterResonance = p.addExtParam("postFilterResonance" + suffix, "Post Filter Resonance" + suffix, "Res", "",
                                         {0.01f, 800.0f, 0.0f, 0.2f}, 1.0f / std::sqrt(2.0f),
@@ -243,8 +260,8 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                    0.0f);
 
     postFilterKeytrack = p.addIntParam("postFilterKeytrack" + suffix, "Post Filter Keytrack" + suffix, "Key Track", "",
-                                      {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
-                                      0.0f);
+                                       {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
+                                       0.0f);
 
     gain = p.addExtParam("gain" + suffix, "Gain" + suffix, "Gain", "dB",
                          {-100.0f, 0.0f, 0.0f, 4.0f}, 0.0f,
@@ -730,8 +747,61 @@ void DelayParams::setup(ResonariumProcessor& p)
     mix = p.addExtParam("delayMix", "Delay Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f},
                         0.5f, 0.0f);
+}
 
+void DistortionParams::setup(ResonariumProcessor& p)
+{
+    enabled = p.addIntParam("distortionEnable", "Distortion Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, enableTextFunction);
 
+    mode = p.addIntParam("distortionMode", "Distortion Mode", "Mode", "",
+                         {0.0f, 5.0f, 1.0f, 1.0f}, 0.0f,
+                         0.0f, distortionModeTextFunction);
+
+    // ampGain = p.addExtParam("distortionAmpGain", "Distortion Amp Gain", "Gain", "",
+    //                         {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+    //                         0.0f);
+    //
+    // ampTone = p.addExtParam("distortionAmpTone", "Distortion Amp Tone", "Tone", "",
+    //                         {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+    //                         0.0f);
+    //
+    // ampOutput = p.addExtParam("distortionAmpOutput", "Distortion Amp Output", "Output", "",
+    //                           {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+    //                           0.0f);
+    //
+    // bitcrushRate = p.addExtParam("distortionBitcrushRate", "Distortion Bitcrush Rate", "Rate", "",
+    //                              {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+    //                              0.0f);
+    //
+    // bitcrushRez = p.addExtParam("distortionBitcrushRez", "Distortion Bitcrush Rez", "Rez", "",
+    //                             {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+    //                             0.0f);
+    //
+    // bitcrushHard = p.addExtParam("distortionBitcrushHard", "Distortion Bitcrush Hard", "Hard", "",
+    //                              {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+    //                              0.0f);
+
+    paramA = p.addExtParam("distortionParamA", "Distortion Param A", "Param A", "",
+                           {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+                           0.0f);
+
+    paramB = p.addExtParam("distortionParamB", "Distortion Param B", "Param B", "",
+                           {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+                           0.0f);
+
+    paramC = p.addExtParam("distortionParamC", "Distortion Param C", "Param C", "",
+                           {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+                            0.0f);
+
+    paramD = p.addExtParam("distortionParamD", "Distortion Param D", "Param D", "",
+                           {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
+                           0.0f);
+
+    // mix = p.addExtParam("distortionMix", "Distortion Mix", "Mix", "",
+    //                     {0.0f, 1.0f, 0.01f, 1.0f},
+    //                     0.5f, 0.0f);
 }
 
 void PhaserParams::setup(ResonariumProcessor& p)
@@ -757,8 +827,8 @@ void PhaserParams::setup(ResonariumProcessor& p)
                           0.5f, 0.0f);
 
     centreFrequency = p.addExtParam("phaserCentreFreq", "Phaser Centre Freq", "Centre Freq", "Hz",
-                                   {20.0f, 20000.0f, 0.0f, 0.4f}, 3000.0f,
-                                   0.0f);
+                                    {20.0f, 20000.0f, 0.0f, 0.4f}, 3000.0f,
+                                    0.0f);
 
     feedback = p.addExtParam("phaserFeedback", "Phaser Feedback", "Feedback", "",
                              {-1.0f, 1.0f, 0.0f, 1.0f},
@@ -814,6 +884,7 @@ void EffectChainParams::setup(ResonariumProcessor& p)
     phaserParams.setup(p);
     reverbParams.setup(p);
     delayParams.setup(p);
+    distortionParams.setup(p);
 }
 
 void SynthParams::setup(ResonariumProcessor& p)
