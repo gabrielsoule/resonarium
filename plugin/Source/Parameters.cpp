@@ -690,7 +690,7 @@ void ChorusParams::setup(ResonariumProcessor& p)
                           0.5f, 0.0f);
 
     delay = p.addExtParam("chorusDelay", "Chorus Delay", "Delay", "s",
-                          {0.0f, 0.1f, 0.0f, 0.001f},
+                          {0.0f, 0.1f, 0.0f, 1.0f},
                           0.0f, 0.0f);
 
     feedback = p.addExtParam("chorusFeedback", "Chorus Feedback", "Feedback", "",
@@ -819,7 +819,7 @@ void PhaserParams::setup(ResonariumProcessor& p)
                          13.0f, 0.0f, durationTextFunction);
 
     rate = p.addExtParam("phaserRate", "Phaser Rate", "Rate", "Hz",
-                         {0.0f, 100.0f, 0.0f, 0.3f},
+                         {0.0f, 99.99f, 0.0f, 0.3f},
                          0.5f, 0.0f);
 
     depth = p.addExtParam("phaserDepth", "Phaser Depth", "Depth", "",

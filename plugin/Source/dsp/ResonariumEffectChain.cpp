@@ -42,6 +42,7 @@ void ResonariumEffectChain::reset()
     reverb.reset();
     mverb.reset();
     gain.reset();
+    distortion.reset();
 }
 
 template <typename T>
