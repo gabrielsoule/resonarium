@@ -430,7 +430,7 @@ juce::Font ResonariumLookAndFeel::getLabelFont (juce::Label& label)
 {
     if(true)
     {
-        return defaultFont.withHeight(label.getFont().getHeight());
+        return defaultFont.withHeight(label.getFont().getHeight()).withExtraKerningFactor(label.getFont().getExtraKerningFactor());
     } else
     {
         return defaultFont.withHeight(14.5f);

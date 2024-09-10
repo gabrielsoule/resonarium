@@ -173,7 +173,7 @@ public:
 
     //for the IMPULSE mode -- how long is the impulse, and how many impulses left to send out?
     int impulseLength = -1;
-    int impulsesLeft = -1;
+    int impulsesLeft = 0;
 };
 
 /**

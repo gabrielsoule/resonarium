@@ -51,15 +51,35 @@ inline juce::String chainSVG =
 class CircleEnableButton : public gin::PluginButton
 {
 public:
-    CircleEnableButton(gin::Parameter* p) : PluginButton(p)
+    CircleEnableButton(gin::Parameter* p) : PluginButton(p), onColor(ResonariumLookAndFeel::accentColourId)
     {
+
     }
 
     CircleEnableButton(gin::Parameter* p, juce::Colour onColor) : PluginButton(p), onColor(onColor)
     {
     }
 
-private:
+    CircleEnableButton(gin::Parameter* p, juce::Colour onColor, bool showName) : PluginButton(p), onColor(onColor), showName(showName)
+    {
+        addAndMakeVisible(name);
+        name.setText(p->getShortName(), juce::dontSendNotification);
+        name.setJustificationType(juce::Justification::centred);
+        name.setColour(juce::Label::textColourId, juce::Colours::white);
+    }
+
+    void resized() override
+    {
+        if (showName)
+        {
+            juce::Rectangle<int> r = getLocalBounds().reduced (2, 0);
+            auto rc = r.removeFromBottom (15);
+
+            name.setBounds (rc);
+        }
+
+    }
+
     void paintButton(juce::Graphics& g, bool over, bool down) override
     {
         auto c = isEnabled() ? onColor : juce::Colours::darkgrey.withAlpha(0.5f);
@@ -91,6 +111,8 @@ private:
     }
 
     juce::Colour onColor;
+    juce::Label name;
+    bool showName;
 };
 
 
@@ -406,10 +428,5 @@ public:
     ModalResonatorBankParams resonatorParams;
     int index;
 };
-
-class CircleOnOffButton : gin::PluginButton
-{
-};
-
 
 #endif //RESONARIUMCOMPONENTS_H

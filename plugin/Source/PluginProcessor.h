@@ -44,6 +44,7 @@ public:
         modSrcCC;
     //contains all the parameters that a voice needs modulated polyphonically (which is almost all of 'em)
     UIParams uiParams;
+    gin::AudioFifo scopeFifo { 2, 44100 };
 
     //A copy of the input buffer, which is accessed by Ext. In exciters.
     juce::AudioBuffer<float> inputBuffer;

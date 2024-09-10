@@ -25,6 +25,9 @@ private:
     // juce::TooltipWindow tooltipWindow;
     juce::ScopedMessageBox loudnessWarningBox;
 
+    SafePointer<juce::ImageComponent> logo; //NYI TODO implement gradient logo, fow now, just text
+    SafePointer<juce::Label> logoText;
+    SafePointer<gin::TriggeredScope> scope;
     std::vector<SafePointer<WaveguideResonatorBankParamBox>> resonatorBankParamBoxes;
     std::vector<SafePointer<ImpulseExciterParamBox>> impulseExciterParamBoxes;
     std::vector<SafePointer<NoiseExciterParamBox>> noiseExciterParamBoxes;

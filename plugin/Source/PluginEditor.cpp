@@ -1,12 +1,35 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include <sys/sysctl.h>
+
 //==============================================================================
 ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     : gin::ProcessorEditor(p), proc(p), uiParams(p.uiParams)
 {
     setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
     auto voiceParams = proc.synth.params.voiceParams;
+
+    titleBar.menuButton.setVisible(false);
+    // logo = new juce::ImageComponent();
+    // logo->setImage(juce::ImageCache::getFromMemory(BinaryData::resonarium_logo_png, BinaryData::resonarium_logo_pngSize));
+    logoText = new juce::Label();
+    logoText->setText("RESONARIUM", juce::dontSendNotification);
+    logoText->setJustificationType(juce::Justification::centredLeft);
+    logoText->setBounds(8, 0, 200, 40);
+    logoText->setFont(logoText->getFont().withHeight(20.0f).withExtraKerningFactor(0.2f));
+    logoText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.5f));
+    addAndMakeVisible(logoText);
+
+    scope = new gin::TriggeredScope(proc.scopeFifo);
+    scope->setName ("scope");
+    scope->setNumChannels (2);
+    scope->setTriggerMode (gin::TriggeredScope::TriggerMode::Up);
+    scope->setColour (gin::TriggeredScope::traceColourId + 0, findColour(gin::PluginLookAndFeel::accentColourId, true).withAlpha (0.7f));
+    scope->setColour (gin::TriggeredScope::traceColourId + 1, findColour(gin::PluginLookAndFeel::accentColourId, true).withAlpha (0.7f));
+    scope->setColour (gin::TriggeredScope::lineColourId, juce::Colours::transparentBlack);
+    scope->setBounds(880, 5, 220, 30);
+    addAndMakeVisible(scope);
 
     for(int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
     {
@@ -230,8 +253,8 @@ void ResonariumEditor::paint(juce::Graphics& g)
 void ResonariumEditor::resized()
 {
 #if JUCE_DEBUG
-    inspectButton.setBounds(50, 0, 100, 40);
-    bypassResonatorsButton.setBounds(150, 0, 150, 40);
+    inspectButton.setBounds(200, 0, 100, 40);
+    bypassResonatorsButton.setBounds(300, 0, 150, 40);
 #endif
     ProcessorEditor::resized();
     for (auto* c : this->getChildren())

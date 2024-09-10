@@ -73,12 +73,9 @@ add_subdirectory(modules/juce)
 add_subdirectory(modules/melatonin_inspector)
 add_subdirectory(modules/chowdsp_utils)
 add_subdirectory(modules/melatonin_perfetto)
+juce_add_module(modules/melatonin_blur)
 
 set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/modules/juce" APPEND PROPERTY LABELS JUCE)
-
-#
-
-# Gin modules
 
 foreach (module_name IN ITEMS gin gin_dsp gin_graphics gin_gui gin_metadata gin_network gin_plugin gin_webp gin_simd)
     juce_add_module(
@@ -91,6 +88,7 @@ endforeach ()
 set_property(DIRECTORY APPEND PROPERTY LABELS Assets)
 
 file(GLOB_RECURSE binary_files CONFIGURE_DEPENDS
+        "./plugin/Resources/resonarium_logo.png"
         "./plugin/Resources/Presets/*.xml")
 
 juce_add_binary_data(${PLUGIN_NAME}_Assets SOURCES ${binary_files})
@@ -136,6 +134,8 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
         gin_simd
 
         melatonin_inspector
+
+        melatonin_blur
 
         Melatonin::Perfetto
 

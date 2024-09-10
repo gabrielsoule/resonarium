@@ -171,6 +171,7 @@ void ResonariumProcessor::stateUpdated()
         }
     }
 
+    reset();
 }
 
 void ResonariumProcessor::updateState()
@@ -220,6 +221,9 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     synth.renderNextBlock(buffer, midi, 0, buffer.getNumSamples());
     modMatrix.finishBlock(buffer.getNumSamples());
     synth.endBlock(buffer.getNumSamples());
+
+    if (buffer.getNumSamples() <= scopeFifo.getFreeSpace() && buffer.getNumChannels() == scopeFifo.getNumChannels())
+        scopeFifo.write (buffer);
 }
 
 //==============================================================================

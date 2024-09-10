@@ -19,7 +19,7 @@ public:
     void updateParameters(T& source, float frequency)
     {
         this->ginParams.frequency = frequency;
-        this->ginParams.waveShape = static_cast<gin::LFO::WaveShape>(source.getValue(params.wave));
+        this->ginParams.waveShape = static_cast<gin::LFO::WaveShape>(params.wave->getProcValue());
         this->ginParams.phase = source.getValue(params.phase);
         this->ginParams.offset = source.getValue(params.offset);
         this->ginParams.depth = source.getValue(params.depth);

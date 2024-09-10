@@ -42,7 +42,7 @@ void RandomLFO::updateParameters(float frequency)
 {
     this->rate = frequency;
     this->sync = params.sync->isOn();
-    this->mode = static_cast<Mode>(static_cast<int>(voice->getValue(params.mode)));
+    this->mode = static_cast<Mode>(static_cast<int>(params.mode->getProcValue()));
     this->depth = voice->getValue(params.depth);
     this->offset = voice->getValue(params.offset);
     this->smooth = voice->getValue(params.smooth);
@@ -54,8 +54,8 @@ void RandomLFO::updateParameters(float frequency)
 void RandomLFO::updateParametersMono(gin::ModMatrix& matrix, float frequency)
 {
     this->rate = frequency;
-    this->sync = matrix.getValue(params.sync);
-    this->mode = static_cast<Mode>(static_cast<int>(matrix.getValue(params.mode)));
+    this->sync = params.sync->isOn();
+    this->mode = static_cast<Mode>(static_cast<int>(params.mode->getProcValue()));
     this->depth = matrix.getValue(params.depth);
     this->offset = matrix.getValue(params.offset);
     this->smooth = matrix.getValue(params.smooth);
