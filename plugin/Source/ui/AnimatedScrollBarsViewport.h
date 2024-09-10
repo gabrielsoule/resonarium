@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <JuceHeader.h>
@@ -16,11 +15,11 @@ public:
     : juce::Viewport(componentName)
     {
         setScrollBarsShown(false, false, true, true);
-        
+
         scrollBarListener.updateFunction = [=](juce::ScrollBar* bar, double newRangeStart)
         {
             auto newRangeStartInt = juce::roundToInt(newRangeStart);
-            
+
             if (bar == &hBar)
             {
                 setViewPosition(newRangeStartInt, getViewPositionY());
@@ -30,52 +29,60 @@ public:
                 setViewPosition(getViewPositionX(), newRangeStartInt);
             }
         };
-        
+
         for (auto bar : { &hBar, &vBar })
         {
             addChildComponent(bar);
             bar->addListener(&scrollBarListener);
         }
-        
+
         addMouseListener(this, true);
     }
-    
+
     //==============================================================================
     /** Viewport */
-    
+
     void resized() override
     {
         juce::Viewport::resized();
         updateBars();
     }
-    
-    void mouseMove(const juce::MouseEvent& e) override
+
+    void mouseEnter(const juce::MouseEvent& e) override
     {
-        for (auto bar : { &hBar, &vBar })
+        if(!isMouseOver)
         {
-            bool currentlyVisible = bar->isVisible();
-            bool shouldBeVisible = getBounds().contains(e.getEventRelativeTo(this).getPosition());
-            
-            if (currentlyVisible && !shouldBeVisible)
+            isMouseOver = true;
+            for (auto bar : { &hBar, &vBar })
             {
-                animator.fadeOut(bar, 400);
-            }
-            else
-            {
-                bar->setVisible(shouldBeVisible);
-                bar->setAlpha(shouldBeVisible ? 1.f : 0.f);
+                animator.fadeIn(bar, 400);
+                bar->setVisible(true);
             }
         }
     }
-    
+
+    void mouseExit(const juce::MouseEvent& e) override
+    {
+        //check if mouse is outside the viewport bounds
+        if (!getLocalBounds().contains(e.getEventRelativeTo(this).getPosition()))
+        {
+            DBG("ACTUAL EXIT!");
+            isMouseOver = false;
+            for (auto bar : { &hBar, &vBar })
+            {
+                animator.fadeOut(bar, 400);
+            }
+        }
+    }
+
     void visibleAreaChanged(const juce::Rectangle<int>& newVisibleArea) override
     {
         updateBars();
     }
-    
+
 private:
     //==============================================================================
-    /** 
+    /**
         The Viewport is already a ScrollBar::Listener,
         this subclass is a workaround so we can
         listen also to our custom scrollbars changes.
@@ -83,7 +90,7 @@ private:
     class ScrollBarListenerImpl : public juce::ScrollBar::Listener
     {
     public:
-        
+
         std::function<void(juce::ScrollBar*, double)> updateFunction;
         
         void scrollBarMoved(juce::ScrollBar* bar, double newRangeStart) override
@@ -119,4 +126,5 @@ private:
     juce::ScrollBar vBar { true };
     ScrollBarListenerImpl scrollBarListener;
     juce::ComponentAnimator animator;
+    bool isMouseOver = false;
 };

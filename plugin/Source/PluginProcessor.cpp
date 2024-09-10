@@ -132,7 +132,7 @@ void ResonariumProcessor::setupModMatrix()
         //TODO Add a way to choose whether parameters are mono or poly, right now everything is poly
         if (!pp->isInternal())
         {
-            // DBG("  Adding parameter " + pp->getName(40) + " to mod matrix as a poly parameter");
+            DBG("  Adding parameter " + pp->getName(40) + " to mod matrix as a poly parameter");
             modMatrix.addParameter(pp, true, 0.02);
         }
     }

@@ -32,7 +32,7 @@ public:
     template <typename T>
     void updateParameters(T& source)
     {
-        mode = static_cast<Mode>(source.getValue(params.mode));
+        mode = static_cast<Mode>(params.mode->getProcValue());
         switch (mode)
         {
         case BASS:

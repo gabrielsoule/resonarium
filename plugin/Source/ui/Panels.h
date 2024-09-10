@@ -803,6 +803,19 @@ public:
         addControl(new gin::Knob(chorusParams.mix), 2, 1);
 
         watchParam(chorusParams.sync);
+
+        for (int i = 0; i < controls.size(); i++)
+        {
+            if (auto* knob = dynamic_cast<gin::Knob*>(controls[i]))
+            {
+                knob->setBounds(knob->getBounds().translated(KNOB_W * 0.5, 0));
+            }
+
+            if(auto* select = dynamic_cast<gin::Select*>(controls[i]))
+            {
+                select->setBounds(select->getBounds().translated(KNOB_W * 0.5, 0));
+            }
+        }
     }
 
     ChorusParams chorusParams;
@@ -839,6 +852,19 @@ public:
         addControl(new gin::Knob(phaserParams.mix), 2, 1);
 
         watchParam(phaserParams.sync);
+
+        for (int i = 0; i < controls.size(); i++)
+        {
+            if (auto* knob = dynamic_cast<gin::Knob*>(controls[i]))
+            {
+                knob->setBounds(knob->getBounds().translated(KNOB_W * 0.5, 0));
+            }
+
+            if(auto* select = dynamic_cast<gin::Select*>(controls[i]))
+            {
+                select->setBounds(select->getBounds().translated(KNOB_W * 0.5, 0));
+            }
+        }
     }
 
     ResonariumProcessor& proc;
@@ -999,6 +1025,32 @@ public:
 
     ResonariumProcessor& proc;
     DistortionParams distortionParams;
+};
+
+class SVFParamBox : public gin::ParamBox
+{
+public:
+    SVFParamBox(const juce::String& name, ResonariumProcessor& proc, SVFParams svfParams) :
+        gin::ParamBox(name), proc(proc), svfParams(svfParams)
+    {
+        setName(name);
+        addEnable(svfParams.enabled);
+
+        addControl(new gin::Knob(svfParams.mode), 0, 0);
+        addControl(new gin::Knob(svfParams.cutoff), 1, 0);
+        addControl(new gin::Knob(svfParams.resonance), 2, 0);
+
+        for (int i = 0; i < controls.size(); i++)
+        {
+            if (auto* knob = dynamic_cast<gin::Knob*>(controls[i]))
+            {
+                knob->setBounds(knob->getBounds().translated(KNOB_W * 0.5, 0));
+            }
+        }
+    }
+
+    ResonariumProcessor& proc;
+    SVFParams svfParams;
 };
 
 #endif //PANELS_H

@@ -370,7 +370,14 @@ struct ReverbParams
 
 struct SVFParams
 {
-    void setup(ResonariumProcessor& p);
+    juce::String name;
+    gin::Parameter::Ptr
+        enabled,
+        mode,
+        cutoff,
+        resonance = nullptr;
+
+    void setup(ResonariumProcessor& p, juce::String name);
 };
 
 struct EffectChainParams

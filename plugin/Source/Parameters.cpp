@@ -878,6 +878,27 @@ void ReverbParams::setup(ResonariumProcessor& p)
                         0.5f, 0.0f);
 }
 
+void SVFParams::setup(ResonariumProcessor& p, juce::String name)
+{
+    juce::String prefix = name + " ";
+
+    enabled = p.addIntParam(prefix + "enable", prefix + "Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, enableTextFunction);
+
+    cutoff = p.addExtParam(prefix + "cutoff", prefix + "Freq", "Freq", "Hz",
+                           {20.0f, 20000.0f, 0.0f, 0.4f}, 20000.0f,
+                           0.0f);
+
+    mode = p.addExtParam(prefix + "mode", prefix + "Mode", "Mode", "",
+                         {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
+                         0.0f);
+
+    resonance = p.addExtParam(prefix + "resonance", prefix + "Resonance", "Res", "",
+                              {0.0f, 100.0f, 0.0f, 1.0f}, 1.0f / std::sqrt(2.0f),
+                              0.0f);
+}
+
 void EffectChainParams::setup(ResonariumProcessor& p)
 {
     chorusParams.setup(p);
@@ -885,6 +906,8 @@ void EffectChainParams::setup(ResonariumProcessor& p)
     reverbParams.setup(p);
     delayParams.setup(p);
     distortionParams.setup(p);
+    filterParams[0].setup(p, "Filter 1");
+    filterParams[1].setup(p, "Filter 2");
 }
 
 void SynthParams::setup(ResonariumProcessor& p)

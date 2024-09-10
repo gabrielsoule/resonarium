@@ -124,6 +124,11 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     viewportContentComponent->setBounds(effectsColumn);
 
     juce::Rectangle <int> effectsColumnLocal = juce::Rectangle<int>(0, 0, EXCITER_BOX_WIDTH, WINDOW_HEIGHT * 2); //some extra vertical space
+
+    filter1ParamBox = new SVFParamBox("Filter 1", proc, proc.synth.params.effectChainParams.filterParams[0]);
+    filter1ParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
+    viewportContentComponent->addAndMakeVisible(filter1ParamBox);
+
     chorusParamBox = new ChorusParamBox("Chorus", proc, proc.synth.params.effectChainParams.chorusParams);
     chorusParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
     viewportContentComponent->addAndMakeVisible(chorusParamBox);
@@ -132,22 +137,26 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     phaserParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
     viewportContentComponent->addAndMakeVisible(phaserParamBox);
 
-    reverbParamBox = new ReverbParamBox("Reverb", proc, proc.synth.params.effectChainParams.reverbParams);
-    reverbParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    viewportContentComponent->addAndMakeVisible(reverbParamBox);
+    distortionParamBox = new DistortionParamBox("Distortion", proc, proc.synth.params.effectChainParams.distortionParams);
+    distortionParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
+    viewportContentComponent->addAndMakeVisible(distortionParamBox);
 
     delayParamBox = new DelayParamBox("Delay", proc, proc.synth.params.effectChainParams.delayParams);
     delayParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
     viewportContentComponent->addAndMakeVisible(delayParamBox);
 
-    distortionParamBox = new DistortionParamBox("Distortion", proc, proc.synth.params.effectChainParams.distortionParams);
-    distortionParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
-    viewportContentComponent->addAndMakeVisible(distortionParamBox);
+    reverbParamBox = new ReverbParamBox("Reverb", proc, proc.synth.params.effectChainParams.reverbParams);
+    reverbParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    viewportContentComponent->addAndMakeVisible(reverbParamBox);
+
+    filter2ParamBox = new SVFParamBox("Filter 2", proc, proc.synth.params.effectChainParams.filterParams[1]);
+    filter2ParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
+    viewportContentComponent->addAndMakeVisible(filter2ParamBox);
 
     viewport = new AnimatedScrollBarsViewport();
     viewport->setViewedComponent(viewportContentComponent);
     // viewport->setScrollBarsShown(true, false, true, false);
-    viewport->setScrollBarThickness(4);
+    viewport->setScrollBarThickness(5);
     viewport->setBounds(juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
                                                                40,
                                                                EXCITER_BOX_WIDTH,

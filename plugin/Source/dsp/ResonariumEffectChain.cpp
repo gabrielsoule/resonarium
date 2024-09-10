@@ -15,6 +15,8 @@ ResonariumEffectChain::ResonariumEffectChain(ResonariumProcessor& p, int channel
       effectChainParams(params),
       delay(p, MAX_DELAY_IN_SECONDS),
       distortion(p, params.distortionParams),
+      filter1(params.filterParams[0]),
+      filter2(params.filterParams[1]),
       proc(p)
 {
     this->channel = channel;
@@ -30,6 +32,8 @@ void ResonariumEffectChain::prepare(const juce::dsp::ProcessSpec& spec)
     phaser.prepare(spec);
     reverb.prepare(spec);
     gain.prepare(spec);
+    filter1.prepare(spec);
+    filter2.prepare(spec);
 }
 
 void ResonariumEffectChain::reset()
@@ -43,6 +47,8 @@ void ResonariumEffectChain::reset()
     mverb.reset();
     gain.reset();
     distortion.reset();
+    filter1.reset();
+    filter2.reset();
 }
 
 template <typename T>
@@ -129,20 +135,25 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
     delay.setMix(1, source.getValue(delayParams.mix, 1));
 
     distortion.updateParameters(source);
+
+    filter1.updateParameters(source);
+    filter2.updateParameters(source);
 }
 
 void ResonariumEffectChain::process(juce::dsp::AudioBlock<float> block) noexcept
 {
     const juce::dsp::ProcessContextReplacing context(block);
+    if (filter1Params.enabled->isOn()) filter1.process(context);
     if (chorusParams.enabled->isOn()) chorus.process(context);
     if (phaserParams.enabled->isOn()) phaser.process(context);
+    if (distortionParams.enabled->isOn()) distortion.process(context);
+    if (delayParams.enabled->isOn()) delay.process(context);
     if (reverbParams.enabled->isOn())
     {
         float* data[2] = {block.getChannelPointer(0), block.getChannelPointer(1)};
         mverb.process(data, data, block.getNumSamples());
     }
-    if (delayParams.enabled->isOn()) delay.process(context);
-    if(distortionParams.enabled->isOn()) distortion.process(context);
+    if (filter2Params.enabled->isOn()) filter2.process(context);
 }
 
 

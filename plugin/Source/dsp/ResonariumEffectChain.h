@@ -7,6 +7,7 @@
 #include "MultiDelay.h"
 #include "MultiFilter.h"
 #include "MVerb.h"
+#include "WrappedSVF.h"
 
 class ResonariumEffectChain
 {
@@ -33,11 +34,6 @@ public:
     Distortion distortion;
     DistortionParams distortionParams;
 
-    MultiFilter filter1;
-    SVFParams filter1Params;
-    MultiFilter filter2;
-    SVFParams filter2Params;
-
     juce::dsp::Phaser<float> phaser;
     PhaserParams phaserParams;
 
@@ -45,6 +41,12 @@ public:
     gin::PlateReverb<float, int> reverb2;
     MVerb<float> mverb;
     ReverbParams reverbParams;
+
+    WrappedSVF filter1;
+    WrappedSVF filter2;
+    SVFParams filter1Params;
+    SVFParams filter2Params;
+
 
     juce::dsp::Gain<float> gain;
 
