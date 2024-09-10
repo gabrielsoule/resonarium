@@ -6,7 +6,13 @@
 gin::ProcessorOptions ResonariumProcessor::getOptions()
 {
     gin::ProcessorOptions options;
-    //no-op for now...
+    options.programmingCredits.clear();
+    options.programmingCredits.add("Gabriel Soule");
+    options.developer = "Gabriel Soule";
+    options.pluginVersion = "0.0.4 ALPHA";
+    options.pluginName = "Resonarium";
+    // options.withAdditionalCredits({"Roland Rabien", "RAW Material Software JUCE Framework"});
+    // options.programmingCredits.add("JUCE 8 Framework");
     return options;
 }
 
@@ -14,6 +20,19 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
 ResonariumProcessor::ResonariumProcessor() : gin::Processor(
                                                  false), synth(*this)
 {
+    auto sz = 0;
+    for (auto i = 0; i < BinaryData::namedResourceListSize; i++)
+    {
+        if (juce::String (BinaryData::originalFilenames[i]).endsWith (".xml"))
+        {
+            if (auto data = BinaryData::getNamedResource (BinaryData::namedResourceList[i], sz))
+            {
+                extractProgram (BinaryData::originalFilenames[i], data, sz);
+                DBG("Loading built-in preset: " + juce::String (BinaryData::originalFilenames[i]));
+            }
+        }
+    }
+
     lf = std::make_unique<ResonariumLookAndFeel>();
 
     uiParams.setup(*this);
@@ -32,20 +51,20 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
 
     setupModMatrix(); //set up the modulation matrix
     init(); //internal init
-    testFilter(0.2,0.1, true);
-
-    testFilter(0.5, 0.5, false);
-    testFilter(0.5, 1, false);
-    testFilter(0.5, 2, false);
-    testFilter(0.5, 3, false);
-    testFilter(0.48, 3, false);
-    for(float m = 0; m <= 1; m += 0.2)
-    {
-        for (float q = 0.1; q <= 10; q *= 2)
-        {
-            testFilter(m, q, false);
-        }
-    }
+    // testFilter(0.2,0.1, true);
+    //
+    // testFilter(0.5, 0.5, false);
+    // testFilter(0.5, 1, false);
+    // testFilter(0.5, 2, false);
+    // testFilter(0.5, 3, false);
+    // testFilter(0.48, 3, false);
+    // for(float m = 0; m <= 1; m += 0.2)
+    // {
+    //     for (float q = 0.1; q <= 10; q *= 2)
+    //     {
+    //         testFilter(m, q, false);
+    //     }
+    // }
 }
 
 ResonariumProcessor::~ResonariumProcessor()
@@ -110,9 +129,12 @@ void ResonariumProcessor::setupModMatrix()
 
     for (auto pp : getPluginParameters())
     {
+        //TODO Add a way to choose whether parameters are mono or poly, right now everything is poly
         if (!pp->isInternal())
-            DBG("  Adding parameter " + pp->getName(40) + " to mod matrix as a poly parameter");
-        modMatrix.addParameter(pp, true, 0.02);
+        {
+            // DBG("  Adding parameter " + pp->getName(40) + " to mod matrix as a poly parameter");
+            modMatrix.addParameter(pp, true, 0.02);
+        }
     }
     DBG("TOTAL PARAMETERS REGISTERED: " + juce::String(getPluginParameters().size()));
 

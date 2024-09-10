@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<state name="Netherstorm" author="" tags="">
+  <state>
+    <instance/>
+    <MODMATRIX/>
+    <MSEG1 startIndex="0" endIndex="2">
+      <PT t="0.0" v="0.0" c="5.5"/>
+      <PT t="0.5" v="1.0" c="5.5"/>
+      <PT t="1.0" v="0.0" c="5.5"/>
+    </MSEG1>
+    <MSEG2 startIndex="0" endIndex="2">
+      <PT t="0.0" v="0.0" c="5.5"/>
+      <PT t="0.5" v="1.0" c="5.5"/>
+      <PT t="1.0" v="0.0" c="5.5"/>
+    </MSEG2>
+    <MSEG3 startIndex="0" endIndex="2">
+      <PT t="0.0" v="0.0" c="5.5"/>
+      <PT t="0.5" v="1.0" c="5.5"/>
+      <PT t="1.0" v="0.0" c="5.5"/>
+    </MSEG3>
+    <MSEG4 startIndex="0" endIndex="2">
+      <PT t="0.0" v="0.0" c="5.5"/>
+      <PT t="0.5" v="1.0" c="5.5"/>
+      <PT t="1.0" v="0.0" c="5.5"/>
+    </MSEG4>
+  </state>
+  <param uid="enabled wb0r0" val="1.0"/>
+  <param uid="decayTime wb0r0" val="3.000000715255737"/>
+  <param uid="decayFilterResonance wb0r0" val="0.7071064710617065"/>
+  <param uid="postFilterResonance wb0r0" val="0.7071064710617065"/>
+  <param uid="gain wb0r0" val="-7.044868469238281"/>
+  <param uid="enabled wb0r1" val="1.0"/>
+  <param uid="pitchOffsetSemis wb0r1" val="7.0"/>
+  <param uid="decayTime wb0r1" val="3.359585762023926"/>
+  <param uid="decayFilterCutoff wb0r1" val="20000.0"/>
+  <param uid="decayFilterResonance wb0r1" val="0.7071064710617065"/>
+  <param uid="gain wb0r1" val="-10.61082458496094"/>
+  <param uid="enabled wb0r2" val="1.0"/>
+  <param uid="pitchOffsetSemis wb0r2" val="10.0"/>
+  <param uid="decayTime wb0r2" val="5.298132419586182"/>
+  <param uid="decayFilterCutoff wb0r2" val="6769.3349609375"/>
+  <param uid="postFilterCutoff wb0r2" val="4012.897216796875"/>
+  <param uid="postFilterPitch wb0r2" val="13.19999694824219"/>
+  <param uid="postFilterResonance wb0r2" val="300.9039306640625"/>
+  <param uid="postFilterMode wb0r2" val="0.5"/>
+  <param uid="postFilterKeytrack wb0r2" val="1.0"/>
+  <param uid="gain wb0r2" val="-100.0"/>
+  <param uid="enabled wb0r3" val="1.0"/>
+  <param uid="pitchOffsetSemis wb0r3" val="12.0"/>
+  <param uid="decayTime wb0r3" val="3.920632839202881"/>
+  <param uid="decayFilterCutoff wb0r3" val="9442.681640625"/>
+  <param uid="postFilterCutoff wb0r3" val="3321.34423828125"/>
+  <param uid="postFilterPitch wb0r3" val="26.88999938964844"/>
+  <param uid="postFilterResonance wb0r3" val="52.14058685302734"/>
+  <param uid="postFilterKeytrack wb0r3" val="1.0"/>
+  <param uid="gain wb0r3" val="-12.02322387695312"/>
+  <param uid="decayTime wb0r4" val="3.000000715255737"/>
+  <param uid="postFilterResonance wb0r4" val="0.7071064710617065"/>
+  <param uid="decayTime wb0r5" val="3.000000715255737"/>
+  <param uid="decayTime wb0r6" val="3.000000715255737"/>
+  <param uid="decayTime wb0r7" val="3.000000715255737"/>
+  <param uid="decayFilterResonance wb0r7" val="0.7071064710617065"/>
+  <param uid="couplingMode wb0" val="2.0"/>
+  <param uid="inputGain wb0" val="-100.0"/>
+  <param uid="cascadeAmount wb0" val="0.4699999094009399"/>
+  <param uid="cascadeFilterCutoff wb0" val="3070.75732421875"/>
+  <param uid="cascadeFilterResonance wb0" val="0.7071064710617065"/>
+  <param uid="impExciter0 enabled" val="1.0"/>
+  <param uid="impExciter0 thickness" val="8.0"/>
+  <param uid="noiseExciter0enabled" val="1.0"/>
+  <param uid="noiseExciter0filterType" val="1.0"/>
+  <param uid="noiseExciter0_resonance" val="0.7071065902709961"/>
+  <param uid="impTrainExciter0_resonance" val="0.7071065902709961"/>
+  <param uid="chorusRate" val="1.930474877357483"/>
+  <param uid="chorusDepth" val="0.7907500267028809"/>
+  <param uid="chorusDelay" val="0.1000000014901161"/>
+  <param uid="chorusFeedback" val="-0.7873749732971191"/>
+  <param uid="chorusMix" val="0.6200000047683716"/>
+  <param uid="phaserRate" val="15.75582981109619"/>
+  <param uid="phaserCentreFreq" val="2559.26806640625"/>
+  <param uid="phaserFeedback" val="0.8321874737739563"/>
+  <param uid="reverbEnable" val="1.0"/>
+  <param uid="reverbDecay" val="0.2913906276226044"/>
+  <param uid="reverbPredelay" val="0.3546406328678131"/>
+  <param uid="reverbSize" val="0.264843761920929"/>
+  <param uid="reverbMix" val="0.2199999988079071"/>
+  <param uid="delayTimeL" val="0.05094830691814423"/>
+  <param uid="distortionEnable" val="1.0"/>
+  <param uid="distortionMode" val="2.0"/>
+  <param uid="distortionParamA" val="0.816531240940094"/>
+  <param uid="distortionParamB" val="0.5944218039512634"/>
+  <param uid="distortionParamC" val="0.8541562557220459"/>
+  <param uid="distortionParamD" val="0.3038749992847443"/>
+  <param uid="Env 1attack" val="0.09999998658895493"/>
+  <param uid="Env 1release" val="0.09999998658895493"/>
+</state>

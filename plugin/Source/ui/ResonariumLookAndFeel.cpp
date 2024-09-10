@@ -7,7 +7,6 @@ ResonariumLookAndFeel::ResonariumLookAndFeel()
     // setDefaultSansSerifTypeface(typeface);
     setDefaultSansSerifTypeface(myfont.getTypefacePtr());
     defaultFont = myfont;
-    DBG(myfont.toString());
     juce::Array<juce::Font> fonts;
     juce::Font::findFonts(fonts);
     setColour (whiteColourId, juce::Colour (0xffFFFFFF));

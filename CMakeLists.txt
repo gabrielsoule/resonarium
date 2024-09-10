@@ -9,7 +9,7 @@ set(PLUGIN_VERSION 0.0.4)
 set(BUNDLE_ID com.gabrielsoule.resonarium)
 set(AU_ID ResonariumAU)
 set(LV2_URI "https://gabrielsoule.com/resonarium")
-set(WEBSITE "https://example.com")
+set(WEBSITE "https://gabrielsoule.com")
 set(PLUGIN_CODE Res0)
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
@@ -22,13 +22,13 @@ set_property(GLOBAL PROPERTY DEBUG_CONFIGURATIONS "Debug")
 set(CMAKE_C_FLAGS_DEVELOPMENT ${CMAKE_C_FLAGS_RELEASE})
 set(CMAKE_CXX_FLAGS_DEVELOPMENT ${CMAKE_CXX_FLAGS_RELEASE})
 
-project(${PLUGIN_NAME} VERSION ${PLUGIN_VERSION} LANGUAGES CXX C HOMEPAGE_URL "https://socalabs.com/")
+project(${PLUGIN_NAME} VERSION ${PLUGIN_VERSION} LANGUAGES CXX C HOMEPAGE_URL "https://gabrielsoule.com/")
 
 include(CMakeDependentOption)
 
 set_property(DIRECTORY APPEND PROPERTY LABELS ${PLUGIN_NAME})
 
-set_property(DIRECTORY APPEND PROPERTY LABELS SocaLabs)
+set_property(DIRECTORY APPEND PROPERTY LABELS gabrielsoule)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PLUGIN_NAME}_Standalone)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
@@ -72,7 +72,7 @@ set(JUCE_BUILD_EXAMPLES OFF)
 add_subdirectory(modules/juce)
 add_subdirectory(modules/melatonin_inspector)
 add_subdirectory(modules/chowdsp_utils)
-add_subdirectory (modules/melatonin_perfetto)
+add_subdirectory(modules/melatonin_perfetto)
 
 set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/modules/juce" APPEND PROPERTY LABELS JUCE)
 
@@ -87,6 +87,15 @@ foreach (module_name IN ITEMS gin gin_dsp gin_graphics gin_gui gin_metadata gin_
 
     set_property(TARGET "${module_name}" APPEND PROPERTY LABELS Gin)
 endforeach ()
+
+set_property(DIRECTORY APPEND PROPERTY LABELS Assets)
+
+file(GLOB_RECURSE binary_files CONFIGURE_DEPENDS
+        "./plugin/Resources/Presets/*.xml")
+
+juce_add_binary_data(${PLUGIN_NAME}_Assets SOURCES ${binary_files})
+
+set_target_properties(${PLUGIN_NAME}_Assets PROPERTIES UNITY_BUILD ON UNITY_BUILD_MODE BATCH UNITY_BUILD_BATCH_SIZE 10)
 
 juce_add_plugin(${PLUGIN_NAME}
         PRODUCT_NAME ${PLUGIN_NAME}
@@ -118,6 +127,7 @@ target_sources(${PLUGIN_NAME} PRIVATE ${source_files})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/plugin PREFIX Source FILES ${source_files})
 
 target_link_libraries(${PLUGIN_NAME} PRIVATE
+        ${PLUGIN_NAME}_Assets
         gin
         gin_dsp
         gin_graphics
