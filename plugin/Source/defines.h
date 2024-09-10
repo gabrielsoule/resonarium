@@ -29,8 +29,8 @@
 #define MAX_DELAY_IN_SECONDS 4.0f
 
 //misc. UI stuff
-#define WINDOW_WIDTH 1300
-#define WINDOW_HEIGHT 900
+#define WINDOW_WIDTH (1300 - 18)
+#define WINDOW_HEIGHT (900 - 11)
 #define BOX_HEADER_HEIGHT 28
 #define TOP_MENU_BAR_HEIGHT 40
 #define TITLE_BAR_HEIGHT 28

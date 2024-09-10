@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "melatonin_inspector/melatonin_inspector.h"
+#include "ui/AnimatedScrollBarsViewport.h"
 #include "ui/ResonariumComponents.h"
 #include "ui/Panels.h"
 
@@ -35,6 +36,8 @@ private:
     SafePointer<MatrixBox> matrixBox;
     SafePointer<ModSrcBox> modSrcBox;
 
+    SafePointer<AnimatedScrollBarsViewport> viewport;
+    SafePointer<Component> viewportContentComponent;
     SafePointer<ChorusParamBox> chorusParamBox;
     SafePointer<ReverbParamBox> reverbParamBox;
     SafePointer<PhaserParamBox> phaserParamBox;

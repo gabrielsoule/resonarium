@@ -96,45 +96,63 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
         msegParamBoxes.push_back(ptr);
         addAndMakeVisible(ptr);
         ptr->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT,
-                       MODULATION_BOX_WIDTH,
+                       MODULATION_BOX_WIDTH - 1,
                        PARAM_BOX_XSMALL_HEIGHT * 1.5f);
     }
 
     matrixBox = new MatrixBox("MATRIX", proc);
     addAndMakeVisible(matrixBox);
     matrixBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
-                         40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH,
+                         40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH - 1,
                          PARAM_BOX_XSMALL_HEIGHT * 1.5f);
 
     modSrcBox = new ModSrcBox("SOURCES", proc);
     addAndMakeVisible(modSrcBox);
     modSrcBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
-                         40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH,
+                         40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH - 1,
                          PARAM_BOX_XSMALL_HEIGHT * 1.5f);
 
+    //Set up the scrollable effects column
+
+    int scrollbarThickness = 4;
     juce::Rectangle <int> effectsColumn = juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
                                                                40,
                                                                EXCITER_BOX_WIDTH,
-                                                               WINDOW_HEIGHT);
+                                                               WINDOW_HEIGHT * 2); //some extra vertical space
+
+    viewportContentComponent = new juce::Component();
+    viewportContentComponent->setBounds(effectsColumn);
+
+    juce::Rectangle <int> effectsColumnLocal = juce::Rectangle<int>(0, 0, EXCITER_BOX_WIDTH, WINDOW_HEIGHT * 2); //some extra vertical space
     chorusParamBox = new ChorusParamBox("Chorus", proc, proc.synth.params.effectChainParams.chorusParams);
-    chorusParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    addAndMakeVisible(chorusParamBox);
+    chorusParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    viewportContentComponent->addAndMakeVisible(chorusParamBox);
 
     phaserParamBox = new PhaserParamBox("Phaser", proc, proc.synth.params.effectChainParams.phaserParams);
-    phaserParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    addAndMakeVisible(phaserParamBox);
+    phaserParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    viewportContentComponent->addAndMakeVisible(phaserParamBox);
 
     reverbParamBox = new ReverbParamBox("Reverb", proc, proc.synth.params.effectChainParams.reverbParams);
-    reverbParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    addAndMakeVisible(reverbParamBox);
+    reverbParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    viewportContentComponent->addAndMakeVisible(reverbParamBox);
 
     delayParamBox = new DelayParamBox("Delay", proc, proc.synth.params.effectChainParams.delayParams);
-    delayParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    addAndMakeVisible(delayParamBox);
+    delayParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    viewportContentComponent->addAndMakeVisible(delayParamBox);
 
     distortionParamBox = new DistortionParamBox("Distortion", proc, proc.synth.params.effectChainParams.distortionParams);
-    distortionParamBox->setBounds(effectsColumn.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
-    addAndMakeVisible(distortionParamBox);
+    distortionParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
+    viewportContentComponent->addAndMakeVisible(distortionParamBox);
+
+    viewport = new AnimatedScrollBarsViewport();
+    viewport->setViewedComponent(viewportContentComponent);
+    // viewport->setScrollBarsShown(true, false, true, false);
+    viewport->setScrollBarThickness(4);
+    viewport->setBounds(juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
+                                                               40,
+                                                               EXCITER_BOX_WIDTH,
+                                                               WINDOW_HEIGHT));
+    addAndMakeVisible(viewport);
 
     usage.setBounds(WINDOW_WIDTH - 150, 10, 110, 20);
     addAndMakeVisible(usage);
