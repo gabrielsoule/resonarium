@@ -1,0 +1,20 @@
+{
+  "global": {
+    "volume": "Adjusts the overall volume of the synthesizer",
+    "pan": "Controls the stereo positioning of the sound"
+  },
+  "exciter": {
+    "impulse": {
+        "gain": "Controls the volume of the impulse exciter",
+        "decay": "Controls the decay time of the impulse exciter"
+
+    }
+  },
+  "resonator": {
+    "pitch": "Set the pitch of the resonator with respect to the current MIDI note. The resonator will produce sound at this frequency, and will resonate strongly with any harmonically related input signals.",
+    "frequency": "Set the absolute frequency of the resonator, unrelated to the current MIDI note. The resonator will produce sound at this frequency, and will resonate strongly with any harmonically related input signals.",
+    "keytrack": "If enabled, the resonator can be tuned with respect to the current MIDI note. Otherwise, the resonator can be tuned to a constant frequency.",
+    "decay": "Adjust the decay time of the resonator. Lower values correspond to stronger damping and a shorter note. If set to zero, the resonator will be bypassed entirely and the exciter signal will pass through.",
+    "gain": "Controls the gain of the resonator"
+  }
+}

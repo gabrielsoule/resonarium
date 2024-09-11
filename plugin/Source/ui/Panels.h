@@ -274,13 +274,7 @@ public:
         cascadeFilterModeKnob = new gin::Knob(bankParams.cascadeFilterMode);
         addControl(cascadeFilterModeKnob);
 
-
-        //input gain
-        //input mix
-
-        //resonator feedback mode
-
-        //output gain
+        watchParam(bankParams.couplingMode);
     }
 
     void resized() override
@@ -296,14 +290,18 @@ public:
             resonatorsArea.removeFromLeft(4);
         }
 
-        inputGainKnob->setBounds(720, BOX_HEADER_HEIGHT + 10, KNOB_W, KNOB_H);
-        couplingModeKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + KNOB_H, KNOB_W, KNOB_H);
-        outputGainKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 2 * (KNOB_H), KNOB_W, KNOB_H);
-        cascadeAmountKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 3 * (KNOB_H), KNOB_W, KNOB_H);
-        cascadeFilterKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 4 * (KNOB_H), KNOB_W, KNOB_H);
-        cascadeFilterResonanceKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 5 * (KNOB_H), KNOB_W, KNOB_H);
-        cascadeFilterModeKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 6 * (KNOB_H), KNOB_W, KNOB_H);
-        inputMixKnob->setBounds(720, BOX_HEADER_HEIGHT + 10 + 7 * KNOB_H, KNOB_W, KNOB_H);
+        float bankControlsX = 710;
+        float bankControlsY = BOX_HEADER_HEIGHT + 55;
+
+        inputGainKnob->setBounds(bankControlsX, bankControlsY, KNOB_W, KNOB_H);
+        inputMixKnob->setBounds(bankControlsX + KNOB_W, bankControlsY, KNOB_W, KNOB_H);
+        outputGainKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + KNOB_H, KNOB_W, KNOB_H);
+        couplingModeKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + 2 * KNOB_H, KNOB_W, KNOB_H);
+
+        cascadeAmountKnob->setBounds(bankControlsX, bankControlsY + 3.2 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeFilterKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 3.2 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeFilterResonanceKnob->setBounds(bankControlsX, bankControlsY + 4.2 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeFilterModeKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 4.2 * (KNOB_H), KNOB_W, KNOB_H);
 
 
         //it's really annoying to position rotated text components, since the affine transforms affect the coordinates...
@@ -320,6 +318,20 @@ public:
                                                                       postFilterLabel->getBounds().getCentreX(),
                                                                       postFilterLabel->getBounds().getCentreY()));
         postFilterLabel->toFront(false);
+    }
+
+    void paramChanged() override
+    {
+        ParamBox::paramChanged();
+        bool showCascadeControls = static_cast<int>(bankParams.couplingMode->getProcValue()) == 2;
+        if (cascadeAmountKnob != nullptr)
+            cascadeAmountKnob->setVisible(showCascadeControls);
+        if (cascadeFilterKnob != nullptr)
+            cascadeFilterKnob->setVisible(showCascadeControls);
+        if (cascadeFilterResonanceKnob != nullptr)
+            cascadeFilterResonanceKnob->setVisible(showCascadeControls);
+        if (cascadeFilterModeKnob != nullptr)
+            cascadeFilterModeKnob->setVisible(showCascadeControls);
     }
 
     void paint(juce::Graphics& g) override
@@ -413,14 +425,14 @@ public:
     juce::Label* loopFilterLabel;
     juce::Label* postFilterLabel;
 
-    gin::Select* couplingModeKnob;
-    gin::Knob* inputMixKnob;
-    gin::Knob* inputGainKnob;
-    gin::Knob* outputGainKnob;
-    gin::Knob* cascadeAmountKnob;
-    gin::Knob* cascadeFilterKnob;
-    gin::Knob* cascadeFilterResonanceKnob;
-    gin::Knob* cascadeFilterModeKnob;
+    gin::Select* couplingModeKnob = nullptr;
+    gin::Knob* inputMixKnob = nullptr;
+    gin::Knob* inputGainKnob = nullptr;
+    gin::Knob* outputGainKnob = nullptr;
+    gin::Knob* cascadeAmountKnob = nullptr;
+    gin::Knob* cascadeFilterKnob = nullptr;
+    gin::Knob* cascadeFilterResonanceKnob = nullptr;
+    gin::Knob* cascadeFilterModeKnob = nullptr;
 };
 
 class WaveguideResonatorBankParamBox : public gin::ParamBox
@@ -811,7 +823,7 @@ public:
                 knob->setBounds(knob->getBounds().translated(KNOB_W * 0.5, 0));
             }
 
-            if(auto* select = dynamic_cast<gin::Select*>(controls[i]))
+            if (auto* select = dynamic_cast<gin::Select*>(controls[i]))
             {
                 select->setBounds(select->getBounds().translated(KNOB_W * 0.5, 0));
             }
@@ -860,7 +872,7 @@ public:
                 knob->setBounds(knob->getBounds().translated(KNOB_W * 0.5, 0));
             }
 
-            if(auto* select = dynamic_cast<gin::Select*>(controls[i]))
+            if (auto* select = dynamic_cast<gin::Select*>(controls[i]))
             {
                 select->setBounds(select->getBounds().translated(KNOB_W * 0.5, 0));
             }
@@ -944,7 +956,6 @@ public:
         }
 
         //iterate through all components, if component is instance of Knob, change internal knob padding
-
     }
 
     void paramChanged() override
@@ -975,7 +986,6 @@ public:
 
     ResonariumProcessor& proc;
     DelayParams delayParams;
-
 };
 
 class DistortionParamBox : public gin::ParamBox

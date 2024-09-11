@@ -288,17 +288,18 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
                                  {0.0, 2.0, 1.0, 1.0f}, 0.0f,
                                  gin::SmoothingType::linear, couplingModeTextFunction);
 
-    inputGain = p.addExtParam("inputGain" + suffix, "Input Gain" + suffix, "Gain", "dB",
-                              {-100.0, 100.0, 0.0, 4.0f}, 0.0f,
+    inputGain = p.addExtParam("inputGain" + suffix, "Input Gain" + suffix, "Gain In", "dB",
+                              {-100.0, 100.0, 0.0, 1.0f}, 0.0f,
                               gin::SmoothingType::linear);
+    inputGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
     //input mix between the exciter and the previous resonator bank
-    inputMix = p.addExtParam("inputMix" + suffix, "Input Mix" + suffix, "Mix", "",
+    inputMix = p.addExtParam("inputMix" + suffix, "Input Mix" + suffix, "Input Mix", "",
                              {0.0, 1.0, 0.01, 1.0f}, 0.0f,
                              gin::SmoothingType::linear);
 
-    outputGain = p.addExtParam("outputGain" + suffix, "Output Gain" + suffix, "Gain", "dB",
-                               {-100.0, 100.0, 0.0, 4.0f}, 0.0f,
+    outputGain = p.addExtParam("outputGain" + suffix, "Output Gain" + suffix, "Gain Out", "dB",
+                               {-100.0, 100.0, 0.0, 1.0f}, 0.0f,
                                gin::SmoothingType::linear);
     outputGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 

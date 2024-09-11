@@ -139,7 +139,7 @@ public:
     {
         setInterceptsMouseClicks(false, false);
         shadow.setOpacity(1.0f);
-        shadow.setSpread(3);
+        shadow.setSpread(5);
     }
 
     void paint (juce::Graphics& g) override
@@ -154,7 +154,7 @@ public:
     void resized()
     {
         valueTrack.clear();
-        valueTrack.addEllipse (30, 10, 100, 100);
+        valueTrack.addEllipse (40, 5, 120, 100);
     }
 
     void lookAndFeelChanged() override

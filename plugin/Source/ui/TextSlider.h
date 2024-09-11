@@ -26,7 +26,14 @@ public:
     void valueUpdated(gin::Parameter*) override
     {
         float value = p->getUserValue();
-        setText(decimals > 0 ? juce::String(value, decimals) : juce::String(static_cast<int>(value)), juce::dontSendNotification);
+        juce::String text = juce::String(value, decimals);
+        //remove erroneous negative zero if zero
+        if(value == 0.0f && text.contains("-"))
+        {
+            //remove the negative sign
+            text = text.substring(1);
+        }
+        setText(decimals > 0 ? text : juce::String(static_cast<int>(value)), juce::dontSendNotification);
         this->onTextChange();
         this->toBack();
     }
