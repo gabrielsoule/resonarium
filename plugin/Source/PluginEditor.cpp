@@ -1,37 +1,63 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-#include <sys/sysctl.h>
 
-//==============================================================================
 ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     : gin::ProcessorEditor(p), proc(p), uiParams(p.uiParams)
 {
     setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
     auto voiceParams = proc.synth.params.voiceParams;
-
     titleBar.menuButton.setVisible(false);
-    // logo = new juce::ImageComponent();
-    // logo->setImage(juce::ImageCache::getFromMemory(BinaryData::resonarium_logo_png, BinaryData::resonarium_logo_pngSize));
+
+    juce::String warningMessage =
+        "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\n\nUnder certain configurations, undesirable positive feedback loops can manifest. These may produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level.";
+    // loudnessWarningBox_v2 = new gin::PluginAlertWindow ("WARNING -- PROTECT YOUR EARS", warningMessage, juce::AlertWindow::WarningIcon, this);
+    // loudnessWarningBox_v2->addButton ("I understand!", 1, juce::KeyPress (juce::KeyPress::returnKey));
+    // loudnessWarningBox_v2->setLookAndFeel (slProc.lf.get());
+    // addAndMakeVisible(loudnessWarningBox_v2);
+
+
+    // loudnessWarningBox_v2->runAsync (*this, [loudnessWarningBox_v2] (int)
+    // {
+    //     loudnessWarningBox_v2->setVisible (false);
+    // });
+
+    auto* blur = new TitleBarDropShadow();
+    blur->setBounds(0, 0, 400, 40);
+    addAndMakeVisible(blur);
+
+    logo = new ResonariumLogo();
+    logo->setBounds(7, 2, 37, 37);
+    addAndMakeVisible(logo);
+
     logoText = new juce::Label();
     logoText->setText("RESONARIUM", juce::dontSendNotification);
     logoText->setJustificationType(juce::Justification::centredLeft);
-    logoText->setBounds(8, 0, 200, 40);
-    logoText->setFont(logoText->getFont().withHeight(20.0f).withExtraKerningFactor(0.2f));
-    logoText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.5f));
+    logoText->setBounds(50, 0, 210, 40);
+    logoText->setFont(logoText->getFont().withHeight(21.0f).withExtraKerningFactor(0.22f));
+    logoText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.7f));
     addAndMakeVisible(logoText);
 
+    versionText = new juce::Label();
+    versionText->setText(proc.getOptions().pluginVersion, juce::dontSendNotification);
+    versionText->setBounds(218, 0, 100, 40);
+    versionText->setFont(versionText->getFont().withStyle(juce::Font::italic).withHeight(13.0f));
+    versionText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.2f));
+    addAndMakeVisible(versionText);
+
     scope = new gin::TriggeredScope(proc.scopeFifo);
-    scope->setName ("scope");
-    scope->setNumChannels (2);
-    scope->setTriggerMode (gin::TriggeredScope::TriggerMode::Up);
-    scope->setColour (gin::TriggeredScope::traceColourId + 0, findColour(gin::PluginLookAndFeel::accentColourId, true).withAlpha (0.7f));
-    scope->setColour (gin::TriggeredScope::traceColourId + 1, findColour(gin::PluginLookAndFeel::accentColourId, true).withAlpha (0.7f));
-    scope->setColour (gin::TriggeredScope::lineColourId, juce::Colours::transparentBlack);
+    scope->setName("scope");
+    scope->setNumChannels(2);
+    scope->setTriggerMode(gin::TriggeredScope::TriggerMode::Up);
+    scope->setColour(gin::TriggeredScope::traceColourId + 0,
+                     findColour(gin::PluginLookAndFeel::accentColourId, true).withAlpha(0.7f));
+    scope->setColour(gin::TriggeredScope::traceColourId + 1,
+                     findColour(gin::PluginLookAndFeel::accentColourId, true).withAlpha(0.7f));
+    scope->setColour(gin::TriggeredScope::lineColourId, juce::Colours::transparentBlack);
     scope->setBounds(880, 5, 220, 30);
     addAndMakeVisible(scope);
 
-    for(int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
     {
         auto* wrb = new WaveguideResonatorBankParamBox_V2(
             "Waveguide Bank " + std::to_string(i + 1), proc, i, voiceParams.waveguideResonatorBankParams[i]);
@@ -138,15 +164,16 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     //Set up the scrollable effects column
 
     int scrollbarThickness = 4;
-    juce::Rectangle <int> effectsColumn = juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
-                                                               40,
-                                                               EXCITER_BOX_WIDTH,
-                                                               WINDOW_HEIGHT * 2); //some extra vertical space
+    juce::Rectangle<int> effectsColumn = juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
+                                                              40,
+                                                              EXCITER_BOX_WIDTH,
+                                                              WINDOW_HEIGHT * 2); //some extra vertical space
 
     viewportContentComponent = new juce::Component();
     viewportContentComponent->setBounds(effectsColumn);
 
-    juce::Rectangle <int> effectsColumnLocal = juce::Rectangle<int>(0, 0, EXCITER_BOX_WIDTH, WINDOW_HEIGHT * 2); //some extra vertical space
+    juce::Rectangle<int> effectsColumnLocal = juce::Rectangle<int>(0, 0, EXCITER_BOX_WIDTH, WINDOW_HEIGHT * 2);
+    //some extra vertical space
 
     filter1ParamBox = new SVFParamBox("Filter 1", proc, proc.synth.params.effectChainParams.filterParams[0]);
     filter1ParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
@@ -160,7 +187,8 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     phaserParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
     viewportContentComponent->addAndMakeVisible(phaserParamBox);
 
-    distortionParamBox = new DistortionParamBox("Distortion", proc, proc.synth.params.effectChainParams.distortionParams);
+    distortionParamBox = new DistortionParamBox("Distortion", proc,
+                                                proc.synth.params.effectChainParams.distortionParams);
     distortionParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
     viewportContentComponent->addAndMakeVisible(distortionParamBox);
 
@@ -181,9 +209,9 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     // viewport->setScrollBarsShown(true, false, true, false);
     viewport->setScrollBarThickness(5);
     viewport->setBounds(juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
-                                                               40,
-                                                               EXCITER_BOX_WIDTH,
-                                                               WINDOW_HEIGHT));
+                                             40,
+                                             EXCITER_BOX_WIDTH,
+                                             WINDOW_HEIGHT));
     addAndMakeVisible(viewport);
 
     usage.setBounds(WINDOW_WIDTH - 150, 10, 110, 20);
@@ -231,12 +259,18 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                                                    .withIconType (juce::MessageBoxIconType::WarningIcon)
                                                    .withTitle ("WARNING - PROTECT YOUR EARS! ")
                                                    .withMessage (
-                                                       "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\n\nUnder certain configurations, undesirable positive feedback loops can manifest. These may produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level.")
-                                                   .withButton ("I understand!"),
+                                                       "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\n\nUnder certain configurations, undesirable positive feedback loops can manifest. These may produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level.\n\nIf you do not do so, you may be unpredictably exposed to dangerously loud audio.")
+                                                   .withButton ("I understand and have taken appropriate action!"),
                                                nullptr);
 
     this->ResonariumEditor::resized();
 #endif
+
+    // auto* blurDemoComponent = new melatonin::BlurDemoComponent();
+    // blurDemoComponent->setBounds(100, 100, 600, 600);
+    // addAndMakeVisible(blurDemoComponent);
+
+    juce::Timer::callAfterDelay(300, [this] {showOnboardingWarning();});
 }
 
 ResonariumEditor::~ResonariumEditor()
@@ -261,4 +295,18 @@ void ResonariumEditor::resized()
     {
         c->resized();
     }
+}
+
+void ResonariumEditor::showOnboardingWarning()
+{
+    // juce::String msg;
+    //
+    // auto w = std::make_shared<gin::PluginAlertWindow> ("---- About ----", "aaa", juce::AlertWindow::NoIcon, this);
+    // w->addButton ("OK", 1, juce::KeyPress (juce::KeyPress::returnKey));
+    // w->setLookAndFeel (slProc.lf.get());
+    //
+    // w->runAsync (*this, [w] (int)
+    // {
+    //     w->setVisible (false);
+    // });
 }

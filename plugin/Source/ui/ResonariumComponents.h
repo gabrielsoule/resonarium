@@ -10,27 +10,6 @@
 #include "../Parameters.h"
 #include "../defines.h"
 
-// class ResonatorParameterRow : public gin::MultiParamComponent
-// {
-// public:
-//     ResonatorParameterRow(juce::String title, gin::Parameter::Ptr paramArray[], size_t numParams, int parameterWidth, int parameterHeight, int padding): paramArray(paramArray), numParams(numParams)
-//     {
-//         for (int i = 0; i < numParams; i++)
-//         {
-//             auto* control = new TextSlider(paramArray[i]);
-//             addAndMakeVisible(control);
-//             watchParam(paramArray[i]);
-//
-//         }
-//     }
-//
-//     gin::Parameter::Ptr* paramArray;
-//     int numParams;
-//     int parameterWidth;
-//     int parameterHeight;
-//     int padding;
-// };
-
 static constexpr float SPACING_X = 10; // how far apart are resonator columns?
 static constexpr float SPACING_Y_SMALL = 1;
 static constexpr float SPACING_Y_LARGE = 10;
@@ -39,14 +18,51 @@ static constexpr float PARAMETER_HEIGHT = 25;
 static constexpr float PARAMETER_TEXT_HEIGHT = 14;
 
 // inline juce::String pianoKeyboardSVG = "m79.398 7.1992h-58.797c-7.3984 0-13.5 6.1016-13.5 13.5v58.801c0 7.3984 6.1016 13.5 13.5 13.5h58.801c7.3984 0 13.5-6.1016 13.5-13.5l-0.003906-58.801c0-7.5-6-13.5-13.5-13.5zm-40.699 53.699c2.3008 0 4.3008-1.8984 4.3008-4.3008v-46.398h14v46.5c0 2.3008 1.8984 4.3008 4.3008 4.3008h2v29h-26.602v-29.102zm-28.598 18.602v-58.801c0-5.8008 4.6992-10.5 10.5-10.5h6.8008v46.5c0 2.3008 1.8984 4.3008 4.3008 4.3008h2l-0.003906 29h-13.098c-5.8008 0-10.5-4.6992-10.5-10.5zm79.797 0c0 5.8008-4.6992 10.5-10.5 10.5h-13.098v-29.102h2c2.3008 0 4.3008-1.8984 4.3008-4.3008v-46.398h6.8008c5.8008 0 10.5 4.6992 10.5 10.5z";
-inline juce::String pianoKeyboardSVG =
+static inline juce::String pianoKeyboardSVG =
     "m71.668 28.449h-43.336c-1.8359 0-3.332 1.4961-3.332 3.332v36.434c0 1.8359 1.4961 3.332 3.332 3.332h43.332c1.8398 0 3.332-1.4961 3.332-3.332l0.003906-36.43c0-1.8398-1.4961-3.3359-3.332-3.3359zm-31.395 38.934h-11.109l0.003907-34.766h8.3008v20.141h2.8047zm15.285 0h-11.121l0.003906-14.625h2.8047v-20.141h5.5078v20.141h2.8047zm15.273 0h-11.109l0.003906-14.625h2.8047v-20.141h8.3008z";
-inline juce::String unlockSVG =
+static inline juce::String unlockSVG =
     "M4 30.016v-14.016q0-0.832 0.576-1.408t1.44-0.576v-4q0-2.72 1.344-5.024t3.616-3.648 5.024-1.344q3.616 0 6.368 2.272t3.424 5.728h-4.16q-0.608-1.76-2.144-2.88t-3.488-1.12q-2.496 0-4.256 1.76t-1.728 4.256v4h16q0.8 0 1.408 0.576t0.576 1.408v14.016q0 0.832-0.576 1.408t-1.408 0.576h-20q-0.832 0-1.44-0.576t-0.576-1.408zM8 28h16v-9.984h-16v9.984z";
-inline juce::String lockSVG =
+static inline juce::String lockSVG =
     "M4 30.016q0 0.832 0.576 1.408t1.44 0.576h20q0.8 0 1.408-0.576t0.576-1.408v-14.016q0-0.832-0.576-1.408t-1.408-0.576v-4q0-2.048-0.8-3.872t-2.144-3.2-3.2-2.144-3.872-0.8q-2.72 0-5.024 1.344t-3.616 3.648-1.344 5.024v4q-0.832 0-1.44 0.576t-0.576 1.408v14.016zM8 28v-9.984h16v9.984h-16zM10.016 14.016v-4q0-2.496 1.728-4.256t4.256-1.76 4.256 1.76 1.76 4.256v4h-12z";
-inline juce::String chainSVG =
+static inline juce::String chainSVG =
     "M0 18.016q0 2.496 1.76 4.224t4.256 1.76h1.984q1.952 0 3.488-1.12t2.144-2.88h-7.616q-0.832 0-1.44-0.576t-0.576-1.408v-4q0-0.832 0.576-1.408t1.44-0.608h7.616q-0.608-1.76-2.144-2.88t-3.488-1.12h-1.984q-2.496 0-4.256 1.76t-1.76 4.256v4zM8 16q0 0.832 0.576 1.44t1.44 0.576h12q0.8 0 1.408-0.576t0.576-1.44-0.576-1.408-1.408-0.576h-12q-0.832 0-1.44 0.576t-0.576 1.408zM18.368 20q0.64 1.792 2.176 2.912t3.456 1.088h2.016q2.464 0 4.224-1.76t1.76-4.224v-4q0-2.496-1.76-4.256t-4.224-1.76h-2.016q-1.92 0-3.456 1.12t-2.176 2.88h7.648q0.8 0 1.408 0.608t0.576 1.408v4q0 0.832-0.576 1.408t-1.408 0.576h-7.648z";
+class ResonariumLogo : public juce::Component
+{
+public:
+    ResonariumLogo()
+    {
+        auto logoXml = juce::XmlDocument::parse(BinaryData::resonarium_logo_svg_svg);
+        drawableSVG = juce::Drawable::createFromSVG(*logoXml);
+        drawableSVG->setName("Logo Drawable");
+        addAndMakeVisible(drawableSVG.get());
+    }
+
+    void resized() override
+    {
+        //make the drawable fill the component
+        drawableSVG->setBounds(getLocalBounds());
+        drawableSVG->setTransformToFit(getLocalBounds().toFloat(), juce::RectanglePlacement::xLeft);
+    }
+
+    void lookAndFeelChanged() override
+    {
+        for (int i = 0; i < drawableSVG->getNumChildComponents(); ++i)
+        {
+            if (auto* path = dynamic_cast<juce::DrawablePath*>(drawableSVG->getChildComponent(i)))
+            {
+                path->setStrokeFill(juce::FillType(juce::Colours::white.withAlpha(0.7f)));
+            }
+        }
+    }
+
+    void paint(juce::Graphics& g) override
+    {
+        g.setColour(juce::Colours::green);
+        drawableSVG->paint(g);
+    }
+
+    std::unique_ptr<juce::Drawable> drawableSVG;
+};
 
 class CircleEnableButton : public gin::PluginButton
 {
@@ -115,6 +131,41 @@ public:
     bool showName;
 };
 
+class TitleBarDropShadow : public juce::Component
+{
+public:
+
+    TitleBarDropShadow()
+    {
+        setInterceptsMouseClicks(false, false);
+        shadow.setOpacity(1.0f);
+        shadow.setSpread(3);
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        // drop shadows get painted *before* the path
+        shadow.render (g, valueTrack);
+
+        g.setColour (juce::Colours::transparentWhite);
+        g.fillPath (valueTrack);
+    }
+
+    void resized()
+    {
+        valueTrack.clear();
+        valueTrack.addEllipse (30, 10, 100, 100);
+    }
+
+    void lookAndFeelChanged() override
+    {
+        shadow.setColor(findColour(ResonariumLookAndFeel::accentColourId));
+    }
+
+private:
+    juce::Path valueTrack;
+    melatonin::DropShadow shadow = { juce::Colours::purple, 110, { 0, 0 } };
+};
 
 class WaveguideResonatorComponent_V2 : public gin::MultiParamComponent
 {

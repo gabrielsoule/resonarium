@@ -18,7 +18,7 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
 
 //==============================================================================
 ResonariumProcessor::ResonariumProcessor() : gin::Processor(
-                                                 false), synth(*this)
+                                                 false, getOptions()), synth(*this)
 {
     auto sz = 0;
     for (auto i = 0; i < BinaryData::namedResourceListSize; i++)
@@ -198,7 +198,7 @@ void ResonariumProcessor::prepareToPlay(double newSampleRate, int newSamplesPerB
     synth.prepare({newSampleRate, static_cast<juce::uint32>(newSamplesPerBlock), 2});
     inputBuffer = juce::AudioBuffer<float>(2, newSamplesPerBlock);
     inputBuffer.clear();
-
+    reset();
     DBG("Resonarium instance preparing to play:");
     DBG("   Input channels: " + juce::String(getMainBusNumInputChannels()));
     DBG("   Output channels: " + juce::String(getMainBusNumOutputChannels()));

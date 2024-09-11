@@ -17,6 +17,7 @@ public:
     //==============================================================================
     void paint(juce::Graphics& g) override;
     void resized() override;
+    void showOnboardingWarning();
 
 private:
     ResonariumProcessor& proc;
@@ -24,9 +25,13 @@ private:
 
     // juce::TooltipWindow tooltipWindow;
     juce::ScopedMessageBox loudnessWarningBox;
+    SafePointer<gin::PluginAlertWindow> loudnessWarningBox_v2;
 
-    SafePointer<juce::ImageComponent> logo; //NYI TODO implement gradient logo, fow now, just text
+    SafePointer<juce::ImageComponent> logoImg; //NYI TODO implement gradient logo, fow now, just text
     SafePointer<juce::Label> logoText;
+    SafePointer<ResonariumLogo> logo;
+    SafePointer<juce::Label> versionText;
+
     SafePointer<gin::TriggeredScope> scope;
     std::vector<SafePointer<WaveguideResonatorBankParamBox>> resonatorBankParamBoxes;
     std::vector<SafePointer<ImpulseExciterParamBox>> impulseExciterParamBoxes;

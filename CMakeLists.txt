@@ -89,6 +89,7 @@ set_property(DIRECTORY APPEND PROPERTY LABELS Assets)
 
 file(GLOB_RECURSE binary_files CONFIGURE_DEPENDS
         "./plugin/Resources/resonarium_logo.png"
+        "./plugin/Resources/resonarium_logo_svg.svg"
         "./plugin/Resources/Presets/*.xml")
 
 juce_add_binary_data(${PLUGIN_NAME}_Assets SOURCES ${binary_files})
