@@ -41,8 +41,9 @@ private:
     std::vector<SafePointer<RandomLFOParamBox>> randomLfoParamBoxes;
     std::vector<SafePointer<MSEGParamBox>> msegParamBoxes;
     std::vector<SafePointer<ADSRParamBox>> envelopeParamBoxes;
-    SafePointer<MatrixBox> matrixBox;
-    SafePointer<ModSrcBox> modSrcBox;
+    SafePointer<MacroParamBox> macroParamBox;
+    SafePointer<MatrixParamBox> matrixParamBox;
+    SafePointer<ModSourceParamBox> modSourceParamBox;
 
     SafePointer<AnimatedScrollBarsViewport> viewport;
     SafePointer<Component> viewportContentComponent;

@@ -12,7 +12,7 @@
 class GraphicsUtils
 {
 public:
-    static void drawBracket(const juce::Graphics& g, float x, float startY, float endY)
+    static void drawBracketLeft(const juce::Graphics& g, float x, float startY, float endY)
     {
         juce::Path bracketPath;
         bracketPath.startNewSubPath(x, startY);
@@ -110,12 +110,6 @@ public:
         auto start = new gin::Knob(sampleParams.start);
         start->internalKnobReduction = 0;
         addControl(start, 2, 0);
-        // auto test1 = new gin::Knob(sampleParams.start);
-        // test1->internalKnobReduction = -0;
-        // addControl(test1, 3, 0);
-        // auto test2 = new gin::Knob(sampleParams.start);
-        // test2->internalKnobReduction = -0;
-        // addControl(test2, 4, 0);
     }
 
     void paint(juce::Graphics& g) override
@@ -274,6 +268,26 @@ public:
         cascadeFilterModeKnob = new gin::Knob(bankParams.cascadeFilterMode);
         addControl(cascadeFilterModeKnob);
 
+        topControlBracketLabel = new juce::Label("topControlBracketLabel", "WAVEGUIDE\nCONTROLS");
+        topControlBracketLabel->setJustificationType(juce::Justification::centred);
+        topControlBracketLabel->setFont(topControlBracketLabel->getFont().withHeight(17).withExtraKerningFactor(0.07f));
+        topControlBracketLabel->setEditable(false);
+        topControlBracketLabel->setColour(juce::Label::textColourId, textColour);
+        addAndMakeVisible(topControlBracketLabel);
+        topControlBracket = new BracketComponent(BracketComponent::Orientation::top);
+        addAndMakeVisible(topControlBracket);
+        bottomControlBracket = new BracketComponent(BracketComponent::Orientation::bottom);
+        addAndMakeVisible(bottomControlBracket);
+        bottomControlBracketLabel = new juce::Label("bottomControlBracketLabel", "CASCADE\nCONTROLS");
+        bottomControlBracketLabel->setJustificationType(juce::Justification::centred);
+        bottomControlBracketLabel->setFont(bottomControlBracketLabel->getFont().withHeight(17).withExtraKerningFactor(0.07f));
+        bottomControlBracketLabel->setEditable(false);
+        bottomControlBracketLabel->setColour(juce::Label::textColourId, textColour);
+        addAndMakeVisible(bottomControlBracketLabel);
+        controlAreaGlow = new GlowComponent();
+        addAndMakeVisible(controlAreaGlow);
+        controlAreaGlow->toBack();
+
         watchParam(bankParams.couplingMode);
     }
 
@@ -291,18 +305,34 @@ public:
         }
 
         float bankControlsX = 710;
-        float bankControlsY = BOX_HEADER_HEIGHT + 55;
+        float bankControlsY = BOX_HEADER_HEIGHT + 70;
+
+
+        topControlBracket->setBounds(bankControlsX - 1, bankControlsY - 5, KNOB_W * 2 + 1, 10);
+        topControlBracketLabel->setBounds(bankControlsX, bankControlsY - 50, KNOB_W * 2, 40);
 
         inputGainKnob->setBounds(bankControlsX, bankControlsY, KNOB_W, KNOB_H);
         inputMixKnob->setBounds(bankControlsX + KNOB_W, bankControlsY, KNOB_W, KNOB_H);
         outputGainKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + KNOB_H, KNOB_W, KNOB_H);
         couplingModeKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + 2 * KNOB_H, KNOB_W, KNOB_H);
 
-        cascadeAmountKnob->setBounds(bankControlsX, bankControlsY + 3.2 * (KNOB_H), KNOB_W, KNOB_H);
-        cascadeFilterKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 3.2 * (KNOB_H), KNOB_W, KNOB_H);
-        cascadeFilterResonanceKnob->setBounds(bankControlsX, bankControlsY + 4.2 * (KNOB_H), KNOB_W, KNOB_H);
-        cascadeFilterModeKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 4.2 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeAmountKnob->setBounds(bankControlsX, bankControlsY + 3.18 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeFilterKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 3.18 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeFilterResonanceKnob->setBounds(bankControlsX, bankControlsY + 4.18 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeFilterModeKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 4.18 * (KNOB_H), KNOB_W, KNOB_H);
 
+        bottomControlBracket->setBounds(bankControlsX -1, cascadeFilterModeKnob->getBounds().getBottom(), KNOB_W * 2 + 1, 10);
+        bottomControlBracketLabel->setBounds(bankControlsX, bottomControlBracket->getBounds().getBottom() + 3, KNOB_W * 2, 40);
+
+        controlAreaGlow->setBounds(juce::Rectangle<int>(topControlBracket->getBounds().getTopLeft(), bottomControlBracket->getBounds().getBottomRight()).expanded(50));
+        GlowComponent::GlowParameters glowParams;
+        glowParams.colour = juce::Colour(0xff775cff);
+        glowParams.radiusX = 20;
+        glowParams.radiusY = 100;
+        glowParams.opacity = 0.25;
+        glowParams.spread = 0;
+        glowParams.glowRadius = 80;
+        controlAreaGlow->setParameters(glowParams);
 
         //it's really annoying to position rotated text components, since the affine transforms affect the coordinates...
         //we just do it "by hand" here which is... also really annoying
@@ -332,6 +362,10 @@ public:
             cascadeFilterResonanceKnob->setVisible(showCascadeControls);
         if (cascadeFilterModeKnob != nullptr)
             cascadeFilterModeKnob->setVisible(showCascadeControls);
+        if (bottomControlBracket != nullptr)
+            bottomControlBracket->setVisible(showCascadeControls);
+        if (bottomControlBracketLabel != nullptr)
+            bottomControlBracketLabel->setVisible(showCascadeControls);
     }
 
     void paint(juce::Graphics& g) override
@@ -394,9 +428,9 @@ public:
         textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
         g.drawFittedText("MODE", textRect, juce::Justification::centredRight, 1);
 
-        GraphicsUtils::drawBracket(g, filterBlockBackground.getTopLeft().x - 80,
-                                   filterBlockBackground.getTopLeft().y + 2,
-                                   filterBlockBackground.getBottomLeft().y - 2);
+        GraphicsUtils::drawBracketLeft(g, filterBlockBackground.getTopLeft().x - 80,
+                                       filterBlockBackground.getTopLeft().y + 2,
+                                       filterBlockBackground.getBottomLeft().y - 2);
 
         g.setColour(juce::Colours::black);
         filterBlockBackground.translate(0, 4 * PARAMETER_HEIGHT + 3 * SPACING_Y_SMALL + SPACING_Y_LARGE);
@@ -411,9 +445,9 @@ public:
         textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
         g.drawFittedText("MODE", textRect, juce::Justification::centredRight, 1);
 
-        GraphicsUtils::drawBracket(g, filterBlockBackground.getTopLeft().x - 80,
-                                   filterBlockBackground.getTopLeft().y + 2,
-                                   filterBlockBackground.getBottomLeft().y - 2);
+        GraphicsUtils::drawBracketLeft(g, filterBlockBackground.getTopLeft().x - 80,
+                                       filterBlockBackground.getTopLeft().y + 2,
+                                       filterBlockBackground.getBottomLeft().y - 2);
     }
 
     int resonatorBankIndex;
@@ -433,6 +467,12 @@ public:
     gin::Knob* cascadeFilterKnob = nullptr;
     gin::Knob* cascadeFilterResonanceKnob = nullptr;
     gin::Knob* cascadeFilterModeKnob = nullptr;
+
+    juce::Label* topControlBracketLabel = nullptr;
+    BracketComponent* topControlBracket = nullptr;
+    BracketComponent* bottomControlBracket = nullptr;
+    juce::Label* bottomControlBracketLabel = nullptr;
+    GlowComponent* controlAreaGlow = nullptr;
 };
 
 class WaveguideResonatorBankParamBox : public gin::ParamBox
@@ -752,15 +792,54 @@ public:
     gin::ParamComponent::Ptr b = nullptr;
 };
 
-class ModSrcBox : public gin::ParamBox
+class MacroParamBox : public gin::ParamBox
 {
 public:
-    ModSrcBox(const juce::String& name, ResonariumProcessor& proc)
+    MacroParamBox(const juce::String& name, ResonariumProcessor& proc, std::array<gin::Parameter::Ptr, NUM_MACROS> macroParams) :
+        gin::ParamBox(name), proc(proc), macroParams(macroParams)
+    {
+        setName("macro");
+        addHeader({"MACROS", "SOURCES", "MATRIX"}, 0, proc.uiParams.modWindowSelect);
+        headerTabButtonWidth = 100;
+        for(int i = 0; i < NUM_MACROS; i++)
+        {
+            addControl(knobs[i] = new gin::Knob(macroParams[i]));
+            modSrcButtons[i] = new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMacro[i], false);
+            frame.addAndMakeVisible(modSrcButtons[i]);
+        }
+    }
+
+    void resized() override
+    {
+        ParamBox::resized();
+        //Some simple code to lay out the knobs and mod source buttons in an evenly spaced row
+        int availableWidth = getWidth() - NUM_MACROS * KNOB_W;
+        int knobSpacing = availableWidth / (NUM_MACROS + 1);
+        int yOffset = 45;
+
+        for (int i = 0; i < NUM_MACROS; i++)
+        {
+            knobs[i]->setBounds(knobSpacing * (i + 1) + KNOB_W * i, yOffset, KNOB_W, KNOB_H);
+            //center the 15x15 mod source button below the knob
+            modSrcButtons[i]->setBounds(knobSpacing * (i + 1) + KNOB_W * i + KNOB_W / 2 - 7, KNOB_H + 5 + yOffset, 15, 15);
+        }
+    }
+
+    ResonariumProcessor& proc;
+    std::array<gin::Knob*, NUM_MACROS> knobs;
+    std::array<gin::ModulationSourceButton*, NUM_MACROS> modSrcButtons;
+    std::array<gin::Parameter::Ptr, NUM_MACROS> macroParams;
+};
+
+class ModSourceParamBox : public gin::ParamBox
+{
+public:
+    ModSourceParamBox(const juce::String& name, ResonariumProcessor& proc)
         : gin::ParamBox(name), proc(proc)
     {
         setName("mod");
 
-        addHeader({"SOURCES", "MATRIX"}, 0, proc.uiParams.modWindowSelect);
+        addHeader({"MACROS", "SOURCES", "MATRIX"}, 1, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
         addControl(modSrcListComponent = new gin::ModSrcListBox(proc.modMatrix));
     }
@@ -775,15 +854,14 @@ public:
     ResonariumProcessor& proc;
 };
 
-//==============================================================================
-class MatrixBox : public gin::ParamBox
+class MatrixParamBox : public gin::ParamBox
 {
 public:
-    MatrixBox(const juce::String& name, ResonariumProcessor& proc)
+    MatrixParamBox(const juce::String& name, ResonariumProcessor& proc)
         : gin::ParamBox(name), proc(proc)
     {
         setName("mtx");
-        addHeader({"SOURCES", "MATRIX"}, 1, proc.uiParams.modWindowSelect);
+        addHeader({"MACROS","SOURCES", "MATRIX"}, 2, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
         addControl(modMatrixComponent = new gin::ModMatrixBox(proc, proc.modMatrix, 75));
     }

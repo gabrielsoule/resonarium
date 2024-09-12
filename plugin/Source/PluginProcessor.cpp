@@ -23,11 +23,11 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     auto sz = 0;
     for (auto i = 0; i < BinaryData::namedResourceListSize; i++)
     {
-        if (juce::String (BinaryData::originalFilenames[i]).endsWith (".xml"))
+        if (juce::String(BinaryData::originalFilenames[i]).endsWith(".xml"))
         {
-            if (auto data = BinaryData::getNamedResource (BinaryData::namedResourceList[i], sz))
+            if (auto data = BinaryData::getNamedResource(BinaryData::namedResourceList[i], sz))
             {
-                extractProgram (BinaryData::originalFilenames[i], data, sz);
+                extractProgram(BinaryData::originalFilenames[i], data, sz);
                 DBG("Loading built-in preset: " + juce::String (BinaryData::originalFilenames[i]));
             }
         }
@@ -117,14 +117,22 @@ void ResonariumProcessor::setupModMatrix()
                                                       false));
     }
 
+    for (int i = 0; i < NUM_MACROS; i++)
+    {
+        modSrcMacro.add(modMatrix.addMonoModSource(juce::String::formatted("macro%d", i + 1),
+                                                   juce::String::formatted("Macro %d", i + 1),
+                                                   false));
+    }
 
     for (int i = 0; i <= 119; i++)
     {
-        juce::String name = juce::MidiMessage::getControllerName (i);
+        juce::String name = juce::MidiMessage::getControllerName(i);
         if (name.isEmpty())
-            modSrcCC.add (modMatrix.addMonoModSource (juce::String::formatted ("cc%d", i), juce::String::formatted ("CC %d", i), false));
+            modSrcCC.add(modMatrix.addMonoModSource(juce::String::formatted("cc%d", i),
+                                                    juce::String::formatted("CC %d", i), false));
         else
-            modSrcCC.add (modMatrix.addMonoModSource (juce::String::formatted ("cc%d", i), juce::String::formatted ("CC %d ", i) + name, false));
+            modSrcCC.add(modMatrix.addMonoModSource(juce::String::formatted("cc%d", i),
+                                                    juce::String::formatted("CC %d ", i) + name, false));
     }
 
     for (auto pp : getPluginParameters())
@@ -147,7 +155,7 @@ void ResonariumProcessor::stateUpdated()
     DBG("Updating state FROM disk");
     modMatrix.stateUpdated(state);
 
-    for(int i = 0; i < NUM_MSEGS; i++)
+    for (int i = 0; i < NUM_MSEGS; i++)
     {
         juce::String msegName = "MSEG" + juce::String(i + 1);
         auto msegTree = state.getChildWithName(msegName);
@@ -178,9 +186,9 @@ void ResonariumProcessor::updateState()
 {
     DBG("Updating plugin state TO disk");
     modMatrix.updateState(state);
-    for(int i = 0; i < NUM_MSEGS; i++)
+    for (int i = 0; i < NUM_MSEGS; i++)
     {
-        auto msegTree = state.getOrCreateChildWithName ("MSEG" + juce::String(i + 1), nullptr);
+        auto msegTree = state.getOrCreateChildWithName("MSEG" + juce::String(i + 1), nullptr);
         synth.params.msegParams[i].msegData->toValueTree(msegTree);
     }
 }
@@ -216,14 +224,15 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     juce::ScopedNoDenormals noDenormals;
     inputBuffer.copyFrom(0, 0, buffer.getReadPointer(0), buffer.getNumSamples());
     inputBuffer.copyFrom(1, 0, buffer.getReadPointer(1), buffer.getNumSamples());
-    buffer.applyGain(std::cos(synth.params.voiceParams.externalInputExciterParams.mix->getProcValue() * juce::MathConstants<float>::halfPi));
+    buffer.applyGain(std::cos(
+        synth.params.voiceParams.externalInputExciterParams.mix->getProcValue() * juce::MathConstants<float>::halfPi));
     synth.startBlock();
     synth.renderNextBlock(buffer, midi, 0, buffer.getNumSamples());
     modMatrix.finishBlock(buffer.getNumSamples());
     synth.endBlock(buffer.getNumSamples());
 
     if (buffer.getNumSamples() <= scopeFifo.getFreeSpace() && buffer.getNumChannels() == scopeFifo.getNumChannels())
-        scopeFifo.write (buffer);
+        scopeFifo.write(buffer);
 }
 
 //==============================================================================

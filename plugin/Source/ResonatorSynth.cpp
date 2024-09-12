@@ -15,17 +15,17 @@ ResonatorSynth::ResonatorSynth(ResonariumProcessor& p) : proc(p)
     monoMSEGs.clear();
     msegData.clear();
 
-    for(int i = 0; i < NUM_LFOS; i++)
+    for (int i = 0; i < NUM_LFOS; i++)
     {
         monoLFOs[i].params = params.lfoParams[i];
     }
 
-    for(int i = 0; i < NUM_RANDOMS; i++)
+    for (int i = 0; i < NUM_RANDOMS; i++)
     {
         monoRandomLFOs[i].params = params.randomLfoParams[i];
     }
 
-    for(int i = 0; i < NUM_MSEGS; i++)
+    for (int i = 0; i < NUM_MSEGS; i++)
     {
         auto mseg = StereoMSEGWrapper(params.msegParams[i]);
         monoMSEGs.add(mseg);
@@ -47,13 +47,13 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
         monoLFOs[i].prepare(spec);
     }
 
-    for(int i = 0; i < NUM_RANDOMS; i++)
+    for (int i = 0; i < NUM_RANDOMS; i++)
     {
         monoRandomLFOs[i].reset();
         monoRandomLFOs[i].prepare(spec);
     }
 
-    for(int i = 0; i < NUM_MSEGS; i++)
+    for (int i = 0; i < NUM_MSEGS; i++)
     {
         monoMSEGs.getReference(i).prepare(spec);
     }
@@ -61,38 +61,6 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
 
 void ResonatorSynth::updateParameters()
 {
-    // Update Mono LFOs
-    // for (int i = 0; i < NUM_LFOS; i++)
-    // {
-    //     if (params.lfoParams[i].enabled->isOn())
-    //     {
-    //         gin::LFO::Parameters internalParams;
-    //
-    //         float freq = 0;
-    //         if (params.lfoParams[i].sync->getProcValue() > 0.0f)
-    //             freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
-    //                 toSeconds(proc.getPlayHead());
-    //         else
-    //             freq = proc.modMatrix.getValue(params.lfoParams[i].rate);
-    //
-    //         internalParams.waveShape = (gin::LFO::WaveShape)int(params.lfoParams[i].wave->getProcValue());
-    //         internalParams.frequency = freq;
-    //         internalParams.phase = proc.modMatrix.getValue(params.lfoParams[i].phase);
-    //         internalParams.offset = proc.modMatrix.getValue(params.lfoParams[i].offset);
-    //         internalParams.depth = proc.modMatrix.getValue(params.lfoParams[i].depth);
-    //         internalParams.delay = 0;
-    //         internalParams.fade = 0;
-    //
-    //         monoLFOs[i].setParameters(internalParams);
-    //         monoLFOs[i].process(currentBlockSize);
-    //         proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], monoLFOs[i].getOutput());
-    //     }
-    //     else
-    //     {
-    //         proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], 0);
-    //     }
-    // }
-
     for (int i = 0; i < NUM_LFOS; i++)
     {
         if (params.lfoParams[i].enabled->isOn())
@@ -115,13 +83,14 @@ void ResonatorSynth::updateParameters()
         }
     }
 
-    for(int i = 0; i < NUM_RANDOMS; i++)
+    for (int i = 0; i < NUM_RANDOMS; i++)
     {
         if (params.randomLfoParams[i].enabled->isOn())
         {
             float rate = 0;
             if (params.randomLfoParams[i].sync->getProcValue() > 0.0f)
-                rate = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.randomLfoParams[i].beat->getProcValue())].
+                rate = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(
+                        params.randomLfoParams[i].beat->getProcValue())].
                     toSeconds(proc.getPlayHead());
             else
                 rate = proc.modMatrix.getValue(params.randomLfoParams[i].rate);
@@ -132,9 +101,9 @@ void ResonatorSynth::updateParameters()
         }
     }
 
-    for(int i = 0; i < NUM_MSEGS; i++)
+    for (int i = 0; i < NUM_MSEGS; i++)
     {
-        if(params.msegParams[i].enabled->isOn())
+        if (params.msegParams[i].enabled->isOn())
         {
             float rate = 0;
             if (params.msegParams[i].sync->getProcValue() > 0.0f)
@@ -154,35 +123,11 @@ void ResonatorSynth::updateParameters()
         }
     }
 
-    // for (int i = 0; i < NUM_MSEGS; i++)
-    // {
-    //     if (params.msegParams[i].enabled->isOn())
-    //     {
-    //         gin::MSEG::Parameters internalParams;
-    //
-    //         float freq = 0;
-    //         if (params.msegParams[i].sync->getProcValue() > 0.0f)
-    //             freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.msegParams[i].beat->getProcValue())].
-    //                 toSeconds(proc.getPlayHead());
-    //         else
-    //             freq = proc.modMatrix.getValue(params.msegParams[i].rate);
-    //
-    //         internalParams.frequency = freq;
-    //         internalParams.phase = proc.modMatrix.getValue(params.msegParams[i].phase);
-    //         internalParams.offset = proc.modMatrix.getValue(params.msegParams[i].offset);
-    //         internalParams.depth = proc.modMatrix.getValue(params.msegParams[i].depth);
-    //         internalParams.delay = 0;
-    //         internalParams.fade = 0;
-    //
-    //         monoMSEGs.getReference(i).setParameters(internalParams);
-    //         monoLFOs[i].process(currentBlockSize);
-    //         proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], monoMSEGs.getReference(i).getOutput());
-    //     }
-    //     else
-    //     {
-    //         proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], 0);
-    //     }
-    // }
+    for(int i = 0; i < NUM_MACROS; i++)
+    {
+        proc.modMatrix.setMonoValue(proc.modSrcMacro[i], proc.modMatrix.getValue(params.macroParams[i]), 0);
+        proc.modMatrix.setMonoValue(proc.modSrcMacro[i], proc.modMatrix.getValue(params.macroParams[i]), 1);
+    }
 }
 
 void ResonatorSynth::renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples)
@@ -194,7 +139,7 @@ void ResonatorSynth::renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, i
 
 void ResonatorSynth::fillExtInExciterBuffers(const juce::AudioBuffer<float>& buffer)
 {
-    for(auto v : voices)
+    for (auto v : voices)
     {
         // dynamic_cast<ResonatorVoice*>(v)->extInExciter->fillInputBuffer(buffer);
     }
@@ -203,7 +148,7 @@ void ResonatorSynth::fillExtInExciterBuffers(const juce::AudioBuffer<float>& buf
 void ResonatorSynth::panic()
 {
     //kill voices and reset
-    for(auto v : voices)
+    for (auto v : voices)
     {
         stopVoiceFastKill(v, v->getCurrentlyPlayingNote(), false);
     }

@@ -24,6 +24,7 @@
 #define NUM_ENVELOPES 4
 #define NUM_RANDOMS 4
 #define NUM_MSEGS 4
+#define NUM_MACROS 6
 
 //effects
 #define MAX_DELAY_IN_SECONDS 4.0f

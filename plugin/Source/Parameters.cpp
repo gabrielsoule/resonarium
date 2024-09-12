@@ -794,7 +794,7 @@ void DistortionParams::setup(ResonariumProcessor& p)
 
     paramC = p.addExtParam("distortionParamC", "Distortion Param C", "Param C", "",
                            {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-                            0.0f);
+                           0.0f);
 
     paramD = p.addExtParam("distortionParamD", "Distortion Param D", "Param D", "",
                            {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
@@ -944,6 +944,13 @@ void SynthParams::setup(ResonariumProcessor& p)
         msegParams[i].setup(p, i);
         voiceParams.msegParams[i] = msegParams[i];
     }
+
+    for (int i = 0; i < NUM_MACROS; i++)
+    {
+        macroParams[i] = p.addExtParam("macro" + std::to_string(i + 1), "Macro " + std::to_string(i + 1), "Macro " + std::to_string(i + 1), "",
+                                       {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
+                                       0.0f);
+    }
 }
 
 void UIParams::setup(ResonariumProcessor& p)
@@ -969,7 +976,7 @@ void UIParams::setup(ResonariumProcessor& p)
                                0.0f, gin::SmoothingType::linear);
 
     modWindowSelect = p.addIntParam("uiActiveModWindow", "Mod Window", "", "",
-                                    {0.0f, 1, 1.0f, 1.0f},
+                                    {0.0f, 2.0f, 1.0f, 1.0f},
                                     0.0f, gin::SmoothingType::linear);
 
     bypassResonators = p.addIntParam("uiBypassResonators", "BypassResonators", "", "",

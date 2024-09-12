@@ -35,7 +35,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     logoText->setJustificationType(juce::Justification::centredLeft);
     logoText->setBounds(50, 0, 210, 40);
     logoText->setFont(logoText->getFont().withHeight(21.0f).withExtraKerningFactor(0.22f));
-    logoText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.7f));
+    logoText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.85f));
     addAndMakeVisible(logoText);
 
     versionText = new juce::Label();
@@ -149,21 +149,25 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                        PARAM_BOX_XSMALL_HEIGHT * 1.5f);
     }
 
-    matrixBox = new MatrixBox("MATRIX", proc);
-    addAndMakeVisible(matrixBox);
-    matrixBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
+    macroParamBox = new MacroParamBox("MACROS", proc, proc.synth.params.macroParams);
+    addAndMakeVisible(macroParamBox);
+    macroParamBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
                          40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH - 1,
                          PARAM_BOX_XSMALL_HEIGHT * 1.5f);
 
-    modSrcBox = new ModSrcBox("SOURCES", proc);
-    addAndMakeVisible(modSrcBox);
-    modSrcBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
+    matrixParamBox = new MatrixParamBox("MATRIX", proc);
+    addAndMakeVisible(matrixParamBox);
+    matrixParamBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
+                         40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH - 1,
+                         PARAM_BOX_XSMALL_HEIGHT * 1.5f);
+
+    modSourceParamBox = new ModSourceParamBox("SOURCES", proc);
+    addAndMakeVisible(modSourceParamBox);
+    modSourceParamBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
                          40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH - 1,
                          PARAM_BOX_XSMALL_HEIGHT * 1.5f);
 
     //Set up the scrollable effects column
-
-    int scrollbarThickness = 4;
     juce::Rectangle<int> effectsColumn = juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
                                                               40,
                                                               EXCITER_BOX_WIDTH,
@@ -203,6 +207,11 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     filter2ParamBox = new SVFParamBox("Filter 2", proc, proc.synth.params.effectChainParams.filterParams[1]);
     filter2ParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
     viewportContentComponent->addAndMakeVisible(filter2ParamBox);
+
+    //compute a rectangle that is the size of all the components in the viewport
+    float scrollableAreaFinalHeight = effectsColumnLocal.getY();
+    viewportContentComponent->setBounds(viewportContentComponent->getBounds().withHeight(scrollableAreaFinalHeight + PARAM_BOX_XSMALL_HEIGHT));
+
 
     viewport = new AnimatedScrollBarsViewport();
     viewport->setViewedComponent(viewportContentComponent);
@@ -259,7 +268,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                                                    .withIconType (juce::MessageBoxIconType::WarningIcon)
                                                    .withTitle ("WARNING - PROTECT YOUR EARS! ")
                                                    .withMessage (
-                                                       "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\n\nUnder certain configurations, undesirable positive feedback loops can manifest. These may produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level.\n\nIf you do not do so, you may be unpredictably exposed to dangerously loud audio.")
+                                                       "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\n\nCertain parameter configurations may induce undesirable positive feedback loops. These often produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level. \n\nIf you do not do so, you may be unpredictably exposed to dangerously loud audio.")
                                                    .withButton ("I understand and have taken appropriate action!"),
                                                nullptr);
 

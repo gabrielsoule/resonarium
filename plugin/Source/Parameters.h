@@ -444,7 +444,7 @@ struct SynthParams
     std::array<RandomLFOParams, NUM_LFOS> randomLfoParams;
     std::array<ADSRParams, NUM_ENVELOPES> adsrParams;
     std::array<MSEGParams, NUM_MSEGS> msegParams;
-
+    std::array<gin::Parameter::Ptr, NUM_MACROS> macroParams;
     EffectChainParams effectChainParams;
 
     SynthParams() = default;

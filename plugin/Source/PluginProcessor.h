@@ -42,7 +42,8 @@ public:
         modSrcPolyENV,
         modSrcMonoMSEG,
         modSrcPolyMSEG,
-        modSrcCC;
+        modSrcCC,
+        modSrcMacro;
     //contains all the parameters that a voice needs modulated polyphonically (which is almost all of 'em)
     UIParams uiParams;
     gin::AudioFifo scopeFifo { 2, 44100 };
