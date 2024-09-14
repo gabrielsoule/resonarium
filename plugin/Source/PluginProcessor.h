@@ -4,7 +4,6 @@
 
 #include "ResonatorSynth.h"
 #include "Parameters.h"
-#include "util/TooltipManager.h"
 
 //==============================================================================
 class ResonariumProcessor : public gin::Processor
@@ -47,7 +46,6 @@ public:
     //contains all the parameters that a voice needs modulated polyphonically (which is almost all of 'em)
     UIParams uiParams;
     gin::AudioFifo scopeFifo { 2, 44100 };
-    TooltipManager tooltips;
 
     //A copy of the input buffer, which is accessed by Ext. In exciters.
     juce::AudioBuffer<float> inputBuffer;

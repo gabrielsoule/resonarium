@@ -20,6 +20,23 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
 ResonariumProcessor::ResonariumProcessor() : gin::Processor(
                                                  false, getOptions()), synth(*this)
 {
+    lf = std::make_unique<ResonariumLookAndFeel>();
+    //Load tooltips from binary data
+    int size = BinaryData::tooltips_jsonSize;
+    const char* jsonData = BinaryData::tooltips_json;
+
+    if (jsonData != nullptr)
+    {
+        juce::String jsonContent(jsonData, size);
+        getTooltipManager().loadFromJson(juce::JSON::parse(jsonContent));
+    }
+    else
+    {
+        juce::Logger::writeToLog("Failed to load tooltips.json from BinaryData");
+        jassertfalse;
+    }
+
+    //Load built-in presets from binary data
     auto sz = 0;
     for (auto i = 0; i < BinaryData::namedResourceListSize; i++)
     {
@@ -33,11 +50,10 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
         }
     }
 
-    lf = std::make_unique<ResonariumLookAndFeel>();
-
     uiParams.setup(*this);
 
-    //Synth setup
+    //Setup the synth class
+    synth.setupParameters();
     synth.enableLegacyMode();
     synth.setVoiceStealingEnabled(true);
     synth.setMPE(true);
@@ -48,7 +64,6 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
         synth.addVoice(voice);
         voice->id = i;
     }
-
     setupModMatrix(); //set up the modulation matrix
     init(); //internal init
     // testFilter(0.2,0.1, true);

@@ -10,6 +10,11 @@
 
 ResonatorSynth::ResonatorSynth(ResonariumProcessor& p) : proc(p)
 {
+
+}
+
+void ResonatorSynth::setupParameters()
+{
     params.setup(proc);
 
     monoMSEGs.clear();

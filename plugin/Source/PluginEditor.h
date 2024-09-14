@@ -33,7 +33,7 @@ private:
     SafePointer<juce::Label> versionText;
 
     SafePointer<gin::TriggeredScope> scope;
-    std::vector<SafePointer<WaveguideResonatorBankParamBox>> resonatorBankParamBoxes;
+    std::vector<SafePointer<WaveguideResonatorBankParamBox_V2>> resonatorBankParamBoxes;
     std::vector<SafePointer<ImpulseExciterParamBox>> impulseExciterParamBoxes;
     std::vector<SafePointer<NoiseExciterParamBox>> noiseExciterParamBoxes;
     std::vector<SafePointer<ImpulseTrainExciterParamBox>> impulseTrainExciterParamBoxes;

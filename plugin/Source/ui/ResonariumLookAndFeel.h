@@ -32,6 +32,8 @@ public:
                        int buttonX, int buttonY, int buttonW, int buttonH,
                        juce::ComboBox&) override;
 
+    void drawTooltip(juce::Graphics& g, const juce::String& text, int width, int height) override;
+
     void positionComboBoxText (juce::ComboBox&, juce::Label&) override;
 
     void drawTextEditorOutline (juce::Graphics&, int width, int height, juce::TextEditor&) override;

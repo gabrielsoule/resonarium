@@ -19,6 +19,7 @@ class ResonatorSynth : public gin::Synthesiser
 {
 public:
     ResonatorSynth(ResonariumProcessor& p);
+    void setupParameters();
     void prepare(const juce::dsp::ProcessSpec& spec);
     void updateParameters();
     void renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;

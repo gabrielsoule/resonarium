@@ -1,5 +1,7 @@
 #include "ResonariumLookAndFeel.h"
 
+#include "juce_gui_basics/detail/juce_LookAndFeelHelpers.h"
+
 ResonariumLookAndFeel::ResonariumLookAndFeel()
 {
     typeface = juce::Typeface::createSystemTypefaceFor (gin::Resources::BarlowThin_ttf, gin::Resources::BarlowThin_ttfSize);
@@ -377,6 +379,24 @@ void ResonariumLookAndFeel::drawComboBox (juce::Graphics& g, int width, int heig
 
     g.setColour (box.findColour (juce::ComboBox::outlineColourId));
     g.drawRoundedRectangle (boxBounds.toFloat(), boxBounds.getHeight() / 2.0f, 1.0f);
+}
+
+void ResonariumLookAndFeel::drawTooltip(juce::Graphics& g, const juce::String& text, int width, int height)
+{
+    juce::Rectangle<int> bounds (width, height);
+    auto cornerSize = 5.0f;
+
+    g.setColour (findColour(backgroundColourId));
+    g.fillRoundedRectangle (bounds.toFloat(), cornerSize);
+
+    g.setColour (findColour (accentColourId));
+    g.drawRoundedRectangle (bounds.toFloat().reduced (0.5f, 0.5f), 0, 1.0f);
+
+    juce::detail::LookAndFeelHelpers::layoutTooltipText (getDefaultMetricsKind(), text, findColour (juce::TooltipWindow::textColourId))
+        .draw (g, { static_cast<float> (width), static_cast<float> (height) });
+    // g.setColour(juce::Colours::white.withAlpha(0.8f));
+    // g.setFont(defaultFont.withHeight(14).withExtraKerningFactor(0.05f));
+    // g.drawFittedText(text, bounds.reduced(5, 0), juce::Justification::centredLeft, 50);
 }
 
 void ResonariumLookAndFeel::positionComboBoxText (juce::ComboBox& box, juce::Label& label)

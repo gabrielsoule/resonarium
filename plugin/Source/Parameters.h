@@ -124,20 +124,6 @@ struct WaveguideResonatorBankParams
     void setup(ResonariumProcessor& p, int index);
 };
 
-struct ModalResonatorBankParams
-{
-    int index = -1;
-    std::array<gin::Parameter::Ptr, NUM_MODAL_RESONATORS> enabled;
-    std::array<gin::Parameter::Ptr, NUM_MODAL_RESONATORS> harmonicMultiplier;
-    std::array<gin::Parameter::Ptr, NUM_MODAL_RESONATORS> harmonicInSemitones;
-    std::array<gin::Parameter::Ptr, NUM_MODAL_RESONATORS> decay;
-    std::array<gin::Parameter::Ptr, NUM_MODAL_RESONATORS> gain;
-
-    ModalResonatorBankParams() = default;
-
-    void setup(ResonariumProcessor& p, int index);
-};
-
 struct ImpulseExciterParams
 {
     int index = -1;
@@ -419,7 +405,6 @@ struct VoiceParams
     SampleExciterParams sampleExciterParams;
 
     std::array<WaveguideResonatorBankParams, NUM_WAVEGUIDE_RESONATOR_BANKS> waveguideResonatorBankParams;
-    std::array<ModalResonatorBankParams, NUM_MODAL_RESONATOR_BANKS> modalResonatorBankParams;
 
     std::array<LFOParams, NUM_LFOS> lfoParams;
     std::array<RandomLFOParams, NUM_RANDOMS> randomLfoParams;

@@ -5,7 +5,6 @@
 
 #include <JuceHeader.h>
 #include "Exciters.h"
-#include "ModalResonatorBank.h"
 #include "WaveguideResonatorBank.h"
 #include "dsp/ResonariumEffectChain.h"
 #include "util/RandomLFO.h"

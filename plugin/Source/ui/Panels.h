@@ -154,57 +154,6 @@ public:
     ExternalInputExciterParams extInParams;
 };
 
-class ModalResonatorBankParamBox : public gin::ParamBox
-{
-public:
-    ModalResonatorBankParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum,
-                               ModalResonatorBankParams bankParams) :
-        gin::ParamBox(name), resonatorNum(resonatorNum), bankParams(bankParams), uiParams(proc.uiParams)
-    {
-        setName("modalResonatorBankParams " + juce::String(resonatorNum));
-        this->headerTabButtonWidth = 150;
-        addHeader({"MODAL 1", "WAVEGUIDE 1", "MODAL 2", "WAVEGUIDE 2"}, resonatorNum, uiParams.resonatorBankSelect);
-        for (int i = 0; i < NUM_MODAL_RESONATORS; i++)
-        {
-            auto* resonatorComponent = new ModalResonatorComponent(bankParams, i);
-            resonatorComponents.add(resonatorComponent);
-            addAndMakeVisible(resonatorComponent);
-        }
-    }
-
-    void resized() override
-    {
-        ParamBox::resized();
-        juce::Rectangle<int> resonatorsArea = getLocalBounds();
-        resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
-        resonatorsArea.setHeight(RESONATOR_BANK_BOX_HEIGHT);
-        resonatorsArea.removeFromLeft(100);
-        for (int i = 0; i < NUM_MODAL_RESONATORS; i++)
-        {
-            resonatorsArea.removeFromLeft(7);
-            resonatorComponents[i]->setBounds(resonatorsArea.removeFromLeft(KNOB_W_SMALL));
-        }
-    }
-
-
-    void paint(juce::Graphics& g) override
-    {
-        ParamBox::paint(g);
-        // juce::Path path;
-        // path.startNewSubPath(30, 30);
-        // path.lineTo(30, 70);
-        // path.quadraticTo(30, 100, 60, 100);
-        // path.addArrow(juce::Line<float>(100, 100, 200, 200), 3, 5, 5);
-        // g.setColour(juce::Colours::blue);
-        // g.strokePath(path, juce::PathStrokeType(5.0f));
-    }
-
-    int resonatorNum;
-    juce::Array<ModalResonatorComponent*> resonatorComponents;
-    ModalResonatorBankParams bankParams;
-    UIParams uiParams;
-};
-
 class WaveguideResonatorBankParamBox_V2 : public gin::ParamBox
 {
 public:
@@ -473,47 +422,6 @@ public:
     BracketComponent* bottomControlBracket = nullptr;
     juce::Label* bottomControlBracketLabel = nullptr;
     GlowComponent* controlAreaGlow = nullptr;
-};
-
-class WaveguideResonatorBankParamBox : public gin::ParamBox
-{
-public:
-    WaveguideResonatorBankParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum,
-                                   WaveguideResonatorBankParams bankParams) :
-        gin::ParamBox(name), resonatorNum(resonatorNum), bankParams(bankParams), uiParams(proc.uiParams)
-    {
-        setName("waveguideResonatorBankParams " + juce::String(resonatorNum));
-        this->headerTabButtonWidth = 150;
-        addHeader({"MODAL 1", "WAVEGUIDE 1", "MODAL 2", "WAVEGUIDE 2"}, resonatorNum, uiParams.resonatorBankSelect);
-        auto* select = new gin::Select(bankParams.couplingMode);
-        addControl(select);
-        for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
-        {
-            WaveguideResonatorComponent* resonatorComponent = new WaveguideResonatorComponent(
-                bankParams.resonatorParams[i]);
-            resonatorComponents.add(resonatorComponent);
-            addAndMakeVisible(resonatorComponent);
-        }
-    }
-
-    void resized() override
-    {
-        ParamBox::resized();
-        juce::Rectangle<int> resonatorsArea = getLocalBounds();
-        resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
-        resonatorsArea.setHeight(RESONATOR_BANK_BOX_HEIGHT);
-        resonatorsArea.removeFromLeft(100);
-        for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
-        {
-            resonatorsArea.removeFromLeft(7);
-            resonatorComponents[i]->setBounds(resonatorsArea.removeFromLeft(KNOB_W_SMALL));
-        }
-    }
-
-    int resonatorNum;
-    juce::Array<WaveguideResonatorComponent*> resonatorComponents;
-    WaveguideResonatorBankParams bankParams;
-    UIParams uiParams;
 };
 
 class ADSRParamBox : public gin::ParamBox
@@ -804,6 +712,8 @@ public:
         for(int i = 0; i < NUM_MACROS; i++)
         {
             addControl(knobs[i] = new gin::Knob(macroParams[i]));
+            knobs[i]->getSlider().setTooltip("Test Tooltip: Loremr, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. AAA BBB CCC DDD EEE FFF GGG HHH III JJJ. Foo bar baz.");
+            // knobs[i]->getSlider().setTooltip("This is a test tooltip,it doesn't do much");f
             modSrcButtons[i] = new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMacro[i], false);
             frame.addAndMakeVisible(modSrcButtons[i]);
         }
@@ -813,15 +723,16 @@ public:
     {
         ParamBox::resized();
         //Some simple code to lay out the knobs and mod source buttons in an evenly spaced row
-        int availableWidth = getWidth() - NUM_MACROS * KNOB_W;
+        int macroKnobWidth = 57;
+        int availableWidth = getWidth() - NUM_MACROS * macroKnobWidth;
         int knobSpacing = availableWidth / (NUM_MACROS + 1);
-        int yOffset = 45;
+        int yOffset = 38;
 
         for (int i = 0; i < NUM_MACROS; i++)
         {
-            knobs[i]->setBounds(knobSpacing * (i + 1) + KNOB_W * i, yOffset, KNOB_W, KNOB_H);
+            knobs[i]->setBounds(knobSpacing * (i + 1) + macroKnobWidth * i, yOffset, macroKnobWidth, KNOB_H * 1.1);
             //center the 15x15 mod source button below the knob
-            modSrcButtons[i]->setBounds(knobSpacing * (i + 1) + KNOB_W * i + KNOB_W / 2 - 7, KNOB_H + 5 + yOffset, 15, 15);
+            modSrcButtons[i]->setBounds(knobSpacing * (i + 1) + macroKnobWidth * i + macroKnobWidth / 2 - 7, KNOB_H * 1.1 + 10 + yOffset, 15, 15);
         }
     }
 

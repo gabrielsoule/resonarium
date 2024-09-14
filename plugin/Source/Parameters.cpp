@@ -136,7 +136,7 @@ void MultiFilterParams::setup(ResonariumProcessor& p, juce::String prefix)
 
     type = p.addExtParam(prefix + "filterType", prefix + " Filter Type", "Filter", "",
                          {0.0f, 5.0f, 1.0f, 1.0f},
-                         0.0f, 0.0f, filterTextFunction);
+                         0.0f, 0.0f, "", filterTextFunction);
     frequency = p.addExtParam(prefix + "frequency", prefix + " Frequency ", "Freq", "Hz",
                               {20.0f, 20000.0f, 0.0f, 0.4f},
                               1000.0f, 0.0f);
@@ -286,72 +286,41 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
 
     couplingMode = p.addExtParam("couplingMode" + suffix, "Coupling Mode" + suffix, "Coupling", "",
                                  {0.0, 2.0, 1.0, 1.0f}, 0.0f,
-                                 gin::SmoothingType::linear, couplingModeTextFunction);
+                                 gin::SmoothingType::linear, "resonatorbank.coupling", couplingModeTextFunction);
 
     inputGain = p.addExtParam("inputGain" + suffix, "Input Gain" + suffix, "Gain In", "dB",
                               {-100.0, 100.0, 0.0, 1.0f}, 0.0f,
-                              gin::SmoothingType::linear);
+                              gin::SmoothingType::linear, "resonatorbank.inputgain");
     inputGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
     //input mix between the exciter and the previous resonator bank
     inputMix = p.addExtParam("inputMix" + suffix, "Input Mix" + suffix, "Input Mix", "",
                              {0.0, 1.0, 0.01, 1.0f}, 0.0f,
-                             gin::SmoothingType::linear);
+                             gin::SmoothingType::linear, "resonatorbank.inputmix");
 
     outputGain = p.addExtParam("outputGain" + suffix, "Output Gain" + suffix, "Gain Out", "dB",
                                {-100.0, 100.0, 0.0, 1.0f}, 0.0f,
-                               gin::SmoothingType::linear);
+                               gin::SmoothingType::linear, "resonatorbank.outputgain");
     outputGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
     cascadeLevel = p.addExtParam("cascadeAmount" + suffix, "Cascade Amount" + suffix, "Amount", "",
                                  {-1.0, 1.0, 0.01, 1.0f}, 0.0f,
-                                 gin::SmoothingType::linear);
+                                 gin::SmoothingType::linear, "resonatorbank.cascadeamount");
 
-    //cutoff
     cascadeFilterCutoff = p.addExtParam("cascadeFilterCutoff" + suffix, "Cascade Filter Cutoff" + suffix, "Cutoff",
                                         "Hz",
                                         {20.0f, 20000.0f, 0.0f, 0.4f}, 3000.0f,
-                                        gin::SmoothingType::linear);
+                                        gin::SmoothingType::linear, "resonatorbank.cascadefiltercutoff");
 
     cascadeFilterResonance = p.addExtParam("cascadeFilterResonance" + suffix, "Cascade Filter Resonance" + suffix,
                                            "Res", "",
                                            {0.01f, 800.0f, 0.0f, 0.4f}, 1.0f / std::sqrt(2.0f),
-                                           gin::SmoothingType::linear);
+                                           gin::SmoothingType::linear, "resonatorbank.cascadefilterresonance");
 
     cascadeFilterMode = p.addExtParam("cascadeFilterMode" + suffix, "Cascade Filter Mode" + suffix, "Mode", "",
                                       {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
-                                      0.0f);
+                                      0.0f, "resonatorbank.cascadefiltermode");
 }
-
-void ModalResonatorBankParams::setup(ResonariumProcessor& p, int index)
-{
-    jassert(index >= 0 && index < NUM_WAVEGUIDE_RESONATOR_BANKS);
-    this->index = index;
-
-    juce::String bankSuffix = " mb" + std::to_string(index);
-
-    for (int i = 0; i < NUM_MODAL_RESONATORS; i++)
-    {
-        juce::String resonatorSuffix = bankSuffix + "r" + juce::String(i);
-        enabled[i] = p.addExtParam("enabled" + resonatorSuffix, "Enabled" + resonatorSuffix, "On/Off", " ",
-                                   {0.0, 1.0, 1.0, 1.0f}, 0.0f,
-                                   gin::SmoothingType::linear);
-        harmonicInSemitones[i] = p.addExtParam("pitchOffsetSemis" + resonatorSuffix, "Pitch Offset" + resonatorSuffix,
-                                               "Pitch", " st",
-                                               {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
-                                               0.0f);
-        decay[i] = p.addExtParam("decay" + resonatorSuffix, "Decay " + resonatorSuffix, "Decay", "",
-                                 {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-                                 gin::SmoothingType::linear);
-        decay[i]->conversionFunction = [](const float x) { return x * 2.0f; };
-
-        gain[i] = p.addExtParam("gain" + resonatorSuffix, "Gain" + resonatorSuffix, "Gain", "dB",
-                                {-100.0f, 12.0f, 0.0f, 1.0f}, 0.0f,
-                                0.0f);
-        gain[i]->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
-    }
-}
-
 
 void ImpulseExciterParams::setup(ResonariumProcessor& p, int index)
 {
@@ -411,7 +380,7 @@ void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
 
     this->mode = p.addExtParam(prefix + "mode", prefix + " Mode", "Mode", "",
                                {0.0f, 3.0f, 1.0f, 1.0f}, 0.0f,
-                               0.0f, impulseTrainExciterModeTextFunction);
+                               0.0f, "", impulseTrainExciterModeTextFunction);
 
     this->rate = p.addExtParam(prefix + "rate", prefix + " Rate", "Rate", "Hz",
                                {0.1f, 1000.0f, 0.01f, 0.4f}, 1.0f,
@@ -444,7 +413,7 @@ void ExternalInputExciterParams::setup(ResonariumProcessor& p)
 
     enabled = p.addExtParam("extInEnable", "Ext. In Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, enableTextFunction);
+                            0.0f, "", enableTextFunction);
 
     gain = p.addExtParam("extInGain", "Ext. In Gain", "Gain", "dB",
                          {-100.0f, 24.0f, 0.0f, 4.0f}, 0.0f,
@@ -462,7 +431,7 @@ void SampleExciterParams::setup(ResonariumProcessor& p)
 
     enabled = p.addExtParam("sampleEnable", "Sample Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, enableTextFunction);
+                            0.0f, "", enableTextFunction);
 
     gain = p.addExtParam("sampleGain", "Sample Gain", "Gain", "dB",
                          {-100.0f, 24.0f, 0.0f, 4.0f}, 0.0f,
@@ -486,19 +455,19 @@ void LFOParams::setup(ResonariumProcessor& p, int index)
 
     enabled = p.addExtParam(prefix + "enable", prefix + "Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, enableTextFunction);
+                            0.0f, "", enableTextFunction);
 
     sync = p.addIntParam(prefix + "sync", prefix + "Sync", "Sync", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, enableTextFunction);
+                         0.0f, "", enableTextFunction);
 
     retrig = p.addIntParam(prefix + "retrig", prefix + "Retrig", "Retrig", "",
                            {0.0f, 1.0f, 1.0f, 1.0f}, 1.0f,
-                           0.0f, enableTextFunction);
+                           0.0f, "", enableTextFunction);
 
     wave = p.addIntParam(prefix + "wave", prefix + "Wave", "Wave", "",
                          {1.0f, 17.0f, 1.0f, 1.0f}, 1.0f,
-                         0.0f, lfoTextFunction);
+                         0.0f, "", lfoTextFunction);
 
     rate = p.addExtParam(prefix + "rate", prefix + "Rate", "Rate", "Hz",
                          {0.0f, 200.0f, 0.0f, 0.3f},
@@ -506,7 +475,7 @@ void LFOParams::setup(ResonariumProcessor& p, int index)
 
     beat = p.addIntParam(prefix + "beat", prefix + "Beat", "Beat", "",
                          {0.0f, float(notes.size() - 1), 1.0f, 1.0f},
-                         13.0f, 0.0f, durationTextFunction);
+                         13.0f, 0.0f, "", durationTextFunction);
 
     depth = p.addExtParam(prefix + "depth", prefix + "Depth", "Depth", "",
                           {-1.0f, 1.0f, 0.0f, 1.0f},
@@ -543,15 +512,15 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
 
     enabled = p.addExtParam(prefix + "enable", prefix + "Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, enableTextFunction);
+                            0.0f, "", enableTextFunction);
 
     mode = p.addIntParam(prefix + "mode", prefix + "Mode", "Mode", "",
                          {0.0f, 2.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, randomLFOModeTextFunction);
+                         0.0f, "", randomLFOModeTextFunction);
 
     sync = p.addIntParam(prefix + "sync", prefix + "Sync", "Sync", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, enableTextFunction);
+                         0.0f, "", enableTextFunction);
 
     rate = p.addExtParam(prefix + "rate", prefix + "Rate", "Rate", "Hz",
                          {0.0f, 200.0f, 0.0f, 0.3f},
@@ -559,7 +528,7 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
 
     beat = p.addIntParam(prefix + "beat", prefix + "Beat", "Beat", "",
                          {0.0f, float(notes.size() - 1), 1.0f, 1.0f},
-                         13.0f, 0.0f, durationTextFunction);
+                         13.0f, 0.0f, "", durationTextFunction);
 
     depth = p.addExtParam(prefix + "depth", prefix + "Depth", "Depth", "",
                           {-1.0f, 1.0f, 0.0f, 1.0f},
@@ -596,11 +565,11 @@ void MSEGParams::setup(ResonariumProcessor& p, int index)
     //TODO load the msegData from disk once we figure out how that works...
     enabled = p.addExtParam(prefix + "enable", "MSEG" + std::to_string(index) + "Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, enableTextFunction);
+                            0.0f, "", enableTextFunction);
 
     sync = p.addIntParam(prefix + "sync", "MSEG" + std::to_string(index) + "Sync", "Sync", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, enableTextFunction);
+                         0.0f, "", enableTextFunction);
 
     rate = p.addExtParam(prefix + "rate", "MSEG" + std::to_string(index) + "Rate", "Rate", "Hz",
                          {0.0f, 200.0f, 0.0f, 0.3f},
@@ -608,7 +577,7 @@ void MSEGParams::setup(ResonariumProcessor& p, int index)
 
     beat = p.addIntParam(prefix + "beat", "MSEG" + std::to_string(index) + "Beat", "Beat", "",
                          {0.0f, 13.0f, 1.0f, 1.0f},
-                         13.0f, 0.0f, durationTextFunction);
+                         13.0f, 0.0f, "", durationTextFunction);
 
     depth = p.addExtParam(prefix + "depth", "MSEG" + std::to_string(index) + "Depth", "Depth", "",
                           {-1.0f, 1.0f, 0.0f, 1.0f},
@@ -636,15 +605,11 @@ void MSEGParams::setup(ResonariumProcessor& p, int index)
 
     loop = p.addIntParam(prefix + "loop", "MSEG" + std::to_string(index) + "Loop", "Loop", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, enableTextFunction);
+                         0.0f, "", enableTextFunction);
 }
 
 void VoiceParams::setup(ResonariumProcessor& p)
 {
-    for (int i = 0; i < NUM_MODAL_RESONATOR_BANKS; i++)
-    {
-        modalResonatorBankParams[i].setup(p, i);
-    }
     for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
     {
         waveguideResonatorBankParams[i].setup(p, i);
@@ -671,16 +636,16 @@ void ChorusParams::setup(ResonariumProcessor& p)
 {
     enabled = p.addExtParam("chorusEnable", "Chorus Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, enableTextFunction);
+                            0.0f, "", enableTextFunction);
 
 
     sync = p.addIntParam("chorusSync", "Chorus Sync", "Sync", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, enableTextFunction);
+                         0.0f, "", enableTextFunction);
 
     beat = p.addExtParam("chorusBeat", "Chorus Beat", "Beat", "",
                          {0.0f, 13.0f, 1.0f, 1.0f},
-                         13.0f, 0.0f, durationTextFunction);
+                         13.0f, 0.0f, "", durationTextFunction);
 
     rate = p.addExtParam("chorusRate", "Chorus Rate", "Rate", "Hz",
                          {0.0f, 100.0f, 0.0f, 0.3f},
@@ -707,7 +672,7 @@ void DelayParams::setup(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("delayEnable", "Delay Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, enableTextFunction);
+                            0.0f, "", enableTextFunction);
 
     timeL = p.addExtParam("delayTimeL", "Delay Time L", "Time L", "s",
                           {0.01f, 4.0f, 0.0f, 0.4f},
@@ -719,11 +684,11 @@ void DelayParams::setup(ResonariumProcessor& p)
 
     beatL = p.addExtParam("delayBeatL", "Delay Beat L", "Beat L", "",
                           {0.0f, 13.0f, 1.0f, 1.0f},
-                          13.0f, 0.0f, durationTextFunction);
+                          13.0f, 0.0f, "", durationTextFunction);
 
     beatR = p.addExtParam("delayBeatR", "Delay Beat R", "Beat R", "",
                           {0.0f, 13.0f, 1.0f, 1.0f},
-                          13.0f, 0.0f, durationTextFunction);
+                          13.0f, 0.0f, "", durationTextFunction);
 
     pingPongAmount = p.addExtParam("delayPingPong", "Delay PingPong", "PingPong", "",
                                    {0.0f, 1.0f, 0.01f, 1.0f},
@@ -731,11 +696,11 @@ void DelayParams::setup(ResonariumProcessor& p)
 
     syncL = p.addIntParam("delaySyncL", "Delay Sync L", "Sync L", "",
                           {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                          0.0f, enableTextFunction);
+                          0.0f, "", enableTextFunction);
 
     syncR = p.addIntParam("delaySyncR", "Delay Sync R", "Sync R", "",
                           {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                          0.0f, enableTextFunction);
+                          0.0f, "", enableTextFunction);
 
     feedback = p.addExtParam("delayFeedback", "Delay Feedback", "Feedback", "",
                              {0.0f, 1.0f, 0.0f, 1.0f},
@@ -743,7 +708,7 @@ void DelayParams::setup(ResonariumProcessor& p)
 
     lock = p.addIntParam("delayLock", "Delay Stereo Lock", "Lock", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 1.0f,
-                         0.0f, enableTextFunction);
+                         0.0f, "", enableTextFunction);
 
     mix = p.addExtParam("delayMix", "Delay Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f},
@@ -754,11 +719,11 @@ void DistortionParams::setup(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("distortionEnable", "Distortion Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, enableTextFunction);
+                            0.0f, "", enableTextFunction);
 
     mode = p.addIntParam("distortionMode", "Distortion Mode", "Mode", "",
                          {0.0f, 5.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, distortionModeTextFunction);
+                         0.0f, "", distortionModeTextFunction);
 
     // ampGain = p.addExtParam("distortionAmpGain", "Distortion Amp Gain", "Gain", "",
     //                         {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
@@ -809,15 +774,15 @@ void PhaserParams::setup(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("phaserEnable", "Phaser Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, enableTextFunction);
+                            0.0f, "", enableTextFunction);
 
     sync = p.addIntParam("phaserSync", "Phaser Sync", "Sync", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, enableTextFunction);
+                         0.0f, "", enableTextFunction);
 
     beat = p.addExtParam("phaserBeat", "Phaser Beat", "Beat", "",
                          {0.0f, 13.0f, 1.0f, 1.0f},
-                         13.0f, 0.0f, durationTextFunction);
+                         13.0f, 0.0f, "", durationTextFunction);
 
     rate = p.addExtParam("phaserRate", "Phaser Rate", "Rate", "Hz",
                          {0.0f, 99.99f, 0.0f, 0.3f},
@@ -844,7 +809,7 @@ void ReverbParams::setup(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("reverbEnable", "Reverb Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, enableTextFunction);
+                            0.0f, "", enableTextFunction);
 
     dampingFreq = p.addExtParam("reverbDampingFreq", "Reverb Damping Freq", "Damping Freq", "Hz",
                                 {0.0f, 1.0f, 0.0f, 1.0f}, 0.2f,
@@ -885,7 +850,7 @@ void SVFParams::setup(ResonariumProcessor& p, juce::String name)
 
     enabled = p.addIntParam(prefix + "enable", prefix + "Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, enableTextFunction);
+                            0.0f, "", enableTextFunction);
 
     cutoff = p.addExtParam(prefix + "cutoff", prefix + "Freq", "Freq", "Hz",
                            {20.0f, 20000.0f, 0.0f, 0.4f}, 20000.0f,
@@ -947,7 +912,8 @@ void SynthParams::setup(ResonariumProcessor& p)
 
     for (int i = 0; i < NUM_MACROS; i++)
     {
-        macroParams[i] = p.addExtParam("macro" + std::to_string(i + 1), "Macro " + std::to_string(i + 1), "Macro " + std::to_string(i + 1), "",
+        macroParams[i] = p.addExtParam("macro" + std::to_string(i + 1), "Macro " + std::to_string(i + 1),
+                                       "Macro " + std::to_string(i + 1), "",
                                        {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
                                        0.0f);
     }
