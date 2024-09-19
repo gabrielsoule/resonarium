@@ -21,7 +21,7 @@ float StereoResonator::Resonator::popSample()
     auto delay = delayLengthInterpolator.nextValue();
     delayLine.setDelay(delay);
     float outSample = delayLine.popSample(0);
-    outSample = loopFilter.processSample(0, outSample) * loopFilterNormalizationScalar;
+    outSample = loopFilter.processSample(0, outSample);
     outSample = apf.processSample(outSample);
     return outSample * decayCoefficient;
 }
@@ -98,9 +98,10 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
         {
             nextFrequency = voice.getValue(params.resonatorFrequency, channel);
         }
-        delayLengthInSamples = sampleRate / nextFrequency;
+        delayLengthInSamples = sampleRate / nextFrequency - 1.03;
         delayLengthInterpolator.setTargetValue(delayLengthInSamples, numSamples);
         delayLine.setDelay(delayLengthInSamples);
+        // DBG("Setting delay length to " + juce::String(delayLengthInSamples) + " which corresponds to frequency" + juce::String(nextFrequency));
 
         if (decayInSeconds == 60.0f)
         {

@@ -56,6 +56,7 @@ class StereoResonator
         float minFrequency = 1.0f;
         float maxFrequency = 22000.0f;
         float delayLengthInSamples; //the length of the delay line in samples corresponding to frequency
+        float delayLineTuningSamples; // the amount by which the delay must be shortened to account for group delay in the filter
         float decayCoefficient; //the first-order damping coefficient
         float decayTime;
         float sampleRate;
@@ -72,7 +73,6 @@ class StereoResonator
         float loopFilterCutoff;
         float loopFilterResonance;
         float loopFilterMode;
-        float loopFilterNormalizationScalar = 1; //the inverse of the max gain point of the multi-mode SVF
         bool postFilterKeytrack = false;
         float postFilterCutoff;
         float postFilterResonance;

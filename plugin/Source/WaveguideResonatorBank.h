@@ -1,7 +1,6 @@
 #ifndef WAVEGUIDERESONATORBANK_H
 #define WAVEGUIDERESONATORBANK_H
 #include "defines.h"
-#include "Resonator.h"
 #include "ResonatorBank.h"
 #include "StereoResonator.h"
 

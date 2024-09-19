@@ -66,8 +66,15 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     }
     setupModMatrix(); //set up the modulation matrix
     init(); //internal init
-    // testFilter(0.2,0.1, true);
-    //
+    // testFilter(500, 0.3, 1/std::sqrt<float>(2.0), false);
+    testFilter(400, 0.0, 1 / std::sqrt(2), false);
+    testFilter(400, 0.01, 4, false);
+    testFilter(4000, 0.01, 6, false);
+    testFilter(900, 0.01, 15, false);
+    testFilter<false>(3000, 0.03, 14 + 1 / std::sqrt(2), false);
+
+    testFilter<false>(3000, 0.02, 14 + 1 / std::sqrt(2), false);
+    testFilter<false>(3000, 0, 14 + 1 / std::sqrt(2), false);
     // testFilter(0.5, 0.5, false);
     // testFilter(0.5, 1, false);
     // testFilter(0.5, 2, false);
@@ -110,6 +117,7 @@ void ResonariumProcessor::setupModMatrix()
         modSrcMonoRND.add(modMatrix.addMonoModSource(juce::String::formatted("mrnd%d", i + 1),
                                                      juce::String::formatted("RAND %d (Mono)", i + 1),
                                                      true));
+
         modSrcPolyRND.add(modMatrix.addPolyModSource(juce::String::formatted("mrnd%d", i + 1),
                                                      juce::String::formatted("RAND %d", i + 1),
                                                      true));
@@ -127,6 +135,7 @@ void ResonariumProcessor::setupModMatrix()
         modSrcMonoMSEG.add(modMatrix.addMonoModSource(juce::String::formatted("mmseg%d", i + 1),
                                                       juce::String::formatted("MSEG %d (Mono)", i + 1),
                                                       true));
+
         modSrcPolyMSEG.add(modMatrix.addPolyModSource(juce::String::formatted("env%d", i + 1),
                                                       juce::String::formatted("MSEG %d", i + 1),
                                                       false));

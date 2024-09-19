@@ -10,11 +10,17 @@
     }
   },
   "resonator": {
+    "gain": "Control the gain of the resonator.",
     "pitch": "Set the pitch of the resonator with respect to the current MIDI note. The resonator will produce sound at this frequency, and will resonate strongly with any harmonically related input signals.",
     "frequency": "Set the absolute frequency of the resonator, unrelated to the current MIDI note. The resonator will produce sound at this frequency, and will resonate strongly with any harmonically related input signals.",
     "keytrack": "If enabled, the resonator can be tuned with respect to the current MIDI note. Otherwise, the resonator can be tuned to a constant frequency.",
     "decay": "Adjust the decay time of the resonator. Lower values correspond to stronger damping and a shorter note. If set to zero, the resonator will be bypassed entirely and the exciter signal will pass through to the post filter.",
-    "gain": "Controls the gain of the resonator"
+    "dispersion": "Dispersion occurs when different frequencies travel at different speeds through a vibrating object. This parameter controls the amount of dispersion in the resonator. Higher values induce a inharmonic, metallic timbre.",
+    "loopfilterkeytrack": "If enabled, the loop filter's cutoff frequency will be set with respect to the current MIDI note. Otherwise, the filter cutoff can be set to a constant frequency.",
+    "loopfiltercutoff": "Set the cutoff frequency of the waveguide filter. This corresponds to damping present in the string. Higher cutoff frequencies produce a brighter sound.",
+    "loopfilterresonance": "Set the resonance of the waveguide filter. Higher resonance values induce waveguide resonance at the peak frequency of the filter, which is approximately the cutoff. The waveguide will be heavily damped at all other frequencies.",
+    "loopfiltermode": "Set the mode of the waveguide filter. A mode of 0 corresponds to a lowpass filter, a mode of 0.5 corresponds to a bandpass filter, and a mode of 1 corresponds to a highpass filter. Intermediate values interpolate these extrema. To employ banded waveguides, set the mode to 0.5 (bandpass) and adjust the resonance to taste."
+
   },
   "resonatorbank": {
     "inputgain": "Set the gain of the input signal to the waveguide bank",
@@ -24,6 +30,6 @@
     "cascadeamount": "Set the level of each cascade signal between adjacent resonators. The output of the nth resonator will be multiplied by this amount before being fed into the n+1th resonator.",
     "cascadefiltercutoff": "Set the cutoff frequency of the filter applied to each cascade signal.",
     "cascadefilterresonance": "Set the resonance of the filter applied to each cascade signal. Higher values produce a more pronounced peak at the cutoff frequency.",
-    "cascadefiltermode": "Sets the mode of the cascade signal filters. A mode of 0 corresponds to a lowpass filter, a mode of 0.5 corresponds to a bandpass filter, and a mode of 1 corresponds to a highpass filter. Intermediate values interpolate these extrema."
+    "cascadefiltermode": "Set the mode of the cascade signal filters. A mode of 0 corresponds to a lowpass filter, a mode of 0.5 corresponds to a bandpass filter, and a mode of 1 corresponds to a highpass filter. Intermediate values interpolate these extrema."
   }
 }

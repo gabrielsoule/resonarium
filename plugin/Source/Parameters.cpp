@@ -224,15 +224,19 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                            0.0f);
 
     loopFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Loop Filter Resonance" + suffix, "Res", "",
-                                        {0.01f, 800.0f, 0.0f, 0.2f}, 1.0f / std::sqrt(2.0f),
+                                        {0.0f, 100, 0.0f, 0.2f}, 0,
                                         0.0f);
+    constexpr float one_over_sqrt2 = 0.7071067811865475244f;
+    loopFilterResonance->conversionFunction = [](const float x) { return x + one_over_sqrt2; };
+
+
 
     loopFilterKeytrack = p.addIntParam("decayFilterKeytrack" + suffix, "Loop Filter Keytrack" + suffix, "Key Track", "",
                                        {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
                                        0.0f);
 
     loopFilterMode = p.addExtParam("svfMode" + suffix, "Mode" + suffix, "Loop Filter Mode", "",
-                                   {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
+                                   {0.0f, 1.0f, 0.01, 1.0f}, 0.0f,
                                    0.0f);
 
     // decayFilterKeytrack = p.addExtParam("filterKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
