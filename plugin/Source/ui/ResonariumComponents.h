@@ -6,6 +6,7 @@
 
 #include <JuceHeader.h>
 
+#include "ClickThruSelect.h"
 #include "TextSlider.h"
 #include "../Parameters.h"
 #include "../defines.h"
@@ -355,7 +356,7 @@ public:
         resonatorFrequencyKnob = new TextSlider(resonatorParams.resonatorFrequency, colour);
         resonatorFrequencyKnob->setReadoutDecimals(0);
         decayTimeKnob = new TextSlider(resonatorParams.decayTime, colour);
-        decayTimeKnob->setReadoutDecimals(1);
+        decayTimeKnob->setReadoutDecimals(2);
         dispersionKnob = new TextSlider(resonatorParams.dispersion, colour);
         dispersionKnob->setReadoutDecimals(0);
         loopFilterCutoffKnob = new TextSlider(resonatorParams.loopFilterCutoff, colour);
@@ -364,8 +365,9 @@ public:
         loopFilterPitchKnob->setReadoutDecimals(2);
         loopFilterResonanceKnob = new TextSlider(resonatorParams.loopFilterResonance, colour);
         loopFilterResonanceKnob->setReadoutDecimals(2);
-        loopFilterModeKnob = new TextSlider(resonatorParams.loopFilterMode, colour);
-        loopFilterModeKnob->setReadoutDecimals(2);
+        // loopFilterModeKnob = new TextSlider(resonatorParams.loopFilterMode, colour);
+        // loopFilterModeKnob->setReadoutDecimals(2);
+        loopFilterTypeKnob = new ClickThruSelect(resonatorParams.loopFilterType, colour);
         postFilterCutoffKnob = new TextSlider(resonatorParams.postFilterCutoff, colour);
         postFilterCutoffKnob->setReadoutDecimals(0);
         postFilterPitchKnob = new TextSlider(resonatorParams.postFilterPitchInSemis, colour);
@@ -389,7 +391,7 @@ public:
         addAndMakeVisible(loopFilterCutoffKnob);
         addAndMakeVisible(loopFilterPitchKnob);
         addAndMakeVisible(loopFilterResonanceKnob);
-        addAndMakeVisible(loopFilterModeKnob);
+        addAndMakeVisible(loopFilterTypeKnob);
         addAndMakeVisible(postFilterCutoffKnob);
         addAndMakeVisible(postFilterPitchKnob);
         addAndMakeVisible(postFilterResonanceKnob);
@@ -434,7 +436,7 @@ public:
         bounds.removeFromTop(SPACING_Y_SMALL);
         loopFilterResonanceKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
         bounds.removeFromTop(SPACING_Y_SMALL);
-        loopFilterModeKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
+        loopFilterTypeKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
         bounds.removeFromTop(SPACING_Y_LARGE);
         postFilterKeytrack->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT).reduced(3));
         bounds.removeFromTop(SPACING_Y_SMALL);
@@ -481,7 +483,7 @@ public:
     TextSlider* loopFilterCutoffKnob;
     TextSlider* loopFilterPitchKnob;
     TextSlider* loopFilterResonanceKnob;
-    TextSlider* loopFilterModeKnob;
+    ClickThruSelect* loopFilterTypeKnob;
     TextSlider* postFilterCutoffKnob;
     TextSlider* postFilterPitchKnob;
     TextSlider* postFilterResonanceKnob;
@@ -497,100 +499,4 @@ public:
     int backgroundRectangleStartY;
 };
 
-class WaveguideResonatorComponent : public gin::MultiParamComponent
-{
-public:
-    WaveguideResonatorComponent(ResonatorParams resonatorParams) : resonatorParams(resonatorParams)
-    {
-        this->enableButton = new gin::SVGPluginButton(resonatorParams.enabled, gin::Assets::power);
-        this->gainKnob = new TextSlider(resonatorParams.gain);
-        this->pitchOffsetKnob = new gin::Knob(resonatorParams.pitchInSemis);
-        this->dispersionKnob = new gin::Knob(resonatorParams.dispersion);
-        this->decayTimeKnob = new gin::Knob(resonatorParams.decayTime);
-        // this->gainKnob->getSlider().getProperties().set("textOnly", true);
-        // this->gainKnob->setName("MyGainKnob");
-        jassert(this->gainKnob->getSlider().getProperties()["textOnly"]);
-        // this->gainKnob->getSlider().setInterceptsMouseClicks(false, true);
-        // this->brightnessKnob = new gin::Knob(resonatorParams.eksFilterBrightness);
-        // this->decayFilterCutoffKnob = new gin::Knob(resonatorParams.decayFilterCutoff);
-        this->svfCutoffKnob = new gin::Knob(resonatorParams.loopFilterCutoff);
-        this->svfResonanceKnob = new gin::Knob(resonatorParams.loopFilterResonance);
-
-        addAndMakeVisible(enableButton);
-        addAndMakeVisible(gainKnob);
-        addAndMakeVisible(pitchOffsetKnob);
-        addAndMakeVisible(decayTimeKnob);
-        addAndMakeVisible(dispersionKnob);
-        addAndMakeVisible(svfCutoffKnob);
-        addAndMakeVisible(svfResonanceKnob);
-        // addAndMakeVisible(brightnessKnob);
-        // addAndMakeVisible(decayFilterCutoffKnob);
-
-        watchParam(resonatorParams.enabled);
-
-        setSize(KNOB_W_SMALL, 300);
-    }
-
-    void resized() override
-    {
-        auto bounds = getLocalBounds();
-        bounds.removeFromTop(7); //just a little off the top, please
-        enableButton->setBounds(bounds.removeFromTop(12));
-        gainKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
-        pitchOffsetKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
-        decayTimeKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
-        dispersionKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
-        svfCutoffKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
-        svfResonanceKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
-        // brightnessKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
-        // decayFilterCutoffKnob->setBounds(bounds.removeFromTop(KNOB_H_SMALL));
-    }
-
-    void paramChanged() override
-    {
-        // for some reason paramChanged() is being called before this component is added to the parent
-        // this is fine, except that we can't access the lookandfeel at this point
-        // this is a hack to get around that. There might be side effects. That's a later problem.
-        if (this->getParentComponent() == nullptr)
-        {
-            return;
-        }
-
-        MultiParamComponent::paramChanged();
-        for (auto c : this->getChildren())
-        {
-            if (c != enableButton) c->setEnabled(resonatorParams.enabled->isOn());
-        }
-
-        if (resonatorParams.enabled->isOn())
-        {
-            borderColor = findColour(gin::PluginLookAndFeel::accentColourId, true);
-        }
-        else
-        {
-            borderColor = findColour(gin::PluginLookAndFeel::title1ColourId, true);
-        }
-    }
-
-    void paint(juce::Graphics& g) override
-    {
-        g.setColour(borderColor); // Set the color of the background
-        float cornerSize = 10.0f; // Set the corner size for the rounded rectangle
-        // g.drawRoundedRectangle (getLocalBounds().reduced(2.0f,2.0f).toFloat(), cornerSize, 2); // Draw the rounded rectangle
-    }
-
-    const float padding = 4.0f;
-    juce::Colour borderColor;
-    gin::SVGPluginButton* enableButton;
-    gin::Knob* gainKnob;
-    gin::Knob* pitchOffsetKnob;
-    gin::Knob* decayTimeKnob;
-    gin::Knob* dispersionKnob;
-    gin::Knob* decayFilterCutoffKnob;
-    gin::Knob* brightnessKnob;
-    gin::Knob* svfCutoffKnob;
-    gin::Knob* svfResonanceKnob;
-
-    ResonatorParams resonatorParams;
-};
 #endif //RESONARIUMCOMPONENTS_H

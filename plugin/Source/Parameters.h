@@ -85,6 +85,7 @@ struct ResonatorParams
         loopFilterPitchInSemis,
         loopFilterResonance, //for both SVF and BQD filter modes
         loopFilterMode, //for SVF filter mode only
+        loopFilterType,
         loopFilterKeytrack, //bool y/n
         postFilterCutoff,
         postFilterPitchInSemis,

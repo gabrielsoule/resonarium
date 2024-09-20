@@ -22,14 +22,13 @@ static juce::String filterTextFunction(const gin::Parameter&, float v)
     }
 }
 
-static juce::String resonatorFilterTypeTextFunction(const gin::Parameter&, float v)
+static juce::String loopFilterTypeTextFunction(const gin::Parameter&, float v)
 {
     switch (int(v))
     {
-    case 0: return "EKS";
-    case 1: return "BQD";
-    case 2: return "SVF";
-    case 3: return "EQ3";
+    case 0: return "LP";
+    case 1: return "BP";
+    case 2: return "HP";
     default:
         jassertfalse;
         return {};
@@ -205,16 +204,6 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                0.0f);
     dispersion->conversionFunction = [](const float x) { return x / 100.0f; };
 
-    // EKS, BQD, SVF, EQ3
-    // decayFilterType = p.addExtParam("decayFilterType" + suffix, "Filter Type" + suffix, "Filter", "",
-    //                                 {0.0, 3.0, 1.0, 1.0f}, 0.0f,
-    //                                 0.0f, resonatorFilterTypeTextFunction);
-
-    // LP, HP, BP, NOTCH, AP
-    // biquadFilterType = p.addExtParam("biquadFilterType" + suffix, "Biquad Type" + suffix, "Biquad Type", "",
-    //                                  {0.0f, 5.0f, 1.0f, 1.0f},
-    //                                  0.0f, 0.0f, filterTextFunction);
-
     loopFilterCutoff = p.addExtParam("decayFilterCutoff" + suffix, "Loop Filter Cutoff" + suffix, "Cutoff", "Hz",
                                      {20.0f, 20000.0, 0.0f, 0.2f}, 3000.0f,
                                      0.0f);
@@ -229,8 +218,6 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     constexpr float one_over_sqrt2 = 0.7071067811865475244f;
     loopFilterResonance->conversionFunction = [](const float x) { return x + one_over_sqrt2; };
 
-
-
     loopFilterKeytrack = p.addIntParam("decayFilterKeytrack" + suffix, "Loop Filter Keytrack" + suffix, "Key Track", "",
                                        {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
                                        0.0f);
@@ -238,14 +225,9 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     loopFilterMode = p.addExtParam("svfMode" + suffix, "Mode" + suffix, "Loop Filter Mode", "",
                                    {0.0f, 1.0f, 0.01, 1.0f}, 0.0f,
                                    0.0f);
-
-    // decayFilterKeytrack = p.addExtParam("filterKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
-    //                                     {0.0f, 100.0f, 0.0f, 1.0f}, 0.0f,
-    //                                     0.0f);
-
-    // eksFilterBrightness = p.addExtParam("eksBrightness" + suffix, "Brightness" + suffix, "Brightness", "",
-    //                                     {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-    //                                     0.0f);
+    loopFilterType = p.addExtParam("svfType" + suffix, "Type" + suffix, "Loop Filter Type", "",
+                                   {0.0f, 2.0f, 1.0, 1.0f}, 0.0f,
+                                   0.0f, "", loopFilterTypeTextFunction);
 
     postFilterCutoff = p.addExtParam("postFilterCutoff" + suffix, "Post Filter Cutoff" + suffix, "Cutoff", "Hz",
                                      {20.0f, 20000.0f, 0.0f, 0.2f}, 4000.0f,

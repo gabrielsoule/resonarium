@@ -51,15 +51,22 @@ public:
     juce::AudioBuffer<float> inputBuffer;
 
     template <bool unity = true>
-    static void testFilter(float cutoff, float mode, float Q, bool readout)
+    static void testFilter(float cutoff, float mode, float Q, bool readout, bool peak = false)
     {
-        int order = 17;
+        int order = 14;
         juce::dsp::FFT fft(order);
         int fftSize = std::pow(2, order);
         juce::AudioBuffer<float> impulseResponse;
         juce::AudioBuffer<float> spectrum;
         chowdsp::SVFMultiMode<float, 1, unity> svf;
-        svf.setCutoffFrequency(cutoff );
+        if(peak)
+        {
+            svf.setPeakFrequency(cutoff);
+        }
+        else
+        {
+            svf.setCutoffFrequency (cutoff);
+        }
         svf.setMode(mode);
         svf.setQValue(Q);
         svf.update();

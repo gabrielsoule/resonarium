@@ -70,7 +70,7 @@ class StereoResonator
         float nextFrequency;
         float dispersion;
         bool loopFilterKeytrack = false;
-        float loopFilterCutoff;
+        float loopFilterFrequency;
         float loopFilterResonance;
         float loopFilterMode;
         bool postFilterKeytrack = false;
@@ -78,6 +78,7 @@ class StereoResonator
         float postFilterResonance;
         float postFilterMode;
         float postFilterNormalizationScalar = 1;
+        float loopFilterPhaseDelay;
 
         InterpolatedValue delayLengthInterpolator;
 
@@ -118,6 +119,10 @@ public:
     void reset();
     void prepare(const juce::dsp::ProcessSpec& spec);
     void updateParameters(float frequency, int numSamples, bool force = false);
+private:
+    //"'Ey boss, that's an awful lot of digits... do we really need that many?"
+    static constexpr double INV_SQRT_2 = 0.7071067811865475244008443621048490392848359376884740365883398689;
+    static constexpr float INV_SQRT_2_F = INV_SQRT_2;
 };
 
 

@@ -67,6 +67,11 @@ void StereoResonator::Resonator::prepare(const juce::dsp::ProcessSpec& spec)
     this->reset();
 }
 
+//This function is the worst. It always ends up being the worst. Just a mess.
+//I've already re-written the entire class from scratch once because it was the worst then too.
+//"Let it not be the worst this time," I proclaimed.
+//But now it's the worst again. Somehow.
+//TODO Study why this keeps happening to me.
 void StereoResonator::Resonator::updateParameters(float frequency, int numSamples)
 {
     this->gain = voice.getValue(params.gain);
@@ -80,7 +85,7 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
     postFilter.updateParameters(newPostFilterCutoff, newPostFilterResonance, newPostFilterMode);
 
     const float decayInSeconds = voice.getValue(params.decayTime, channel);
-    if (decayInSeconds < 0.05f)
+    if (decayInSeconds < 0.03f)
     {
         passthrough = true;
     }
@@ -98,10 +103,6 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
         {
             nextFrequency = voice.getValue(params.resonatorFrequency, channel);
         }
-        delayLengthInSamples = sampleRate / nextFrequency - 1.03;
-        delayLengthInterpolator.setTargetValue(delayLengthInSamples, numSamples);
-        delayLine.setDelay(delayLengthInSamples);
-        // DBG("Setting delay length to " + juce::String(delayLengthInSamples) + " which corresponds to frequency" + juce::String(nextFrequency));
 
         if (decayInSeconds == 60.0f)
         {
@@ -114,18 +115,36 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
 
         loopFilterKeytrack = params.loopFilterKeytrack->isOn();
         const float newCutoff = loopFilterKeytrack
-                              ? frequency * std::pow(2.0f, voice.getValue(params.loopFilterPitchInSemis, channel) / 12.0f)
+                              ? nextFrequency * std::pow(2.0f, voice.getValue(params.loopFilterPitchInSemis, channel) / 12.0f)
                               : voice.getValue(params.loopFilterCutoff, channel);
-        const float newResonance = voice.getValue(params.loopFilterResonance, channel);
-        const float newMode = voice.getValue(params.loopFilterMode, channel);
-        loopFilter.updateParameters(newCutoff, newResonance, newMode);
+        const float newResonance = voice.getValue(params.loopFilterResonance, channel) + 0.001f;
+        const float newMode = 0; //TODO add BP, HP
+        bool updated = loopFilter.updateParameters(newCutoff, newResonance, newMode, loopFilterKeytrack);
+        if(updated)
+        {
+            if(loopFilterKeytrack)
+            {
+                loopFilterPhaseDelay = loopFilter.getPhaseDelayInSamples(nextFrequency);
+            }
+            else
+            {
+                loopFilterPhaseDelay = 0; //TODO
+            }
+        }
 
         float newDispersion = voice.getValue(params.dispersion, channel);
-        // if(newDispersion != dispersion)
-        // {
         dispersion = newDispersion;
         apf.setDispersionAmount(newDispersion);
-        // }
+
+        //experimentally, the delay line lagrange interpolation adds a delay of one sample plus change.
+        //this tuning error, if unaddressed, is readily observed at higher frequencies.
+        constexpr float DELAY_LINE_INTERPOLATION_DELAY = 1.03f;
+        delayLengthInSamples = sampleRate / nextFrequency - DELAY_LINE_INTERPOLATION_DELAY;
+        delayLengthInSamples = delayLengthInSamples - loopFilterPhaseDelay;
+        DBG("phase delay length:" + juce::String(loopFilterPhaseDelay) + "corresponds to frequency" + juce::String(sampleRate / delayLengthInSamples));
+        DBG("final dely length:" + juce::String(delayLengthInSamples));
+        delayLengthInterpolator.setTargetValue(delayLengthInSamples, numSamples);
+        delayLine.setDelay(delayLengthInSamples);
     }
 
 #if JUCE_SNAP_TO_ZERO

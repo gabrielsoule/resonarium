@@ -3,6 +3,7 @@
 
 #include <JuceHeader.h>
 
+#include "ClickThruSelect.h"
 #include "TextSlider.h"
 #include "../Parameters.h"
 #include "../defines.h"

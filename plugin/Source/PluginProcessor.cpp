@@ -67,14 +67,16 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     setupModMatrix(); //set up the modulation matrix
     init(); //internal init
     // testFilter(500, 0.3, 1/std::sqrt<float>(2.0), false);
-    testFilter(400, 0.0, 1 / std::sqrt(2), false);
-    testFilter(400, 0.01, 4, false);
-    testFilter(4000, 0.01, 6, false);
-    testFilter(900, 0.01, 15, false);
-    testFilter<false>(3000, 0.03, 14 + 1 / std::sqrt(2), false);
-
-    testFilter<false>(3000, 0.02, 14 + 1 / std::sqrt(2), false);
-    testFilter<false>(3000, 0, 14 + 1 / std::sqrt(2), false);
+    // testFilter(400, 0.0, 1 / std::sqrt(2), false);
+    // testFilter(400, 0.01, 4, false);
+    // testFilter(4000, 0.01, 6, false);
+    // testFilter(900, 0.01, 15, false);
+    // testFilter<false>(3000, 0.03, 14 + 1 / std::sqrt(2), false);
+    //
+    // testFilter<false>(3000, 0.02, 14 + 1 / std::sqrt(2), false);
+    // testFilter<false>(3000, 0, 14 + 1 / std::sqrt(2), false);
+    // testFilter(500, 0, 1, false, true);
+    testFilter(400, 0, 1 / std::sqrt(2), true, true);
     // testFilter(0.5, 0.5, false);
     // testFilter(0.5, 1, false);
     // testFilter(0.5, 2, false);
