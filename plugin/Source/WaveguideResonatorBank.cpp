@@ -71,11 +71,13 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
  */
 void WaveguideResonatorBank::updateParameters(float newFrequency, int numSamples)
 {
-    this->frequency = newFrequency;
-    this->couplingMode = static_cast<CouplingMode>(voice.getValue(params.couplingMode));
-    this->previousResonatorMix = voice.getValue(params.inputMix);
-    this->exciterMix = 1 - voice.getValue(params.inputMix);
-    this->previousResonatorMix *= 0.5f; //scale down a little to taste
+    frequency = newFrequency;
+    couplingMode = static_cast<CouplingMode>(voice.getValue(params.couplingMode));
+    previousResonatorBankMix = voice.getValue(params.inputMix);
+    exciterMix = 1 - voice.getValue(params.inputMix);
+    previousResonatorBankMix *= 0.5f; //scale down a little to taste
+    inputGain = voice.getValue(params.inputGain);
+    outputGain = voice.getValue(params.outputGain);
     for (auto* r : resonators)
     {
         r->updateParameters(newFrequency, numSamples);
@@ -118,16 +120,16 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
             {
                 if (r->enabled)
                 {
-                    const float inSampleL = exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.getSample(0, i) * previousResonatorMix;
-                    const float inSampleR = exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.getSample(1, i) * previousResonatorMix;
+                    const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.getSample(0, i) * previousResonatorBankMix) * inputGain;
+                    const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.getSample(1, i) * previousResonatorBankMix) * inputGain;
                     outSampleL += r->left.postProcess(r->left.processSample(inSampleL)) * r->left.gain;
                     outSampleR += r->right.postProcess(r->right.processSample(inSampleR)) * r->right.gain;
                 }
             }
             outSampleL = outSampleL / totalGainL;
             outSampleR = outSampleR / totalGainR;
-            previousResonatorBankBlock.setSample(0, i, outSampleL);
-            previousResonatorBankBlock.setSample(1, i, outSampleR);
+            previousResonatorBankBlock.setSample(0, i, outSampleL * outputGain);
+            previousResonatorBankBlock.setSample(1, i, outSampleR * outputGain);
         }
     }
     else if (couplingMode == INTERLINKED)
@@ -158,16 +160,16 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
 
             for (int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
             {
-                const float inSampleL = exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.getSample(0, i) * previousResonatorMix;
-                const float inSampleR = exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.getSample(1, i) * previousResonatorMix;
+                const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.getSample(0, i) * previousResonatorBankMix) * inputGain;
+                const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.getSample(1, i) * previousResonatorBankMix) * inputGain;
                 resonators[j]->
                     pushSample((feedbackSampleL + resonatorOutSamplesL[j]) * -1 + inSampleL, 0);
                 resonators[j]->
                     pushSample((feedbackSampleR + resonatorOutSamplesR[j]) * -1 + inSampleR, 1);
             }
 
-            previousResonatorBankBlock.setSample(0, i, outSampleL);
-            previousResonatorBankBlock.setSample(1, i, outSampleR);
+            previousResonatorBankBlock.setSample(0, i, outSampleL * outputGain);
+            previousResonatorBankBlock.setSample(1, i, outSampleR * outputGain);
         }
     }
     else if (couplingMode == CASCADE)
@@ -199,8 +201,8 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                     const float resonatorOutSampleR = resonators[j]->popSample(1);
                     const float processedFwdSampleL = cascadeFilterL.processSample(j, dcBlockersL[j].processSample(previousResonatorSampleL) * cascadeAmountL);
                     const float processedFwdSampleR = cascadeFilterR.processSample(j, dcBlockersR[j].processSample(previousResonatorSampleR) * cascadeAmountR);
-                    const float inSampleL = exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.getSample(0, i) * previousResonatorMix;
-                    const float inSampleR = exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.getSample(1, i) * previousResonatorMix;
+                    const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.getSample(0, i) * previousResonatorBankMix) * inputGain;
+                    const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.getSample(1, i) * previousResonatorBankMix) * inputGain;
                     resonators[j]->pushSample(resonatorOutSampleL + processedFwdSampleL + inSampleL, 0);
                     resonators[j]->pushSample(resonatorOutSampleR + processedFwdSampleR + inSampleR, 1);
                     previousResonatorSampleL = resonatorOutSampleL;
@@ -210,8 +212,8 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                 }
             }
 
-            previousResonatorBankBlock.setSample(0, i, outSampleL);
-            previousResonatorBankBlock.setSample(1, i, outSampleR);
+            previousResonatorBankBlock.setSample(0, i, outSampleL * outputGain);
+            previousResonatorBankBlock.setSample(1, i, outSampleR * outputGain);
         }
     }
     else

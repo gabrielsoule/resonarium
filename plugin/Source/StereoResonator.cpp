@@ -128,7 +128,7 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
             }
             else
             {
-                loopFilterPhaseDelay = 0; //TODO
+                loopFilterPhaseDelay = loopFilter.getPhaseDelayInSamples(nextFrequency);
             }
         }
 
@@ -136,13 +136,11 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
         dispersion = newDispersion;
         apf.setDispersionAmount(newDispersion);
 
-        //experimentally, the delay line lagrange interpolation adds a delay of one sample plus change.
+        //experimentally, the delay line Lagrange interpolation adds a delay of one sample plus change.
         //this tuning error, if unaddressed, is readily observed at higher frequencies.
         constexpr float DELAY_LINE_INTERPOLATION_DELAY = 1.03f;
         delayLengthInSamples = sampleRate / nextFrequency - DELAY_LINE_INTERPOLATION_DELAY;
         delayLengthInSamples = delayLengthInSamples - loopFilterPhaseDelay;
-        DBG("phase delay length:" + juce::String(loopFilterPhaseDelay) + "corresponds to frequency" + juce::String(sampleRate / delayLengthInSamples));
-        DBG("final dely length:" + juce::String(delayLengthInSamples));
         delayLengthInterpolator.setTargetValue(delayLengthInSamples, numSamples);
         delayLine.setDelay(delayLengthInSamples);
     }

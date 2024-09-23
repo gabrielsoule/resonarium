@@ -36,15 +36,17 @@ public:
     float sampleRate;
     juce::OwnedArray<StereoResonator> resonators;
 
-    float previousResonatorMix = 0.0f; //how much of the previous resonator bank's output should we mix in?
+    float previousResonatorBankMix = 0.0f; //how much of the previous resonator bank's output should we mix in?
     float exciterMix = 1.0f; //how much of the exciter signal should we mix in?
+    float inputGain = 1.0f;
+    float outputGain = 1.0f;
 
-    //the below is for cascade mode
+    //below is for cascade mode
     juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients;
     juce::dsp::IIR::Filter <float> dcBlockersL[NUM_WAVEGUIDE_RESONATORS];
     juce::dsp::IIR::Filter <float> dcBlockersR[NUM_WAVEGUIDE_RESONATORS];
-    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, true> cascadeFilterL;
-    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, true> cascadeFilterR;
+    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, false> cascadeFilterL;
+    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, false> cascadeFilterR;
 };
 
 #endif //WAVEGUIDERESONATORBANK_H

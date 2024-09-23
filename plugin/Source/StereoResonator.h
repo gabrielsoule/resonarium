@@ -19,6 +19,14 @@ class StereoResonator
     class Resonator
     {
     public:
+
+        enum class FilterMode
+        {
+            LPF = 0,
+            BPF = 1,
+            HPF = 2,
+        };
+
         Resonator(ResonatorVoice& voice, ResonatorParams params, int channel) : voice(voice), params(params),
                                                                                channel(channel), delayLine(21000)
         {
