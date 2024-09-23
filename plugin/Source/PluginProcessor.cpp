@@ -76,7 +76,7 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     // testFilter<false>(3000, 0.02, 14 + 1 / std::sqrt(2), false);
     // testFilter<false>(3000, 0, 14 + 1 / std::sqrt(2), false);
     // testFilter(500, 0, 1, false, true);
-    testFilter(400, 0, 1 / std::sqrt(2), true, true);
+    // testFilter(400, 0, 1 / std::sqrt(2), true, true);
     // testFilter(0.5, 0.5, false);
     // testFilter(0.5, 1, false);
     // testFilter(0.5, 2, false);

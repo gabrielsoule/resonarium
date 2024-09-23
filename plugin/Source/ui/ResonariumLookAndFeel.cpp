@@ -5,10 +5,13 @@
 ResonariumLookAndFeel::ResonariumLookAndFeel()
 {
     typeface = juce::Typeface::createSystemTypefaceFor (gin::Resources::BarlowThin_ttf, gin::Resources::BarlowThin_ttfSize);
-    auto myfont = juce::Font(juce::FontOptions("Futura", "Medium", 14));
+    // auto myfont = juce::Font(juce::FontOptions("Futura", "Medium", 14));
+    auto typefacePtr = juce::Typeface::createSystemTypefaceFor (BinaryData::Jost100Hairline_otf, BinaryData::Jost100Hairline_otfSize);
+    auto font = juce::FontOptions{}.withName (typefacePtr->getName()).withStyle("Medium").withPointHeight(14);
+    DBG(typefacePtr->getName());
     // setDefaultSansSerifTypeface(typeface);
-    setDefaultSansSerifTypeface(myfont.getTypefacePtr());
-    defaultFont = myfont;
+    setDefaultSansSerifTypeface(typefacePtr);
+    defaultFont = font;
     juce::Array<juce::Font> fonts;
     juce::Font::findFonts(fonts);
     setColour (whiteColourId, juce::Colour (0xffFFFFFF));
@@ -437,12 +440,14 @@ juce::PopupMenu::Options ResonariumLookAndFeel::getOptionsForComboBoxPopupMenu (
 
 juce::Font ResonariumLookAndFeel::getTextButtonFont (juce::TextButton&, int buttonHeight)
 {
-    return juce::Font ("Futura", "Medium", 16.0f); // Change to your preferred font
+   return juce:: FontOptions{}.withName ("Jost*").withStyle ("Medium").withPointHeight(14);
+
+    // return juce::Font ("Futura", "Medium", 16.0f); // Change to your preferred font
 }
 
 juce::Font ResonariumLookAndFeel::getPopupMenuFont()
 {
-    return juce::Font ("Futura", "Medium", 18.0f); // Change to your preferred font
+   return juce:: FontOptions{}.withName ("Jost*").withStyle ("Medium").withPointHeight(14);
 }
 
 // Override the font for Labels

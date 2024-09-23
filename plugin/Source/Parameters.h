@@ -74,8 +74,8 @@ struct ResonatorParams
     int bankIndex = -1;
     gin::Parameter::Ptr
         enabled,
-        pitchInSemis,
-        resonatorFrequency,
+        pitch,
+        frequency,
         resonatorKeytrack,
         decayTime,
         dispersion,
@@ -111,6 +111,7 @@ struct WaveguideResonatorBankParams
     std::array<ResonatorParams, NUM_WAVEGUIDE_RESONATORS> resonatorParams;
     gin::Parameter::Ptr
         noteOffset,
+        useSemitones,
         couplingMode,
         inputGain,
         inputMix,

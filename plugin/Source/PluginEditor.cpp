@@ -21,7 +21,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     logoText->setText("RESONARIUM", juce::dontSendNotification);
     logoText->setJustificationType(juce::Justification::centredLeft);
     logoText->setBounds(50, 0, 210, 40);
-    logoText->setFont(logoText->getFont().withHeight(21.0f).withExtraKerningFactor(0.22f));
+    logoText->setFont(logoText->getFont().withHeight(23.0f).withExtraKerningFactor(0.22f));
     logoText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.85f));
     addAndMakeVisible(logoText);
 

@@ -78,72 +78,72 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
 
     postFilterKeytrack = params.postFilterKeytrack->isOn();
     const float newPostFilterCutoff = postFilterKeytrack
-                    ? frequency * std::pow(2.0f, voice.getValue(params.postFilterPitchInSemis, channel) / 12.0f)
-                    : voice.getValue(params.postFilterCutoff, channel);
+                                          ? frequency * std::pow(
+                                              2.0f, voice.getValue(params.postFilterPitchInSemis, channel) / 12.0f)
+                                          : voice.getValue(params.postFilterCutoff, channel);
     const float newPostFilterResonance = voice.getValue(params.postFilterResonance, channel);
     const float newPostFilterMode = voice.getValue(params.postFilterMode, channel);
     postFilter.updateParameters(newPostFilterCutoff, newPostFilterResonance, newPostFilterMode);
-
     const float decayInSeconds = voice.getValue(params.decayTime, channel);
+
     if (decayInSeconds < 0.03f)
     {
         passthrough = true;
+        return;
+    }
+    passthrough = false;
+    passthroughSample = 0;
+    lastFrequency = nextFrequency;
+    keytrack = params.resonatorKeytrack->isOn();
+    if (keytrack)
+    {
+        nextFrequency = voice.getValue(params.pitch) * frequency;
     }
     else
     {
-        passthrough = false;
-        passthroughSample = 0;
-        lastFrequency = nextFrequency;
-        keytrack = params.resonatorKeytrack->isOn();
-        if (keytrack)
-        {
-            nextFrequency = frequency * std::pow(2.0f, voice.getValue(params.pitchInSemis, channel) / 12.0f);
-        }
-        else
-        {
-            nextFrequency = voice.getValue(params.resonatorFrequency, channel);
-        }
-
-        if (decayInSeconds == 60.0f)
-        {
-            decayCoefficient = 1.0f;
-        }
-        else
-        {
-            decayCoefficient = std::pow(0.001f, 1.0f / (decayInSeconds * nextFrequency));
-        }
-
-        loopFilterKeytrack = params.loopFilterKeytrack->isOn();
-        const float newCutoff = loopFilterKeytrack
-                              ? nextFrequency * std::pow(2.0f, voice.getValue(params.loopFilterPitchInSemis, channel) / 12.0f)
-                              : voice.getValue(params.loopFilterCutoff, channel);
-        const float newResonance = voice.getValue(params.loopFilterResonance, channel) + 0.001f;
-        const float newMode = 0; //TODO add BP, HP
-        bool updated = loopFilter.updateParameters(newCutoff, newResonance, newMode, loopFilterKeytrack);
-        if(updated)
-        {
-            if(loopFilterKeytrack)
-            {
-                loopFilterPhaseDelay = loopFilter.getPhaseDelayInSamples(nextFrequency);
-            }
-            else
-            {
-                loopFilterPhaseDelay = loopFilter.getPhaseDelayInSamples(nextFrequency);
-            }
-        }
-
-        float newDispersion = voice.getValue(params.dispersion, channel);
-        dispersion = newDispersion;
-        apf.setDispersionAmount(newDispersion);
-
-        //experimentally, the delay line Lagrange interpolation adds a delay of one sample plus change.
-        //this tuning error, if unaddressed, is readily observed at higher frequencies.
-        constexpr float DELAY_LINE_INTERPOLATION_DELAY = 1.03f;
-        delayLengthInSamples = sampleRate / nextFrequency - DELAY_LINE_INTERPOLATION_DELAY;
-        delayLengthInSamples = delayLengthInSamples - loopFilterPhaseDelay;
-        delayLengthInterpolator.setTargetValue(delayLengthInSamples, numSamples);
-        delayLine.setDelay(delayLengthInSamples);
+        nextFrequency = voice.getValue(params.frequency, channel);
     }
+
+    if (decayInSeconds == 60.0f)
+    {
+        decayCoefficient = 1.0f;
+    }
+    else
+    {
+        decayCoefficient = std::pow(0.001f, 1.0f / (decayInSeconds * nextFrequency));
+    }
+
+    loopFilterKeytrack = params.loopFilterKeytrack->isOn();
+    const float newCutoff = loopFilterKeytrack
+                                ? nextFrequency * std::pow(
+                                    2.0f, voice.getValue(params.loopFilterPitchInSemis, channel) / 12.0f)
+                                : voice.getValue(params.loopFilterCutoff, channel);
+    const float newResonance = voice.getValue(params.loopFilterResonance, channel) + 0.001f;
+    const float newMode = params.loopFilterType->getProcValue() * 0.5f;
+    jassert(newMode == 0 || newMode == 0.5 || newMode == 1);
+    bool updated = loopFilter.updateParameters(newCutoff, newResonance, newMode, loopFilterKeytrack);
+    if (updated)
+    {
+        if(newMode == 0.5)
+        {
+            loopFilterPhaseDelay = 0;
+        } else
+        {
+            loopFilterPhaseDelay = loopFilter.getPhaseDelayInSamples(nextFrequency);
+        }
+    }
+
+    float newDispersion = voice.getValue(params.dispersion, channel);
+    dispersion = newDispersion;
+    apf.setDispersionAmount(newDispersion);
+
+    //experimentally, the delay line Lagrange interpolation adds a delay of one sample plus change.
+    //this tuning error, if unaddressed, is readily observed at higher frequencies.
+    constexpr float DELAY_LINE_INTERPOLATION_DELAY = 1.03f;
+    delayLengthInSamples = sampleRate / nextFrequency - DELAY_LINE_INTERPOLATION_DELAY;
+    delayLengthInSamples = delayLengthInSamples - loopFilterPhaseDelay;
+    delayLengthInterpolator.setTargetValue(delayLengthInSamples, numSamples);
+    delayLine.setDelay(delayLengthInSamples);
 
 #if JUCE_SNAP_TO_ZERO
     postFilter.snapToZero();

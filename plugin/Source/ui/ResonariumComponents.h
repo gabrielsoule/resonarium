@@ -27,7 +27,6 @@ static inline juce::String lockSVG =
     "M4 30.016q0 0.832 0.576 1.408t1.44 0.576h20q0.8 0 1.408-0.576t0.576-1.408v-14.016q0-0.832-0.576-1.408t-1.408-0.576v-4q0-2.048-0.8-3.872t-2.144-3.2-3.2-2.144-3.872-0.8q-2.72 0-5.024 1.344t-3.616 3.648-1.344 5.024v4q-0.832 0-1.44 0.576t-0.576 1.408v14.016zM8 28v-9.984h16v9.984h-16zM10.016 14.016v-4q0-2.496 1.728-4.256t4.256-1.76 4.256 1.76 1.76 4.256v4h-12z";
 static inline juce::String chainSVG =
     "M0 18.016q0 2.496 1.76 4.224t4.256 1.76h1.984q1.952 0 3.488-1.12t2.144-2.88h-7.616q-0.832 0-1.44-0.576t-0.576-1.408v-4q0-0.832 0.576-1.408t1.44-0.608h7.616q-0.608-1.76-2.144-2.88t-3.488-1.12h-1.984q-2.496 0-4.256 1.76t-1.76 4.256v4zM8 16q0 0.832 0.576 1.44t1.44 0.576h12q0.8 0 1.408-0.576t0.576-1.44-0.576-1.408-1.408-0.576h-12q-0.832 0-1.44 0.576t-0.576 1.408zM18.368 20q0.64 1.792 2.176 2.912t3.456 1.088h2.016q2.464 0 4.224-1.76t1.76-4.224v-4q0-2.496-1.76-4.256t-4.224-1.76h-2.016q-1.92 0-3.456 1.12t-2.176 2.88h7.648q0.8 0 1.408 0.608t0.576 1.408v4q0 0.832-0.576 1.408t-1.408 0.576h-7.648z";
-
 /**
  * A component that draws a nice bracket around some content,
  * like you'd see on the control panel of the Eagle lunar module.
@@ -343,7 +342,7 @@ private:
 class WaveguideResonatorComponent_V2 : public gin::MultiParamComponent
 {
 public:
-    explicit WaveguideResonatorComponent_V2(ResonatorParams resonatorParams, juce::Colour colour) :
+    explicit WaveguideResonatorComponent_V2(WaveguideResonatorBankParams enclosingBankParams, ResonatorParams resonatorParams, juce::Colour colour) :
         resonatorParams(resonatorParams), colour(colour)
     {
         enableButton = new gin::SVGPluginButton(resonatorParams.enabled, gin::Assets::power);
@@ -351,9 +350,33 @@ public:
         enableButton->setColour(juce::TextButton::buttonColourId, colour);
         gainKnob = new gin::Knob(resonatorParams.gain);
         gainKnob->getSlider().setColour(juce::Slider::rotarySliderFillColourId, colour);
-        pitchOffsetKnob = new TextSlider(resonatorParams.pitchInSemis, colour);
-        pitchOffsetKnob->setReadoutDecimals(2);
-        resonatorFrequencyKnob = new TextSlider(resonatorParams.resonatorFrequency, colour);
+        pitchKnob = new TextSlider(resonatorParams.pitch, colour);
+        pitchKnob->setReadoutDecimals(2);
+        pitchKnob->mainReadout.textToParamConversionFunction = [enclosingBankParams](float value) {
+            if(enclosingBankParams.useSemitones->isOn())
+            {
+                // DBG("fValue: " + juce::String(value));
+                // DBG("fFrequency: " + juce::String(std::pow(2.0f, value / 12.0f)));
+                return std::pow(2.0f, value / 12.0f);
+            }
+            else
+            {
+                return value;
+            }
+        };
+        pitchKnob->mainReadout.paramToTextConversionFunction = [enclosingBankParams](float value) {
+            if(enclosingBankParams.useSemitones->isOn())
+            {
+                // DBG("fValue: " + juce::String(value));
+                // DBG("fSemitones: " + juce::String(12 * std::log2(value)));
+                return 12 * std::log2(value);
+            }
+            else
+            {
+                return value;
+            }
+        };
+        resonatorFrequencyKnob = new TextSlider(resonatorParams.frequency, colour);
         resonatorFrequencyKnob->setReadoutDecimals(0);
         decayTimeKnob = new TextSlider(resonatorParams.decayTime, colour);
         decayTimeKnob->setReadoutDecimals(2);
@@ -384,7 +407,7 @@ public:
 
         addAndMakeVisible(enableButton);
         addAndMakeVisible(gainKnob);
-        addAndMakeVisible(pitchOffsetKnob);
+        addAndMakeVisible(pitchKnob);
         addAndMakeVisible(resonatorFrequencyKnob);
         addAndMakeVisible(decayTimeKnob);
         addAndMakeVisible(dispersionKnob);
@@ -423,7 +446,7 @@ public:
         resonatorKeytrack->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT).reduced(3));
         bounds.removeFromTop(SPACING_Y_SMALL);
         resonatorFrequencyKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
-        pitchOffsetKnob->setBounds(resonatorFrequencyKnob->getBounds());
+        pitchKnob->setBounds(resonatorFrequencyKnob->getBounds());
         bounds.removeFromTop(SPACING_Y_LARGE);
         decayTimeKnob->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT));
         bounds.removeFromTop(SPACING_Y_LARGE);
@@ -464,7 +487,7 @@ public:
             if (c != enableButton) c->setEnabled(resonatorParams.enabled->isOn());
         }
 
-        pitchOffsetKnob->setVisible(resonatorParams.resonatorKeytrack->isOn());
+        pitchKnob->setVisible(resonatorParams.resonatorKeytrack->isOn());
         resonatorFrequencyKnob->setVisible(!resonatorParams.resonatorKeytrack->isOn());
 
         loopFilterPitchKnob->setVisible(resonatorParams.loopFilterKeytrack->isOn());
@@ -477,7 +500,7 @@ public:
     gin::SVGPluginButton* enableButton;
     gin::Knob* gainKnob;
     TextSlider* resonatorFrequencyKnob;
-    TextSlider* pitchOffsetKnob;
+    TextSlider* pitchKnob;
     TextSlider* decayTimeKnob;
     TextSlider* dispersionKnob;
     TextSlider* loopFilterCutoffKnob;

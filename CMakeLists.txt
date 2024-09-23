@@ -91,7 +91,8 @@ file(GLOB_RECURSE binary_files CONFIGURE_DEPENDS
         "./plugin/Resources/resonarium_logo.png"
         "./plugin/Resources/resonarium_logo_svg.svg"
         "./plugin/Resources/tooltips.json"
-        "./plugin/Resources/Presets/*.xml")
+        "./plugin/Resources/Presets/*.xml"
+        "./plugin/Resources/Fonts/*.otf")
 
 juce_add_binary_data(${PLUGIN_NAME}_Assets SOURCES ${binary_files})
 

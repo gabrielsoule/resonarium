@@ -182,8 +182,9 @@ public:
                   uiParams.resonatorBankSelect);
         for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
         {
-            auto* resonatorComponent = new WaveguideResonatorComponent_V2(
-                bankParams.resonatorParams[i], resonatorColors[i]);
+            auto* resonatorComponent = new WaveguideResonatorComponent_V2(bankParams,
+                                                                          bankParams.resonatorParams[i],
+                                                                          resonatorColors[i]);
             resonatorComponents.add(resonatorComponent);
             addAndMakeVisible(resonatorComponent);
         }
@@ -194,12 +195,15 @@ public:
         addAndMakeVisible(postFilterLabel = new juce::Label("postFilterLabel", "POST FILTER"));
         loopFilterLabel->setJustificationType(juce::Justification::centred);
         postFilterLabel->setJustificationType(juce::Justification::centred);
-        loopFilterLabel->setFont(loopFilterLabel->getFont().withHeight(17).withExtraKerningFactor(0.07f));
-        postFilterLabel->setFont(postFilterLabel->getFont().withHeight(17).withExtraKerningFactor(0.07f));
+        loopFilterLabel->setFont(loopFilterLabel->getFont().withHeight(20).withExtraKerningFactor(0.06f));
+        postFilterLabel->setFont(postFilterLabel->getFont().withHeight(20).withExtraKerningFactor(0.06f));
         loopFilterLabel->setEditable(false);
         postFilterLabel->setEditable(false);
         loopFilterLabel->setColour(juce::Label::textColourId, textColour);
         postFilterLabel->setColour(juce::Label::textColourId, textColour);
+
+        showSemitonesToggle = new gin::SVGPluginButton(bankParams.useSemitones, "");
+        addControl(showSemitonesToggle);
 
         couplingModeKnob = new gin::Select(bankParams.couplingMode);
         addControl(couplingModeKnob);
@@ -220,7 +224,7 @@ public:
 
         topControlBracketLabel = new juce::Label("topControlBracketLabel", "WAVEGUIDE\nCONTROLS");
         topControlBracketLabel->setJustificationType(juce::Justification::centred);
-        topControlBracketLabel->setFont(topControlBracketLabel->getFont().withHeight(17).withExtraKerningFactor(0.07f));
+        topControlBracketLabel->setFont(topControlBracketLabel->getFont().withHeight(19).withExtraKerningFactor(0.06f));
         topControlBracketLabel->setEditable(false);
         topControlBracketLabel->setColour(juce::Label::textColourId, textColour);
         addAndMakeVisible(topControlBracketLabel);
@@ -230,7 +234,8 @@ public:
         addAndMakeVisible(bottomControlBracket);
         bottomControlBracketLabel = new juce::Label("bottomControlBracketLabel", "CASCADE\nCONTROLS");
         bottomControlBracketLabel->setJustificationType(juce::Justification::centred);
-        bottomControlBracketLabel->setFont(bottomControlBracketLabel->getFont().withHeight(17).withExtraKerningFactor(0.07f));
+        bottomControlBracketLabel->setFont(
+            bottomControlBracketLabel->getFont().withHeight(19).withExtraKerningFactor(0.06f));
         bottomControlBracketLabel->setEditable(false);
         bottomControlBracketLabel->setColour(juce::Label::textColourId, textColour);
         addAndMakeVisible(bottomControlBracketLabel);
@@ -239,6 +244,7 @@ public:
         controlAreaGlow->toBack();
 
         watchParam(bankParams.couplingMode);
+        watchParam(bankParams.useSemitones);
     }
 
     void resized() override
@@ -271,10 +277,14 @@ public:
         cascadeFilterResonanceKnob->setBounds(bankControlsX, bankControlsY + 4.18 * (KNOB_H), KNOB_W, KNOB_H);
         cascadeFilterModeKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 4.18 * (KNOB_H), KNOB_W, KNOB_H);
 
-        bottomControlBracket->setBounds(bankControlsX -1, cascadeFilterModeKnob->getBounds().getBottom(), KNOB_W * 2 + 1, 10);
-        bottomControlBracketLabel->setBounds(bankControlsX, bottomControlBracket->getBounds().getBottom() + 3, KNOB_W * 2, 40);
+        bottomControlBracket->setBounds(bankControlsX - 1, cascadeFilterModeKnob->getBounds().getBottom(),
+                                        KNOB_W * 2 + 1, 10);
+        bottomControlBracketLabel->setBounds(bankControlsX, bottomControlBracket->getBounds().getBottom() + 3,
+                                             KNOB_W * 2, 40);
 
-        controlAreaGlow->setBounds(juce::Rectangle<int>(topControlBracket->getBounds().getTopLeft(), bottomControlBracket->getBounds().getBottomRight()).expanded(50));
+        controlAreaGlow->setBounds(juce::Rectangle<int>(topControlBracket->getBounds().getTopLeft(),
+                                                        bottomControlBracket->getBounds().getBottomRight()).
+            expanded(50));
         GlowComponent::GlowParameters glowParams;
         glowParams.colour = juce::Colour(0xff775cff);
         glowParams.radiusX = 20;
@@ -316,12 +326,17 @@ public:
             bottomControlBracket->setVisible(showCascadeControls);
         if (bottomControlBracketLabel != nullptr)
             bottomControlBracketLabel->setVisible(showCascadeControls);
+
+        for(auto* resonatorComponent : resonatorComponents)
+        {
+            resonatorComponent->pitchKnob->mainReadout.valueUpdated(nullptr);
+        }
     }
 
     void paint(juce::Graphics& g) override
     {
         ParamBox::paint(g);
-        juce::Font font = static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont.withHeight(17).
+        juce::Font font = static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont.withHeight(19).
             withExtraKerningFactor(0.05f);
         g.setFont(font);
         //draw some attractive background rectangles
@@ -345,6 +360,7 @@ public:
         g.drawFittedText("KEYTRACK", textRect, juce::Justification::centredRight, 1);
         textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
         g.drawFittedText("PITCH", textRect, juce::Justification::centredRight, 1);
+        showSemitonesToggle->setBounds(textRect);
         rowBackground.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
 
         g.setColour(juce::Colours::black);
@@ -417,6 +433,7 @@ public:
     gin::Knob* cascadeFilterKnob = nullptr;
     gin::Knob* cascadeFilterResonanceKnob = nullptr;
     gin::Knob* cascadeFilterModeKnob = nullptr;
+    gin::SVGButton* showSemitonesToggle = nullptr;
 
     juce::Label* topControlBracketLabel = nullptr;
     BracketComponent* topControlBracket = nullptr;
@@ -704,16 +721,18 @@ public:
 class MacroParamBox : public gin::ParamBox
 {
 public:
-    MacroParamBox(const juce::String& name, ResonariumProcessor& proc, std::array<gin::Parameter::Ptr, NUM_MACROS> macroParams) :
+    MacroParamBox(const juce::String& name, ResonariumProcessor& proc,
+                  std::array<gin::Parameter::Ptr, NUM_MACROS> macroParams) :
         gin::ParamBox(name), proc(proc), macroParams(macroParams)
     {
         setName("macro");
         addHeader({"MACROS", "SOURCES", "MATRIX"}, 0, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
-        for(int i = 0; i < NUM_MACROS; i++)
+        for (int i = 0; i < NUM_MACROS; i++)
         {
             addControl(knobs[i] = new gin::Knob(macroParams[i]));
-            knobs[i]->getSlider().setTooltip("Test Tooltip: Loremr, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. AAA BBB CCC DDD EEE FFF GGG HHH III JJJ. Foo bar baz.");
+            knobs[i]->getSlider().setTooltip(
+                "Test Tooltip: Loremr, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. AAA BBB CCC DDD EEE FFF GGG HHH III JJJ. Foo bar baz.");
             // knobs[i]->getSlider().setTooltip("This is a test tooltip,it doesn't do much");f
             modSrcButtons[i] = new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMacro[i], false);
             frame.addAndMakeVisible(modSrcButtons[i]);
@@ -733,7 +752,8 @@ public:
         {
             knobs[i]->setBounds(knobSpacing * (i + 1) + macroKnobWidth * i, yOffset, macroKnobWidth, KNOB_H * 1.1);
             //center the 15x15 mod source button below the knob
-            modSrcButtons[i]->setBounds(knobSpacing * (i + 1) + macroKnobWidth * i + macroKnobWidth / 2 - 7, KNOB_H * 1.1 + 10 + yOffset, 15, 15);
+            modSrcButtons[i]->setBounds(knobSpacing * (i + 1) + macroKnobWidth * i + macroKnobWidth / 2 - 7,
+                                        KNOB_H * 1.1 + 10 + yOffset, 15, 15);
         }
     }
 
@@ -773,7 +793,7 @@ public:
         : gin::ParamBox(name), proc(proc)
     {
         setName("mtx");
-        addHeader({"MACROS","SOURCES", "MATRIX"}, 2, proc.uiParams.modWindowSelect);
+        addHeader({"MACROS", "SOURCES", "MATRIX"}, 2, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
         addControl(modMatrixComponent = new gin::ModMatrixBox(proc, proc.modMatrix, 75));
     }

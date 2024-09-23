@@ -26,16 +26,35 @@ public:
     void valueUpdated(gin::Parameter*) override
     {
         float value = p->getUserValue();
+        // DBG("value: " << value);
+        if (paramToTextConversionFunction != nullptr)
+        {
+            value = paramToTextConversionFunction(value);
+        }
+        // DBG("converted value: " << value);
         juce::String text = juce::String(value, decimals);
+
         //remove erroneous negative zero if zero
         if(value == 0.0f && text.contains("-"))
         {
             //remove the negative sign
             text = text.substring(1);
         }
+        DBG("text: " << text);
         setText(decimals > 0 ? text : juce::String(static_cast<int>(value)), juce::dontSendNotification);
         this->onTextChange();
         this->toBack();
+    }
+
+    void textWasEdited() override
+    {
+        if (applyValue (getText()))
+        {
+            float v = getText().getFloatValue();
+            v = textToParamConversionFunction(v);
+            p->setUserValueAsUserAction (v);
+        }
+        repaint();
     }
 
     void resized() override
@@ -77,6 +96,8 @@ public:
     float unitFontSize = 12.0f;
     size_t decimals = 2;
     gin::Parameter* p;
+    std::function<float(float)> textToParamConversionFunction = nullptr;
+    std::function<float(float)> paramToTextConversionFunction = nullptr;
 };
 
 
@@ -190,7 +211,7 @@ public:
         mainReadout.decimals = decimals;
     }
 
-    float fontSize = 21.0f;
+    float fontSize = 23.0f;
     size_t decimals = 2.0f;
     CustomizableReadout mainReadout;
     float mainReadoutTextWidth;

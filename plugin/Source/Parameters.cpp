@@ -183,11 +183,11 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                             {0.0, 1.0, 1.0, 1.0f}, 0.0f,
                             0.0f);
 
-    pitchInSemis = p.addExtParam("pitchOffsetSemis" + suffix, "Pitch Offset" + suffix, "Pitch", "ST",
-                                 {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
+    pitch = p.addExtParam("pitch" + suffix, "Pitch Multiplier" + suffix, "Pitch", "",
+                                 {0.10, 10.0f, 0.01f, 0.7f}, 1.0f,
                                  0.0f);
 
-    resonatorFrequency = p.addExtParam("resonatorFrequency" + suffix, "Frequency" + suffix, "Freq", "Hz",
+    frequency = p.addExtParam("resonatorFrequency" + suffix, "Frequency" + suffix, "Freq", "Hz",
                                        {20.0f, 20000.0f, 0.0f, 0.4f}, 1000.0f,
                                        0.0f);
 
@@ -269,6 +269,10 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
     noteOffset = p.addExtParam("noteOffset" + suffix, "Note Offset" + suffix, "Note", "semitones",
                                {-36.0f, 36.0f, 0.0f, 1.0f}, 0.0f,
                                gin::SmoothingType::linear);
+
+    useSemitones = p.addIntParam("useSemitones" + suffix, "Use Semitones" + suffix, "Use Semitones", "",
+                                 {0.0f, 1.0f, 0.0f, 1.0f}, 1.0f,
+                                 0.0f);
 
     couplingMode = p.addExtParam("couplingMode" + suffix, "Coupling Mode" + suffix, "Coupling", "",
                                  {0.0, 2.0, 1.0, 1.0f}, 0.0f,
