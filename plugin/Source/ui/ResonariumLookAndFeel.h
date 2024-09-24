@@ -1,12 +1,8 @@
 #pragma once
 
-// #include "gin_images.h"
 #include <JuceHeader.h>
 
-//==============================================================================
-/** Plugin specific addition to GinLookAndFeel
-    Still black and white
-*/
+//Code adapted from gin::PluginLookAndFeel
 class ResonariumLookAndFeel : public gin::PluginLookAndFeel
 {
 public:
@@ -50,10 +46,6 @@ public:
     juce::Font defaultFont;
 };
 
-//==============================================================================
-/** Auto sets and clears CopperLookAndFeel as default.
-    Wrap this up in a SharedResourcePointer
-*/
 class ResonariumLookAndFeelWrapper : public ResonariumLookAndFeel
 {
 public:

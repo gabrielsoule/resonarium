@@ -170,6 +170,94 @@ public:
     std::unique_ptr<juce::Drawable> drawableSVG;
 };
 
+/**
+ * An extension of the Gin plugin button that uses Juce's modern SVG rendering.
+ * This replacement can render an entire SVG file rather than just a single path.
+ */
+class SVGFilePluginButton : public gin::SVGPluginButton
+{
+public:
+    SVGFilePluginButton(gin::Parameter* p, juce::String svg, juce::String svgEnabled) : gin::SVGPluginButton(p, svg, svgEnabled)
+    {
+        auto svgXml = juce::XmlDocument::parse(svg);
+        auto svgXmlEnabled = juce::XmlDocument::parse(svg);
+        //there has to be a better way here... right? Why doesn't JUCE just return a DrawableComposite?
+        drawableSVGDisabled = std::unique_ptr<juce::DrawableComposite>(dynamic_cast<juce::DrawableComposite*>(juce::Drawable::createFromSVG(*svgXml).release()));
+        drawableSVGEnabled = std::unique_ptr<juce::DrawableComposite>(dynamic_cast<juce::DrawableComposite*>(juce::Drawable::createFromSVG(*svgXmlEnabled).release()));
+        drawableSVGDisabled->setName(p->getName(100) + " Disabled");
+        drawableSVGEnabled->setName(p->getName(100) + " Enabled");
+
+        addAndMakeVisible(drawableSVGDisabled.get());
+        addAndMakeVisible(drawableSVGEnabled.get());
+
+        for (int i = 0; i < drawableSVGDisabled->getNumChildComponents(); ++i)
+        {
+            if (auto* path = dynamic_cast<juce::DrawablePath*>(drawableSVGDisabled->getChildComponent(i)))
+            {
+                disabledSVGPaths.add(path);
+            }
+        }
+
+        for (int i = 0; i < drawableSVGEnabled->getNumChildComponents(); ++i)
+        {
+            if (auto* path = dynamic_cast<juce::DrawablePath*>(drawableSVGEnabled->getChildComponent(i)))
+            {
+                enabledSVGPaths.add(path);
+            }
+        }
+
+        SVGFilePluginButton::valueUpdated(p);
+    }
+
+    void lookAndFeelChanged() override
+    {
+        for (int i = 0; i < drawableSVGDisabled->getNumChildComponents(); ++i)
+        {
+            if (auto* path = dynamic_cast<juce::DrawablePath*>(drawableSVGDisabled->getChildComponent(i)))
+            {
+                path->setFill(juce::Colours::white.withAlpha(0.0f));
+                path->setStrokeFill(juce::Colours::white.withAlpha(0.5f));
+            }
+        }
+
+        for (int i = 0; i < drawableSVGEnabled->getNumChildComponents(); ++i)
+        {
+            if (auto* path = dynamic_cast<juce::DrawablePath*>(drawableSVGEnabled->getChildComponent(i)))
+            {
+                path->setFill(getLookAndFeel().findColour(ResonariumLookAndFeel::accentColourId).withAlpha(0.0f));
+                path->setStrokeFill(getLookAndFeel().findColour(ResonariumLookAndFeel::accentColourId));
+            }
+        }
+    }
+
+    void valueUpdated(gin::Parameter* p) override
+    {
+        SVGPluginButton::valueUpdated(p);
+        drawableSVGDisabled->setVisible(!p->isOn());
+        drawableSVGEnabled->setVisible(p->isOn());
+    }
+
+    void mouseEnter(const juce::MouseEvent& event) override
+    {
+        SVGPluginButton::mouseEnter(event);
+    }
+
+    void resized() override
+    {
+        SVGPluginButton::resized();
+        drawableSVGDisabled->setTransformToFit(getLocalBounds().toFloat(), juce::RectanglePlacement::xLeft);
+        drawableSVGEnabled->setTransformToFit(getLocalBounds().toFloat(), juce::RectanglePlacement::xLeft);
+        drawableSVGDisabled->resetBoundingBoxToContentArea();
+        drawableSVGEnabled->resetBoundingBoxToContentArea();
+    }
+
+    std::unique_ptr<juce::DrawableComposite> drawableSVGDisabled;
+    juce::Array<juce::DrawablePath*> disabledSVGPaths;
+    std::unique_ptr<juce::DrawableComposite> drawableSVGEnabled;
+    juce::Array<juce::DrawablePath*> enabledSVGPaths;
+
+};
+
 class CircleEnableButton : public gin::PluginButton
 {
 public:

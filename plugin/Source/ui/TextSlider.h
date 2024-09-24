@@ -40,7 +40,6 @@ public:
             //remove the negative sign
             text = text.substring(1);
         }
-        DBG("text: " << text);
         setText(decimals > 0 ? text : juce::String(static_cast<int>(value)), juce::dontSendNotification);
         this->onTextChange();
         this->toBack();

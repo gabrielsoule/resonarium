@@ -185,36 +185,36 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
 
     pitch = p.addExtParam("pitch" + suffix, "Pitch Multiplier" + suffix, "Pitch", "",
                                  {0.10, 10.0f, 0.01f, 0.7f}, 1.0f,
-                                 0.0f);
+                                 0.0f, "resonator.pitch");
 
     frequency = p.addExtParam("resonatorFrequency" + suffix, "Frequency" + suffix, "Freq", "Hz",
                                        {20.0f, 20000.0f, 0.0f, 0.4f}, 1000.0f,
-                                       0.0f);
+                                       0.0f, "resonator.frequency");
 
     resonatorKeytrack = p.addExtParam("resonatorKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
                                       {0.0f, 100.0f, 0.0f, 1.0f}, 1.0f,
-                                      0.0f);
+                                      0.0f, "resonator.keytrack");
 
     decayTime = p.addExtParam("decayTime" + suffix, "Decay Time" + suffix, "Decay", "s",
                               {0.0f, 60.0f, 0.0f, 0.2f}, 3.0f,
-                              0.0f);
+                              0.0f, "resonator.decay");
 
     dispersion = p.addExtParam("dispersion" + suffix, "Dispersion" + suffix, "Disp.", "%",
                                {0.0f, 100.0f, 0.0f, 1.0f}, 0.0f,
-                               0.0f);
+                               0.0f, "resonator.dispersion");
     dispersion->conversionFunction = [](const float x) { return x / 100.0f; };
 
     loopFilterCutoff = p.addExtParam("decayFilterCutoff" + suffix, "Loop Filter Cutoff" + suffix, "Cutoff", "Hz",
                                      {20.0f, 20000.0, 0.0f, 0.2f}, 3000.0f,
-                                     0.0f);
+                                     0.0f, "resonator.loopfiltercutoff");
 
     loopFilterPitchInSemis = p.addExtParam("decayFilterPitch" + suffix, "Loop Filter Pitch" + suffix, "Pitch", "ST",
                                            {-60.0f, 60.0f, 0.01f, 1.0f}, 0.0f,
-                                           0.0f);
+                                           0.0f, "resonator.loopfiltercutoff");
 
     loopFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Loop Filter Resonance" + suffix, "Res", "",
                                         {0.0f, 100, 0.0f, 0.2f}, 0,
-                                        0.0f);
+                                        0.0f, "resonator.loopfilterresonance");
     constexpr float one_over_sqrt2 = 0.7071067811865475244f;
     loopFilterResonance->conversionFunction = [](const float x) { return x + one_over_sqrt2; };
 
@@ -251,7 +251,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
 
     gain = p.addExtParam("gain" + suffix, "Gain" + suffix, "Gain", "dB",
                          {-100.0f, 0.0f, 0.0f, 4.0f}, 0.0f,
-                         0.0f);
+                         0.0f, "resonator.gain");
     gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 }
 
@@ -272,7 +272,7 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
 
     useSemitones = p.addIntParam("useSemitones" + suffix, "Use Semitones" + suffix, "Use Semitones", "",
                                  {0.0f, 1.0f, 0.0f, 1.0f}, 1.0f,
-                                 0.0f);
+                                 0.0f, "resonatorbank.usesemitones");
 
     couplingMode = p.addExtParam("couplingMode" + suffix, "Coupling Mode" + suffix, "Coupling", "",
                                  {0.0, 2.0, 1.0, 1.0f}, 0.0f,

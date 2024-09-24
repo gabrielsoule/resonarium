@@ -1,15 +1,16 @@
 #include "ResonariumLookAndFeel.h"
 
+#include "ResonariumComponents.h"
 #include "juce_gui_basics/detail/juce_LookAndFeelHelpers.h"
+
+//Code adapted from gin::PluginLookAndFeel
 
 ResonariumLookAndFeel::ResonariumLookAndFeel()
 {
     typeface = juce::Typeface::createSystemTypefaceFor (gin::Resources::BarlowThin_ttf, gin::Resources::BarlowThin_ttfSize);
-    // auto myfont = juce::Font(juce::FontOptions("Futura", "Medium", 14));
     auto typefacePtr = juce::Typeface::createSystemTypefaceFor (BinaryData::Jost100Hairline_otf, BinaryData::Jost100Hairline_otfSize);
     auto font = juce::FontOptions{}.withName (typefacePtr->getName()).withStyle("Medium").withPointHeight(14);
     DBG(typefacePtr->getName());
-    // setDefaultSansSerifTypeface(typeface);
     setDefaultSansSerifTypeface(typefacePtr);
     defaultFont = font;
     juce::Array<juce::Font> fonts;
@@ -344,7 +345,11 @@ void ResonariumLookAndFeel::drawButtonText (juce::Graphics& g, juce::TextButton&
 
     g.setColour (c);
 
-    if (auto svg = dynamic_cast<gin::SVGButton*> (&b))
+    if(auto svg = dynamic_cast<SVGFilePluginButton*>(&b))
+    {
+        //do nothing right now, in the future we'll draw the SVG here L&F
+    }
+    else if (auto svg = dynamic_cast<gin::SVGButton*> (&b))
     {
         juce::Path path;
         if(b.getToggleState() && svg->rawSVGEnabled.isNotEmpty())

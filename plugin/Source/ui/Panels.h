@@ -202,7 +202,8 @@ public:
         loopFilterLabel->setColour(juce::Label::textColourId, textColour);
         postFilterLabel->setColour(juce::Label::textColourId, textColour);
 
-        showSemitonesToggle = new gin::SVGPluginButton(bankParams.useSemitones, "");
+        showSemitonesToggle = new SVGFilePluginButton(bankParams.useSemitones, BinaryData::music_note_svg, BinaryData::music_note_svg);
+
         addControl(showSemitonesToggle);
 
         couplingModeKnob = new gin::Select(bankParams.couplingMode);
@@ -266,7 +267,7 @@ public:
 
         topControlBracket->setBounds(bankControlsX - 1, bankControlsY - 5, KNOB_W * 2 + 1, 10);
         topControlBracketLabel->setBounds(bankControlsX, bankControlsY - 50, KNOB_W * 2, 40);
-
+        showSemitonesToggle->setBounds(85, 125, 60, 17);
         inputGainKnob->setBounds(bankControlsX, bankControlsY, KNOB_W, KNOB_H);
         inputMixKnob->setBounds(bankControlsX + KNOB_W, bankControlsY, KNOB_W, KNOB_H);
         outputGainKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + KNOB_H, KNOB_W, KNOB_H);
@@ -308,6 +309,8 @@ public:
                                                                       postFilterLabel->getBounds().getCentreX(),
                                                                       postFilterLabel->getBounds().getCentreY()));
         postFilterLabel->toFront(false);
+
+        if(index == 0) inputMixKnob->setEnabled(false);
     }
 
     void paramChanged() override
@@ -359,9 +362,10 @@ public:
         g.setColour(textColour);
         g.drawFittedText("KEYTRACK", textRect, juce::Justification::centredRight, 1);
         textRect.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
+        if(showSemitonesToggle->isMouseOver()) g.setColour(textColour.withAlpha(0.7f));
         g.drawFittedText("PITCH", textRect, juce::Justification::centredRight, 1);
-        showSemitonesToggle->setBounds(textRect);
         rowBackground.translate(0, PARAMETER_HEIGHT + SPACING_Y_SMALL);
+        g.setColour(textColour);
 
         g.setColour(juce::Colours::black);
         rowBackground.translate(0, PARAMETER_HEIGHT + SPACING_Y_LARGE);
@@ -433,7 +437,8 @@ public:
     gin::Knob* cascadeFilterKnob = nullptr;
     gin::Knob* cascadeFilterResonanceKnob = nullptr;
     gin::Knob* cascadeFilterModeKnob = nullptr;
-    gin::SVGButton* showSemitonesToggle = nullptr;
+
+    SVGFilePluginButton* showSemitonesToggle = nullptr;
 
     juce::Label* topControlBracketLabel = nullptr;
     BracketComponent* topControlBracket = nullptr;

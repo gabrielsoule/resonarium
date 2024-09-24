@@ -90,6 +90,7 @@ set_property(DIRECTORY APPEND PROPERTY LABELS Assets)
 file(GLOB_RECURSE binary_files CONFIGURE_DEPENDS
         "./plugin/Resources/resonarium_logo.png"
         "./plugin/Resources/resonarium_logo_svg.svg"
+        "./plugin/Resources/*.svg"
         "./plugin/Resources/tooltips.json"
         "./plugin/Resources/Presets/*.xml"
         "./plugin/Resources/Fonts/*.otf")
