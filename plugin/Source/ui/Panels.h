@@ -310,7 +310,7 @@ public:
                                                                       postFilterLabel->getBounds().getCentreY()));
         postFilterLabel->toFront(false);
 
-        if(index == 0) inputMixKnob->setEnabled(false);
+        if(bankParams.index == 0) inputMixKnob->setEnabled(false);
     }
 
     void paramChanged() override

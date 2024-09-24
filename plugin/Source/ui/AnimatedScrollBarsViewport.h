@@ -66,7 +66,6 @@ public:
         //check if mouse is outside the viewport bounds
         if (!getLocalBounds().contains(e.getEventRelativeTo(this).getPosition()))
         {
-            DBG("ACTUAL EXIT!");
             isMouseOver = false;
             for (auto bar : { &hBar, &vBar })
             {
