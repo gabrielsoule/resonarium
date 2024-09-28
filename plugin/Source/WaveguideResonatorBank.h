@@ -47,6 +47,9 @@ public:
     juce::dsp::IIR::Filter <float> dcBlockersR[NUM_WAVEGUIDE_RESONATORS];
     chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, false> cascadeFilterL;
     chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, false> cascadeFilterR;
+
+    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, true> testInterlinkedFilterL;
+    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, true> testInterlinkedFilterR;
 };
 
 #endif //WAVEGUIDERESONATORBANK_H

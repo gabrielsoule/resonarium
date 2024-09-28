@@ -39,6 +39,8 @@ void WaveguideResonatorBank::reset()
     }
     cascadeFilterL.reset();
     cascadeFilterR.reset();
+    testInterlinkedFilterL.reset();
+    testInterlinkedFilterR.reset();
 }
 
 void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
@@ -46,6 +48,8 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
     sampleRate = spec.sampleRate;
     cascadeFilterL.prepare(spec);
     cascadeFilterR.prepare(spec);
+    testInterlinkedFilterL.prepare(spec);
+    testInterlinkedFilterR.prepare(spec);
 
     for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
     {
@@ -58,6 +62,9 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
         dcBlockersL[i].prepare(spec);
         dcBlockersR[i].prepare(spec);
     }
+
+    testInterlinkedFilterL.updateParameters(1000, 1 / std::sqrt(2), 1, false);
+    testInterlinkedFilterR.updateParameters(1000, 1 / std::sqrt(2), 1, false);
 
 
     reset();
@@ -153,19 +160,20 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                 outSampleR += resonators[j]->postProcess(resonatorOutSamplesL[j], 1) * resonators[j]->resonators[1].gain;
             }
 
-            //apply the bridge filter H(z) = -2.
-            //This is a necessary criterion for stability
+            //apply the bridge filter H(z) = -2 / totalGain. This is a necessary criterion for stability
             feedbackSampleL = -2.0f * feedbackSampleL;
             feedbackSampleR = -2.0f * feedbackSampleR;
+            // feedbackSampleL = testInterlinkedFilterL.processSample(0, feedbackSampleL);
+            // feedbackSampleR = testInterlinkedFilterR.processSample(0, feedbackSampleR);
 
             for (int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
             {
                 const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.getSample(0, i) * previousResonatorBankMix) * inputGain;
                 const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.getSample(1, i) * previousResonatorBankMix) * inputGain;
                 resonators[j]->
-                    pushSample((feedbackSampleL + resonatorOutSamplesL[j]) * -1 + inSampleL, 0);
+                    pushSample((feedbackSampleL + resonatorOutSamplesL[j]) * 1 + inSampleL, 0);
                 resonators[j]->
-                    pushSample((feedbackSampleR + resonatorOutSamplesR[j]) * -1 + inSampleR, 1);
+                    pushSample((feedbackSampleR + resonatorOutSamplesR[j]) * 1 + inSampleR, 1);
             }
 
             previousResonatorBankBlock.setSample(0, i, outSampleL * outputGain);

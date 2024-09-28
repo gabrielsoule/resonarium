@@ -273,7 +273,7 @@ void ResonatorVoice::updateParameters(int numSamples)
         {
             float rate = 0;
             if (params.randomLfoParams[i].sync->getProcValue() > 0.0f)
-                rate = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(getValue(params.randomLfoParams[i].beat))].
+                rate = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.randomLfoParams[i].beat->getProcValue())].
                     toSeconds(proc.getPlayHead());
             else
                 rate = getValue(params.randomLfoParams[i].rate);

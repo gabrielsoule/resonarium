@@ -21,7 +21,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     logoText->setText("RESONARIUM", juce::dontSendNotification);
     logoText->setJustificationType(juce::Justification::centredLeft);
     logoText->setBounds(50, 0, 210, 40);
-    logoText->setFont(logoText->getFont().withHeight(23.0f).withExtraKerningFactor(0.22f));
+    logoText->setFont(logoText->getFont().withHeight(26.0f).withExtraKerningFactor(0.25f));
     logoText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.85f));
     addAndMakeVisible(logoText);
 
@@ -178,10 +178,13 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     phaserParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
     viewportContentComponent->addAndMakeVisible(phaserParamBox);
 
-    distortionParamBox = new DistortionParamBox("Distortion", proc,
-                                                proc.synth.params.effectChainParams.distortionParams);
-    distortionParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
+    distortionParamBox = new DistortionParamBox("Distortion", proc, proc.synth.params.effectChainParams.distortionParams);
+    distortionParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
     viewportContentComponent->addAndMakeVisible(distortionParamBox);
+
+    multiAmpParamBox = new MultiAmpParamBox("Amp", proc, proc.synth.params.effectChainParams.multiAmpParams);
+    multiAmpParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
+    viewportContentComponent->addAndMakeVisible(multiAmpParamBox);
 
     delayParamBox = new DelayParamBox("Delay", proc, proc.synth.params.effectChainParams.delayParams);
     delayParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));

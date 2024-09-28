@@ -5,6 +5,7 @@
 #include "Parameters.h"
 #include "PluginProcessor.h"
 #include "dsp/Distortion.h"
+#include "dsp/MultiAmp.h"
 
 static juce::String filterTextFunction(const gin::Parameter&, float v)
 {
@@ -113,16 +114,45 @@ static juce::String lfoTextFunction(const gin::Parameter&, float v)
     }
 }
 
-static juce::String distortionModeTextFunction(const gin::Parameter&, float v)
+static juce::String multiAmpModeTextFunction(const gin::Parameter&, float v)
 {
-    switch (Distortion::Mode(int(v)))
+    switch (MultiAmp::Mode(int(v)))
     {
-    case Distortion::Mode::BIG: return "Big";
-    case Distortion::Mode::BASS: return "Bass";
-    case Distortion::Mode::FIRE: return "Fire";
-    case Distortion::Mode::LEAD: return "Lead";
-    case Distortion::Mode::GRIND: return "Grind";
-    case Distortion::Mode::DEREZ: return "Bitcrush";
+    case MultiAmp::Mode::BIG: return "Big";
+    case MultiAmp::Mode::BASS: return "Bass";
+    case MultiAmp::Mode::FIRE: return "Fire";
+    case MultiAmp::Mode::LEAD: return "Lead";
+    case MultiAmp::Mode::GRIND: return "Grind";
+    case MultiAmp::Mode::DEREZ: return "Bitcrush";
+    default:
+        jassertfalse;
+        return {};
+    }
+}
+
+static juce::String distortionTypeTextFunction(const gin::Parameter&, float v)
+{
+    switch (Distortion::DistortionMode(int(v)))
+    {
+    case Distortion::DistortionMode::SOFT_CLIP: return "Soft Clip";
+    case Distortion::DistortionMode::HARD_CLIP: return "Hard Clip";
+    case Distortion::DistortionMode::LINEAR_FOLD: return "Linear Fold";
+    case Distortion::DistortionMode::SIN_FOLD: return "Sine Fold";
+    case Distortion::DistortionMode::BIT_CRUSH: return "Bit Crush";
+    case Distortion::DistortionMode::DOWN_SAMPLE: return "Down Sample";
+    default:
+        jassertfalse;
+        return {};
+    }
+}
+
+static juce::String distortionFilterModeTextFunction(const gin::Parameter&, float v)
+{
+    switch (Distortion::DistortionMode(int(v)))
+    {
+    case Distortion::FilterMode::disabled: return "Off";
+    case Distortion::FilterMode::pre: return "Pre";
+    case Distortion::FilterMode::post: return "Post";
     default:
         jassertfalse;
         return {};
@@ -184,12 +214,12 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                             0.0f);
 
     pitch = p.addExtParam("pitch" + suffix, "Pitch Multiplier" + suffix, "Pitch", "",
-                                 {0.10, 10.0f, 0.01f, 0.7f}, 1.0f,
-                                 0.0f, "resonator.pitch");
+                          {0.10, 10.0f, 0.01f, 0.7f}, 1.0f,
+                          0.0f, "resonator.pitch");
 
     frequency = p.addExtParam("resonatorFrequency" + suffix, "Frequency" + suffix, "Freq", "Hz",
-                                       {20.0f, 20000.0f, 0.0f, 0.4f}, 1000.0f,
-                                       0.0f, "resonator.frequency");
+                              {20.0f, 20000.0f, 0.0f, 0.4f}, 1000.0f,
+                              0.0f, "resonator.frequency");
 
     resonatorKeytrack = p.addExtParam("resonatorKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
                                       {0.0f, 100.0f, 0.0f, 1.0f}, 1.0f,
@@ -707,57 +737,64 @@ void DelayParams::setup(ResonariumProcessor& p)
 
 void DistortionParams::setup(ResonariumProcessor& p)
 {
-    enabled = p.addIntParam("distortionEnable", "Distortion Enable", "Enable", "",
+    enabled = p.addIntParam("distEnable", "Distortion Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                             0.0f, "", enableTextFunction);
 
-    mode = p.addIntParam("distortionMode", "Distortion Mode", "Mode", "",
+    distortionMode = p.addIntParam("distType", "Distortion Type", "Type", "",
+                                   {0.0f, 5.0f, 1.0f, 1.0f}, 0.0f,
+                                   0.0f, "", distortionTypeTextFunction);
+
+    drive = p.addExtParam("distDrive", "Distortion Drive", "Drive", "dB",
+                          {-60, 60, 0.0f, 1.0f}, 0,
+                          0.0f);
+
+    mix = p.addExtParam("distMix", "Distortion Mix", "Mix", "",
+                        {0.0f, 1.0f, 0.01f, 1.0f},
+                        0.5f, 0.0f);
+
+    prePostFilter = p.addIntParam("distPrePostFilter", "Distortion Pre/Post Filter", "Pre/Post", "",
+                                  {0.0f, 2.0f, 1.0f, 1.0f}, 0.0f,
+                                  0.0f, "", distortionFilterModeTextFunction);
+
+    cutoff = p.addExtParam("distCutoff", "Distortion Cutoff", "Cutoff", "Hz",
+                          {20.0f, 20000.0f, 0.0f, 0.4f}, 3000.0f,
+                          0.0f);
+
+    resonance = p.addExtParam("distResonance", "Distortion Resonance", "Res.", "",
+                              {0.01f, 15.0f, 0.0f, 0.4f}, 1.0f / std::sqrt(2.0f),
+                              0.0f);
+
+    filterMode = p.addExtParam("distFilterMode", "Distortion Filter Mode", "Mode", "",
+                               {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
+                               0.0f);
+}
+
+void MultiAmpParams::setup(ResonariumProcessor& p)
+{
+    enabled = p.addIntParam("ampEnable", "Amp Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, "", enableTextFunction);
+
+    mode = p.addIntParam("ampMode", "Amp Mode", "Mode", "",
                          {0.0f, 5.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, "", distortionModeTextFunction);
+                         0.0f, "", multiAmpModeTextFunction);
 
-    // ampGain = p.addExtParam("distortionAmpGain", "Distortion Amp Gain", "Gain", "",
-    //                         {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-    //                         0.0f);
-    //
-    // ampTone = p.addExtParam("distortionAmpTone", "Distortion Amp Tone", "Tone", "",
-    //                         {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-    //                         0.0f);
-    //
-    // ampOutput = p.addExtParam("distortionAmpOutput", "Distortion Amp Output", "Output", "",
-    //                           {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-    //                           0.0f);
-    //
-    // bitcrushRate = p.addExtParam("distortionBitcrushRate", "Distortion Bitcrush Rate", "Rate", "",
-    //                              {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-    //                              0.0f);
-    //
-    // bitcrushRez = p.addExtParam("distortionBitcrushRez", "Distortion Bitcrush Rez", "Rez", "",
-    //                             {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-    //                             0.0f);
-    //
-    // bitcrushHard = p.addExtParam("distortionBitcrushHard", "Distortion Bitcrush Hard", "Hard", "",
-    //                              {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-    //                              0.0f);
-
-    paramA = p.addExtParam("distortionParamA", "Distortion Param A", "Param A", "",
+    paramA = p.addExtParam("ampParamA", "Amp Param A", "Param A", "",
                            {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
                            0.0f);
 
-    paramB = p.addExtParam("distortionParamB", "Distortion Param B", "Param B", "",
+    paramB = p.addExtParam("ampParamB", "Amp Param B", "Param B", "",
                            {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
                            0.0f);
 
-    paramC = p.addExtParam("distortionParamC", "Distortion Param C", "Param C", "",
+    paramC = p.addExtParam("ampParamC", "Amp Param C", "Param C", "",
                            {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
                            0.0f);
 
-    paramD = p.addExtParam("distortionParamD", "Distortion Param D", "Param D", "",
+    paramD = p.addExtParam("ampParamD", "Amp Param D", "Param D", "",
                            {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
                            0.0f);
-
-    // mix = p.addExtParam("distortionMix", "Distortion Mix", "Mix", "",
-    //                     {0.0f, 1.0f, 0.01f, 1.0f},
-    //                     0.5f, 0.0f);
 }
 
 void PhaserParams::setup(ResonariumProcessor& p)
@@ -862,6 +899,7 @@ void EffectChainParams::setup(ResonariumProcessor& p)
     reverbParams.setup(p);
     delayParams.setup(p);
     distortionParams.setup(p);
+    multiAmpParams.setup(p);
     filterParams[0].setup(p, "Filter 1");
     filterParams[1].setup(p, "Filter 2");
 }
@@ -912,7 +950,7 @@ void SynthParams::setup(ResonariumProcessor& p)
 void UIParams::setup(ResonariumProcessor& p)
 {
     resonatorBankSelect = p.addIntParam("uiActiveResonatorBank", "Bank", "", "",
-                                        {0, NUM_MODAL_RESONATOR_BANKS + NUM_WAVEGUIDE_RESONATOR_BANKS - 1, 1.0f, 1.0f},
+                                        {0, NUM_WAVEGUIDE_RESONATOR_BANKS - 1, 1.0f, 1.0f},
                                         0.0f, gin::SmoothingType::linear);
 
     lfoSelect = p.addIntParam("uiActiveLfo", "LFO", "", "",

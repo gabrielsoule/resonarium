@@ -8,6 +8,7 @@ ResonariumEffectChain::ResonariumEffectChain(ResonariumProcessor& p, int channel
     : chorusParams(params.chorusParams),
       delayParams(params.delayParams),
       distortionParams(params.distortionParams),
+      multiAmpParams(params.multiAmpParams),
       filter1Params(params.filterParams[0]),
       filter2Params(params.filterParams[1]),
       phaserParams(params.phaserParams),
@@ -15,6 +16,7 @@ ResonariumEffectChain::ResonariumEffectChain(ResonariumProcessor& p, int channel
       effectChainParams(params),
       delay(p, MAX_DELAY_IN_SECONDS),
       distortion(p, params.distortionParams),
+      multiAmp(p, params.multiAmpParams),
       filter1(params.filterParams[0]),
       filter2(params.filterParams[1]),
       proc(p)
@@ -47,6 +49,7 @@ void ResonariumEffectChain::reset()
     mverb.reset();
     gain.reset();
     distortion.reset();
+    multiAmp.reset();
     filter1.reset();
     filter2.reset();
 }
@@ -135,6 +138,7 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
     delay.setMix(1, source.getValue(delayParams.mix, 1));
 
     distortion.updateParameters(source);
+    multiAmp.updateParameters(source);
 
     filter1.updateParameters(source);
     filter2.updateParameters(source);
@@ -147,6 +151,7 @@ void ResonariumEffectChain::process(juce::dsp::AudioBlock<float> block) noexcept
     if (chorusParams.enabled->isOn()) chorus.process(context);
     if (phaserParams.enabled->isOn()) phaser.process(context);
     if (distortionParams.enabled->isOn()) distortion.process(context);
+    if (multiAmpParams.enabled->isOn()) multiAmp.process(context);
     if (delayParams.enabled->isOn()) delay.process(context);
     if (reverbParams.enabled->isOn())
     {

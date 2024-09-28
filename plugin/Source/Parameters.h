@@ -313,13 +313,31 @@ struct DistortionParams
 {
     gin::Parameter::Ptr
         enabled,
+        distortionMode,
+        drive,
+        mix,
+        prePostFilter,
+        cutoff,
+        filterMode,
+        resonance = nullptr;
+
+    DistortionParams() = default;
+
+    void setup(ResonariumProcessor& p);
+
+};
+
+struct MultiAmpParams
+{
+    gin::Parameter::Ptr
+        enabled,
         mode,
         paramA,
         paramB,
         paramC,
         paramD = nullptr;
 
-    DistortionParams() = default;
+    MultiAmpParams() = default;
 
     void setup(ResonariumProcessor& p);
 };
@@ -373,6 +391,7 @@ struct EffectChainParams
     ChorusParams chorusParams;
     DelayParams delayParams;
     DistortionParams distortionParams;
+    MultiAmpParams multiAmpParams;
     SVFParams filterParams[2];
     PhaserParams phaserParams;
     ReverbParams reverbParams;

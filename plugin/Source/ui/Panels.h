@@ -969,8 +969,6 @@ public:
                 knob->resized();
             }
         }
-
-        //iterate through all components, if component is instance of Knob, change internal knob padding
     }
 
     void paramChanged() override
@@ -1007,20 +1005,69 @@ class DistortionParamBox : public gin::ParamBox
 {
 public:
     DistortionParamBox(const juce::String& name, ResonariumProcessor& proc, DistortionParams distortionParams) :
-        gin::ParamBox(name), proc(proc), distortionParams(distortionParams)
+    gin::ParamBox(name), proc(proc), distortionParams(distortionParams)
     {
-        setName("distortion");
+        setName("dist");
         addEnable(distortionParams.enabled);
+        addControl(distortionModeKnob = new gin::Select(distortionParams.distortionMode), 0, 0);
+        addControl(driveKnob = new gin::Knob(distortionParams.drive), 1, 0);
+        addControl(mixKnob = new gin::Knob(distortionParams.mix), 2, 0);
+        addControl(filterPrePostKnob = new gin::Select(distortionParams.prePostFilter), 0, 1);
+        addControl(filterCutoffKnob = new gin::Knob(distortionParams.cutoff), 1, 1);
+        addControl(filterResonanceKnob = new gin::Knob(distortionParams.resonance), 2, 1);
+        addControl(filterModeKnob = new gin::Knob(distortionParams.filterMode), 3, 1);
+
+        watchParam(distortionParams.prePostFilter);
+    }
+
+    void resized() override
+    {
+        ParamBox::resized();
+        float halfWidth = distortionModeKnob->getBounds().getWidth() / 2.0f;
+        distortionModeKnob->setBounds(distortionModeKnob->getBounds().translated(halfWidth, 0));
+        driveKnob->setBounds(driveKnob->getBounds().translated(halfWidth, 0));
+        mixKnob->setBounds(mixKnob->getBounds().translated(halfWidth, 0));
+    }
+
+    void paramChanged() override
+    {
+        ParamBox::paramChanged();
+        bool filterEnabled = distortionParams.prePostFilter->getProcValue() != 0;
+        filterCutoffKnob->setEnabled(filterEnabled);
+        filterResonanceKnob->setEnabled(filterEnabled);
+        filterModeKnob->setEnabled(filterEnabled);
+    }
+
+    gin::Select* distortionModeKnob;
+    gin::Knob* driveKnob;
+    gin::Knob* mixKnob;
+    gin::Select* filterPrePostKnob;
+    gin::Knob* filterCutoffKnob;
+    gin::Knob* filterResonanceKnob;
+    gin::Knob* filterModeKnob;
+
+    ResonariumProcessor& proc;
+    DistortionParams distortionParams;
+};
+
+class MultiAmpParamBox : public gin::ParamBox
+{
+public:
+    MultiAmpParamBox(const juce::String& name, ResonariumProcessor& proc, MultiAmpParams multiAmpParams) :
+        gin::ParamBox(name), proc(proc), multiAmpParams(multiAmpParams)
+    {
+        setName("amp");
+        addEnable(multiAmpParams.enabled);
         gridWidth = KNOB_W_SMALL;
         gridHeight = KNOB_H_SMALL;
         gridOffsetY += 4;
-        addControl(new gin::Select(distortionParams.mode), 0, 0);
-        addControl(paramAKnob = new gin::Knob(distortionParams.paramA), 1, 0);
-        addControl(paramBKnob = new gin::Knob(distortionParams.paramB), 2, 0);
-        addControl(paramCKnob = new gin::Knob(distortionParams.paramC), 3, 0);
-        addControl(paramDKnob = new gin::Knob(distortionParams.paramD), 4, 0);
+        addControl(new gin::Select(multiAmpParams.mode), 0, 0);
+        addControl(paramAKnob = new gin::Knob(multiAmpParams.paramA), 1, 0);
+        addControl(paramBKnob = new gin::Knob(multiAmpParams.paramB), 2, 0);
+        addControl(paramCKnob = new gin::Knob(multiAmpParams.paramC), 3, 0);
+        addControl(paramDKnob = new gin::Knob(multiAmpParams.paramD), 4, 0);
 
-        watchParam(distortionParams.mode);
+        watchParam(multiAmpParams.mode);
 
         for (int i = 0; i < controls.size(); i++)
         {
@@ -1035,12 +1082,12 @@ public:
     void paramChanged() override
     {
         gin::ParamBox::paramChanged();
-        const auto value = distortionParams.mode->getProcValue();
-        const auto mode = static_cast<Distortion::Mode>(distortionParams.mode->getProcValue());
-        paramAKnob->setDisplayName(Distortion::getParameterName(mode, 0));
-        paramBKnob->setDisplayName(Distortion::getParameterName(mode, 1));
-        paramCKnob->setDisplayName(Distortion::getParameterName(mode, 2));
-        paramDKnob->setDisplayName(Distortion::getParameterName(mode, 3));
+        const auto value = multiAmpParams.mode->getProcValue();
+        const auto mode = static_cast<MultiAmp::Mode>(multiAmpParams.mode->getProcValue());
+        paramAKnob->setDisplayName(MultiAmp::getParameterName(mode, 0));
+        paramBKnob->setDisplayName(MultiAmp::getParameterName(mode, 1));
+        paramCKnob->setDisplayName(MultiAmp::getParameterName(mode, 2));
+        paramDKnob->setDisplayName(MultiAmp::getParameterName(mode, 3));
     }
 
     gin::Knob* paramAKnob;
@@ -1049,7 +1096,7 @@ public:
     gin::Knob* paramDKnob;
 
     ResonariumProcessor& proc;
-    DistortionParams distortionParams;
+    MultiAmpParams multiAmpParams;
 };
 
 class SVFParamBox : public gin::ParamBox

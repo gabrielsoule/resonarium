@@ -52,6 +52,7 @@ private:
     SafePointer<PhaserParamBox> phaserParamBox;
     SafePointer<DelayParamBox> delayParamBox;
     SafePointer<DistortionParamBox> distortionParamBox;
+    SafePointer<MultiAmpParamBox> multiAmpParamBox;
     SafePointer<SVFParamBox> filter1ParamBox;
     SafePointer<SVFParamBox> filter2ParamBox;
 

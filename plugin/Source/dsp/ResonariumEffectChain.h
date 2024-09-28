@@ -4,6 +4,7 @@
 #include <JuceHeader.h>
 
 #include "Distortion.h"
+#include "MultiAmp.h"
 #include "MultiDelay.h"
 #include "MultiFilter.h"
 #include "MVerb.h"
@@ -33,6 +34,9 @@ public:
 
     Distortion distortion;
     DistortionParams distortionParams;
+
+    MultiAmp multiAmp;
+    MultiAmpParams multiAmpParams;
 
     juce::dsp::Phaser<float> phaser;
     PhaserParams phaserParams;
