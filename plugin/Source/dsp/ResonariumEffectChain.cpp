@@ -32,7 +32,6 @@ void ResonariumEffectChain::prepare(const juce::dsp::ProcessSpec& spec)
     filter1.prepare(spec);
     filter2.prepare(spec);
     phaser.prepare(spec);
-    reverb.prepare(spec);
     gain.prepare(spec);
     filter1.prepare(spec);
     filter2.prepare(spec);
@@ -45,7 +44,6 @@ void ResonariumEffectChain::reset()
     filter1.reset();
     filter2.reset();
     phaser.reset();
-    reverb.reset();
     mverb.reset();
     gain.reset();
     distortion.reset();

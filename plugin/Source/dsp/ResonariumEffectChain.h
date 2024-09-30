@@ -41,8 +41,6 @@ public:
     juce::dsp::Phaser<float> phaser;
     PhaserParams phaserParams;
 
-    juce::dsp::Reverb reverb;
-    gin::PlateReverb<float, int> reverb2;
     MVerb<float> mverb;
     ReverbParams reverbParams;
 
