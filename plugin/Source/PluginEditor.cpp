@@ -190,6 +190,10 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     delayParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
     viewportContentComponent->addAndMakeVisible(delayParamBox);
 
+    compressorParamBox = new CompressorParamBox("Compressor", proc, proc.synth.params.effectChainParams.compressorParams);
+    compressorParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
+    viewportContentComponent->addAndMakeVisible(compressorParamBox);
+
     reverbParamBox = new ReverbParamBox("Reverb", proc, proc.synth.params.effectChainParams.reverbParams);
     reverbParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
     viewportContentComponent->addAndMakeVisible(reverbParamBox);

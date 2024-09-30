@@ -832,6 +832,29 @@ void PhaserParams::setup(ResonariumProcessor& p)
                         0.5f, 0.0f);
 }
 
+void CompressorParams::setup(ResonariumProcessor& p)
+{
+    enabled = p.addIntParam("compressorEnable", "Compressor Enable", "Enable", "",
+                            {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                            0.0f, "", enableTextFunction);
+
+    threshold = p.addExtParam("compressorThreshold", "Compressor Threshold", "Thresh", "dB",
+        {-60.0f, 12.0f, 0.0f, 1.0f}, 0.0f,
+        0.0f);
+
+    ratio = p.addExtParam("compressorRatio", "Compressor Ratio", "Ratio", "",
+        {1.0f, 9.0f, 0.0f, 1.0f}, 1.0f,
+        0.0f);
+
+    attack = p.addExtParam("compressorAttack", "Compressor Attack", "Attack", "ms",
+        {1.0f, 1000.0f, 0.0f, 1.0f}, 1.0f,
+        0.0f);
+
+    release = p.addExtParam("compressorRelease", "Compressor Release", "Release", "ms",
+        {1.0f, 1000.0f, 0.0f, 1.0f}, 1.0f,
+        0.0f);
+}
+
 void ReverbParams::setup(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("reverbEnable", "Reverb Enable", "Enable", "",
@@ -900,6 +923,7 @@ void EffectChainParams::setup(ResonariumProcessor& p)
     delayParams.setup(p);
     distortionParams.setup(p);
     multiAmpParams.setup(p);
+    compressorParams.setup(p);
     filterParams[0].setup(p, "Filter 1");
     filterParams[1].setup(p, "Filter 2");
 }

@@ -911,6 +911,23 @@ public:
     }
 };
 
+class CompressorParamBox : public gin::ParamBox
+{
+public:
+    CompressorParamBox(const juce::String& name, ResonariumProcessor& proc, CompressorParams compressorParams) :
+        gin::ParamBox(name), proc(proc), compressorParams(compressorParams)
+    {
+        addEnable(compressorParams.enabled);
+        addControl(new gin::Knob(compressorParams.threshold), 0, 0);
+        addControl(new gin::Knob(compressorParams.ratio), 1, 0);
+        addControl(new gin::Knob(compressorParams.attack), 2, 0);
+        addControl(new gin::Knob(compressorParams.release), 3, 0);
+    }
+
+    ResonariumProcessor& proc;
+    CompressorParams compressorParams;
+};
+
 class ReverbParamBox : public gin::ParamBox
 {
 public:

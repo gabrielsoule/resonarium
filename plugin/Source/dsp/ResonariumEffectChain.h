@@ -41,6 +41,9 @@ public:
     juce::dsp::Phaser<float> phaser;
     PhaserParams phaserParams;
 
+    juce::dsp::Compressor<float> compressor;
+    CompressorParams compressorParams;
+
     MVerb<float> mverb;
     ReverbParams reverbParams;
 

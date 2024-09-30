@@ -48,11 +48,12 @@ private:
     SafePointer<AnimatedScrollBarsViewport> viewport;
     SafePointer<Component> viewportContentComponent;
     SafePointer<ChorusParamBox> chorusParamBox;
-    SafePointer<ReverbParamBox> reverbParamBox;
     SafePointer<PhaserParamBox> phaserParamBox;
     SafePointer<DelayParamBox> delayParamBox;
     SafePointer<DistortionParamBox> distortionParamBox;
     SafePointer<MultiAmpParamBox> multiAmpParamBox;
+    SafePointer<CompressorParamBox> compressorParamBox;
+    SafePointer<ReverbParamBox> reverbParamBox;
     SafePointer<SVFParamBox> filter1ParamBox;
     SafePointer<SVFParamBox> filter2ParamBox;
 

@@ -324,7 +324,6 @@ struct DistortionParams
     DistortionParams() = default;
 
     void setup(ResonariumProcessor& p);
-
 };
 
 struct MultiAmpParams
@@ -353,6 +352,18 @@ struct PhaserParams
         centreFrequency,
         feedback,
         mix = nullptr;
+
+    void setup(ResonariumProcessor& p);
+};
+
+struct CompressorParams
+{
+    gin::Parameter::Ptr
+        enabled,
+        threshold,
+        ratio,
+        attack,
+        release = nullptr;
 
     void setup(ResonariumProcessor& p);
 };
@@ -393,6 +404,7 @@ struct EffectChainParams
     DistortionParams distortionParams;
     MultiAmpParams multiAmpParams;
     SVFParams filterParams[2];
+    CompressorParams compressorParams;
     PhaserParams phaserParams;
     ReverbParams reverbParams;
 

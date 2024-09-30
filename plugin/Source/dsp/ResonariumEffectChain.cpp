@@ -9,6 +9,7 @@ ResonariumEffectChain::ResonariumEffectChain(ResonariumProcessor& p, int channel
       delayParams(params.delayParams),
       distortionParams(params.distortionParams),
       multiAmpParams(params.multiAmpParams),
+      compressorParams(params.compressorParams),
       filter1Params(params.filterParams[0]),
       filter2Params(params.filterParams[1]),
       phaserParams(params.phaserParams),
@@ -76,7 +77,6 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
     const float mverbMix = source.getValue(reverbParams.mix);
     const float mverbEarlyMix = source.getValue(reverbParams.earlyMix);
 
-    //jassert between 0 and 1
     jassert(mverbDampingFreq >= 0 && mverbDampingFreq <= 1);
     jassert(mverbDensity >= 0 && mverbDensity <= 1);
     jassert(mverbBandwidthFreq >= 0 && mverbBandwidthFreq <= 1);
@@ -135,10 +135,18 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
     delay.setMix(0, source.getValue(delayParams.mix, 0));
     delay.setMix(1, source.getValue(delayParams.mix, 1));
 
+    compressor.setThreshold(source.getValue(compressorParams.threshold));
+    compressor.setRatio(source.getValue(compressorParams.ratio));
+    compressor.setAttack(source.getValue(compressorParams.attack));
+    compressor.setRelease(source.getValue(compressorParams.release));
+
+
     distortion.updateParameters(source);
+
     multiAmp.updateParameters(source);
 
     filter1.updateParameters(source);
+
     filter2.updateParameters(source);
 }
 
@@ -151,6 +159,7 @@ void ResonariumEffectChain::process(juce::dsp::AudioBlock<float> block) noexcept
     if (distortionParams.enabled->isOn()) distortion.process(context);
     if (multiAmpParams.enabled->isOn()) multiAmp.process(context);
     if (delayParams.enabled->isOn()) delay.process(context);
+    if (compressorParams.enabled->isOn()) compressor.process(context);
     if (reverbParams.enabled->isOn())
     {
         float* data[2] = {block.getChannelPointer(0), block.getChannelPointer(1)};
