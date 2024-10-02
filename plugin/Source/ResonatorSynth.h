@@ -23,7 +23,6 @@ public:
     void prepare(const juce::dsp::ProcessSpec& spec);
     void updateParameters();
     void renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
-    void fillExtInExciterBuffers(const juce::AudioBuffer<float>& buffer);
     void panic();
     ResonariumProcessor& proc;
     StereoLFOWrapper monoLFOs[NUM_LFOS];

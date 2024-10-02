@@ -142,14 +142,6 @@ void ResonatorSynth::renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, i
     Synthesiser::renderNextSubBlock(outputAudio, startSample, numSamples);
 }
 
-void ResonatorSynth::fillExtInExciterBuffers(const juce::AudioBuffer<float>& buffer)
-{
-    for (auto v : voices)
-    {
-        // dynamic_cast<ResonatorVoice*>(v)->extInExciter->fillInputBuffer(buffer);
-    }
-}
-
 void ResonatorSynth::panic()
 {
     //kill voices and reset

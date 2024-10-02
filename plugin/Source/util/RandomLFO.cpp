@@ -74,28 +74,18 @@ void RandomLFO::noteOn(float phase)
 
 void RandomLFO::processInternal(int numSamples, RandomState& state)
 {
-    // phaseDelta = rate * oneOverSampleRate * numSamples;
-    // currentPhase += phaseDelta;
-    // if (currentPhase >= 1.0f)
-    // {
-    //     currentPhase -= 1.0f;
-        float min = std::max(0.0f, state.lastRandomValue - state.lastRandomValue * chaos);
-        float max = std::min(1.0f, state.lastRandomValue + (1.0f - state.lastRandomValue) * chaos);
+    float min = std::max(0.0f, state.lastRandomValue - state.lastRandomValue * chaos);
+    float max = std::min(1.0f, state.lastRandomValue + (1.0f - state.lastRandomValue) * chaos);
 
-        static constexpr uint32_t MAX_UINT = std::numeric_limits<uint32_t>::max();
-        state.lastRandomValue = state.nextRandomValue;
+    static constexpr uint32_t MAX_UINT = std::numeric_limits<uint32_t>::max();
+    state.lastRandomValue = state.nextRandomValue;
 
-        // Convert signed int to unsigned int before casting to float
-        uint32_t unsignedRandom = static_cast<uint32_t>(state.rng.nextInt()) + 0x80000000;
-        state.nextRandomValue = min + (static_cast<float>(unsignedRandom) / static_cast<float>(MAX_UINT)) * (max - min);
-    // }
+    // Convert signed int to unsigned int before casting to float
+    uint32_t unsignedRandom = static_cast<uint32_t>(state.rng.nextInt()) + 0x80000000;
+    state.nextRandomValue = min + (static_cast<float>(unsignedRandom) / static_cast<float>(MAX_UINT)) * (max - min);
 
     jassert(state.lastRandomValue >= 0.0f && state.lastRandomValue <= 1.0f);
     jassert(state.nextRandomValue >= 0.0f && state.nextRandomValue <= 1.0f);
-    //
-    // // float modifiedPhase = smooth == 0 ? 1 : juce::jmin(1.0f, ((1.0f / smooth) * currentPhase));
-    // auto modifiedPhase = currentPhase;
-    // state.currentRandomValue = perlinInterpolate(state.lastRandomValue, state.nextRandomValue, modifiedPhase);
 }
 
 void RandomLFO::process(int numSamples)
@@ -112,9 +102,12 @@ void RandomLFO::process(int numSamples)
 
     auto modifiedPhase = currentPhase;
     modifiedPhase = smooth == 0 ? 1 : juce::jmin(1.0f, ((1.0f / smooth) * currentPhase));
-    centerState.currentRandomValue = perlinInterpolate(centerState.lastRandomValue, centerState.nextRandomValue, modifiedPhase);
-    leftState.currentRandomValue = perlinInterpolate(leftState.lastRandomValue, leftState.nextRandomValue, modifiedPhase);
-    rightState.currentRandomValue = perlinInterpolate(rightState.lastRandomValue, rightState.nextRandomValue, modifiedPhase);
+    centerState.currentRandomValue = perlinInterpolate(centerState.lastRandomValue, centerState.nextRandomValue,
+                                                       modifiedPhase);
+    leftState.currentRandomValue = perlinInterpolate(leftState.lastRandomValue, leftState.nextRandomValue,
+                                                     modifiedPhase);
+    rightState.currentRandomValue = perlinInterpolate(rightState.lastRandomValue, rightState.nextRandomValue,
+                                                      modifiedPhase);
 }
 
 float RandomLFO::getOutput()
@@ -130,7 +123,8 @@ float RandomLFO::getOutputUnclamped()
 float RandomLFO::getOutput(int channel)
 {
     jassert(channel == 0 || channel == 1);
-    const float output = sideStates[channel].currentRandomValue * stereoAmount + centerState.currentRandomValue * (1.0f - stereoAmount);
+    const float output = sideStates[channel].currentRandomValue * stereoAmount + centerState.currentRandomValue * (1.0f
+        - stereoAmount);
     return output * 2.0f - 1.0f;
 }
 
@@ -139,19 +133,8 @@ float RandomLFO::getOutputUnclamped(int channel)
     jassertfalse;
 }
 
-// float RandomLFO::perlinInterpolate(float a, float b, float t)
-// {
-// const float interpolate_from = a * t;
-// const float interpolate_to = b * (t - 1.0f);
-// const float interpolate_t = t * t * (t * -2.0f + 3.0f);
-// return (interpolate_from + (interpolate_to - interpolate_from) * interpolate_t) * 2.0f;
-// }
-
 float RandomLFO::perlinInterpolate(float from, float to, float t)
 {
-    // Smoothstep function
     t = t * t * (3.0f - 2.0f * t);
-
-    // Linear interpolation using the smoothstepped t
     return (from * (1.0f - t) + to * t);
 }

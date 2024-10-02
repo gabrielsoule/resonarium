@@ -9,10 +9,8 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
     options.programmingCredits.clear();
     options.programmingCredits.add("Gabriel Soule");
     options.developer = "Gabriel Soule";
-    options.pluginVersion = "0.0.4 ALPHA";
+    options.pluginVersion = "0.0.5 ALPHA";
     options.pluginName = "Resonarium";
-    // options.withAdditionalCredits({"Roland Rabien", "RAW Material Software JUCE Framework"});
-    // options.programmingCredits.add("JUCE 8 Framework");
     return options;
 }
 
@@ -32,7 +30,7 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     }
     else
     {
-        juce::Logger::writeToLog("Failed to load tooltips.json from BinaryData");
+        juce::Logger::writeToLog("WARNING: Failed to load tooltips.json from BinaryData");
         jassertfalse;
     }
 
@@ -57,13 +55,14 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     synth.enableLegacyMode();
     synth.setVoiceStealingEnabled(true);
     synth.setMPE(true);
-    for (int i = 0; i < NUM_SYNTH_VOICES; i++)
+    for (int i = 0; i < 32; i++)
     {
         ResonatorVoice* voice = new ResonatorVoice(*this, synth.params.voiceParams);
         modMatrix.addVoice(voice);
         synth.addVoice(voice);
         voice->id = i;
     }
+    synth.setNumVoices(NUM_SYNTH_VOICES);
     setupModMatrix(); //set up the modulation matrix
     init(); //internal init
     // testFilter(500, 0.3, 1/std::sqrt<float>(2.0), false);

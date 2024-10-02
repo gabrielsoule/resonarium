@@ -4,10 +4,8 @@
 #include <JuceHeader.h>
 #include "../Parameters.h"
 /**
-* Light wrapper over Juce::IIRFilter to easily enable multiple filter types in a single class,
+* Light wrapper over to easily enable multiple filter types in a single class,
 * along with an optional set of host-controlled parameters.
-*
-
 * The MultiFilter is marginally clever: if the voice pointer
 * is null, it will operate in monophonic mode automatically,
 * and if any of the parameter pointers are null, then it will operate

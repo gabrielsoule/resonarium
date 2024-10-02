@@ -1,12 +1,11 @@
 {
-  "global": {
-    "volume": "Adjusts the overall volume of the synthesizer",
-    "pan": "Controls the stereo positioning of the sound"
-  },
   "exciter": {
     "impulse": {
-      "gain": "Controls the volume of the impulse exciter",
-      "decay": "Controls the decay time of the impulse exciter"
+      "level": "Control the level of the input signal. The value of this parameter directly corresponds to the amplitude of the impulse sample.",
+      "density": "Control the length of the impulse, in samples. Higher values induce a low-pass effect."
+    },
+    "noise": {
+      "level": "Control the level of the white noise signal. The value of this parameter directly corresponds to the amplitude of the white noise",
     }
   },
   "resonator": {

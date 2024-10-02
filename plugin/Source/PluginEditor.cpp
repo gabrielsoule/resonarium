@@ -27,7 +27,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
     versionText = new juce::Label();
     versionText->setText(proc.getOptions().pluginVersion, juce::dontSendNotification);
-    versionText->setBounds(218, 0, 100, 40);
+    versionText->setBounds(248, 0, 100, 40);
     versionText->setFont(versionText->getFont().withStyle(juce::Font::italic).withHeight(13.0f));
     versionText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.2f));
     addAndMakeVisible(versionText);
