@@ -47,6 +47,7 @@ private:
 
     DistortionMode distortionMode;
     float drive[2];
+    float outputGain[2];
     FilterMode filterMode;
     chowdsp::SVFMultiMode<float, 2> filter;
 

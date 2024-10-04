@@ -108,7 +108,7 @@ struct ResonatorParams
 struct WaveguideResonatorBankParams
 {
     int index = -1;
-    std::array<ResonatorParams, NUM_WAVEGUIDE_RESONATORS> resonatorParams;
+    std::array<ResonatorParams, NUM_RESONATORS> resonatorParams;
     gin::Parameter::Ptr
         noteOffset,
         useSemitones,
@@ -315,6 +315,7 @@ struct DistortionParams
         enabled,
         distortionMode,
         drive,
+        outputGain,
         mix,
         prePostFilter,
         cutoff,
@@ -437,7 +438,7 @@ struct VoiceParams
     ExternalInputExciterParams externalInputExciterParams;
     SampleExciterParams sampleExciterParams;
 
-    std::array<WaveguideResonatorBankParams, NUM_WAVEGUIDE_RESONATOR_BANKS> waveguideResonatorBankParams;
+    std::array<WaveguideResonatorBankParams, NUM_RESONATOR_BANKS> waveguideResonatorBankParams;
 
     std::array<LFOParams, NUM_LFOS> lfoParams;
     std::array<RandomLFOParams, NUM_RANDOMS> randomLfoParams;

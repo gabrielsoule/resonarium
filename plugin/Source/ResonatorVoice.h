@@ -53,7 +53,7 @@ public:
     juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to outpu
     juce::AudioBuffer<float> tempBuffer; // temporary buffer for processing
 
-    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlockers[NUM_WAVEGUIDE_RESONATORS];
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlockers[NUM_RESONATORS];
 
     juce::OwnedArray<Exciter> exciters;
     ExternalInputExciter* extInExciter; //alias for the external input exciter which requires some special treatment

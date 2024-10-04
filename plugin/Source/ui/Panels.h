@@ -171,16 +171,21 @@ public:
         resonatorColors.add(juce::Colour(0xffA0C4FF));
         resonatorColors.add(juce::Colour(0xffBDB2FF));
         resonatorColors.add(juce::Colour(0xffFFC6FF));
-        jassert(resonatorColors.size() == NUM_WAVEGUIDE_RESONATORS);
-        for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+        jassert(resonatorColors.size() == NUM_RESONATORS);
+        for (int i = 0; i < NUM_RESONATORS; i++)
         {
             resonatorColors.set(i, resonatorColors[i].withSaturation(1.0).withLightness(0.7));
         }
         setName("waveguideResonatorBankParams " + juce::String(resonatorNum));
         this->headerTabButtonWidth = 150;
-        addHeader({"WAVEGUIDE 1", "WAVEGUIDE 2", "WAVEGUIDE 3", "WAVEGUIDE 4"}, resonatorNum,
+        juce::StringArray headerButtonNames;
+        for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
+        {
+            headerButtonNames.add("WAVEGUIDE " + juce::String(i + 1));
+        }
+        addHeader(headerButtonNames, resonatorNum,
                   uiParams.resonatorBankSelect);
-        for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+        for (int i = 0; i < NUM_RESONATORS; i++)
         {
             auto* resonatorComponent = new WaveguideResonatorComponent_V2(bankParams,
                                                                           bankParams.resonatorParams[i],
@@ -255,7 +260,7 @@ public:
         resonatorsArea.removeFromTop(BOX_HEADER_HEIGHT + 10);
         resonatorsArea.setHeight(RESONATOR_BANK_BOX_HEIGHT);
         resonatorsArea.removeFromLeft(155);
-        for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+        for (int i = 0; i < NUM_RESONATORS; i++)
         {
             resonatorComponents[i]->setBounds(resonatorsArea.removeFromLeft(62));
             resonatorsArea.removeFromLeft(4);
@@ -1028,22 +1033,14 @@ public:
         addEnable(distortionParams.enabled);
         addControl(distortionModeKnob = new gin::Select(distortionParams.distortionMode), 0, 0);
         addControl(driveKnob = new gin::Knob(distortionParams.drive), 1, 0);
-        addControl(mixKnob = new gin::Knob(distortionParams.mix), 2, 0);
+        addControl(outputGainKnob = new gin::Knob(distortionParams.outputGain), 2, 0);
+        addControl(mixKnob = new gin::Knob(distortionParams.mix), 3, 0);
         addControl(filterPrePostKnob = new gin::Select(distortionParams.prePostFilter), 0, 1);
         addControl(filterCutoffKnob = new gin::Knob(distortionParams.cutoff), 1, 1);
         addControl(filterResonanceKnob = new gin::Knob(distortionParams.resonance), 2, 1);
         addControl(filterModeKnob = new gin::Knob(distortionParams.filterMode), 3, 1);
 
         watchParam(distortionParams.prePostFilter);
-    }
-
-    void resized() override
-    {
-        ParamBox::resized();
-        float halfWidth = distortionModeKnob->getBounds().getWidth() / 2.0f;
-        distortionModeKnob->setBounds(distortionModeKnob->getBounds().translated(halfWidth, 0));
-        driveKnob->setBounds(driveKnob->getBounds().translated(halfWidth, 0));
-        mixKnob->setBounds(mixKnob->getBounds().translated(halfWidth, 0));
     }
 
     void paramChanged() override
@@ -1057,6 +1054,7 @@ public:
 
     gin::Select* distortionModeKnob;
     gin::Knob* driveKnob;
+    gin::Knob* outputGainKnob;
     gin::Knob* mixKnob;
     gin::Select* filterPrePostKnob;
     gin::Knob* filterCutoffKnob;

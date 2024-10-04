@@ -44,7 +44,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     scope->setBounds(880, 5, 220, 30);
     addAndMakeVisible(scope);
 
-    for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
         auto* wrb = new WaveguideResonatorBankParamBox_V2(
             "Waveguide Bank " + std::to_string(i + 1), proc, i, voiceParams.waveguideResonatorBankParams[i]);

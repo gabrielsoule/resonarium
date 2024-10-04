@@ -201,8 +201,8 @@ void ADSRParams::setup(ResonariumProcessor& p, juce::String prefix, int index)
 
 void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bankIndex)
 {
-    jassert(resonatorIndex >= 0 && resonatorIndex < NUM_WAVEGUIDE_RESONATORS);
-    jassert(bankIndex >= 0 && bankIndex < NUM_WAVEGUIDE_RESONATOR_BANKS);
+    jassert(resonatorIndex >= 0 && resonatorIndex < NUM_RESONATORS);
+    jassert(bankIndex >= 0 && bankIndex < NUM_RESONATOR_BANKS);
 
     this->resonatorIndex = resonatorIndex;
     this->bankIndex = bankIndex;
@@ -287,9 +287,9 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
 
 void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
 {
-    jassert(index >= 0 && index < NUM_WAVEGUIDE_RESONATOR_BANKS);
+    jassert(index >= 0 && index < NUM_RESONATOR_BANKS);
     this->index = index;
-    for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+    for (int i = 0; i < NUM_RESONATORS; i++)
     {
         resonatorParams[i].setup(p, i, index);
     }
@@ -630,7 +630,7 @@ void MSEGParams::setup(ResonariumProcessor& p, int index)
 
 void VoiceParams::setup(ResonariumProcessor& p)
 {
-    for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
         waveguideResonatorBankParams[i].setup(p, i);
     }
@@ -746,8 +746,12 @@ void DistortionParams::setup(ResonariumProcessor& p)
                                    0.0f, "", distortionTypeTextFunction);
 
     drive = p.addExtParam("distDrive", "Distortion Drive", "Drive", "dB",
-                          {-60, 60, 0.0f, 1.0f}, 0,
+                          {-36, 36, 0.0f, 1.0f}, 0,
                           0.0f);
+
+    outputGain = p.addExtParam("distOutputGain", "Distortion Output Gain", "Output", "dB",
+                               {-36.0f, 36.0f, 0.0f, 0.0f}, 0.0f,
+                               0.0f);
 
     mix = p.addExtParam("distMix", "Distortion Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f},
@@ -974,7 +978,7 @@ void SynthParams::setup(ResonariumProcessor& p)
 void UIParams::setup(ResonariumProcessor& p)
 {
     resonatorBankSelect = p.addIntParam("uiActiveResonatorBank", "Bank", "", "",
-                                        {0, NUM_WAVEGUIDE_RESONATOR_BANKS - 1, 1.0f, 1.0f},
+                                        {0, NUM_RESONATOR_BANKS - 1, 1.0f, 1.0f},
                                         0.0f, gin::SmoothingType::linear);
 
     lfoSelect = p.addIntParam("uiActiveLfo", "LFO", "", "",

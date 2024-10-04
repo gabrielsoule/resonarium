@@ -13,7 +13,7 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
     juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients =
         new juce::dsp::IIR::Coefficients<float>(1, -1, 1, -0.995f);
 
-    for (int i = 0; i < NUM_WAVEGUIDE_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
         auto* waveguideBank = new WaveguideResonatorBank(*this, params.waveguideResonatorBankParams[i]);
         // waveguideResonatorBanks.add(waveguideBank);

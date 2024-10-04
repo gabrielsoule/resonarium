@@ -43,13 +43,13 @@ public:
 
     //below is for cascade mode
     juce::dsp::IIR::Coefficients<float>::Ptr dcBlockerCoefficients;
-    juce::dsp::IIR::Filter <float> dcBlockersL[NUM_WAVEGUIDE_RESONATORS];
-    juce::dsp::IIR::Filter <float> dcBlockersR[NUM_WAVEGUIDE_RESONATORS];
-    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, false> cascadeFilterL;
-    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, false> cascadeFilterR;
+    juce::dsp::IIR::Filter <float> dcBlockersL[NUM_RESONATORS];
+    juce::dsp::IIR::Filter <float> dcBlockersR[NUM_RESONATORS];
+    chowdsp::SVFMultiMode<float, NUM_RESONATORS, false> cascadeFilterL;
+    chowdsp::SVFMultiMode<float, NUM_RESONATORS, false> cascadeFilterR;
 
-    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, true> testInterlinkedFilterL;
-    chowdsp::SVFMultiMode<float, NUM_WAVEGUIDE_RESONATORS, true> testInterlinkedFilterR;
+    chowdsp::SVFMultiMode<float, NUM_RESONATORS, true> testInterlinkedFilterL;
+    chowdsp::SVFMultiMode<float, NUM_RESONATORS, true> testInterlinkedFilterR;
 };
 
 #endif //WAVEGUIDERESONATORBANK_H

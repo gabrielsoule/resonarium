@@ -6,7 +6,7 @@ WaveguideResonatorBank::WaveguideResonatorBank(ResonatorVoice& parentVoice, Wave
 {
     dcBlockerCoefficients =
         new juce::dsp::IIR::Coefficients<float>(1, -1, 1, -0.995f);
-    for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+    for (int i = 0; i < NUM_RESONATORS; i++)
     {
         resonators.add(new StereoResonator(parentVoice, params.resonatorParams[i]));
         dcBlockersL[i] = juce::dsp::IIR::Filter<float>(dcBlockerCoefficients);
@@ -31,7 +31,7 @@ WaveguideResonatorBank::~WaveguideResonatorBank()
  */
 void WaveguideResonatorBank::reset()
 {
-    for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+    for (int i = 0; i < NUM_RESONATORS; i++)
     {
         resonators[i]->reset();
         dcBlockersL[i].reset();
@@ -51,7 +51,7 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
     testInterlinkedFilterL.prepare(spec);
     testInterlinkedFilterR.prepare(spec);
 
-    for (int i = 0; i < NUM_WAVEGUIDE_RESONATORS; i++)
+    for (int i = 0; i < NUM_RESONATORS; i++)
     {
         jassert(resonators[i]->params.resonatorIndex == i); //ensure that parameters have been correctly distributed
         resonators[i]->prepare(spec);
@@ -143,14 +143,14 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
     {
         for (int i = 0; i < exciterBlock.getNumSamples(); i++)
         {
-            float resonatorOutSamplesL[NUM_WAVEGUIDE_RESONATORS];
-            float resonatorOutSamplesR[NUM_WAVEGUIDE_RESONATORS];
+            float resonatorOutSamplesL[NUM_RESONATORS];
+            float resonatorOutSamplesR[NUM_RESONATORS];
             float outSampleL = 0.0f;
             float outSampleR = 0.0f;
             float feedbackSampleL = 0.0f;
             float feedbackSampleR = 0.0f;
 
-            for (int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
+            for (int j = 0; j < NUM_RESONATORS; j++)
             {
                 resonatorOutSamplesL[j] = resonators[j]->popSample(0);
                 resonatorOutSamplesR[j] = resonators[j]->popSample(1);
@@ -166,7 +166,7 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
             // feedbackSampleL = testInterlinkedFilterL.processSample(0, feedbackSampleL);
             // feedbackSampleR = testInterlinkedFilterR.processSample(0, feedbackSampleR);
 
-            for (int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
+            for (int j = 0; j < NUM_RESONATORS; j++)
             {
                 const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.getSample(0, i) * previousResonatorBankMix) * inputGain;
                 const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.getSample(1, i) * previousResonatorBankMix) * inputGain;
@@ -201,7 +201,7 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
             float previousResonatorSampleR = 0.0f;
             float outSampleL = 0.0f;
             float outSampleR = 0.0f;
-            for(int j = 0; j < NUM_WAVEGUIDE_RESONATORS; j++)
+            for(int j = 0; j < NUM_RESONATORS; j++)
             {
                 if(resonators[j]->enabled)
                 {
