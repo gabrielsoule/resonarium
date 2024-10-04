@@ -746,11 +746,11 @@ void DistortionParams::setup(ResonariumProcessor& p)
                                    0.0f, "", distortionTypeTextFunction);
 
     drive = p.addExtParam("distDrive", "Distortion Drive", "Drive", "dB",
-                          {-36, 36, 0.0f, 1.0f}, 0,
+                          {-36.0f, 36.0f, 0.0f, 1.0f}, 0.0f,
                           0.0f);
 
     outputGain = p.addExtParam("distOutputGain", "Distortion Output Gain", "Output", "dB",
-                               {-36.0f, 36.0f, 0.0f, 0.0f}, 0.0f,
+                               {-36.0f, 36.0f, 0.0f, 1.0f}, 0.0f,
                                0.0f);
 
     mix = p.addExtParam("distMix", "Distortion Mix", "Mix", "",
