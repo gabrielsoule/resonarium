@@ -20,6 +20,7 @@ class RandomLFO {
         float lastRandomValue; //the previous "step" in the random walk
         float nextRandomValue; //the next "step" in the random walk
         float currentRandomValue; //the current value at the end of the block of samples, interpolated between last and next
+        std::atomic<float> atomicState; //used for atomic reads from the UI thread
     };
 
     void processInternal(int numSamples, RandomState& state);

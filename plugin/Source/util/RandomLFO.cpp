@@ -108,6 +108,10 @@ void RandomLFO::process(int numSamples)
                                                      modifiedPhase);
     rightState.currentRandomValue = perlinInterpolate(rightState.lastRandomValue, rightState.nextRandomValue,
                                                       modifiedPhase);
+
+    centerState.atomicState.store(centerState.currentRandomValue, std::memory_order_relaxed);
+    leftState.atomicState.store(leftState.currentRandomValue, std::memory_order_relaxed);
+    rightState.atomicState.store(rightState.currentRandomValue, std::memory_order_relaxed);
 }
 
 float RandomLFO::getOutput()

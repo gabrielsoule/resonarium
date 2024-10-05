@@ -4,6 +4,7 @@
 
 #include "ResonatorSynth.h"
 #include "Parameters.h"
+#include <melatonin_perfetto/melatonin_perfetto.h>
 
 //==============================================================================
 class ResonariumProcessor : public gin::Processor
@@ -49,6 +50,10 @@ public:
 
     //A copy of the input buffer, which is accessed by Ext. In exciters.
     juce::AudioBuffer<float> inputBuffer;
+
+#if PERFETTO
+    std::unique_ptr<perfetto::TracingSession> tracingSession;
+#endif
 
     template <bool unity = true>
     static void testFilter(float cutoff, float mode, float Q, bool readout, bool peak = false)

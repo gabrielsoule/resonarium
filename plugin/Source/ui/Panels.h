@@ -4,6 +4,7 @@
 #include <JuceHeader.h>
 
 #include "ClickThruSelect.h"
+#include "RandomLFOComponent.h"
 #include "TextSlider.h"
 #include "../Parameters.h"
 #include "../defines.h"
@@ -593,7 +594,7 @@ class RandomLFOParamBox : public gin::ParamBox
 public:
     RandomLFOParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum,
                       RandomLFOParams randomLfoParams) :
-        gin::ParamBox(name), randomLfoParams(randomLfoParams)
+        gin::ParamBox(name), proc(proc), randomLfoParams(randomLfoParams)
     {
         setName("rnd" + juce::String(randomLfoParams.index + 1));
         addEnable(randomLfoParams.enabled);
@@ -613,16 +614,24 @@ public:
         addControl(b = new gin::Select(randomLfoParams.beat), 1, 0);
         addControl(new gin::Knob(randomLfoParams.stereo), 2, 0);
         addControl(new gin::Knob(randomLfoParams.depth, true), 3, 0);
-        // addControl(new gin::Knob(randomLfoParams.jitter), 3, 0);
         addControl(new gin::Knob(randomLfoParams.chaos), 4, 0);
         addControl(new gin::Knob(randomLfoParams.smooth), 5, 0);
-        // addControl(new gin::Knob(randomLfoParams.offset), 3, 1);
+
+        visualizer = new RandomLFOComponent(randomLfoParams);
+        addControl(visualizer);
+        visualizer->stateCallback = [this, randomLfoParams]
+        {
+            return this->proc.synth.monoRandomLFOs[randomLfoParams.index].centerState.atomicState.load(std::memory_order_relaxed);
+        };
+
         watchParam(randomLfoParams.sync);
     }
 
     void resized() override
     {
         ParamBox::resized();
+        visualizer->setBounds(
+            juce::Rectangle<int>(KNOB_W * 6 + 6, TITLE_BAR_HEIGHT, KNOB_W * 2 - 6, KNOB_H).translated(2, 6));
     }
 
     void paramChanged() override
@@ -636,9 +645,11 @@ public:
         }
     }
 
+    ResonariumProcessor& proc;
     RandomLFOParams randomLfoParams;
     gin::ParamComponent::Ptr r = nullptr;
     gin::ParamComponent::Ptr b = nullptr;
+    RandomLFOComponent* visualizer;
 };
 
 class MSEGParamBox : public gin::ParamBox

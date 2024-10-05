@@ -137,11 +137,13 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
         gin_plugin
         gin_simd
 
+        Melatonin::Perfetto
+        melatonin_perfetto
+
         melatonin_inspector
 
         melatonin_blur
 
-        Melatonin::Perfetto
 
         chowdsp::chowdsp_dsp_utils
         chowdsp::chowdsp_gui

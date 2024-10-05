@@ -18,6 +18,11 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
 ResonariumProcessor::ResonariumProcessor() : gin::Processor(
                                                  false, getOptions()), synth(*this)
 {
+#if PERFETTO
+    DBG("Perfetto is ENABLED!");
+    MelatoninPerfetto::get().beginSession();
+#endif
+
     lf = std::make_unique<ResonariumLookAndFeel>();
     //Load tooltips from binary data
     int size = BinaryData::tooltips_jsonSize;
@@ -92,6 +97,9 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
 
 ResonariumProcessor::~ResonariumProcessor()
 {
+#if PERFETTO
+    MelatoninPerfetto::get().endSession();
+#endif
 }
 
 void ResonariumProcessor::setupModMatrix()
