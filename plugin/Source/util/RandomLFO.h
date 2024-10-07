@@ -17,10 +17,10 @@ class RandomLFO {
     struct RandomState
     {
         juce::Random rng;
-        float lastRandomValue; //the previous "step" in the random walk
-        float nextRandomValue; //the next "step" in the random walk
-        float currentRandomValue; //the current value at the end of the block of samples, interpolated between last and next
-        std::atomic<float> atomicState; //used for atomic reads from the UI thread
+        float lastRandomValue = 0; //the previous "step" in the random walk
+        float nextRandomValue = 0; //the next "step" in the random walk
+        float currentRandomValue = 0; //the current value at the end of the block of samples, interpolated between last and next
+        std::atomic<float> atomicState = 0; //used for atomic reads from the UI thread
     };
 
     void processInternal(int numSamples, RandomState& state);
@@ -60,7 +60,7 @@ public:
     bool stereo = false;
     RandomState sideStates[2];
     RandomState centerState;
-    RandomState& leftState; //convienient aliases
+    RandomState& leftState; //convenient aliases
     RandomState& rightState;
 
     float currentPhase;

@@ -2,7 +2,6 @@
 
 RandomLFOComponent::RandomLFOComponent(RandomLFOParams params) : params(params)
 {
-    // Start the timer with an update rate of 20 Hz
     startTimerHz(20);
 }
 
@@ -15,13 +14,9 @@ void RandomLFOComponent::resized()
 {
     auto area = getLocalBounds().reduced(2);
     bufferSize = area.getWidth() / scalingFactor;
-
-    // Resize the buffer and initialize with center Y-values
     curveBuffer.resize(bufferSize, valueToY(0.0f));
 
     bufferIndex = 0;
-
-    // Create the initial path
     createPath();
 }
 
@@ -43,19 +38,10 @@ void RandomLFOComponent::timerCallback()
 {
     if(params.enabled->isOn() && stateCallback)
     {
-        // Get the current random value
         const float value = stateCallback() * 2.0f - 1.0f;
-
-        // Add the value to the buffer
         curveBuffer[bufferIndex] = valueToY(value);
-
-        // Increment the buffer index
         bufferIndex = (bufferIndex + 1) % bufferSize;
-
-        // Update the path
         createPath();
-
-        // Repaint the component
         repaint();
     }
 }
@@ -81,7 +67,6 @@ void RandomLFOComponent::createPath()
     auto area = getLocalBounds().reduced(2);
     size_t numPoints = curveBuffer.size();
 
-    // Correct xScale calculation without scalingFactor
     float xScale = static_cast<float>(area.getWidth()) / static_cast<float>(numPoints - 1);
 
     size_t index = bufferIndex;
