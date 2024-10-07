@@ -22,15 +22,10 @@ void RandomLFOComponent::resized()
 
 void RandomLFOComponent::paint(juce::Graphics& g)
 {
-    // Fill the background
     g.setColour(juce::Colours::black);
     g.fillRoundedRectangle(getLocalBounds().toFloat(), 10);
     const auto c = findColour (gin::GinLookAndFeel::accentColourId).withAlpha (isEnabled() ? 1.0f : 0.5f);
-
-    // Set the colour for the waveform
     g.setColour(c);
-
-    // Draw the waveform path
     g.strokePath(path, juce::PathStrokeType(2.0f));
 }
 
