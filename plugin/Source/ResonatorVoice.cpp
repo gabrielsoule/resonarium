@@ -16,7 +16,6 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
     for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
         auto* waveguideBank = new WaveguideResonatorBank(*this, params.waveguideResonatorBankParams[i]);
-        // waveguideResonatorBanks.add(waveguideBank);
         resonatorBanks.add(waveguideBank);
         resonatorBankIndex++;
         dcBlockers[i].state = dcBlockerCoefficients;
@@ -74,9 +73,11 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     exciterBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     resonatorBankBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     tempBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
+    soloBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     exciterBuffer.clear();
     resonatorBankBuffer.clear();
     tempBuffer.clear();
+    soloBuffer.clear();
 
     for (auto* exciter : exciters)
     {
@@ -199,6 +200,7 @@ void ResonatorVoice::noteStarted()
     effectChain.reset();
     exciterBuffer.clear();
     resonatorBankBuffer.clear();
+    soloBuffer.clear();
 }
 
 void ResonatorVoice::noteRetriggered()
@@ -273,7 +275,8 @@ void ResonatorVoice::updateParameters(int numSamples)
         {
             float rate = 0;
             if (params.randomLfoParams[i].sync->getProcValue() > 0.0f)
-                rate = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.randomLfoParams[i].beat->getProcValue())].
+                rate = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(
+                        params.randomLfoParams[i].beat->getProcValue())].
                     toSeconds(proc.getPlayHead());
             else
                 rate = getValue(params.randomLfoParams[i].rate);
@@ -367,8 +370,18 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
             tempOutputBlock.add(previousBankBlock);
         }
 
-        effectChain.process(tempOutputBlock);
-        outputBlock.add(tempOutputBlock);
+        if (!proc.synth.soloActive)
+        {
+            effectChain.process(tempOutputBlock);
+            outputBlock.add(tempOutputBlock);
+        }
+        else //if a solo is active, discard the full output and just send out the solo block
+        {
+            juce::dsp::AudioBlock<float> soloOutputBlock = juce::dsp::AudioBlock<float>(soloBuffer)
+                .getSubBlock(startSample, numSamples);
+            effectChain.process(soloOutputBlock);
+            outputBlock.add(soloOutputBlock);
+        }
     }
     else
     {
@@ -379,7 +392,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     float maxAmplitude = outputBuffer.getMagnitude(startSample, numSamples);
     if (killIfSilent && numBlocksSinceNoteOn > 10)
     {
-        if (maxAmplitude < 0.0002f)
+        if (maxAmplitude < 0.001f)
         {
             silenceCount += 1;
             if (silenceCount > silenceCountThreshold)

@@ -268,12 +268,12 @@ public:
         }
 
         float bankControlsX = 710;
-        float bankControlsY = BOX_HEADER_HEIGHT + 70;
+        float bankControlsY = BOX_HEADER_HEIGHT + 105;
 
 
         topControlBracket->setBounds(bankControlsX - 1, bankControlsY - 5, KNOB_W * 2 + 1, 10);
         topControlBracketLabel->setBounds(bankControlsX, bankControlsY - 50, KNOB_W * 2, 40);
-        showSemitonesToggle->setBounds(85, 125, 60, 17);
+        showSemitonesToggle->setBounds(85, 125 + 35, 60, 17);
         inputGainKnob->setBounds(bankControlsX, bankControlsY, KNOB_W, KNOB_H);
         inputMixKnob->setBounds(bankControlsX + KNOB_W, bankControlsY, KNOB_W, KNOB_H);
         outputGainKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + KNOB_H, KNOB_W, KNOB_H);
@@ -303,14 +303,14 @@ public:
 
         //it's really annoying to position rotated text components, since the affine transforms affect the coordinates...
         //we just do it "by hand" here which is... also really annoying
-        loopFilterLabel->setBounds(-5, 260, 115, 30);
+        loopFilterLabel->setBounds(-5, 295, 115, 30);
         loopFilterLabel->setTransform(juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi,
                                                                       loopFilterLabel->getBounds().getCentreX(),
                                                                       loopFilterLabel->getBounds().getCentreY()));
         // loopFilterLabel->setTransform(juce::AffineTransform::rotation(juce::MathConstants<float>::halfPi));
         loopFilterLabel->toFront(false);
 
-        postFilterLabel->setBounds(-5, 375, 115, 30);
+        postFilterLabel->setBounds(-5, 410, 115, 30);
         postFilterLabel->setTransform(juce::AffineTransform::rotation(-juce::MathConstants<float>::halfPi,
                                                                       postFilterLabel->getBounds().getCentreX(),
                                                                       postFilterLabel->getBounds().getCentreY()));
@@ -349,7 +349,8 @@ public:
             withExtraKerningFactor(0.05f);
         g.setFont(font);
         //draw some attractive background rectangles
-        juce::Rectangle<float> rowBackground = juce::Rectangle<float>(157, BOX_HEADER_HEIGHT + 10 + 55 + 3, 518,
+
+        juce::Rectangle<float> rowBackground = juce::Rectangle<float>(157, BOX_HEADER_HEIGHT + 10 + 55 + 3 + 33, 518,
                                                                       PARAMETER_HEIGHT).expanded(0, 1);
         juce::Rectangle<int> textRect = juce::Rectangle<int>(rowBackground.getX() - 115, rowBackground.getY() + 1, 105,
                                                              PARAMETER_HEIGHT);

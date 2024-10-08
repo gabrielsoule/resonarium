@@ -28,7 +28,6 @@ public:
     void noteTimbreChanged() override;
     void notePitchbendChanged() override;
     void noteKeyStateChanged() override;
-    // void setCurrentSampleRate(double newRate) override;
     void prepare(const juce::dsp::ProcessSpec& spec);
     void updateParameters(int numSamples);
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
@@ -40,8 +39,8 @@ public:
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote;
     int id = 0;
-    // juce::OwnedArray<ResonatorBank> resonatorBanks;
     juce::OwnedArray<WaveguideResonatorBank> resonatorBanks;
+
     bool killIfSilent = false;
     int silenceCount = 0;
     int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
@@ -50,8 +49,9 @@ public:
     int numSamples; //num samples in the current block
 
     juce::AudioBuffer<float> exciterBuffer; // buffer for exciters to write to, is routed to resonator banks
-    juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to outpu
+    juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to output
     juce::AudioBuffer<float> tempBuffer; // temporary buffer for processing
+    juce::AudioBuffer<float> soloBuffer; // if a resonator's solo button is toggled, that resonator's output is routed here
 
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlockers[NUM_RESONATORS];
 

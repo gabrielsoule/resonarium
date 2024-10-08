@@ -762,8 +762,8 @@ void DistortionParams::setup(ResonariumProcessor& p)
                                   0.0f, "", distortionFilterModeTextFunction);
 
     cutoff = p.addExtParam("distCutoff", "Distortion Cutoff", "Cutoff", "Hz",
-                          {20.0f, 20000.0f, 0.0f, 0.4f}, 3000.0f,
-                          0.0f);
+                           {20.0f, 20000.0f, 0.0f, 0.4f}, 3000.0f,
+                           0.0f);
 
     resonance = p.addExtParam("distResonance", "Distortion Resonance", "Res.", "",
                               {0.01f, 15.0f, 0.0f, 0.4f}, 1.0f / std::sqrt(2.0f),
@@ -843,20 +843,20 @@ void CompressorParams::setup(ResonariumProcessor& p)
                             0.0f, "", enableTextFunction);
 
     threshold = p.addExtParam("compressorThreshold", "Compressor Threshold", "Thresh", "dB",
-        {-60.0f, 12.0f, 0.0f, 1.0f}, 0.0f,
-        0.0f);
+                              {-60.0f, 12.0f, 0.0f, 1.0f}, 0.0f,
+                              0.0f);
 
     ratio = p.addExtParam("compressorRatio", "Compressor Ratio", "Ratio", "",
-        {1.0f, 9.0f, 0.0f, 1.0f}, 1.0f,
-        0.0f);
+                          {1.0f, 9.0f, 0.0f, 1.0f}, 1.0f,
+                          0.0f);
 
     attack = p.addExtParam("compressorAttack", "Compressor Attack", "Attack", "ms",
-        {1.0f, 1000.0f, 0.0f, 1.0f}, 1.0f,
-        0.0f);
+                           {1.0f, 1000.0f, 0.0f, 1.0f}, 1.0f,
+                           0.0f);
 
     release = p.addExtParam("compressorRelease", "Compressor Release", "Release", "ms",
-        {1.0f, 1000.0f, 0.0f, 1.0f}, 1.0f,
-        0.0f);
+                            {1.0f, 1000.0f, 0.0f, 1.0f}, 1.0f,
+                            0.0f);
 }
 
 void ReverbParams::setup(ResonariumProcessor& p)
@@ -972,6 +972,15 @@ void SynthParams::setup(ResonariumProcessor& p)
                                        "Macro " + std::to_string(i + 1), "",
                                        {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
                                        0.0f);
+    }
+
+    soloResonator = p.addIntParam("soloParameter", "Solo Parameter", "Solo", "",
+                                  {-1.0f, NUM_RESONATOR_BANKS * NUM_RESONATORS, 1.0f, 1.0f}, -1.0f,
+                                  0.0f);
+
+    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    {
+        voiceParams.waveguideResonatorBankParams[i].soloResonator = soloResonator;
     }
 }
 

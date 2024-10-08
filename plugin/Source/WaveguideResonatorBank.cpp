@@ -1,4 +1,7 @@
 #include "WaveguideResonatorBank.h"
+
+#include <sys/proc.h>
+
 #include "ResonatorVoice.h"
 
 WaveguideResonatorBank::WaveguideResonatorBank(ResonatorVoice& parentVoice, WaveguideResonatorBankParams params) :
@@ -94,7 +97,7 @@ void WaveguideResonatorBank::updateParameters(float newFrequency, int numSamples
 //TODO: with the addition of stereo resonators, we should rewrite this whole function to support stereo processing without all the code duplication
 /**
  * READS FROM the exciter block and CONSUMES the previous resonator bank block.
- * The output is written to the previous resonator bank block.
+ * The output is (over) written to the previous resonator bank block.
  * @param exciterBlock
  * @param previousResonatorBankBlock
  */
@@ -123,20 +126,36 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
         {
             float outSampleL = 0.0f;
             float outSampleR = 0.0f;
-            for (auto* r : resonators)
+            for (int j = 0; j < NUM_RESONATORS; j++)
             {
-                if (r->enabled)
+                if (resonators[j]->enabled)
                 {
-                    const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.getSample(0, i) * previousResonatorBankMix) * inputGain;
-                    const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.getSample(1, i) * previousResonatorBankMix) * inputGain;
-                    outSampleL += r->left.postProcess(r->left.processSample(inSampleL)) * r->left.gain;
-                    outSampleR += r->right.postProcess(r->right.processSample(inSampleR)) * r->right.gain;
+                    const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.
+                        getSample(0, i) * previousResonatorBankMix) * inputGain;
+                    const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.
+                        getSample(1, i) * previousResonatorBankMix) * inputGain;
+                    const float soloOutSampleL = resonators[j]->left.postProcess(
+                        resonators[j]->left.processSample(inSampleL)) * resonators[j]->left.gain;
+                    const float soloOutSampleR = resonators[j]->right.postProcess(
+                        resonators[j]->right.processSample(inSampleR)) * resonators[j]->right.gain;
+                    outSampleL += soloOutSampleL;
+                    outSampleR += soloOutSampleR;
+
+                    if (voice.proc.synth.soloActive &&
+                        voice.proc.synth.soloBankIndex == index &&
+                        voice.proc.synth.soloResonatorIndex == resonators[j]->index)
+                    {
+                        voice.soloBuffer.setSample(0, voice.startSample + i, soloOutSampleL);
+                        voice.soloBuffer.setSample(1, voice.startSample + i, soloOutSampleR);
+                    }
                 }
             }
-            outSampleL = outSampleL / totalGainL;
-            outSampleR = outSampleR / totalGainR;
-            previousResonatorBankBlock.setSample(0, i, outSampleL * outputGain);
-            previousResonatorBankBlock.setSample(1, i, outSampleR * outputGain);
+            outSampleL = (outSampleL / totalGainL) * outputGain;
+            outSampleR = (outSampleR / totalGainR) * outputGain;
+
+
+            previousResonatorBankBlock.setSample(0, i, outSampleL);
+            previousResonatorBankBlock.setSample(1, i, outSampleR);
         }
     }
     else if (couplingMode == INTERLINKED)
@@ -156,8 +175,18 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                 resonatorOutSamplesR[j] = resonators[j]->popSample(1);
                 feedbackSampleL += resonatorOutSamplesL[j] * (resonators[j]->resonators[0].gain / totalGainL);
                 feedbackSampleR += resonatorOutSamplesR[j] * (resonators[j]->resonators[1].gain / totalGainR);
-                outSampleL += resonators[j]->postProcess(resonatorOutSamplesL[j], 0) * resonators[j]->resonators[0].gain;
-                outSampleR += resonators[j]->postProcess(resonatorOutSamplesL[j], 1) * resonators[j]->resonators[1].gain;
+                outSampleL += resonators[j]->postProcess(resonatorOutSamplesL[j], 0) * resonators[j]->resonators[0].
+                    gain;
+                outSampleR += resonators[j]->postProcess(resonatorOutSamplesL[j], 1) * resonators[j]->resonators[1].
+                    gain;
+            }
+
+            if (voice.proc.synth.soloActive && voice.proc.synth.soloBankIndex == index)
+            {
+                voice.soloBuffer.setSample(0, voice.startSample + i,
+                                           resonatorOutSamplesL[voice.proc.synth.soloResonatorIndex]);
+                voice.soloBuffer.setSample(1, voice.startSample + i,
+                                           resonatorOutSamplesR[voice.proc.synth.soloResonatorIndex]);
             }
 
             //apply the bridge filter H(z) = -2 / totalGain. This is a necessary criterion for stability
@@ -168,8 +197,10 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
 
             for (int j = 0; j < NUM_RESONATORS; j++)
             {
-                const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.getSample(0, i) * previousResonatorBankMix) * inputGain;
-                const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.getSample(1, i) * previousResonatorBankMix) * inputGain;
+                const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.
+                    getSample(0, i) * previousResonatorBankMix) * inputGain;
+                const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.
+                    getSample(1, i) * previousResonatorBankMix) * inputGain;
                 resonators[j]->
                     pushSample((feedbackSampleL + resonatorOutSamplesL[j]) * 1 + inSampleL, 0);
                 resonators[j]->
@@ -195,28 +226,44 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
         const float newModeR = voice.getValue(params.cascadeFilterMode, 1);
         cascadeFilterR.updateParameters(newCutoffR, newResonanceR, newModeR);
 
-        for(int i = 0; i < exciterBlock.getNumSamples(); i++)
+        for (int i = 0; i < exciterBlock.getNumSamples(); i++)
         {
             float previousResonatorSampleL = 0.0f;
             float previousResonatorSampleR = 0.0f;
             float outSampleL = 0.0f;
             float outSampleR = 0.0f;
-            for(int j = 0; j < NUM_RESONATORS; j++)
+            for (int j = 0; j < NUM_RESONATORS; j++)
             {
-                if(resonators[j]->enabled)
+                if (resonators[j]->enabled)
                 {
                     const float resonatorOutSampleL = resonators[j]->popSample(0);
                     const float resonatorOutSampleR = resonators[j]->popSample(1);
-                    const float processedFwdSampleL = cascadeFilterL.processSample(j, dcBlockersL[j].processSample(previousResonatorSampleL) * cascadeAmountL);
-                    const float processedFwdSampleR = cascadeFilterR.processSample(j, dcBlockersR[j].processSample(previousResonatorSampleR) * cascadeAmountR);
-                    const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.getSample(0, i) * previousResonatorBankMix) * inputGain;
-                    const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.getSample(1, i) * previousResonatorBankMix) * inputGain;
+                    const float processedFwdSampleL = cascadeFilterL.processSample(
+                        j, dcBlockersL[j].processSample(previousResonatorSampleL) * cascadeAmountL);
+                    const float processedFwdSampleR = cascadeFilterR.processSample(
+                        j, dcBlockersR[j].processSample(previousResonatorSampleR) * cascadeAmountR);
+                    const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.
+                        getSample(0, i) * previousResonatorBankMix) * inputGain;
+                    const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.
+                        getSample(1, i) * previousResonatorBankMix) * inputGain;
                     resonators[j]->pushSample(resonatorOutSampleL + processedFwdSampleL + inSampleL, 0);
                     resonators[j]->pushSample(resonatorOutSampleR + processedFwdSampleR + inSampleR, 1);
                     previousResonatorSampleL = resonatorOutSampleL;
                     previousResonatorSampleR = resonatorOutSampleR;
-                    outSampleL += resonators[j]->postProcess(resonatorOutSampleL, 0) * resonators[j]->resonators[0].gain;
-                    outSampleR += resonators[j]->postProcess(resonatorOutSampleR, 1) * resonators[j]->resonators[1].gain;
+                    const float soloOutSampleL =
+                        resonators[j]->postProcess(resonatorOutSampleL, 0) * resonators[j]->resonators[0].gain;
+                    const float soloOutSampleR =
+                        resonators[j]->postProcess(resonatorOutSampleR, 1) * resonators[j]->resonators[1].gain;
+                    outSampleR += soloOutSampleR;
+                    outSampleL += soloOutSampleL;
+
+                    if (voice.proc.synth.soloActive &&
+                        voice.proc.synth.soloBankIndex == index &&
+                        voice.proc.synth.soloResonatorIndex == resonators[j]->index)
+                    {
+                        voice.soloBuffer.setSample(0, voice.startSample + i, soloOutSampleL);
+                        voice.soloBuffer.setSample(1, voice.startSample + i, soloOutSampleR);
+                    }
                 }
             }
 

@@ -215,7 +215,7 @@ public:
         {
             if (auto* path = dynamic_cast<juce::DrawablePath*>(drawableSVGDisabled->getChildComponent(i)))
             {
-                path->setFill(juce::Colours::white.withAlpha(0.0f));
+                path->setFill(juce::Colours::white.withAlpha(0.5f));
                 path->setStrokeFill(juce::Colours::white.withAlpha(0.5f));
             }
         }
@@ -224,7 +224,7 @@ public:
         {
             if (auto* path = dynamic_cast<juce::DrawablePath*>(drawableSVGEnabled->getChildComponent(i)))
             {
-                path->setFill(getLookAndFeel().findColour(ResonariumLookAndFeel::accentColourId).withAlpha(0.0f));
+                path->setFill(getLookAndFeel().findColour(ResonariumLookAndFeel::accentColourId));
                 path->setStrokeFill(getLookAndFeel().findColour(ResonariumLookAndFeel::accentColourId));
             }
         }
@@ -233,8 +233,8 @@ public:
     void valueUpdated(gin::Parameter* p) override
     {
         SVGPluginButton::valueUpdated(p);
-        drawableSVGDisabled->setVisible(!p->isOn());
-        drawableSVGEnabled->setVisible(p->isOn());
+        drawableSVGDisabled->setVisible(!this->getToggleState());
+        drawableSVGEnabled->setVisible(this->getToggleState());
     }
 
     void mouseEnter(const juce::MouseEvent& event) override
@@ -436,6 +436,40 @@ public:
         enableButton = new gin::SVGPluginButton(resonatorParams.enabled, gin::Assets::power);
         enableButton->setColour(juce::TextButton::buttonOnColourId, colour);
         enableButton->setColour(juce::TextButton::buttonColourId, colour);
+        soloButton = new SVGFilePluginButton(enclosingBankParams.soloResonator, BinaryData::letter_s_svg, BinaryData::letter_s_svg);
+        // soloButton->setColour(juce::TextButton::buttonOnColourId, juce::Colours::red);
+        // soloButton->setColour(juce::TextButton::buttonColourId, juce::Colours::blue);
+        soloButton->onClick = [this, param = enclosingBankParams.soloResonator, bankIndex = enclosingBankParams.index, resonatorIndex = resonatorParams.resonatorIndex]() {
+
+            //map the resonator index and bank index to a single integer
+            const int id = NUM_RESONATORS * bankIndex + resonatorIndex;
+            int paramValue = static_cast<int>(param->getProcValue());
+            if(id == paramValue)
+            {
+                param->setUserValueNotifingHost(-1); //disable solo
+                DBG("Disabling solo from" + juce::String(id));
+            }
+            else
+            {
+                param->setUserValueNotifingHost(id);
+                DBG("Enabling solo from" + juce::String(id));
+            }
+        };
+        soloButton->onParamValueUpdated = [this, param = enclosingBankParams.soloResonator, bankIndex = enclosingBankParams.index, resonatorIndex = resonatorParams.resonatorIndex]() {
+            const int id = NUM_RESONATORS * bankIndex + resonatorIndex;
+            int paramValue = static_cast<int>(param->getProcValue());
+            DBG("Updating solo from" + juce::String(id) + " to " + juce::String(paramValue));
+            if(id == paramValue)
+            {
+                DBG("Setting solo to true, turning button on");
+                soloButton->setToggleState(true, juce::dontSendNotification);
+            }
+            else
+            {
+                DBG("Setting solo to false, turning button off");
+                soloButton->setToggleState(false, juce::dontSendNotification);
+            }
+        };
         gainKnob = new gin::Knob(resonatorParams.gain);
         gainKnob->getSlider().setColour(juce::Slider::rotarySliderFillColourId, colour);
         pitchKnob = new TextSlider(resonatorParams.pitch, colour);
@@ -443,8 +477,6 @@ public:
         pitchKnob->mainReadout.textToParamConversionFunction = [enclosingBankParams](float value) {
             if(enclosingBankParams.useSemitones->isOn())
             {
-                // DBG("fValue: " + juce::String(value));
-                // DBG("fFrequency: " + juce::String(std::pow(2.0f, value / 12.0f)));
                 return std::pow(2.0f, value / 12.0f);
             }
             else
@@ -455,8 +487,6 @@ public:
         pitchKnob->mainReadout.paramToTextConversionFunction = [enclosingBankParams](float value) {
             if(enclosingBankParams.useSemitones->isOn())
             {
-                // DBG("fValue: " + juce::String(value));
-                // DBG("fSemitones: " + juce::String(12 * std::log2(value)));
                 return 12 * std::log2(value);
             }
             else
@@ -511,6 +541,7 @@ public:
         addAndMakeVisible(resonatorKeytrack);
         addAndMakeVisible(postFilterKeytrack);
         addAndMakeVisible(loopFilterKeytrack);
+        addAndMakeVisible(soloButton);
 
         resonatorFrequencyKnob->setVisible(false);
         loopFilterPitchKnob->setVisible(false);
@@ -526,7 +557,10 @@ public:
     {
         auto bounds = this->getLocalBounds();
         enableButton->setBounds(bounds.removeFromTop(12));
-        bounds.removeFromTop(3);
+        bounds.removeFromTop(SPACING_Y_LARGE);
+        //centre the soloButton within the bounds, as a square
+        soloButton->setBounds(bounds.removeFromTop(PARAMETER_HEIGHT).withSizeKeepingCentre(15, 15));
+        bounds.removeFromTop(SPACING_Y_SMALL);
         gainKnob->setBounds(
             bounds.removeFromTop(KNOB_W_SMALL).withWidth(KNOB_W_SMALL).translated(
                 bounds.getWidth() / 2 - KNOB_W_SMALL / 2, 0));
@@ -587,6 +621,7 @@ public:
 
     gin::SVGPluginButton* enableButton;
     gin::Knob* gainKnob;
+    SVGFilePluginButton* soloButton;
     TextSlider* resonatorFrequencyKnob;
     TextSlider* pitchKnob;
     TextSlider* decayTimeKnob;

@@ -24,6 +24,11 @@ public:
     void updateParameters();
     void renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples) override;
     void panic();
+
+    bool soloActive = false; //true if a resonator is in solo mode
+    int soloBankIndex = 0; //the index of the solo resonator's enclosing bank
+    int soloResonatorIndex = 0; //the resonator index itself
+
     ResonariumProcessor& proc;
     StereoLFOWrapper monoLFOs[NUM_LFOS];
     RandomLFO monoRandomLFOs[NUM_RANDOMS];

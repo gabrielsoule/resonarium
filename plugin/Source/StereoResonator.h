@@ -47,7 +47,7 @@ class StereoResonator
         float popSample();
         /**
          * Push a sample into the delay line.
-         * An invocation of this function should generally be preceeded by an invocation of popSample().
+         * An invocation of this function should generally be preceded by an invocation of popSample().
          */
         void pushSample(float input);
 
@@ -99,9 +99,10 @@ class StereoResonator
 public:
     StereoResonator(ResonatorVoice& voice, ResonatorParams params)
         : voice(voice), params(params),
-          resonators{{voice, params, 0}, {voice, params, 1}}, left(resonators[0]), right(resonators[1])
+          resonators{{voice, params, 0}, {voice, params, 1}}, left(resonators[0]), right(resonators[1]), index(params.resonatorIndex)
     {
     }
+
 
     ResonatorVoice& voice;
     ResonatorParams params;
@@ -109,6 +110,7 @@ public:
     Resonator& left; //handy aliases
     Resonator& right;
     bool enabled;
+    int index;
 
     float processSample(float input, int channel);
 

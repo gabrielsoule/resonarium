@@ -66,6 +66,15 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
 
 void ResonatorSynth::updateParameters()
 {
+    int rawIndex = static_cast<int>(params.soloResonator->getProcValue());
+    soloActive = rawIndex > -1.0f;
+    if(soloActive)
+    {
+        soloBankIndex = std::floor(rawIndex / NUM_RESONATORS);
+        soloResonatorIndex = rawIndex % NUM_RESONATORS;
+        // DBG("Solo active at bank " << soloBankIndex << " resonator " << soloResonatorIndex);
+        // DBG(rawIndex);
+    }
     for (int i = 0; i < NUM_LFOS; i++)
     {
         if (params.lfoParams[i].enabled->isOn())

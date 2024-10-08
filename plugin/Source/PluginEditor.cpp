@@ -6,6 +6,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     : gin::ProcessorEditor(p), proc(p), uiParams(p.uiParams)
 {
     setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+    setLookAndFeel(p.lf.get());
     auto voiceParams = proc.synth.params.voiceParams;
     titleBar.menuButton.setVisible(false);
 

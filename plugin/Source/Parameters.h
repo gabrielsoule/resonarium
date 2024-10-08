@@ -110,6 +110,7 @@ struct WaveguideResonatorBankParams
     int index = -1;
     std::array<ResonatorParams, NUM_RESONATORS> resonatorParams;
     gin::Parameter::Ptr
+        soloResonator, //<--this parameter is the SAME parameter as the one that the synth uses, it should NOT be setup from scratch here
         noteOffset,
         useSemitones,
         couplingMode,
@@ -465,6 +466,7 @@ struct SynthParams
     std::array<MSEGParams, NUM_MSEGS> msegParams;
     std::array<gin::Parameter::Ptr, NUM_MACROS> macroParams;
     EffectChainParams effectChainParams;
+    gin::Parameter::Ptr soloResonator;
 
     SynthParams() = default;
 
