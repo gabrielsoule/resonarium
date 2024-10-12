@@ -10,6 +10,7 @@
   },
   "resonator": {
     "gain": "Control the gain of the resonator.",
+    "solo": "Solo the resonator, intercepting and routing its output directly to the main output. The output of the rest of the synth will be silenced. ",
     "pitch": "Set the pitch of the resonator with respect to the current MIDI note. The resonator will produce sound at this frequency, and will resonate strongly with any harmonically related input signals.",
     "frequency": "Set the absolute frequency of the resonator, unrelated to the current MIDI note. The resonator will produce sound at this frequency, and will resonate strongly with any harmonically related input signals.",
     "keytrack": "If enabled, the resonator can be tuned with respect to the current MIDI note. Otherwise, the resonator can be tuned to a constant frequency.",

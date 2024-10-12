@@ -22,7 +22,7 @@ void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block)
     if(!params.enabled->isOn()) return;
 
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
-    auto adjustedGain =level / static_cast<float>(thickness);
+    auto adjustedGain = level / static_cast<float>(thickness);
     const int impulsesThisBlock = juce::jmin<int>(truncatedBlock.getNumSamples(), impulsesRemaining);
     for (int i = 0; i < impulsesThisBlock; i++)
     {

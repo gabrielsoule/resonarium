@@ -34,6 +34,8 @@ public:
         distortionMode = static_cast<DistortionMode>(params.distortionMode->getProcValue());
         drive[0] = source.getValue(params.drive, 0);
         drive[1] = source.getValue(params.drive, 1);
+        outputGain[0] = source.getValue(params.outputGain, 0);
+        outputGain[1] = source.getValue(params.outputGain, 1);
         filterMode = static_cast<FilterMode>(params.filterMode->getProcValue());
         filter.updateParameters(source.getValue(params.cutoff), source.getValue(params.resonance),
                                 source.getValue(params.filterMode));

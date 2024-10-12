@@ -260,7 +260,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                    0.0f, "", loopFilterTypeTextFunction);
 
     postFilterCutoff = p.addExtParam("postFilterCutoff" + suffix, "Post Filter Cutoff" + suffix, "Cutoff", "Hz",
-                                     {20.0f, 20000.0f, 0.0f, 0.2f}, 4000.0f,
+                                     {20.0f, 20000.0f, 0.0f, 0.2f}, 9000.0f,
                                      0.0f);
 
     postFilterPitchInSemis = p.addExtParam("postFilterPitch" + suffix, "Post Filter Pitch" + suffix, "Pitch", "ST",
@@ -755,7 +755,7 @@ void DistortionParams::setup(ResonariumProcessor& p)
 
     mix = p.addExtParam("distMix", "Distortion Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f},
-                        0.5f, 0.0f);
+                        1.0f, 0.0f);
 
     prePostFilter = p.addIntParam("distPrePostFilter", "Distortion Pre/Post Filter", "Pre/Post", "",
                                   {0.0f, 2.0f, 1.0f, 1.0f}, 0.0f,
@@ -976,7 +976,7 @@ void SynthParams::setup(ResonariumProcessor& p)
 
     soloResonator = p.addIntParam("soloParameter", "Solo Parameter", "Solo", "",
                                   {-1.0f, NUM_RESONATOR_BANKS * NUM_RESONATORS, 1.0f, 1.0f}, -1.0f,
-                                  0.0f);
+                                  0.0f, "resonator.solo");
 
     for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {

@@ -24,7 +24,7 @@ public:
     template <typename T>
     void updateParameters(T& source, int channel)
     {
-
+        //unused, but the parameters are indeed updated in every block
     }
 
     template <typename ProcessContext>

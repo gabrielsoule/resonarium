@@ -379,7 +379,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
         {
             juce::dsp::AudioBlock<float> soloOutputBlock = juce::dsp::AudioBlock<float>(soloBuffer)
                 .getSubBlock(startSample, numSamples);
-            effectChain.process(soloOutputBlock);
+            // effectChain.process(soloOutputBlock);
             outputBlock.add(soloOutputBlock);
         }
     }
