@@ -421,7 +421,8 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 void ResonatorVoice::notePressureChanged()
 {
     auto note = getCurrentlyPlayingNote();
-    proc.modMatrix.setPolyValue(*this, proc.modSrcPressure, note.pressure.asUnsignedFloat());
+    proc.modMatrix.setPolyValue(*this, proc.modSrcPressure, note.pressure.asUnsignedFloat(), 0);
+    proc.modMatrix.setPolyValue(*this, proc.modSrcPressure, note.pressure.asUnsignedFloat(), 1);
 }
 
 void ResonatorVoice::noteTimbreChanged()
