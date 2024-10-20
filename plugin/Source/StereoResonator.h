@@ -9,7 +9,6 @@
 
 #include "Parameters.h"
 #include "dsp/Filters.h"
-#include "util/InterpolatedParameter.h"
 #include "util/InterpolatedValue.h"
 
 class ResonatorVoice;

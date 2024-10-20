@@ -1011,11 +1011,17 @@ public:
         if (timeLKnob && timeLCopyKnob && timeRKnob && beatLKnob && beatLCopyKnob && beatRKnob)
         {
             timeLKnob->setVisible(!delayParams.syncL->isOn());
+            timeLKnob->setDisplayName(delayParams.lock->isOn() ? "Time" : "Time L");
             beatLKnob->setVisible(delayParams.syncL->isOn());
+            beatLKnob->setDisplayName(delayParams.lock->isOn() ? "Beat" : "Beat L");
             timeLCopyKnob->setVisible(delayParams.lock->isOn() && !delayParams.syncL->isOn());
+            timeLCopyKnob->setDisplayName(delayParams.lock->isOn() ? "Time" : "Time L");
             beatLCopyKnob->setVisible(delayParams.lock->isOn() && delayParams.syncL->isOn());
+            beatLCopyKnob->setDisplayName(delayParams.lock->isOn() ? "Beat" : "Beat L");
             timeRKnob->setVisible(!delayParams.lock->isOn() && !delayParams.syncR->isOn());
+            timeRKnob->setDisplayName(delayParams.lock->isOn() ? "Time" : "Time R");
             beatRKnob->setVisible(!delayParams.lock->isOn() && delayParams.syncR->isOn());
+            beatRKnob->setDisplayName(delayParams.lock->isOn() ? "Beat" : "Beat R");
         }
     }
 

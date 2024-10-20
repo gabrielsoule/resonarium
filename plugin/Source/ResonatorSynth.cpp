@@ -6,8 +6,6 @@
 #include "ResonatorVoice.h"
 #include "PluginProcessor.h"
 
-#define NUM_VOICES 16
-
 ResonatorSynth::ResonatorSynth(ResonariumProcessor& p) : proc(p)
 {
 

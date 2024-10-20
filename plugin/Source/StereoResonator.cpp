@@ -142,6 +142,11 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
     constexpr float DELAY_LINE_INTERPOLATION_DELAY = 1.03f;
     delayLengthInSamples = sampleRate / nextFrequency - DELAY_LINE_INTERPOLATION_DELAY;
     delayLengthInSamples = delayLengthInSamples - loopFilterPhaseDelay;
+    if(delayLengthInSamples < 2.0f)
+    {
+        delayLengthInSamples = 2.0f;
+        DBG("WARNING: Delay length in samples is too small, setting to 2.0f");
+    }
     delayLengthInterpolator.setTargetValue(delayLengthInSamples, numSamples);
     delayLine.setDelay(delayLengthInSamples);
 
