@@ -834,7 +834,7 @@ public:
     {
         setName("chorus");
         addEnable(chorusParams.enabled);
-        addControl(new gin::Select(chorusParams.sync), 0, 0);
+        addControl(new gin::Switch(chorusParams.sync), 0, 0);
         addControl(r = new gin::Knob(chorusParams.rate), 1, 0);
         addControl(b = new gin::Select(chorusParams.beat), 1, 0);
         addControl(new gin::Knob(chorusParams.depth), 2, 0);
@@ -854,6 +854,11 @@ public:
             if (auto* select = dynamic_cast<gin::Select*>(controls[i]))
             {
                 select->setBounds(select->getBounds().translated(KNOB_W * 0.5, 0));
+            }
+
+            if (auto* switchControl = dynamic_cast<gin::Switch*>(controls[i]))
+            {
+                switchControl->setBounds(switchControl->getBounds().translated(KNOB_W * 0.5, 0));
             }
         }
     }
@@ -883,7 +888,7 @@ public:
     {
         setName("phaser");
         addEnable(phaserParams.enabled);
-        addControl(new gin::Select(phaserParams.sync), 0, 0);
+        addControl(new gin::Switch(phaserParams.sync), 0, 0);
         addControl(r = new gin::Knob(phaserParams.rate), 1, 0);
         addControl(b = new gin::Select(phaserParams.beat), 1, 0);
         addControl(new gin::Knob(phaserParams.depth), 2, 0);
@@ -903,6 +908,11 @@ public:
             if (auto* select = dynamic_cast<gin::Select*>(controls[i]))
             {
                 select->setBounds(select->getBounds().translated(KNOB_W * 0.5, 0));
+            }
+
+            if (auto* switchControl = dynamic_cast<gin::Switch*>(controls[i]))
+            {
+                switchControl->setBounds(switchControl->getBounds().translated(KNOB_W * 0.5, 0));
             }
         }
     }
@@ -974,15 +984,15 @@ public:
         gridHeight = KNOB_H_SMALL;
         gridOffsetY += 4;
         addEnable(delayParams.enabled);
-        addControl(syncLKnob = new gin::Select(delayParams.syncL), 0, 0);
+        addControl(syncLKnob = new gin::Switch(delayParams.syncL), 0, 0);
         addControl(timeLKnob = new gin::Knob(delayParams.timeL), 1, 0);
         addControl(beatLKnob = new gin::Select(delayParams.beatL), 1, 0);
-        addControl(lockKnob = new gin::Select(delayParams.lock), 2, 0);
+        addControl(lockKnob = new gin::Switch(delayParams.lock), 2, 0);
         addControl(timeLCopyKnob = new gin::Knob(delayParams.timeL), 3, 0);
         addControl(beatLCopyKnob = new gin::Select(delayParams.beatL), 3, 0);
         addControl(timeRKnob = new gin::Knob(delayParams.timeR), 3, 0);
         addControl(beatRKnob = new gin::Select(delayParams.beatR), 3, 0);
-        addControl(syncRKnob = new gin::Select(delayParams.syncR), 4, 0);
+        addControl(syncRKnob = new gin::Switch(delayParams.syncR), 4, 0);
         addControl(new gin::Knob(delayParams.pingPongAmount), 1, 1);
         addControl(new gin::Knob(delayParams.feedback), 2, 1);
         addControl(new gin::Knob(delayParams.mix), 3, 1);
@@ -1023,15 +1033,15 @@ public:
 
     //we want to simulate the left and right knobs moving in concert when the lock toggle is on
     //to do this, we show and hide a copy of the left time or beat knob when the lock is on
-    gin::Select* syncLKnob;
-    gin::Select* syncRKnob;
+    gin::Switch* syncLKnob;
+    gin::Switch* syncRKnob;
     gin::Knob* timeLKnob;
     gin::Knob* timeLCopyKnob;
     gin::Knob* timeRKnob;
     gin::Select* beatLKnob;
     gin::Select* beatLCopyKnob;
     gin::Select* beatRKnob;
-    gin::Select* lockKnob;
+    gin::Switch* lockKnob;
 
     ResonariumProcessor& proc;
     DelayParams delayParams;
