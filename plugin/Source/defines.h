@@ -8,7 +8,7 @@
 
 //resonators
 #define NUM_RESONATORS 8
-#define NUM_RESONATOR_BANKS 3
+#define NUM_RESONATOR_BANKS 4
 #define MIN_FILTER_FREQUENCY = 1.0f;
 #define MAX_FILTER_FREQUENCY 20000.0f;
 

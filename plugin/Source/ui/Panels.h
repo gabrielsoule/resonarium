@@ -9,6 +9,7 @@
 #include "../Parameters.h"
 #include "../defines.h"
 #include "ResonariumComponents.h"
+#include "SampleDropperComponent.h"
 #include "../ResonatorVoice.h"
 
 class GraphicsUtils
@@ -100,41 +101,36 @@ public:
     {
         setName("sampleExciterParams");
         addEnable(sampleParams.enabled);
-        gridWidth = KNOB_W_SMALL;
-        gridHeight = KNOB_H_SMALL;
 
-        auto gain = new gin::Knob(sampleParams.gain);
-        gain->internalKnobReduction = 0;
-        addControl(gain, 0, 0);
-        auto mix = new gin::Knob(sampleParams.mix);
-        mix->internalKnobReduction = 0;
-        addControl(mix, 1, 0);
-        auto start = new gin::Knob(sampleParams.start);
-        start->internalKnobReduction = 0;
-        addControl(start, 2, 0);
+        addControl(new gin::Knob(sampleParams.gain), 0, 1);
+        addControl(new gin::Knob(sampleParams.mix), 1, 1);
+        addControl(new gin::Knob(sampleParams.start), 2, 1);
+        addControl(new gin::Switch(sampleParams.loop), 3, 1);
+        addControl(sampleDropper = new SampleDropperComponent(proc.sampler), 0, 0, 4, 1);
     }
 
     void paint(juce::Graphics& g) override
     {
         gin::ParamBox::paint(g);
-        auto sampleArea = getLocalBounds()
-                          .withTrimmedTop(TOP_MENU_BAR_HEIGHT)
-                          .withTrimmedBottom(13)
-                          .withTrimmedLeft(160)
-                          .withTrimmedRight(10);
-        constexpr float cornerSize = 5.0f;
-        constexpr float dashLengths[2] = {4.0f, 8.0f};
-        juce::Path path;
-        path.addRoundedRectangle(sampleArea, cornerSize);
-        const juce::PathStrokeType strokeType(1);
-        strokeType.createDashedStroke(path, path, dashLengths, 2);
-        g.setColour(juce::Colours::darkgrey);
-        g.strokePath(path, strokeType);
-        g.setFont(static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont);
-        g.drawFittedText("DRAG SAMPLE", 165, 40, 50, 50, juce::Justification::centred, 2, 1);
+        // auto sampleArea = getLocalBounds()
+        //                   .withTrimmedTop(TOP_MENU_BAR_HEIGHT)
+        //                   .withTrimmedBottom(13)
+        //                   .withTrimmedLeft(160)
+        //                   .withTrimmedRight(10);
+        // constexpr float cornerSize = 5.0f;
+        // constexpr float dashLengths[2] = {4.0f, 8.0f};
+        // juce::Path path;
+        // path.addRoundedRectangle(sampleArea, cornerSize);
+        // const juce::PathStrokeType strokeType(1);
+        // strokeType.createDashedStroke(path, path, dashLengths, 2);
+        // g.setColour(juce::Colours::darkgrey);
+        // g.strokePath(path, strokeType);
+        // g.setFont(static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont);
+        // g.drawFittedText("DRAG SAMPLE", 165, 40, 50, 50, juce::Justification::centred, 2, 1);
     }
 
     SampleExciterParams sampleParams;
+    SampleDropperComponent* sampleDropper;
 };
 
 class ExternalInputExciterParamBox : public gin::ParamBox

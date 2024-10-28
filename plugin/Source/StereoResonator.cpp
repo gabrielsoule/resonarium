@@ -45,8 +45,8 @@ float StereoResonator::Resonator::postProcess(float input)
 
 void StereoResonator::Resonator::reset()
 {
-    delayLine.reset();
     delayLengthInterpolator.snapValue(delayLengthInSamples);
+    delayLine.reset();
     loopFilter.reset();
     postFilter.reset();
     apf.reset();

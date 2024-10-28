@@ -36,6 +36,7 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
         exciters.add(new ImpulseTrainExciter(proc, *this, params.impulseTrainExciterParams[i]));
     }
 
+    exciters.add(new SampleExciter(proc, *this, params.sampleExciterParams));
     exciters.add(extInExciter = new ExternalInputExciter(proc, *this, params.externalInputExciterParams));
 
     for (int i = 0; i < NUM_LFOS; i++)

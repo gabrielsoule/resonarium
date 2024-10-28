@@ -197,6 +197,7 @@ struct SampleExciterParams
         enabled,
         mix,
         start,
+        loop,
         gain = nullptr;
 
     SampleExciterParams() = default;

@@ -53,45 +53,48 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
         addAndMakeVisible(wrb);
     }
 
-    for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
-    {
-        SafePointer<ImpulseExciterParamBox> ptr = new ImpulseExciterParamBox(
-            "Impulse Exciter", proc, i, voiceParams.impulseExciterParams[i]);
-        impulseExciterParamBoxes.push_back(ptr);
-        ptr->setBounds(0, TOP_MENU_BAR_HEIGHT, EXCITER_BOX_WIDTH, PARAM_BOX_SMALL_HEIGHT);
-        addAndMakeVisible(*ptr);
-    }
+    juce::Rectangle<int> excitersColumn = juce::Rectangle<int>(0,
+                                                          40,
+                                                          EXCITER_BOX_WIDTH,
+                                                          WINDOW_HEIGHT * 2);
 
-    for (int i = 0; i < NUM_NOISE_EXCITERS; i++)
-    {
-        SafePointer<NoiseExciterParamBox> ptr = new NoiseExciterParamBox(
-            "Noise Exciter", proc, i, voiceParams.noiseExciterParams[i]);
-        noiseExciterParamBoxes.push_back(ptr);
-        addAndMakeVisible(*ptr);
-        ptr->setBounds(0, TOP_MENU_BAR_HEIGHT + PARAM_BOX_SMALL_HEIGHT, EXCITER_BOX_WIDTH, PARAM_BOX_SMALL_HEIGHT);
-    }
+    excitersViewportContentComponent = new juce::Component();
+    excitersViewportContentComponent->setBounds(excitersColumn);
 
-    for (int i = 0; i < NUM_IMPULSE_TRAIN_EXCITERS; i++)
-    {
-        SafePointer<ImpulseTrainExciterParamBox> ptr = new ImpulseTrainExciterParamBox(
-            "Sequence Exciter ", proc, i, voiceParams.impulseTrainExciterParams[i]);
-        impulseTrainExciterParamBoxes.push_back(ptr);
-        addAndMakeVisible(*ptr);
-        ptr->setBounds(0, TOP_MENU_BAR_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_SMALL_HEIGHT, EXCITER_BOX_WIDTH,
-                       PARAM_BOX_MEDIUM_HEIGHT);
-    }
+    juce::Rectangle<int> excitersColumnLocal = juce::Rectangle<int>(0, 0, EXCITER_BOX_WIDTH, WINDOW_HEIGHT * 2);
 
-    auto* sampleExciterParamBox = new SampleExciterParamBox("Sampler", proc, voiceParams.sampleExciterParams);
-    addAndMakeVisible(sampleExciterParamBox);
-    sampleExciterParamBox->setBounds(
-        0, TOP_MENU_BAR_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT,
-        EXCITER_BOX_WIDTH, PARAM_BOX_XSMALL_HEIGHT);
-    auto* extInParamBox = new ExternalInputExciterParamBox("External In", proc, voiceParams.externalInputExciterParams);
-    addAndMakeVisible(extInParamBox);
-    extInParamBox->setBounds(
-        0, TOP_MENU_BAR_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_SMALL_HEIGHT + PARAM_BOX_MEDIUM_HEIGHT +
-        PARAM_BOX_XSMALL_HEIGHT,
-        EXCITER_BOX_WIDTH, PARAM_BOX_SMALL_HEIGHT);
+    impulseExciterParamBox = new ImpulseExciterParamBox("Impulse Exciter", proc, 0, voiceParams.impulseExciterParams[0]);
+    impulseExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    excitersViewportContentComponent->addAndMakeVisible(impulseExciterParamBox);
+
+    noiseExciterParamBox = new NoiseExciterParamBox("Noise Exciter", proc, 0, voiceParams.noiseExciterParams[0]);
+    noiseExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    excitersViewportContentComponent->addAndMakeVisible(noiseExciterParamBox);
+
+    impulseTrainExciterParamBox = new ImpulseTrainExciterParamBox("Sequence Exciter", proc, 0, voiceParams.impulseTrainExciterParams[0]);
+    impulseTrainExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_MEDIUM_HEIGHT));
+    excitersViewportContentComponent->addAndMakeVisible(impulseTrainExciterParamBox);
+
+    sampleExciterParamBox = new SampleExciterParamBox("Sampler", proc, voiceParams.sampleExciterParams);
+    sampleExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    excitersViewportContentComponent->addAndMakeVisible(sampleExciterParamBox);
+
+    extInParamBox = new ExternalInputExciterParamBox("External In", proc, voiceParams.externalInputExciterParams);
+    extInParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    excitersViewportContentComponent->addAndMakeVisible(extInParamBox);
+
+    float scrollableAreaFinalHeight = excitersColumnLocal.getY();
+    excitersViewportContentComponent->setBounds(excitersViewportContentComponent->getBounds().withHeight(scrollableAreaFinalHeight + PARAM_BOX_XSMALL_HEIGHT));
+
+    excitersViewport = new AnimatedScrollBarsViewport();
+    excitersViewport->setViewedComponent(excitersViewportContentComponent);
+    excitersViewport->setScrollBarThickness(5);
+    excitersViewport->setBounds(juce::Rectangle<int>(  0,
+                                             40,
+                                             EXCITER_BOX_WIDTH,
+                                             WINDOW_HEIGHT));
+    addAndMakeVisible(excitersViewport);
+
 
     for (int i = 0; i < NUM_ENVELOPES; i++)
     {
@@ -161,62 +164,61 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                                                               EXCITER_BOX_WIDTH,
                                                               WINDOW_HEIGHT * 2); //some extra vertical space
 
-    viewportContentComponent = new juce::Component();
-    viewportContentComponent->setBounds(effectsColumn);
+    effectsViewportContentComponent = new juce::Component();
+    effectsViewportContentComponent->setBounds(effectsColumn);
 
     juce::Rectangle<int> effectsColumnLocal = juce::Rectangle<int>(0, 0, EXCITER_BOX_WIDTH, WINDOW_HEIGHT * 2);
-    //some extra vertical space
 
     filter1ParamBox = new SVFParamBox("Filter 1", proc, proc.synth.params.effectChainParams.filterParams[0]);
     filter1ParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
-    viewportContentComponent->addAndMakeVisible(filter1ParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(filter1ParamBox);
 
     chorusParamBox = new ChorusParamBox("Chorus", proc, proc.synth.params.effectChainParams.chorusParams);
     chorusParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    viewportContentComponent->addAndMakeVisible(chorusParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(chorusParamBox);
 
     phaserParamBox = new PhaserParamBox("Phaser", proc, proc.synth.params.effectChainParams.phaserParams);
     phaserParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    viewportContentComponent->addAndMakeVisible(phaserParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(phaserParamBox);
 
     distortionParamBox = new DistortionParamBox("Distortion", proc, proc.synth.params.effectChainParams.distortionParams);
     distortionParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    viewportContentComponent->addAndMakeVisible(distortionParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(distortionParamBox);
 
     multiAmpParamBox = new MultiAmpParamBox("Amp", proc, proc.synth.params.effectChainParams.multiAmpParams);
     multiAmpParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
-    viewportContentComponent->addAndMakeVisible(multiAmpParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(multiAmpParamBox);
 
     delayParamBox = new DelayParamBox("Delay", proc, proc.synth.params.effectChainParams.delayParams);
     delayParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    viewportContentComponent->addAndMakeVisible(delayParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(delayParamBox);
 
     compressorParamBox = new CompressorParamBox("Compressor", proc, proc.synth.params.effectChainParams.compressorParams);
     compressorParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
-    viewportContentComponent->addAndMakeVisible(compressorParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(compressorParamBox);
 
     reverbParamBox = new ReverbParamBox("Reverb", proc, proc.synth.params.effectChainParams.reverbParams);
     reverbParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    viewportContentComponent->addAndMakeVisible(reverbParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(reverbParamBox);
 
     filter2ParamBox = new SVFParamBox("Filter 2", proc, proc.synth.params.effectChainParams.filterParams[1]);
     filter2ParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
-    viewportContentComponent->addAndMakeVisible(filter2ParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(filter2ParamBox);
 
     //compute a rectangle that is the size of all the components in the viewport
-    float scrollableAreaFinalHeight = effectsColumnLocal.getY();
-    viewportContentComponent->setBounds(viewportContentComponent->getBounds().withHeight(scrollableAreaFinalHeight + PARAM_BOX_XSMALL_HEIGHT));
+    scrollableAreaFinalHeight = effectsColumnLocal.getY();
+    effectsViewportContentComponent->setBounds(effectsViewportContentComponent->getBounds().withHeight(scrollableAreaFinalHeight + PARAM_BOX_XSMALL_HEIGHT));
 
 
-    viewport = new AnimatedScrollBarsViewport();
-    viewport->setViewedComponent(viewportContentComponent);
+    effectsViewport = new AnimatedScrollBarsViewport();
+    effectsViewport->setViewedComponent(effectsViewportContentComponent);
     // viewport->setScrollBarsShown(true, false, true, false);
-    viewport->setScrollBarThickness(5);
-    viewport->setBounds(juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
+    effectsViewport->setScrollBarThickness(5);
+    effectsViewport->setBounds(juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
                                              40,
                                              EXCITER_BOX_WIDTH,
                                              WINDOW_HEIGHT));
-    addAndMakeVisible(viewport);
+    addAndMakeVisible(effectsViewport);
 
     usage.setBounds(WINDOW_WIDTH - 150, 10, 110, 20);
     addAndMakeVisible(usage);

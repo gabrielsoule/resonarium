@@ -180,17 +180,24 @@ public:
  * An exciter that reads audio from a file to excite the resonators.
  * The sample can be shaped by a filter and an ADSR envelope.
  */
-// class SampleExciter : public Exciter
-// {
-// public:
-//     void nextSample() override;
-//     void process(juce::dsp::AudioBlock<float> block) override;
-//     void reset() override;
-//     void noteStarted() override;
-//     void noteStopped(bool avoidTailOff) override;
-//     void updateParameters() override;
-// };
-//
+class SampleExciter : public Exciter
+{
+public:
+    SampleExciter(ResonariumProcessor& proc, gin::ModVoice& voice, SampleExciterParams params) : Exciter(proc, voice), params(params), filter(&voice, params.filterParams, false){}
+
+    void nextSample() override;
+    void process(juce::dsp::AudioBlock<float>& block) override;
+    void reset() override;
+    void noteStarted() override;
+    void noteStopped(bool avoidTailOff) override;
+    void updateParameters() override;
+
+    SampleExciterParams params;
+    MultiFilter filter;
+    int currentSample;
+    bool isPlaying;
+};
+
 /**
  * An exciter that funnels real-time audio from the host processor chain to excite the resonators.
  * Notably,

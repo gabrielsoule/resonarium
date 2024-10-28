@@ -455,16 +455,20 @@ void SampleExciterParams::setup(ResonariumProcessor& p)
 
     gain = p.addExtParam("sampleGain", "Sample Gain", "Gain", "dB",
                          {-100.0f, 24.0f, 0.0f, 4.0f}, 0.0f,
-                         0.0f);
+                         0.0f, "exciter.sampler.gain");
     gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
     mix = p.addExtParam("sampleMix", "Sample Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
                         0.0f);
 
+    loop = p.addIntParam("sampleLoop", "Sample Loop", "Loop", "",
+                         {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                         0.0f, "exciter.sampler.loop", enableTextFunction);
+
     start = p.addExtParam("sampleStart", "Sample Start", "Start", "%",
                           {0.0f, 1.0f, 0.0f, 0.1f}, 0.0f,
-                          0.0f);
+                          0.0f, "exciter.sampler.start");
 }
 
 void LFOParams::setup(ResonariumProcessor& p, int index)

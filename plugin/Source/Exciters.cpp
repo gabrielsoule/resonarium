@@ -268,6 +268,59 @@ void ImpulseTrainExciter::updateParameters()
     jassert(impulseLength > 0);
 }
 
+
+void SampleExciter::nextSample()
+{
+
+}
+
+void SampleExciter::process(juce::dsp::AudioBlock<float>& block)
+{
+    if (!params.enabled->isOn() || !proc.sampler.isLoaded() || !isPlaying)
+        return;
+
+    const int numSamples = block.getNumSamples();
+    const int totalSamples = proc.sampler.getNumSamples();
+
+    // Check if we've reached the end of the sample
+    if (currentSample >= totalSamples)
+        return;
+
+    // Calculate how many samples we can process
+    const int samplesAvailable = totalSamples - currentSample;
+    const int samplesToProcess = std::min(numSamples, samplesAvailable);
+
+    // Get sub-blocks for both source and destination
+    auto sampleBlock = proc.sampler.getSubBlock(currentSample, samplesToProcess);
+    auto outputBlock = block.getSubBlock(0, samplesToProcess);
+
+    // Add sample data to output using SIMD-optimized add
+    outputBlock.add(sampleBlock);
+
+    // Update position
+    currentSample += samplesToProcess;
+}
+
+void SampleExciter::reset()
+{
+    currentSample = 0;
+}
+
+void SampleExciter::noteStarted()
+{
+    isPlaying = true;
+}
+
+void SampleExciter::noteStopped(bool avoidTailOff)
+{
+    isPlaying = false;
+}
+
+void SampleExciter::updateParameters()
+{
+
+}
+
 void ExternalInputExciter::prepare(const juce::dsp::ProcessSpec& spec)
 {
     this->extInBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);

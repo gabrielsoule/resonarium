@@ -6,6 +6,8 @@
 #include "Parameters.h"
 #include <melatonin_perfetto/melatonin_perfetto.h>
 
+#include "dsp/Sampler.h"
+
 //==============================================================================
 class ResonariumProcessor : public gin::Processor
 {
@@ -50,6 +52,8 @@ public:
 
     //A copy of the input buffer, which is accessed by Ext. In exciters.
     juce::AudioBuffer<float> inputBuffer;
+    //every sample exciter is polyphonic, they all share the same sample buffer.
+    Sampler sampler;
 
 #if PERFETTO
     std::unique_ptr<perfetto::TracingSession> tracingSession;

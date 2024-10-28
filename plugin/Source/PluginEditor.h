@@ -31,12 +31,23 @@ private:
     SafePointer<juce::Label> logoText;
     SafePointer<ResonariumLogo> logo;
     SafePointer<juce::Label> versionText;
-
     SafePointer<gin::TriggeredScope> scope;
+
     std::vector<SafePointer<WaveguideResonatorBankParamBox_V2>> resonatorBankParamBoxes;
+
     std::vector<SafePointer<ImpulseExciterParamBox>> impulseExciterParamBoxes;
     std::vector<SafePointer<NoiseExciterParamBox>> noiseExciterParamBoxes;
     std::vector<SafePointer<ImpulseTrainExciterParamBox>> impulseTrainExciterParamBoxes;
+
+
+    SafePointer<AnimatedScrollBarsViewport> excitersViewport;
+    SafePointer<Component> excitersViewportContentComponent;
+    SafePointer<ImpulseExciterParamBox> impulseExciterParamBox;
+    SafePointer<NoiseExciterParamBox> noiseExciterParamBox;
+    SafePointer<ImpulseTrainExciterParamBox> impulseTrainExciterParamBox;
+    SafePointer<SampleExciterParamBox> sampleExciterParamBox;
+    SafePointer<ExternalInputExciterParamBox> extInParamBox;
+
     std::vector<SafePointer<LFOParamBox>> lfoParamBoxes;
     std::vector<SafePointer<RandomLFOParamBox>> randomLfoParamBoxes;
     std::vector<SafePointer<MSEGParamBox>> msegParamBoxes;
@@ -45,8 +56,8 @@ private:
     SafePointer<MatrixParamBox> matrixParamBox;
     SafePointer<ModSourceParamBox> modSourceParamBox;
 
-    SafePointer<AnimatedScrollBarsViewport> viewport;
-    SafePointer<Component> viewportContentComponent;
+    SafePointer<AnimatedScrollBarsViewport> effectsViewport;
+    SafePointer<Component> effectsViewportContentComponent;
     SafePointer<ChorusParamBox> chorusParamBox;
     SafePointer<PhaserParamBox> phaserParamBox;
     SafePointer<DelayParamBox> delayParamBox;
