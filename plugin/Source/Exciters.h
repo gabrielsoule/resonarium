@@ -44,8 +44,10 @@ public:
      * Processes a block of audio samples additively.
      * Exciter audio is added non-destructively to the existing
      * samples in the buffer.
+     * The exciter can also add samples into the output buffer, in case the exciter
+     * wishes to mix its raw signal directly into thte output
      */
-    virtual void process(juce::dsp::AudioBlock<float>& block) = 0;
+    virtual void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) = 0;
     virtual void reset() = 0;
     virtual void noteStarted() = 0;
     virtual void noteStopped(bool avoidTailOff) = 0;
@@ -76,7 +78,7 @@ public:
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float>& block) override;
+    void process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;
@@ -103,7 +105,7 @@ public:
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float>& block) override;
+    void process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;
@@ -150,7 +152,7 @@ public:
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float>& block) override;
+    void process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;
@@ -186,7 +188,7 @@ public:
     SampleExciter(ResonariumProcessor& proc, gin::ModVoice& voice, SampleExciterParams params) : Exciter(proc, voice), params(params), filter(&voice, params.filterParams, false){}
 
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float>& block) override;
+    void process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;
@@ -194,6 +196,8 @@ public:
 
     SampleExciterParams params;
     MultiFilter filter;
+    float mixL = 1.0f;
+    float mixR = 1.0f;
     int currentSample;
     bool isPlaying;
 };
@@ -210,7 +214,7 @@ public:
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float>& block) override;
+    void process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;

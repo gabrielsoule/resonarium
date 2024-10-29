@@ -16,7 +16,7 @@ void ImpulseExciter::nextSample()
 {
 }
 
-void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block)
+void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock)
 {
     jassert(block.getNumChannels() == 2);
     if(!params.enabled->isOn()) return;
@@ -77,7 +77,7 @@ void NoiseExciter::nextSample()
 {
 }
 
-void NoiseExciter::process(juce::dsp::AudioBlock<float>& block)
+void NoiseExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock)
 {
     jassert(block.getNumChannels() == 2);
     if(!params.enabled->isOn()) return;
@@ -143,7 +143,7 @@ void ImpulseTrainExciter::nextSample()
 {
 }
 
-void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block)
+void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock)
 {
     if(!params.enabled->isOn()) return;
 
@@ -274,7 +274,7 @@ void SampleExciter::nextSample()
 
 }
 
-void SampleExciter::process(juce::dsp::AudioBlock<float>& block)
+void SampleExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock)
 {
     if (!params.enabled->isOn() || !proc.sampler.isLoaded() || !isPlaying)
         return;
@@ -282,7 +282,6 @@ void SampleExciter::process(juce::dsp::AudioBlock<float>& block)
     const int numSamples = block.getNumSamples();
     const int totalSamples = proc.sampler.getNumSamples();
 
-    // Check if we've reached the end of the sample
     if (currentSample >= totalSamples)
         return;
 
@@ -292,12 +291,17 @@ void SampleExciter::process(juce::dsp::AudioBlock<float>& block)
 
     // Get sub-blocks for both source and destination
     auto sampleBlock = proc.sampler.getSubBlock(currentSample, samplesToProcess);
-    auto outputBlock = block.getSubBlock(0, samplesToProcess);
+    auto out = block.getSubBlock(0, samplesToProcess);
 
-    // Add sample data to output using SIMD-optimized add
-    outputBlock.add(sampleBlock);
+    if(mixL != 1)
+    {
+        out.addProductOf(sampleBlock, mixL);
+        outputBlock.addProductOf(sampleBlock, 1 - mixL);
+    } else
+    {
+        out.add(sampleBlock);
+    }
 
-    // Update position
     currentSample += samplesToProcess;
 }
 
@@ -318,7 +322,8 @@ void SampleExciter::noteStopped(bool avoidTailOff)
 
 void SampleExciter::updateParameters()
 {
-
+    mixL = voice.getValue(params.mix, 0);
+    mixR = voice.getValue(params.mix, 1);
 }
 
 void ExternalInputExciter::prepare(const juce::dsp::ProcessSpec& spec)
@@ -333,7 +338,7 @@ void ExternalInputExciter::nextSample()
 
 }
 
-void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& block)
+void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock)
 {
     if(!params.enabled->isOn()) return;
 

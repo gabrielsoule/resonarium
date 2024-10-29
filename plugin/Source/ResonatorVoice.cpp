@@ -346,22 +346,22 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     juce::dsp::AudioBlock<float> outputBlock = juce::dsp::AudioBlock<float>(outputBuffer)
         .getSubBlock(startSample, numSamples);
 
+    juce::dsp::AudioBlock<float> previousBankBlock = juce::dsp::AudioBlock<float>(resonatorBankBuffer)
+    .getSubBlock(startSample, numSamples);
+    previousBankBlock.clear();
+
+    //the output of all banks is summed into this block, which is sent to the effect chain
+    juce::dsp::AudioBlock<float> tempOutputBlock = juce::dsp::AudioBlock<float>(tempBuffer)
+        .getSubBlock(startSample, numSamples);
+    tempOutputBlock.clear();
+
     for (auto* exciter : exciters)
     {
-        exciter->process(exciterBlock);
+        exciter->process(exciterBlock, tempOutputBlock);
     }
 
     if (!bypassResonators)
     {
-        juce::dsp::AudioBlock<float> previousBankBlock = juce::dsp::AudioBlock<float>(resonatorBankBuffer)
-            .getSubBlock(startSample, numSamples);
-        previousBankBlock.clear();
-
-        //the output of all banks is summed into this block, which is sent to the effect chain
-        juce::dsp::AudioBlock<float> tempOutputBlock = juce::dsp::AudioBlock<float>(tempBuffer)
-            .getSubBlock(startSample, numSamples);
-        tempOutputBlock.clear();
-
         for (int i = 0; i < resonatorBanks.size(); i++)
         {
             auto* resonatorBank = resonatorBanks[i];
@@ -380,7 +380,6 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
         {
             juce::dsp::AudioBlock<float> soloOutputBlock = juce::dsp::AudioBlock<float>(soloBuffer)
                 .getSubBlock(startSample, numSamples);
-            // effectChain.process(soloOutputBlock);
             outputBlock.add(soloOutputBlock);
         }
     }
