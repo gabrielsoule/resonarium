@@ -281,28 +281,50 @@ void SampleExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::Audi
 
     const int numSamples = block.getNumSamples();
     const int totalSamples = proc.sampler.getNumSamples();
+    int remainingSamples = numSamples;
+    int blockOffset = 0;
 
-    if (currentSample >= totalSamples)
-        return;
-
-    // Calculate how many samples we can process
-    const int samplesAvailable = totalSamples - currentSample;
-    const int samplesToProcess = std::min(numSamples, samplesAvailable);
-
-    // Get sub-blocks for both source and destination
-    auto sampleBlock = proc.sampler.getSubBlock(currentSample, samplesToProcess);
-    auto out = block.getSubBlock(0, samplesToProcess);
-
-    if(mixL != 1)
+    while (remainingSamples > 0)
     {
-        out.addProductOf(sampleBlock, mixL);
-        outputBlock.addProductOf(sampleBlock, 1 - mixL);
-    } else
-    {
-        out.add(sampleBlock);
+        // Check if we've hit the end
+        if (currentSample >= totalSamples)
+        {
+            if (params.loop->isOn())
+            {
+                currentSample = 0;
+            }
+            else
+            {
+                isPlaying = false;
+                break;
+            }
+        }
+
+        // Calculate samples for this iteration
+        const int samplesAvailable = totalSamples - currentSample;
+        const int samplesToProcess = std::min(remainingSamples, samplesAvailable);
+
+        // Get sub-blocks for both source and destination
+        auto sampleBlock = proc.sampler.getSubBlock(currentSample, samplesToProcess);
+        auto out = block.getSubBlock(blockOffset, samplesToProcess);
+        auto outBlock = outputBlock.getSubBlock(blockOffset, samplesToProcess);
+
+        // Mix the signal
+        if(mixL != 1)
+        {
+            out.addProductOf(sampleBlock, mixL);
+            outBlock.addProductOf(sampleBlock, 1 - mixL);
+        }
+        else
+        {
+            out.add(sampleBlock);
+        }
+
+        // Update positions and remaining samples
+        currentSample += samplesToProcess;
+        remainingSamples -= samplesToProcess;
+        blockOffset += samplesToProcess;
     }
-
-    currentSample += samplesToProcess;
 }
 
 void SampleExciter::reset()
