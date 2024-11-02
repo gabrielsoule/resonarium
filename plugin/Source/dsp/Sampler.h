@@ -13,6 +13,7 @@ public:
     float getSample(int channel, int position) const;
     float getSampleInterpolated(int channel, double position) const;
     juce::dsp::AudioBlock<float> getSubBlock(int start, int length);
+    juce::AudioFormatManager& getFormatManager();
     int getNumSamples() const;
     int getNumChannels() const;
     double getSampleRate() const;

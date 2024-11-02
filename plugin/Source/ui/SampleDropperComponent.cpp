@@ -1,20 +1,23 @@
 #include "SampleDropperComponent.h"
 
 SampleDropperComponent::SampleDropperComponent(Sampler& s)
-    : sampler(s)
+    : sampler(s),
+      thumbnailCache(5),    // Cache 5 thumbnails
+      thumbnail(512, sampler.getFormatManager(), thumbnailCache)  // 512 samples per thumbnail point
 {
     setOpaque(false);
     setWantsKeyboardFocus(true);
 
+    // Setup empty state label
     addAndMakeVisible(emptyStateLabel);
     emptyStateLabel.setJustificationType(juce::Justification::centred);
     emptyStateLabel.setMinimumHorizontalScale(1.0f);
     emptyStateLabel.setFont(18.0f);
-    emptyStateLabel.setText("DRAG AND DROP SAMPLE",
-                           juce::dontSendNotification);
-    emptyStateLabel.setColour(juce::Label::textColourId, juce::Colour (0xff775cff));
+    emptyStateLabel.setText("DRAG AND DROP SAMPLE", juce::dontSendNotification);
+    emptyStateLabel.setColour(juce::Label::textColourId, juce::Colour(0xff775cff));
     emptyStateLabel.setInterceptsMouseClicks(false, false);
 
+    // Setup loaded state label
     addAndMakeVisible(loadedStateLabel);
     loadedStateLabel.setJustificationType(juce::Justification::centred);
     loadedStateLabel.setMinimumHorizontalScale(1.0f);
@@ -22,80 +25,36 @@ SampleDropperComponent::SampleDropperComponent(Sampler& s)
     loadedStateLabel.setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.7f));
     loadedStateLabel.setInterceptsMouseClicks(false, false);
 
+    // Listen for thumbnail changes
+    thumbnail.addChangeListener(this);
+
     updateLabels();
 }
 
 SampleDropperComponent::~SampleDropperComponent()
 {
+    thumbnail.removeChangeListener(this);
 }
-
 
 void SampleDropperComponent::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds().reduced(8);
 
-    // Draw border
+    // Draw background
     g.setColour(juce::Colours::black);
     g.fillRoundedRectangle(bounds.toFloat(), 10.0f);
 
-    // Draw waveform if file is loaded
     if (isFileLoaded)
     {
-        g.setColour(juce::Colour (0xff775cff));
-        g.fillPath(waveformPath);
+        // Draw waveform
+        g.setColour(juce::Colour(0xff775cff));
+        thumbnail.drawChannel(g,
+                            bounds,
+                            0.0,                          // start time
+                            thumbnail.getTotalLength(),    // end time
+                            0,                            // channel num
+                            1.0f);                        // vertical zoom
     }
-}
-
-void SampleDropperComponent::createWaveformPath()
-{
-    waveformPath.clear();
-
-    if (!isFileLoaded || sampler.getNumSamples() == 0)
-        return;
-
-    const auto numSamples = sampler.getNumSamples();
-    const auto bounds = getLocalBounds().toFloat().reduced(8.0f);
-    const float pathHeight = bounds.getHeight() * 0.4f;  // Reduced height for subtler look
-    const float centerY = bounds.getCentreY();
-
-    const int skipSamples = std::max(1, numSamples / waveformResolution);
-
-    // First pass: find maximum amplitude
-    float maxAmp = 0.0f;
-    for (int i = 0; i < numSamples; i += skipSamples)
-    {
-        float sample = std::abs(sampler.getSample(0, i));
-        maxAmp = std::max(maxAmp, sample);
-    }
-
-    if (maxAmp == 0.0f) maxAmp = 1.0f;
-
-    // Second pass: create the path with mirroring
-    bool firstPoint = true;
-    for (int i = 0; i < numSamples; i += skipSamples)
-    {
-        const float x = bounds.getX() + (i * bounds.getWidth() / numSamples);
-        float sample = sampler.getSample(0, i) / maxAmp;
-        const float y = centerY - (sample * pathHeight);
-
-        if (firstPoint)
-        {
-            waveformPath.startNewSubPath(x, centerY);
-            firstPoint = false;
-        }
-        waveformPath.lineTo(x, y);
-    }
-
-    // Create mirror image
-    for (int i = numSamples - skipSamples; i >= 0; i -= skipSamples)
-    {
-        const float x = bounds.getX() + (i * bounds.getWidth() / numSamples);
-        float sample = -sampler.getSample(0, i) / maxAmp;
-        const float y = centerY - (sample * pathHeight);
-        waveformPath.lineTo(x, y);
-    }
-
-    waveformPath.closeSubPath();
 }
 
 void SampleDropperComponent::resized()
@@ -103,32 +62,13 @@ void SampleDropperComponent::resized()
     auto bounds = getLocalBounds().reduced(4);
     emptyStateLabel.setBounds(bounds);
     loadedStateLabel.setBounds(bounds);
-    createWaveformPath();
 }
 
-void SampleDropperComponent::updateLabels()
+void SampleDropperComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
-    if (isFileLoaded)
-    {
-        // Update loaded state label text
-        juce::String info = currentFileName + "\n" +
-                           juce::String(sampler.getNumSamples()) + " samples @ " +
-                           juce::String(sampler.getFileSampleRate()) + " Hz";
-        loadedStateLabel.setText(info, juce::dontSendNotification);
-
-        // Show/hide appropriate labels
-        setTooltip(loadedStateLabel.getText());
-        loadedStateLabel.setVisible(false);
-        emptyStateLabel.setVisible(false);
-    }
-    else
-    {
-        // Show/hide appropriate labels
-        loadedStateLabel.setVisible(false);
-        emptyStateLabel.setVisible(true);
-    }
+    if (source == &thumbnail)
+        repaint();
 }
-
 
 bool SampleDropperComponent::isInterestedInFileDrag(const juce::StringArray& files)
 {
@@ -167,21 +107,46 @@ void SampleDropperComponent::loadFile(const juce::File& file)
     {
         currentFileName = file.getFileName();
         isFileLoaded = true;
+
+        // Set the thumbnail's source to the new file
+        thumbnail.setSource(new juce::FileInputSource(file));
+
         updateLabels();
-        createWaveformPath();  // Add this line to create the waveform
 
         if (onSampleLoaded)
             onSampleLoaded();
     }
     else
     {
-        // Show error message
         juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
                                              "Error",
                                              "Couldn't load file: " + file.getFileName());
     }
 
     repaint();
+}
+
+void SampleDropperComponent::updateLabels()
+{
+    if (isFileLoaded)
+    {
+        // Update loaded state label text
+        juce::String info = currentFileName + "\n" +
+                           juce::String(sampler.getNumSamples()) + " samples @ " +
+                           juce::String(sampler.getFileSampleRate()) + " Hz";
+        loadedStateLabel.setText(info, juce::dontSendNotification);
+
+        // Show/hide appropriate labels
+        setTooltip(loadedStateLabel.getText());
+        loadedStateLabel.setVisible(false);
+        emptyStateLabel.setVisible(false);
+    }
+    else
+    {
+        // Show/hide appropriate labels
+        loadedStateLabel.setVisible(false);
+        emptyStateLabel.setVisible(true);
+    }
 }
 
 void SampleDropperComponent::mouseDown(const juce::MouseEvent& event)
@@ -220,6 +185,7 @@ void SampleDropperComponent::mouseDown(const juce::MouseEvent& event)
                 // Clear the current sample
                 currentFileName = "";
                 isFileLoaded = false;
+                thumbnail.setSource(nullptr);
                 updateLabels();
                 repaint();
             }

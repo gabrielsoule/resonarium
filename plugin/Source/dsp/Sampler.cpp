@@ -69,6 +69,11 @@ juce::dsp::AudioBlock<float> Sampler::getSubBlock(int start, int length)
                                       length);    // number of samples
 }
 
+juce::AudioFormatManager& Sampler::getFormatManager()
+{
+    return formatManager;
+}
+
 int Sampler::getNumSamples() const
 {
     return sampleBuffer.getNumSamples();
