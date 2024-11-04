@@ -19,7 +19,6 @@ public:
     void resized() override;
     void showOnboardingWarning();
 
-private:
     ResonariumProcessor& proc;
     UIParams uiParams;
 

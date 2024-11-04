@@ -134,7 +134,6 @@ void ResonariumLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, i
         float min = slider.getMinimum();
         float max = slider.getMaximum();
 
-        // Calculate the proportion of the value within its range
         float proportion = (value - min) / (max - min);
 
         g.setColour(slider.findColour(juce::Slider::thumbColourId).withAlpha(1.0f));
@@ -157,7 +156,6 @@ void ResonariumLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, i
                 float rY = y + 16;
                 float rW = proportion == 0 ? 0 : static_cast<int>(juce::jmap<float>(end - start, 0.0f, width - 3.0f));
                 float rH = 2;
-                // g.fillRect(x + 3 + static_cast<int>(juce::jmap<float>(start, 0.0f, width - 3.0f)), y + 16, static_cast<int>(juce::jmap<float>(end - start, 0.0f, width - 3.0f)), 2);
                 g.fillRect(rX, rY, rW, rH);
             } else
             {
@@ -169,7 +167,6 @@ void ResonariumLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, i
                 float rY = y + 16;
                 float rW = proportion == 0 ? 0 : static_cast<int>(juce::jmap<float>(end - start, 0.0f, width - 3.0f));
                 float rH = 2;
-                // g.fillRect(x + 3 + static_cast<int>(juce::jmap<float>(start, 0.0f, width - 3.0f)), y + 16, static_cast<int>(juce::jmap<float>(end - start, 0.0f, width - 3.0f)), 2);
                 g.fillRect(rX, rY, rW, rH);
             }
         }
@@ -216,9 +213,6 @@ void ResonariumLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, i
 
     const float thickness = (radius - 1) / radius;
 
-    // g.setColour (slider.findColour (juce::Slider::trackColourId).withMultipliedAlpha (slider.isEnabled() ? 1.0f : 0.5f));
-
-    // Draw knob
     {
         const auto scl = 1.3f;
         const auto pi = juce::MathConstants<float>::pi;

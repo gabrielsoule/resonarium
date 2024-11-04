@@ -54,6 +54,7 @@ public:
     juce::AudioBuffer<float> inputBuffer;
     //every sample exciter is polyphonic, they all share the same sample buffer.
     Sampler sampler;
+    juce::String samplePath = "";
 
 #if PERFETTO
     std::unique_ptr<perfetto::TracingSession> tracingSession;

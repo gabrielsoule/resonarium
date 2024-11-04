@@ -16,12 +16,12 @@ void ImpulseExciter::nextSample()
 {
 }
 
-void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock)
+void ImpulseExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
 {
-    jassert(block.getNumChannels() == 2);
+    jassert(exciterBlock.getNumChannels() == 2);
     if(!params.enabled->isOn()) return;
 
-    juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
+    juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)exciterBlock.getNumSamples());
     auto adjustedGain = level / static_cast<float>(thickness);
     const int impulsesThisBlock = juce::jmin<int>(truncatedBlock.getNumSamples(), impulsesRemaining);
     for (int i = 0; i < impulsesThisBlock; i++)
@@ -35,7 +35,7 @@ void ImpulseExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::Aud
 
     filter.process(truncatedBlock);
     //TODO Add proper multi channel support here
-    block.add(truncatedBlock);
+    exciterBlock.add(truncatedBlock);
     scratchBlock.clear();
 }
 
@@ -77,12 +77,12 @@ void NoiseExciter::nextSample()
 {
 }
 
-void NoiseExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock)
+void NoiseExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
 {
-    jassert(block.getNumChannels() == 2);
+    jassert(exciterBlock.getNumChannels() == 2);
     if(!params.enabled->isOn()) return;
 
-    juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
+    juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)exciterBlock.getNumSamples());
     auto gainL = voice.getValue(params.level, 0);
     auto gainR = voice.getValue(params.level, 1);
     for (int i = 0; i < truncatedBlock.getNumSamples(); i++)
@@ -96,7 +96,7 @@ void NoiseExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::Audio
 
     }
     filter.process(truncatedBlock);
-    block.add(truncatedBlock);
+    exciterBlock.add(truncatedBlock);
 }
 
 void NoiseExciter::reset()
@@ -143,7 +143,7 @@ void ImpulseTrainExciter::nextSample()
 {
 }
 
-void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock)
+void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
 {
     if(!params.enabled->isOn()) return;
 
@@ -151,7 +151,7 @@ void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp
     jassert(impulseLength > 0);
     jassert(samplesSinceLastImpulse >= 0);
     jassert(impulsesLeft >= 0);
-    juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)block.getNumSamples());
+    juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)exciterBlock.getNumSamples());
     auto gain = voice.getValue(params.level);
 
     for (int i = 0; i < truncatedBlock.getNumSamples(); i++)
@@ -214,7 +214,7 @@ void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp
 
     filter.process(truncatedBlock);
 
-    block.add(truncatedBlock);
+    exciterBlock.add(truncatedBlock);
 }
 
 void ImpulseTrainExciter::reset()
@@ -274,12 +274,12 @@ void SampleExciter::nextSample()
 
 }
 
-void SampleExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock)
+void SampleExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
 {
     if (!params.enabled->isOn() || !proc.sampler.isLoaded() || !isPlaying)
         return;
 
-    const int numSamples = block.getNumSamples();
+    const int numSamples = exciterBlock.getNumSamples();
     const int totalSamples = proc.sampler.getNumSamples();
     int remainingSamples = numSamples;
     int blockOffset = 0;
@@ -300,25 +300,17 @@ void SampleExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::Audi
             }
         }
 
-        // Calculate samples for this iteration
         const int samplesAvailable = totalSamples - currentSample;
         const int samplesToProcess = std::min(remainingSamples, samplesAvailable);
 
-        // Get sub-blocks for both source and destination
         auto sampleBlock = proc.sampler.getSubBlock(currentSample, samplesToProcess);
-        auto out = block.getSubBlock(blockOffset, samplesToProcess);
+        auto exciterSubBlock = exciterBlock.getSubBlock(blockOffset, samplesToProcess);
         auto outBlock = outputBlock.getSubBlock(blockOffset, samplesToProcess);
 
-        // Mix the signal
-        if(mixL != 1)
-        {
-            out.addProductOf(sampleBlock, mixL);
-            outBlock.addProductOf(sampleBlock, 1 - mixL);
-        }
-        else
-        {
-            out.add(sampleBlock);
-        }
+        // Send mix * signal to exciter block (will go to resonators)
+        exciterSubBlock.addProductOf(sampleBlock, level * mixL);
+        // Send (1-mix) * signal directly to output block
+        outBlock.addProductOf(sampleBlock, level * (1.0f - mixL));
 
         // Update positions and remaining samples
         currentSample += samplesToProcess;
@@ -346,6 +338,7 @@ void SampleExciter::updateParameters()
 {
     mixL = voice.getValue(params.mix, 0);
     mixR = voice.getValue(params.mix, 1);
+    level = voice.getValue(params.gain, 0);
 }
 
 void ExternalInputExciter::prepare(const juce::dsp::ProcessSpec& spec)
@@ -360,7 +353,7 @@ void ExternalInputExciter::nextSample()
 
 }
 
-void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock)
+void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
 {
     if(!params.enabled->isOn()) return;
 
@@ -373,7 +366,7 @@ void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& block, juce::ds
     extInBuffer.copyFrom(1, v.startSample, proc.inputBuffer.getReadPointer(1), v.numSamples, gainR);
     juce::dsp::AudioBlock<float> extInBlock = juce::dsp::AudioBlock<float>(extInBuffer, v.startSample);
     // filter.process(extInBlock);
-    block.add(extInBlock);
+    exciterBlock.add(extInBlock);
 
 }
 

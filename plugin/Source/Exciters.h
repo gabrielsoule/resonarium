@@ -78,7 +78,7 @@ public:
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock) override;
+    void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;
@@ -105,7 +105,7 @@ public:
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock) override;
+    void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;
@@ -152,7 +152,7 @@ public:
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock) override;
+    void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;
@@ -188,7 +188,7 @@ public:
     SampleExciter(ResonariumProcessor& proc, gin::ModVoice& voice, SampleExciterParams params) : Exciter(proc, voice), params(params), filter(&voice, params.filterParams, false){}
 
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock) override;
+    void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;
@@ -198,6 +198,7 @@ public:
     MultiFilter filter;
     float mixL = 1.0f;
     float mixR = 1.0f;
+    float level = 1.0f;
     int currentSample;
     bool isPlaying;
 };
@@ -214,7 +215,7 @@ public:
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
-    void process(juce::dsp::AudioBlock<float>& block, juce::dsp::AudioBlock<float>& outputBlock) override;
+    void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;

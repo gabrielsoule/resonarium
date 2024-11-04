@@ -212,6 +212,32 @@ void ResonariumProcessor::stateUpdated()
         }
     }
 
+    //load the sample file path from the xml
+    auto pathXML = state.getChildWithName("samplePath");
+
+    //if the sample path is invalid or empty, clear the sampler
+    if (!pathXML.isValid() || pathXML.getProperty("path").toString().isEmpty())
+    {
+        DBG("Processor: No sample path found in preset, clearing sampler");
+        sampler.clear();
+    }
+    else
+    {
+        DBG("Processor: Loading sample from path: " + pathXML.getProperty("path").toString());
+        sampler.loadFile(pathXML.getProperty("path").toString());
+    }
+
+    //force an editor update, this is a little janky and should be improved
+    if (getActiveEditor())
+    {
+        auto* editor = getActiveEditor();
+        jassert(editor != nullptr);
+        auto* scaledEditor = dynamic_cast<gin::ScaledPluginEditor*>(editor);
+        jassert(scaledEditor != nullptr);
+        auto* resonariumEditor = dynamic_cast<ResonariumEditor*>(scaledEditor->editor.get());
+        resonariumEditor->sampleExciterParamBox->sampleDropper->updateFromSampler();
+    }
+
     reset();
 }
 
@@ -224,6 +250,9 @@ void ResonariumProcessor::updateState()
         auto msegTree = state.getOrCreateChildWithName("MSEG" + juce::String(i + 1), nullptr);
         synth.params.msegParams[i].msegData->toValueTree(msegTree);
     }
+
+    //write the sample path from the sampler to the xml
+    state.getOrCreateChildWithName("samplePath", nullptr).setProperty("path", sampler.getFilePath(), nullptr);
 }
 
 void ResonariumProcessor::reset()
@@ -276,6 +305,7 @@ bool ResonariumProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* ResonariumProcessor::createEditor()
 {
+    DBG("Instantiating new ResonariumEditor instance!");
     auto* editor = new gin::ScaledPluginEditor(new ResonariumEditor(*this), state);
     editor->editor->resized();
     return editor;

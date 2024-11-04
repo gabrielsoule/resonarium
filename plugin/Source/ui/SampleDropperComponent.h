@@ -17,18 +17,19 @@ public:
     void resized() override;
     void mouseDown(const juce::MouseEvent& event) override;
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
-
+    void updateFromSampler();
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
+    void loadFile(const juce::File& file);
+    void clearCurrentFile();
 
     std::function<void()> onSampleLoaded;
 
 private:
-    void loadFile(const juce::File& file);
     void updateLabels();
 
     Sampler& sampler;
-    juce::String currentFileName;
+    juce::String currentFileName = "";
     bool isFileLoaded = false;
     bool isBeingDraggedOver = false;
 

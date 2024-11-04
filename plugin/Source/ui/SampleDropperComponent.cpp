@@ -70,6 +70,27 @@ void SampleDropperComponent::changeListenerCallback(juce::ChangeBroadcaster* sou
         repaint();
 }
 
+void SampleDropperComponent::updateFromSampler()
+{
+    if (sampler.isLoaded())
+    {
+        isFileLoaded = true;
+        currentFileName = sampler.getSampleName();
+        thumbnail.setSource(new juce::FileInputSource(juce::File(sampler.getFilePath())));
+        DBG("SampleDropperComponent: updated sample: " + currentFileName);
+    }
+    else
+    {
+        isFileLoaded = false;
+        currentFileName = "";
+        thumbnail.setSource(nullptr);
+        DBG("SampleDropperComponent: clearing loaded sample");
+    }
+
+    updateLabels();
+    repaint();
+}
+
 bool SampleDropperComponent::isInterestedInFileDrag(const juce::StringArray& files)
 {
     // Check if any of the files are audio files
@@ -103,16 +124,10 @@ void SampleDropperComponent::filesDropped(const juce::StringArray& files, int x,
 
 void SampleDropperComponent::loadFile(const juce::File& file)
 {
+    DBG("SampleDropperComponent: loading file: " + file.getFileName());
     if (sampler.loadFile(file))
     {
-        currentFileName = file.getFileName();
-        isFileLoaded = true;
-
-        // Set the thumbnail's source to the new file
-        thumbnail.setSource(new juce::FileInputSource(file));
-
-        updateLabels();
-
+        updateFromSampler();
         if (onSampleLoaded)
             onSampleLoaded();
     }
@@ -122,8 +137,13 @@ void SampleDropperComponent::loadFile(const juce::File& file)
                                              "Error",
                                              "Couldn't load file: " + file.getFileName());
     }
+}
 
-    repaint();
+void SampleDropperComponent::clearCurrentFile()
+{
+    DBG("SampleDropperComponent: clearing current file");
+    sampler.clear();  // Assuming you add this method to Sampler
+    updateFromSampler();
 }
 
 void SampleDropperComponent::updateLabels()
@@ -183,11 +203,7 @@ void SampleDropperComponent::mouseDown(const juce::MouseEvent& event)
             else if (result == 2)
             {
                 // Clear the current sample
-                currentFileName = "";
-                isFileLoaded = false;
-                thumbnail.setSource(nullptr);
-                updateLabels();
-                repaint();
+                clearCurrentFile();
             }
         });
     }

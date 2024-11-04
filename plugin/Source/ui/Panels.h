@@ -109,26 +109,6 @@ public:
         addControl(sampleDropper = new SampleDropperComponent(proc.sampler), 0, 0, 4, 1);
     }
 
-    void paint(juce::Graphics& g) override
-    {
-        gin::ParamBox::paint(g);
-        // auto sampleArea = getLocalBounds()
-        //                   .withTrimmedTop(TOP_MENU_BAR_HEIGHT)
-        //                   .withTrimmedBottom(13)
-        //                   .withTrimmedLeft(160)
-        //                   .withTrimmedRight(10);
-        // constexpr float cornerSize = 5.0f;
-        // constexpr float dashLengths[2] = {4.0f, 8.0f};
-        // juce::Path path;
-        // path.addRoundedRectangle(sampleArea, cornerSize);
-        // const juce::PathStrokeType strokeType(1);
-        // strokeType.createDashedStroke(path, path, dashLengths, 2);
-        // g.setColour(juce::Colours::darkgrey);
-        // g.strokePath(path, strokeType);
-        // g.setFont(static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont);
-        // g.drawFittedText("DRAG SAMPLE", 165, 40, 50, 50, juce::Justification::centred, 2, 1);
-    }
-
     SampleExciterParams sampleParams;
     SampleDropperComponent* sampleDropper;
 };
