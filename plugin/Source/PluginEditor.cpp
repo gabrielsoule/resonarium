@@ -76,7 +76,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     excitersViewportContentComponent->addAndMakeVisible(impulseTrainExciterParamBox);
 
     sampleExciterParamBox = new SampleExciterParamBox("Sampler", proc, voiceParams.sampleExciterParams);
-    sampleExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    sampleExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_LARGE_HEIGHT));
     excitersViewportContentComponent->addAndMakeVisible(sampleExciterParamBox);
 
     if(proc.samplePath.isNotEmpty())

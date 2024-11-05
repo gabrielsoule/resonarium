@@ -193,12 +193,14 @@ struct ExternalInputExciterParams
 struct SampleExciterParams
 {
     MultiFilterParams filterParams;
+    ADSRParams adsrParams;
     gin::Parameter::Ptr
         enabled,
         mix,
         start,
+        end,
         loop,
-        gain = nullptr;
+        level = nullptr;
 
     SampleExciterParams() = default;
 

@@ -102,11 +102,21 @@ public:
         setName("sampleExciterParams");
         addEnable(sampleParams.enabled);
 
-        addControl(new gin::Knob(sampleParams.gain), 0, 1);
+        addControl(sampleDropper = new SampleDropperComponent(proc.sampler), 0, 0, 4, 1);
+
+        addControl(new gin::Knob(sampleParams.level), 0, 1);
         addControl(new gin::Knob(sampleParams.mix), 1, 1);
         addControl(new gin::Knob(sampleParams.start), 2, 1);
         addControl(new gin::Switch(sampleParams.loop), 3, 1);
-        addControl(sampleDropper = new SampleDropperComponent(proc.sampler), 0, 0, 4, 1);
+
+        addControl(new gin::Knob(sampleParams.adsrParams.attack), 0, 2);
+        addControl(new gin::Knob(sampleParams.adsrParams.decay), 1, 2);
+        addControl(new gin::Knob(sampleParams.adsrParams.sustain), 2, 2);
+        addControl(new gin::Knob(sampleParams.adsrParams.release), 3, 2);
+
+        addControl(new gin::Select(sampleParams.filterParams.type), 1, 3);
+        addControl(new gin::Knob(sampleParams.filterParams.frequency), 2, 3);
+        addControl(new gin::Knob(sampleParams.filterParams.resonance), 3, 3);
     }
 
     SampleExciterParams sampleParams;

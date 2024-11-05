@@ -448,13 +448,13 @@ void ExternalInputExciterParams::setup(ResonariumProcessor& p)
 void SampleExciterParams::setup(ResonariumProcessor& p)
 {
     filterParams.setup(p, "Sample");
-
+    adsrParams.setup(p, "Sample");
     enabled = p.addExtParam("sampleEnable", "Sample Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                             0.0f, "", enableTextFunction);
 
-    gain = p.addExtParam("sampleGain", "Sample Level", "Level", "",
-                         {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
+    level = p.addExtParam("sampleGain", "Sample Level", "Level", "",
+                         {0.0f, 1.0f, 0.0f, 1.0f}, 1.0f,
                          0.0f, "exciter.sampler.gain");
 
     mix = p.addExtParam("sampleMix", "Sample Mix", "Mix", "",
@@ -468,6 +468,9 @@ void SampleExciterParams::setup(ResonariumProcessor& p)
     start = p.addExtParam("sampleStart", "Sample Start", "Start", "%",
                           {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
                           0.0f, "exciter.sampler.start");
+    end = p.addExtParam("sampleEnd", "Sample End", "End", "%",
+                        {0.0f, 1.0f, 0.0f, 1.0f}, 1.0f,
+                        0.0f, "exciter.sampler.end");
 }
 
 void LFOParams::setup(ResonariumProcessor& p, int index)

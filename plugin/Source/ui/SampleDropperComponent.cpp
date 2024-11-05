@@ -47,7 +47,7 @@ void SampleDropperComponent::paint(juce::Graphics& g)
     if (isFileLoaded)
     {
         // Draw waveform
-        g.setColour(juce::Colour(0xff775cff));
+        g.setColour(juce::Colour(0xff775cff).withAlpha(isEnabled() ? 1.0f : 0.5f));
         thumbnail.drawChannel(g,
                             bounds,
                             0.0,                          // start time

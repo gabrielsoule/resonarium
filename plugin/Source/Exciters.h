@@ -187,6 +187,7 @@ class SampleExciter : public Exciter
 public:
     SampleExciter(ResonariumProcessor& proc, gin::ModVoice& voice, SampleExciterParams params) : Exciter(proc, voice), params(params), filter(&voice, params.filterParams, false){}
 
+    void prepare(const juce::dsp::ProcessSpec& spec) override;
     void nextSample() override;
     void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
@@ -196,11 +197,16 @@ public:
 
     SampleExciterParams params;
     MultiFilter filter;
+    gin::AnalogADSR envelope;
+    juce::AudioBuffer<float> scratchBuffer;
+    juce::dsp::AudioBlock<float> scratchBlock;
+    int startSample = 0;
+    int endSample = 0;
     float mixL = 1.0f;
     float mixR = 1.0f;
     float level = 1.0f;
-    int currentSample;
-    bool isPlaying;
+    int currentSample = 0;
+    bool isPlaying = false;
 };
 
 /**
@@ -220,7 +226,6 @@ public:
     void noteStarted() override;
     void noteStopped(bool avoidTailOff) override;
     void updateParameters() override;
-    void fillExtInputBuffer(juce::AudioBuffer<float> buffer);
 
     ExternalInputExciterParams params;
     MultiFilter filter;
