@@ -871,7 +871,7 @@ void ReverbParams::setup(ResonariumProcessor& p)
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                             0.0f, "", enableTextFunction);
 
-    dampingFreq = p.addExtParam("reverbDampingFreq", "Reverb Damping Freq", "Damping Freq", "Hz",
+    dampingFreq = p.addExtParam("reverbDampingFreq", "Reverb Damping Freq", "Damping", "Hz",
                                 {0.0f, 1.0f, 0.0f, 1.0f}, 0.2f,
                                 0.0f);
 
@@ -879,7 +879,7 @@ void ReverbParams::setup(ResonariumProcessor& p)
                             {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
                             0.0f);
 
-    bandwidthFreq = p.addExtParam("reverbBandwidthFreq", "Reverb Bandwidth Freq", "Bandwidth Freq", "Hz",
+    bandwidthFreq = p.addExtParam("reverbBandwidthFreq", "Reverb Bandwidth Freq", "BW", "Hz",
                                   {0.0f, 1.0f, 0.0f, 1.0f}, 0.2f,
                                   0.0f);
 

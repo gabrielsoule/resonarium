@@ -149,10 +149,6 @@ void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, ju
 {
     if (!params.enabled->isOn()) return;
 
-    jassert(periodInSamples > 0);
-    jassert(impulseLength > 0);
-    jassert(samplesSinceLastImpulse >= 0);
-    jassert(impulsesLeft >= 0);
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)exciterBlock.getNumSamples());
     auto gain = voice.getValue(params.level);
 
@@ -267,7 +263,6 @@ void ImpulseTrainExciter::updateParameters()
     }
 
     jassert(periodInSamples > 0);
-    jassert(impulseLength > 0);
 }
 
 
