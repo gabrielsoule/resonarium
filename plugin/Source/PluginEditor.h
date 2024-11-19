@@ -69,6 +69,7 @@ public:
 
     std::unique_ptr<melatonin::Inspector> inspector;
     gin::SynthesiserUsage usage { proc.synth };
+    gin::ModulationOverview modOverview { proc.modMatrix };
 
     //debug buttons, invisible on a release build
     juce::TextButton inspectButton{"INSPECT UI"};

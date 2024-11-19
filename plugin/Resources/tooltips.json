@@ -26,7 +26,6 @@
     "loopfiltercutoff": "Set the cutoff frequency of the waveguide filter. This corresponds to damping present in the string. Higher cutoff frequencies produce a brighter sound. When in keytrack mode, the filter's resonant frequency is tuned to the current MIDI note with respect to this offset.",
     "loopfilterresonance": "Set the resonance of the waveguide filter. Higher resonance values induce waveguide resonance at the peak frequency of the filter, which is tuned to the current MIDI note when in keytrack mode. When resonance is nonzero, waveguide will be strongly damped at all other frequencies.",
     "loopfiltermode": "Choose whether the waveguide filter should be a low-pass filter, band-pass filter, or high-pass filter."
-
   },
   "resonatorbank": {
     "inputgain": "Set the gain of the input signal to the waveguide bank",
@@ -38,5 +37,31 @@
     "cascadefilterresonance": "Set the resonance of the filter applied to each cascade signal. Higher values produce a more pronounced peak at the cutoff frequency.",
     "cascadefiltermode": "Set the mode of the cascade signal filters. A mode of 0 corresponds to a lowpass filter, a mode of 0.5 corresponds to a bandpass filter, and a mode of 1 corresponds to a highpass filter. Intermediate values interpolate these extrema.",
     "usesemitones": "Toggle resonator tuning by semitones or by frequency multiplier. If enabled, the resonator frequency will be modified by the number of semitones in the Pitch field. If disabled, the resonator frequency will be multiplied by the value in the Pitch field.\n\nThis is a quality-of-life feature and has no effect on the timbre of the resonator."
+  },
+  "modulation": {
+    "sync": "Sync the rate of this modulation source to the host tempo.",
+    "env": {
+      "attack": "Set the attack time of the envelope, in seconds.",
+      "decay": "Set the decay time of the envelope, in seconds.",
+      "sustain": "Set the sustain level of the envelope, as a fraction of the peak level.",
+      "release": "Set the release time of the envelope, in seconds."
+    },
+    "lfo": {
+      "rate": "Set the rate of the LFO, in Hertz.",
+      "retrig": "Choose whether to retrigger the LFO on each new note.",
+      "beat": "Set the rate of the LFO with respect to the host tempo.",
+      "stereo": "Set the phase offset between the left and right channels of the LFO. A value of 0 corresponds to a phase offset of 0 degrees, and a value of 1 corresponds to a phase offset of 180 degrees.",
+      "depth": "Set the modulation depth of this LFO, i.e. the amplitude of the modulation signal.",
+      "phase": "Apply a constant phase offset to the LFO.",
+      "wave": "Choose the waveform of this LFO"
+    },
+    "rand": {
+      "rate": "Set the rate of the random modulation source, in Hertz. The modulator will sample and hold a new random value at this rate.",
+      "beat": "Set the rate of the random modulation source with respect to the host tempo.",
+      "stereo": "Choose how strongly the left and right channels of the random modulation source are correlated. A value of 0 corresponds to perfect correlation, and a value of 1 corresponds to total independence between the channels.",
+      "depth": "Set the modulation depth of this random modulation source, i.e. the amplitude of the modulation signal.",
+      "chaos": "Choose how similar each random value is to the previous random value. A value of 0 corresponds to a constant signal, whereas a value of 1 corresponds to a completely random signal.",
+      "smooth": "Smooth the transition between successive random samples."
+    }
   }
 }

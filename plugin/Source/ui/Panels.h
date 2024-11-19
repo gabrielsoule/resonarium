@@ -740,7 +740,7 @@ public:
         {
             addControl(knobs[i] = new gin::Knob(macroParams[i]));
             knobs[i]->getSlider().setTooltip(
-                "Test Tooltip: Loremr, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat. AAA BBB CCC DDD EEE FFF GGG HHH III JJJ. Foo bar baz.");
+                "Control the value of this macro's outgoing modulation signal.");
             // knobs[i]->getSlider().setTooltip("This is a test tooltip,it doesn't do much");f
             modSrcButtons[i] = new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMacro[i], false);
             frame.addAndMakeVisible(modSrcButtons[i]);

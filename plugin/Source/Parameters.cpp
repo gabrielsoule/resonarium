@@ -454,8 +454,8 @@ void SampleExciterParams::setup(ResonariumProcessor& p)
                             0.0f, "", enableTextFunction);
 
     level = p.addExtParam("sampleGain", "Sample Level", "Level", "",
-                         {0.0f, 1.0f, 0.0f, 1.0f}, 1.0f,
-                         0.0f, "exciter.sampler.gain");
+                          {0.0f, 1.0f, 0.0f, 1.0f}, 1.0f,
+                          0.0f, "exciter.sampler.gain");
 
     mix = p.addExtParam("sampleMix", "Sample Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
@@ -485,31 +485,31 @@ void LFOParams::setup(ResonariumProcessor& p, int index)
 
     sync = p.addIntParam(prefix + "sync", prefix + "Sync", "Sync", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, "", enableTextFunction);
+                         0.0f, "modulation.sync", enableTextFunction);
 
     retrig = p.addIntParam(prefix + "retrig", prefix + "Retrig", "Retrig", "",
                            {0.0f, 1.0f, 1.0f, 1.0f}, 1.0f,
-                           0.0f, "", enableTextFunction);
+                           0.0f, "modulation.lfo.retrig", enableTextFunction);
 
     wave = p.addIntParam(prefix + "wave", prefix + "Wave", "Wave", "",
                          {1.0f, 17.0f, 1.0f, 1.0f}, 1.0f,
-                         0.0f, "", lfoTextFunction);
+                         0.0f, "modulation.lfo.wave", lfoTextFunction);
 
     rate = p.addExtParam(prefix + "rate", prefix + "Rate", "Rate", "Hz",
-                         {0.0f, 200.0f, 0.0f, 0.3f},
-                         1.0f, 0.0f);
+                         {0.0f, 200.0f, 0.0f, 0.3f}, 1.0f,
+                         0.0f, "modulation.lfo.rate");
 
     beat = p.addIntParam(prefix + "beat", prefix + "Beat", "Beat", "",
                          {0.0f, float(notes.size() - 1), 1.0f, 1.0f},
-                         13.0f, 0.0f, "", durationTextFunction);
+                         13.0f, 0.0f, "modulation.lfo.beat", durationTextFunction);
 
     depth = p.addExtParam(prefix + "depth", prefix + "Depth", "Depth", "",
                           {-1.0f, 1.0f, 0.0f, 1.0f},
-                          1.0f, 0.0f);
+                          1.0f, 0.0f, "modulation.lfo.depth");
 
     phase = p.addExtParam(prefix + "phase", prefix + "Phase", "Phase", "",
                           {-1.0f, 1.0f, 0.0f, 1.0f},
-                          0.0f, 0.0f);
+                          0.0f, 0.0f, "modulation.lfo.phase");
 
     offset = p.addExtParam(prefix + "offset", prefix + "Offset", "Offset", "",
                            {-1.0f, 1.0f, 0.0f, 1.0f},
@@ -525,7 +525,7 @@ void LFOParams::setup(ResonariumProcessor& p, int index)
 
     stereo = p.addExtParam(prefix + "stereo", prefix + "Stereo", "Stereo", "",
                            {0.0f, 1.0f, 0.01f, 1.0f},
-                           0.0f, 0.0f);
+                           0.0f, 0.0f, "modulation.lfo.stereo");
     stereo->conversionFunction = [](const float x) { return x * 0.5f; };
 }
 
@@ -550,15 +550,15 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
 
     rate = p.addExtParam(prefix + "rate", prefix + "Rate", "Rate", "Hz",
                          {0.0f, 200.0f, 0.0f, 0.3f},
-                         1.0f, 0.0f);
+                         1.0f, 0.0f, "modulation.rand.rate");
 
     beat = p.addIntParam(prefix + "beat", prefix + "Beat", "Beat", "",
                          {0.0f, float(notes.size() - 1), 1.0f, 1.0f},
-                         13.0f, 0.0f, "", durationTextFunction);
+                         13.0f, 0.0f, "modulation.rand.beat", durationTextFunction);
 
     depth = p.addExtParam(prefix + "depth", prefix + "Depth", "Depth", "",
                           {-1.0f, 1.0f, 0.0f, 1.0f},
-                          1.0f, 0.0f);
+                          1.0f, 0.0f, "modulation.rand.depth");
 
     offset = p.addExtParam(prefix + "offset", prefix + "Offset", "Offset", "",
                            {-1.0f, 1.0f, 0.0f, 1.0f},
@@ -566,7 +566,7 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
 
     smooth = p.addExtParam(prefix + "smooth", prefix + "Smooth", "Smooth", "%",
                            {0.0f, 100.0f, 1.0f, 1.0f},
-                           100.0f, 0.0f);
+                           100.0f, 0.0f, "modulation.rand.smooth");
     smooth->conversionFunction = [](const float x) { return x / 100.0f; };
 
     jitter = p.addExtParam(prefix + "jitter", prefix + "Jitter", "Jitter", "%",
@@ -575,11 +575,11 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
 
     chaos = p.addExtParam(prefix + "chaos", prefix + "chaos", "Chaos", "%",
                           {0.0f, 1.0f, 0.01f, 1.0f},
-                          1.0f, 0.0f);
+                          1.0f, 0.0f, "modulation.rand.chaos");
 
     stereo = p.addExtParam(prefix + "stereo", prefix + "Stereo", "Stereo", "",
                            {0.0f, 1.0f, 0.01f, 1.0f},
-                           0.0f, 0.0f);
+                           0.0f, 0.0f, "modulation.rand.stereo");
 }
 
 void MSEGParams::setup(ResonariumProcessor& p, int index)
@@ -984,7 +984,7 @@ void SynthParams::setup(ResonariumProcessor& p)
                                   {-1.0f, NUM_RESONATOR_BANKS * NUM_RESONATORS, 1.0f, 1.0f}, -1.0f,
                                   0.0f, "resonator.solo");
 
-    for(int i = 0; i < NUM_RESONATOR_BANKS; i++)
+    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
         voiceParams.waveguideResonatorBankParams[i].soloResonator = soloResonator;
     }

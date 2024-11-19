@@ -9,6 +9,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     setLookAndFeel(p.lf.get());
     auto voiceParams = proc.synth.params.voiceParams;
     titleBar.menuButton.setVisible(false);
+    tooltipWindow.setMillisecondsBeforeTipAppears(500);
 
     auto* blur = new TitleBarDropShadow();
     blur->setBounds(0, 0, 400, 40);
@@ -32,6 +33,9 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     versionText->setFont(versionText->getFont().withStyle(juce::Font::italic).withHeight(13.0f));
     versionText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.2f));
     addAndMakeVisible(versionText);
+
+    addChildComponent(modOverview);
+    modOverview.setBounds(350, 10, 150, 20);
 
     scope = new gin::TriggeredScope(proc.scopeFifo);
     scope->setName("scope");
@@ -275,7 +279,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                                                    .withIconType (juce::MessageBoxIconType::WarningIcon)
                                                    .withTitle ("WARNING - PROTECT YOUR EARS! ")
                                                    .withMessage (
-                                                       "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\n\nCertain parameter configurations may induce undesirable positive feedback loops. These often produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level. \n\nIf you do not do so, you may be unpredictably exposed to dangerously loud audio.")
+                                                       "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\n\nCertain parameter configurations may induce undesirable positive feedback loops. These often produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level. \n\nIf you do not do so, you may be unpredictably exposed to dangerously loud audio.\n\nRemember, you can hover over a UI component to show a pop-up tip. Have fun!")
                                                    .withButton ("I understand and have taken appropriate action!"),
                                                nullptr);
 
