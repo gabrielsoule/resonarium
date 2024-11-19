@@ -60,7 +60,7 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     synth.enableLegacyMode();
     synth.setVoiceStealingEnabled(true);
     synth.setMPE(true);
-    for (int i = 0; i < 32; i++)
+    for (int i = 0; i < 64; i++)
     {
         ResonatorVoice* voice = new ResonatorVoice(*this, synth.params.voiceParams);
         modMatrix.addVoice(voice);

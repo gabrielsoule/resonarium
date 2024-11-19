@@ -50,11 +50,19 @@ void StereoResonator::Resonator::reset()
     loopFilter.reset();
     postFilter.reset();
     apf.reset();
-    auto span = delayLine.getRawDelayBuffer().getWriteSpan(0);
-    for (auto& sample : span)
+    // auto span = delayLine.getRawDelayBuffer().getWriteSpan(0);
+    // for (auto& sample : span)
+    // {
+    //     sample = 0.0f;
+    // }
+#ifdef JUCE_DEBUG
+    auto readSpan = delayLine.getRawDelayBuffer().getReadSpan(0);
+    for (auto sample : readSpan)
     {
-        sample = 0.0f;
+        jassert(sample == 0.0f);
     }
+#endif
+
 }
 
 void StereoResonator::Resonator::prepare(const juce::dsp::ProcessSpec& spec)

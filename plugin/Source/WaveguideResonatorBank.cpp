@@ -42,8 +42,8 @@ void WaveguideResonatorBank::reset()
     }
     cascadeFilterL.reset();
     cascadeFilterR.reset();
-    testInterlinkedFilterL.reset();
-    testInterlinkedFilterR.reset();
+    // testInterlinkedFilterL.reset();
+    // testInterlinkedFilterR.reset();
 }
 
 void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)

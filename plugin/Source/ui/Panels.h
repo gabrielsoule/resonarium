@@ -803,7 +803,7 @@ public:
         setName("mtx");
         addHeader({"MACROS", "SOURCES", "MATRIX"}, 2, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
-        addControl(modMatrixComponent = new gin::ModMatrixBox(proc, proc.modMatrix, 75));
+        addControl(modMatrixComponent = new gin::ModMatrixBox(proc, proc.modMatrix, 50));
     }
 
     void resized() override

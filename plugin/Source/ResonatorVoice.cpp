@@ -131,9 +131,6 @@ void ResonatorVoice::noteStarted()
     if (glideInfo.fromNote >= 0 && (glideInfo.glissando || glideInfo.portamento))
     {
         DBG("WARNING: Portamento and glissando are not yet implemented.");
-        // noteSmoother.setTime (glideInfo.rate);
-        // noteSmoother.setValueUnsmoothed (glideInfo.fromNote / 127.0f);
-        // noteSmoother.setValue (note.initialNote / 127.0f);
         stopVoice();
         clearCurrentNote();
     }
@@ -199,9 +196,6 @@ void ResonatorVoice::noteStarted()
     }
 
     effectChain.reset();
-    exciterBuffer.clear();
-    resonatorBankBuffer.clear();
-    soloBuffer.clear();
 }
 
 void ResonatorVoice::noteRetriggered()

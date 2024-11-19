@@ -43,7 +43,6 @@ void ImpulseExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::d
 void ImpulseExciter::reset()
 {
     filter.reset();
-    scratchBuffer.clear();
     impulsesRemaining = voice.getValue(params.thickness);
 }
 
@@ -105,7 +104,6 @@ void NoiseExciter::reset()
     noise.reset();
     envelope.reset();
     filter.reset();
-    scratchBuffer.clear();
 }
 
 void NoiseExciter::noteStarted()
@@ -223,7 +221,6 @@ void ImpulseTrainExciter::reset()
     samplesSinceLastImpulse = 0;
     rng.setSeedRandomly();
     impulsesLeft = impulseLength;
-    scratchBuffer.clear();
 }
 
 void ImpulseTrainExciter::noteStarted()
@@ -406,7 +403,6 @@ void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& exciterBlock,
 
 void ExternalInputExciter::reset()
 {
-    extInBuffer.clear();
     filter.reset();
 }
 
