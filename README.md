@@ -6,7 +6,7 @@ As of writing it's still in a half-baked developmental state, so I'll update thi
 # Installation and Usage
 
 > [!NOTE]
-> This software has only been tested on Apple Silicon machines running MacOS. It should be able to compile fine on Windows/x86 machines, but this has not been tested. The instructions below only apply to MacOS devices.
+> This software has only been tested on Apple Silicon machines running MacOS. It should be able to compile on Windows machines that have been configured with the appropriate development environment (CMake). I don't have a Windows computer, so this has not been verified. The instructions below only apply to MacOS devices.
 
 At present no pre-compiled binaries are available, so you'll have to build Resonarium from source. Fortunately, this is easy: the project is entirely self-contained, and bundles all its dependencies as submodules. Resonarium uses the JUCE CMake API, so the Projucer is not needed. 
 
