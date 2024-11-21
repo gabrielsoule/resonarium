@@ -9,8 +9,11 @@
 //resonators
 #define NUM_RESONATORS 8
 #define NUM_RESONATOR_BANKS 4
-#define MIN_FILTER_FREQUENCY = 1.0f;
-#define MAX_FILTER_FREQUENCY 20000.0f;
+
+//parameter values
+#define MIN_FILTER_FREQUENCY 10.0f
+#define MAX_FILTER_FREQUENCY 20000.0f
+#define FREQUENCY_KNOB_SKEW 0.3f
 
 //exciters
 #define NUM_IMPULSE_EXCITERS 1

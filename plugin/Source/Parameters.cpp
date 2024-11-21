@@ -167,8 +167,9 @@ void MultiFilterParams::setup(ResonariumProcessor& p, juce::String prefix)
                          {0.0f, 5.0f, 1.0f, 1.0f},
                          0.0f, 0.0f, "", filterTextFunction);
     frequency = p.addExtParam(prefix + "frequency", prefix + " Frequency ", "Freq", "Hz",
-                              {20.0f, 20000.0f, 0.0f, 0.4f},
+                              {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW},
                               1000.0f, 0.0f);
+
     resonance = p.addExtParam(prefix + "_resonance", prefix + " Resonance", "Res", "",
                               {0.01f, 100.0f, 0.0f, 0.4f},
                               1.0f / std::sqrt(2.0f), 0.0f);
@@ -218,7 +219,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                           0.0f, "resonator.pitch");
 
     frequency = p.addExtParam("resonatorFrequency" + suffix, "Frequency" + suffix, "Freq", "Hz",
-                              {20.0f, 20000.0f, 0.0f, 0.4f}, 1000.0f,
+                              {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, 1000.0f,
                               0.0f, "resonator.frequency");
 
     resonatorKeytrack = p.addExtParam("resonatorKeytrack" + suffix, "Keytrack" + suffix, "Key Track", "%",
@@ -235,7 +236,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     dispersion->conversionFunction = [](const float x) { return x / 100.0f; };
 
     loopFilterCutoff = p.addExtParam("decayFilterCutoff" + suffix, "Loop Filter Cutoff" + suffix, "Cutoff", "Hz",
-                                     {20.0f, 20000.0, 0.0f, 0.2f}, 3000.0f,
+                                     {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, 3000.0f,
                                      0.0f, "resonator.loopfiltercutoff");
 
     loopFilterPitchInSemis = p.addExtParam("decayFilterPitch" + suffix, "Loop Filter Pitch" + suffix, "Pitch", "ST",
@@ -243,7 +244,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                            0.0f, "resonator.loopfiltercutoff");
 
     loopFilterResonance = p.addExtParam("decayFilterResonance" + suffix, "Loop Filter Resonance" + suffix, "Res", "",
-                                        {0.0f, 100, 0.0f, 0.2f}, 0,
+                                        {0.0f, 100, 0.0f, 0.25f}, 0,
                                         0.0f, "resonator.loopfilterresonance");
     constexpr float one_over_sqrt2 = 0.7071067811865475244f;
     loopFilterResonance->conversionFunction = [](const float x) { return x + one_over_sqrt2; };
@@ -260,7 +261,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                    0.0f, "", loopFilterTypeTextFunction);
 
     postFilterCutoff = p.addExtParam("postFilterCutoff" + suffix, "Post Filter Cutoff" + suffix, "Cutoff", "Hz",
-                                     {20.0f, 20000.0f, 0.0f, 0.2f}, 9000.0f,
+                                     {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, 0.2f}, 9000.0f,
                                      0.0f);
 
     postFilterPitchInSemis = p.addExtParam("postFilterPitch" + suffix, "Post Filter Pitch" + suffix, "Pitch", "ST",
@@ -329,7 +330,7 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
 
     cascadeFilterCutoff = p.addExtParam("cascadeFilterCutoff" + suffix, "Cascade Filter Cutoff" + suffix, "Cutoff",
                                         "Hz",
-                                        {20.0f, 20000.0f, 0.0f, 0.4f}, 3000.0f,
+                                        {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, 3000.0f,
                                         gin::SmoothingType::linear, "resonatorbank.cascadefiltercutoff");
 
     cascadeFilterResonance = p.addExtParam("cascadeFilterResonance" + suffix, "Cascade Filter Resonance" + suffix,
@@ -768,7 +769,7 @@ void DistortionParams::setup(ResonariumProcessor& p)
                                   0.0f, "", distortionFilterModeTextFunction);
 
     cutoff = p.addExtParam("distCutoff", "Distortion Cutoff", "Cutoff", "Hz",
-                           {20.0f, 20000.0f, 0.0f, 0.4f}, 3000.0f,
+                           {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, 3000.0f,
                            0.0f);
 
     resonance = p.addExtParam("distResonance", "Distortion Resonance", "Res.", "",
@@ -830,7 +831,7 @@ void PhaserParams::setup(ResonariumProcessor& p)
                           0.5f, 0.0f);
 
     centreFrequency = p.addExtParam("phaserCentreFreq", "Phaser Centre Freq", "Centre Freq", "Hz",
-                                    {20.0f, 20000.0f, 0.0f, 0.4f}, 3000.0f,
+                                    {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, 3000.0f,
                                     0.0f);
 
     feedback = p.addExtParam("phaserFeedback", "Phaser Feedback", "Feedback", "",
@@ -913,7 +914,7 @@ void SVFParams::setup(ResonariumProcessor& p, juce::String name)
                             0.0f, "", enableTextFunction);
 
     cutoff = p.addExtParam(prefix + "cutoff", prefix + "Freq", "Freq", "Hz",
-                           {20.0f, 20000.0f, 0.0f, 0.4f}, 20000.0f,
+                           {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, MAX_FILTER_FREQUENCY,
                            0.0f);
 
     mode = p.addExtParam(prefix + "mode", prefix + "Mode", "Mode", "",
