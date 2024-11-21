@@ -41,12 +41,17 @@ public:
     int id = 0;
     juce::OwnedArray<WaveguideResonatorBank> resonatorBanks;
 
-    bool killIfSilent = false;
-    int silenceCount = 0;
-    int silenceCountThreshold = 50; //how many quiet samples before we stop the voice?
-    int numBlocksSinceNoteOn; // what it says on the tin.
     int startSample; //start sample of the current block
     int numSamples; //num samples in the current block
+
+    bool killIfSilent = false;
+    int silenceCount = 0;
+    int silenceCountThreshold = 5; //how many quiet samples before we stop the voice?
+    int numBlocksSinceNoteOn; // what it says on the tin.
+    const float testForSilencePeriodInSeconds = 0.1f;
+
+    int testForSilenceBlockPeriod;
+    int testForSilenceBlockCount;
 
     juce::AudioBuffer<float> exciterBuffer; // buffer for exciters to write to, is routed to resonator banks
     juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to output
@@ -64,6 +69,7 @@ public:
     juce::Array<StereoMSEGWrapper> polyMSEGs; //have to use heap array since mseg has no default constructor,
 
     ResonariumEffectChain effectChain;
+
     bool bypassResonators = false;
 };
 

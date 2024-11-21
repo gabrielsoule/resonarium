@@ -71,6 +71,7 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
 {
     MPESynthesiserVoice::setCurrentSampleRate(spec.sampleRate);
     noteSmoother.setSampleRate(spec.sampleRate);
+    testForSilenceBlockCount = static_cast<int>(testForSilencePeriodInSeconds * spec.sampleRate) / spec.maximumBlockSize;
     exciterBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     resonatorBankBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     tempBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
@@ -196,6 +197,7 @@ void ResonatorVoice::noteStarted()
     }
 
     effectChain.reset();
+    testForSilenceBlockCount = 0;
 }
 
 void ResonatorVoice::noteRetriggered()
@@ -383,9 +385,11 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     }
 
     // Silence detection code
-    float maxAmplitude = outputBuffer.getMagnitude(startSample, numSamples);
-    if (killIfSilent && numBlocksSinceNoteOn > 10)
+    testForSilenceBlockCount++;
+    if (testForSilenceBlockCount > testForSilenceBlockPeriod && killIfSilent && numBlocksSinceNoteOn > 10)
     {
+        testForSilenceBlockCount = 0;
+        float maxAmplitude = outputBuffer.getMagnitude(startSample, numSamples);
         if (maxAmplitude < 0.001f)
         {
             silenceCount += 1;
