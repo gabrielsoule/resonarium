@@ -138,42 +138,46 @@ void ResonariumLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
         float value = slider.getValue();
         float min = slider.getMinimum();
         float max = slider.getMaximum();
-        float proportion = (value - min) / (max - min);
-
 
         g.setColour(slider.findColour(juce::Slider::thumbColourId).withAlpha(1.0f));
         bool showModDepth = slider.getProperties().contains("modDepth");
+        int barX = x + 3;
+        int barWidth = width - 3;
+        int barY = y + 17;;
+        int barHeight = 3;
         if ((slider.isEnabled() && (slider.isMouseOverOrDragging() || showModDepth)))
         {
-            g.fillRect(x + 3, y + 18, static_cast<int>(sliderPos * (width - 3)), 2);
+            // g.fillRect(x + 3, y + 18, static_cast<int>(sliderPos * (width - 3)), 2);
+            g.fillRect(barX, barY, static_cast<int>(sliderPos * (width - 3)), barHeight);
         }
 
         if (showModDepth)
         {
+            auto depth = (float)slider.getProperties()["modDepth"];
             bool bipolar = (bool)slider.getProperties()["modBipolar"];
-            if (bipolar)
+            int barEndPos = barX + static_cast<int>(sliderPos * (width - 3));
+            g.setColour(findColour(GinLookAndFeel::whiteColourId).withAlpha(0.9f));
+
+            if(bipolar)
             {
-                auto depth = std::abs((float)slider.getProperties()["modDepth"]);
-                float start = juce::jmax(0.0f, proportion - depth);
-                float end = juce::jmin(1.0f, proportion + depth);
-                g.setColour(juce::Colours::white);
-                float rX = x + 3 + static_cast<int>(juce::jmap<float>(start, 0.0f, width - 3.0f));
-                float rY = y + 16;
-                float rW = proportion == 0 ? 0 : static_cast<int>(juce::jmap<float>(end - start, 0.0f, width - 3.0f));
-                float rH = 2;
-                g.fillRect(rX, rY, rW, rH);
+                int a = barEndPos + depth * barWidth;
+                int b = barEndPos - depth * barWidth;
+                int left = std::min<int>(a,b);
+                int right = std::max<int>(a,b); //left and right ends of the white bar
+                g.fillRect(left, barY + 1, right - left, barHeight - 1);
             }
             else
             {
-                auto depth = (float)slider.getProperties()["modDepth"];
-                float start = proportion;
-                float end = juce::jlimit(0.0f, 1.0f, proportion + depth);
-                g.setColour(juce::Colours::white);
-                float rX = x + 3 + static_cast<int>(juce::jmap<float>(start, 0.0f, width - 3.0f));
-                float rY = y + 16;
-                float rW = proportion == 0 ? 0 : static_cast<int>(juce::jmap<float>(end - start, 0.0f, width - 3.0f));
-                float rH = 2;
-                g.fillRect(rX, rY, rW, rH);
+                int whiteBarWidth = std::abs(static_cast<int>(depth * barWidth));
+                whiteBarWidth = juce::jlimit(0, barWidth, whiteBarWidth);
+                if(depth > 0)
+                {
+                    g.fillRect(barEndPos, barY + 1, whiteBarWidth, barHeight - 1);
+                }
+                else
+                {
+                    g.fillRect(barEndPos - whiteBarWidth, barY + 1, whiteBarWidth, barHeight - 1);
+                }
             }
         }
 
@@ -186,7 +190,8 @@ void ResonariumLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
             {
                 for (auto value : *varArray.getArray())
                 {
-                    g.fillEllipse(x + 3 + ((float)value) * (width - 7), y + 17, 4.0f, 4.0f);
+                    float circleX = x + 3 + static_cast<int>(juce::jmap<float>(value, 0.0f, width - 3.0f));
+                    g.fillEllipse(circleX - 2, y + 17, 4.0f, 4.0f);
                 }
             }
 
@@ -196,7 +201,8 @@ void ResonariumLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
             {
                 for (auto value : *varArray.getArray())
                 {
-                    g.fillEllipse(x + 3 + (float)value * (width - 7), y + 17, 4.0f, 4.0f);
+                    float circleX = x + 3 + static_cast<int>(juce::jmap<float>(value, 0.0f, width - 3.0f));
+                    g.fillEllipse(circleX - 2, y + 17, 4.0f, 4.0f);
                 }
             }
         }
