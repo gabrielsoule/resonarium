@@ -1,4 +1,7 @@
 # Resonarium
+
+![Image](https://github.com/user-attachments/assets/8117c58e-8248-4ac3-95e8-453d381b88af)
+
 Resonarium is a MPE-compatible multipurpose waveguide synthesizer.
 
 As of writing it's still in a half-baked developmental state, so I'll update this when it's ready.
@@ -10,7 +13,7 @@ As of writing it's still in a half-baked developmental state, so I'll update thi
 >
 
 ## Precompiled Binaries
-Pre-compiled MacOS binaries are uploaded irregularly to GitHub as releases. If you don't have CMake installed, these should suffice. Simply drag and drop the VST3 file into your computer's VST3 directory. However, compiling from source (below) is strongly recommended. MacOS makes running unsigned software rather difficult, and this is particularly frustrating when DAWs try (and fail) to initialize unsigned plugins. 
+Pre-compiled MacOS binaries are uploaded irregularly to GitHub as releases. If you don't have CMake installed, these should suffice. Simply drag and drop the VST3 file into your computer's VST3 directory. However, compiling from source (below) is strongly recommended. MacOS makes running unsigned software difficult. This is particularly frustrating when DAWs try (and fail) to initialize unsigned plugins. 
 
 ## Building From Source
 
