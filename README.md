@@ -7,8 +7,14 @@ As of writing it's still in a half-baked developmental state, so I'll update thi
 
 > [!NOTE]
 > This software has only been tested on Apple Silicon machines running MacOS. It should be able to compile on Windows machines that have been configured with the appropriate development environment (CMake). I don't have a Windows computer, so this has not been verified. The instructions below only apply to MacOS devices.
+>
 
-At present no pre-compiled binaries are available, so you'll have to build Resonarium from source. Fortunately, this is easy: the project is entirely self-contained, and bundles all its dependencies as submodules. Resonarium uses the JUCE CMake API, so the Projucer is not needed. 
+## Precompiled Binaries
+Pre-compiled MacOS binaries are uploaded irregularly to GitHub as releases. If you don't have CMake installed, these should suffice. Simply drag and drop the VST3 file into your computer's VST3 directory. However, compiling from source (below) is strongly recommended. MacOS makes running unsigned software rather difficult, and this is particularly frustrating when DAWs try (and fail) to initialize unsigned plugins. 
+
+## Building From Source
+
+Building from source is easy! This project is entirely self-contained, and bundles all its dependencies, including JUCE, as submodules. Resonarium uses the JUCE CMake API, so the Projucer is not needed: all you need is CMake. 
 
 You'll first want to clone the repository to a location of your choice. Once this is done, you'll want to populate the submodules:
 ```
@@ -23,7 +29,7 @@ Then, you can build a target, e.g. the VST3 target, like so:
 ```
 cmake --build build --target Resonarium_VST3
 ```
-This should install the VST3 plugin directly into your system's plugin folder, where host software should be able to scan and load it. If this doesn't work, you may have to manually install the plugin to your system's VST3 directory.
+This should install the VST3 plugin directly into your system's plugin folder, where host software should be able to scan and load it. If this doesn't work, you may have to manually install the plugin from the build directory into your system's VST3 directory.
 
 If you'd rather cut right to the chase and explore Resonarium without all the hassle of spinning up a DAW, the standalone configuration may be more suitable:
 ```
