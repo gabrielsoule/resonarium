@@ -30,12 +30,7 @@ void RandomLFO::prepare(const juce::dsp::ProcessSpec& spec)
     centerState.rng.setSeed(params.seed);
     leftState.rng.setSeed(centerState.rng.nextInt());
     rightState.rng.setSeed(centerState.rng.nextInt());
-    centerState.lastRandomValue = centerState.rng.nextFloat();
-    centerState.nextRandomValue = centerState.rng.nextFloat();
-    leftState.lastRandomValue = leftState.rng.nextFloat();
-    leftState.nextRandomValue = leftState.rng.nextFloat();
-    rightState.lastRandomValue = rightState.rng.nextFloat();
-    rightState.nextRandomValue = rightState.rng.nextFloat();
+    this->reset();
 }
 
 void RandomLFO::updateParameters(float frequency)
@@ -66,6 +61,13 @@ void RandomLFO::updateParametersMono(gin::ModMatrix& matrix, float frequency)
 
 void RandomLFO::reset()
 {
+    currentPhase = 0;
+    centerState.lastRandomValue = centerState.rng.nextFloat();
+    centerState.nextRandomValue = centerState.rng.nextFloat();
+    leftState.lastRandomValue = leftState.rng.nextFloat();
+    leftState.nextRandomValue = leftState.rng.nextFloat();
+    rightState.lastRandomValue = rightState.rng.nextFloat();
+    rightState.nextRandomValue = rightState.rng.nextFloat();
 }
 
 void RandomLFO::noteOn(float phase)

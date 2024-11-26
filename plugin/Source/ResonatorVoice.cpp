@@ -71,7 +71,6 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
 {
     MPESynthesiserVoice::setCurrentSampleRate(spec.sampleRate);
     noteSmoother.setSampleRate(spec.sampleRate);
-    testForSilenceBlockCount = static_cast<int>(testForSilencePeriodInSeconds * spec.sampleRate) / spec.maximumBlockSize;
     exciterBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     resonatorBankBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     tempBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
@@ -147,7 +146,7 @@ void ResonatorVoice::noteStarted()
     proc.modMatrix.setPolyValue(*this, proc.modSrcPressure, note.pressure.asUnsignedFloat(), 0);
     proc.modMatrix.setPolyValue(*this, proc.modSrcPressure, note.pressure.asUnsignedFloat(), 1);
 
-    killIfSilent = false;
+    noteReleased = false;
     silenceCount = 0;
     numBlocksSinceNoteOn = 0;
 
@@ -207,7 +206,7 @@ void ResonatorVoice::noteRetriggered()
 
 void ResonatorVoice::noteStopped(bool allowTailOff)
 {
-    killIfSilent = true;
+    noteReleased = true;
     if (!allowTailOff)
     {
         DBG("Forcefully stopping note " + juce::String(id));
@@ -386,7 +385,21 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 
     // Silence detection code
     testForSilenceBlockCount++;
-    if (testForSilenceBlockCount > testForSilenceBlockPeriod && killIfSilent && numBlocksSinceNoteOn > 10)
+    const float testSample = outputBuffer.getSample(0, startSample);
+    if (testSample > 100.0f)
+    {
+        DBG("Loud sample " << testSample << " detected at beginning of block, stopping note " + juce::String(id));
+        //dump entire value of block to debug string
+        juce::String blockString = "";
+        for (int i = 0; i < numSamples; i++)
+        {
+            blockString += juce::String(outputBuffer.getSample(0, startSample + i)) + " ";
+        }
+        DBG(blockString);
+        stopVoice();
+        clearCurrentNote();
+    }
+    if (testForSilenceBlockCount > testForSilenceBlockPeriod && noteReleased && numBlocksSinceNoteOn > 10)
     {
         testForSilenceBlockCount = 0;
         float maxAmplitude = outputBuffer.getMagnitude(startSample, numSamples);
@@ -402,7 +415,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
         }
         else if (maxAmplitude > 100.0f)
         {
-            DBG("Amplitude overflow detected, stopping note " + juce::String(id));
+            DBG("Amplitude overflow detected in silence detection code, stopping note " + juce::String(id));
             stopVoice();
             clearCurrentNote();
         }

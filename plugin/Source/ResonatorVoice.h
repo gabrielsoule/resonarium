@@ -35,23 +35,22 @@ public:
 
     ResonariumProcessor& proc;
     VoiceParams params;
-    float frequency;
+    float frequency = 440.0f;
     gin::EasedValueSmoother<float> noteSmoother;
-    float currentMidiNote;
+    float currentMidiNote = 64;
     int id = 0;
     juce::OwnedArray<WaveguideResonatorBank> resonatorBanks;
 
-    int startSample; //start sample of the current block
-    int numSamples; //num samples in the current block
+    int startSample = 0; //start sample of the current block
+    int numSamples = 64; //num samples in the current block
 
-    bool killIfSilent = false;
+    bool noteReleased = false;
     int silenceCount = 0;
-    int silenceCountThreshold = 5; //how many quiet samples before we stop the voice?
-    int numBlocksSinceNoteOn; // what it says on the tin.
-    const float testForSilencePeriodInSeconds = 0.1f;
+    int silenceCountThreshold = 2; //how many quiet samples before we stop the voice?
+    int numBlocksSinceNoteOn = 0; // what it says on the tin.
 
-    int testForSilenceBlockPeriod;
-    int testForSilenceBlockCount;
+    int testForSilenceBlockPeriod = 15;
+    int testForSilenceBlockCount = 0;
 
     juce::AudioBuffer<float> exciterBuffer; // buffer for exciters to write to, is routed to resonator banks
     juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to output

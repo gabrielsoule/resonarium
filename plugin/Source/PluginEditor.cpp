@@ -291,6 +291,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     // addAndMakeVisible(blurDemoComponent);
 
     juce::Timer::callAfterDelay(300, [this] {showOnboardingWarning();});
+    DBG("Done setting up ResonariumEditor!");
 }
 
 ResonariumEditor::~ResonariumEditor()

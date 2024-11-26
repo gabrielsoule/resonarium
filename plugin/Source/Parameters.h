@@ -476,6 +476,18 @@ struct SynthParams
     void setup(ResonariumProcessor& p);
 };
 
+struct GlobalParams
+{
+    gin::Parameter::Ptr numVoices,
+    stereoResonators,
+    polyEffectChain = nullptr;
+
+    GlobalParams() = default;
+
+    void setup(ResonariumProcessor& p);
+};
+
+
 struct UIParams
 {
     gin::Parameter::Ptr resonatorBankSelect;

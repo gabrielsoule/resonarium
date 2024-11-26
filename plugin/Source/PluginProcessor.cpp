@@ -23,6 +23,9 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     MelatoninPerfetto::get().beginSession();
 #endif
 
+    juce::Random random;
+    id = static_cast<int>(random.nextFloat()) * 100;
+    DBG("Processor ID:" + juce::String(id));
     lf = std::make_unique<ResonariumLookAndFeel>();
     //Load tooltips from binary data
     int size = BinaryData::tooltips_jsonSize;
