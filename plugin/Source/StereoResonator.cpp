@@ -61,6 +61,12 @@ void StereoResonator::Resonator::reset()
     {
         jassert(sample == 0.0f);
     }
+    if (delayLengthInSamples < 0)
+    {
+        //reset called before prepare and update
+        DBG("Resonator reset before prepare and update. This is likely unintended and may cause problems.");
+        jassertfalse;
+    }
 #endif
 
 }
@@ -217,7 +223,7 @@ void StereoResonator::prepare(const juce::dsp::ProcessSpec& spec)
 {
     resonators[0].prepare(spec);
     resonators[1].prepare(spec);
-    updateParameters(440.0f, true);
+    updateParameters(440.0f, spec.maximumBlockSize, true);
 }
 
 void StereoResonator::updateParameters(float frequency, int numSamples, bool force)

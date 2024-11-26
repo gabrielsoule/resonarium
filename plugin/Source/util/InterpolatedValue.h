@@ -16,7 +16,7 @@ public:
 
     /**
      * Sets the target value of the InterpolatedParameter to the specified value,
-     * using modulation from the specifed source (either the monophonic ModMatrix or a polyphonic ModVoice).
+     * using modulation from the specified source (either the monophonic ModMatrix or a polyphonic ModVoice).
      */
     void setTargetValue(float targetValue, int numSamples)
     {

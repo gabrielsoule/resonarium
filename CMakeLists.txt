@@ -24,6 +24,13 @@ set(CMAKE_CXX_FLAGS_DEVELOPMENT ${CMAKE_CXX_FLAGS_RELEASE})
 
 project(${PLUGIN_NAME} VERSION ${PLUGIN_VERSION} LANGUAGES CXX C HOMEPAGE_URL "https://gabrielsoule.com/")
 
+if(CMAKE_BUILD_TYPE)
+    message(STATUS "Current build type: ${CMAKE_BUILD_TYPE}")
+    message(STATUS "Current C++ flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
+else()
+    message(STATUS "No build type selected")
+endif()
+
 include(CMakeDependentOption)
 
 set_property(DIRECTORY APPEND PROPERTY LABELS ${PLUGIN_NAME})
@@ -198,7 +205,7 @@ if (APPLE)
                         -Wunreachable-code -Winconsistent-missing-destructor-override -Wshift-sign-overflow -Wnullable-to-nonnull-conversion -Wuninitialized -Wno-missing-field-initializers
                         -Wno-ignored-qualifiers -Wno-missing-braces -Wno-char-subscripts -Wno-unused-private-field -fno-aligned-allocation -Wunused-private-field -Wunreachable-code
                         -Wenum-compare -Wshadow -Wfloat-conversion -Wshadow-uncaptured-local -Wshadow-field -Wsign-compare -Wdeprecated-this-capture -Wimplicit-float-conversion -Wno-deprecated-declarations
-                        -ffast-math -fno-finite-math-only)
+                        -ffast-math -fno-finite-math-only -Ofast)
             endif ()
         endif ()
     endforeach ()

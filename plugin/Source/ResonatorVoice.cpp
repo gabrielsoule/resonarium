@@ -396,6 +396,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
             blockString += juce::String(outputBuffer.getSample(0, startSample + i)) + " ";
         }
         DBG(blockString);
+        jassertfalse;
         stopVoice();
         clearCurrentNote();
     }

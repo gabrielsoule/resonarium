@@ -241,7 +241,7 @@ void ResonariumProcessor::stateUpdated()
         resonariumEditor->sampleExciterParamBox->sampleDropper->updateFromSampler();
     }
 
-    reset();
+    if (prepared) reset();
 }
 
 void ResonariumProcessor::updateState()
@@ -266,6 +266,7 @@ void ResonariumProcessor::reset()
 
 void ResonariumProcessor::prepareToPlay(double newSampleRate, int newSamplesPerBlock)
 {
+    prepared = true;
     Processor::prepareToPlay(newSampleRate, newSamplesPerBlock);
     modMatrix.setSampleRate(newSampleRate);
     synth.prepare({newSampleRate, static_cast<juce::uint32>(newSamplesPerBlock), 2});
@@ -295,6 +296,21 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     synth.renderNextBlock(buffer, midi, 0, buffer.getNumSamples());
     modMatrix.finishBlock(buffer.getNumSamples());
     synth.endBlock(buffer.getNumSamples());
+
+#if JUCE_DEBUG
+    //check the buffer for NaNs
+    for (int i = 0; i < buffer.getNumChannels(); i++)
+    {
+        for (int j = 0; j < buffer.getNumSamples(); j++)
+        {
+            if (std::isnan(buffer.getSample(i, j)))
+            {
+                DBG("NaN detected in channel " + juce::String(i) + " at sample " + juce::String(j));
+                jassertfalse;
+            }
+        }
+    }
+#endif
 
     if (buffer.getNumSamples() <= scopeFifo.getFreeSpace() && buffer.getNumChannels() == scopeFifo.getNumChannels())
         scopeFifo.write(buffer);

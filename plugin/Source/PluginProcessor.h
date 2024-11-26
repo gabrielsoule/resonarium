@@ -56,6 +56,7 @@ public:
     Sampler sampler;
     juce::String samplePath = "";
     int id = -1;
+    bool prepared = false; //indicates that prepareToPlay has been called at least once
 
 #if PERFETTO
     std::unique_ptr<perfetto::TracingSession> tracingSession;
