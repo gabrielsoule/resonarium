@@ -11,6 +11,8 @@ Resonarium is a MPE-compatible expressive physical modeling synthesizer. It is d
 
 > [!CAUTION]
 > The sounds produced by waveguide modeling can be unpredictable. Resonarium tries to keep the user safe by proactively terminating voices that produce dangerously loud samples, but the software is still in development and glitches may occur. __The maximum volume of your system _must_ be set to a safe level before using this software.__ We urge particular caution with headphones or large speakers. Be gentle with the gain knobs, and protect your ears!
+>
+> When Resonarium's overflow protection engages, you will hear a sharp pop followed by silence. If this happens repeatedly, you have either created an unstable preset, or the plugin's internal state is somehow corrupted. Deleting and re-instantiating the plugin instance may resolve this issue. If the problem can be reliably reproduced, please submit an issue to this repository.
 
 ## Precompiled Binaries
 Pre-compiled MacOS binaries are uploaded irregularly to GitHub as releases. If you don't have CMake installed, these should suffice. Simply drag and drop the VST3 file into your computer's VST3 directory. However, compiling from source (below) is strongly recommended. MacOS makes running unsigned software difficult. This is particularly frustrating when DAWs try (and fail) to initialize unsigned plugins. 
