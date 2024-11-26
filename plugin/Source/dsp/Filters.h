@@ -19,9 +19,9 @@ public:
     void reset();
     void setDispersionAmount(float amount);
 
-    float state[2];
-    float c;
-    float s;
+    float state[2] = {0, 0};
+    float c = 1;
+    float s = 0;
 };
 
 /**
@@ -38,8 +38,8 @@ public:
     void reset();
     void setBrightness(float brightness);
 
-    float state;
-    float p;
+    float state = 0;;
+    float p = 0.5;
 };
 
 #endif //FILTERS_H

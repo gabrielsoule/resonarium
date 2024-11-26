@@ -14,7 +14,7 @@ float DispersionFilter::processSample(float input)
 
 void DispersionFilter::prepare(juce::dsp::ProcessSpec spec)
 {
-    //no-op for now, filter does not need to know sample rate
+    reset();
 }
 
 void DispersionFilter::reset()
@@ -46,7 +46,7 @@ float OneZeroFilter::processSample(float input)
 
 void OneZeroFilter::prepare(juce::dsp::ProcessSpec spec)
 {
-
+    reset();
 }
 
 void OneZeroFilter::reset()
