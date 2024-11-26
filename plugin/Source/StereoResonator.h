@@ -63,9 +63,7 @@ class StereoResonator
         float minFrequency = 1.0f;
         float maxFrequency = 22000.0f;
         float delayLengthInSamples = -1; //the length of the delay line in samples corresponding to frequency
-        float delayLineTuningSamples; // the amount by which the delay must be shortened to account for group delay in the filter
         float decayCoefficient; //the first-order damping coefficient
-        float decayTime;
         float sampleRate;
 
         bool passthrough = false;
@@ -77,13 +75,7 @@ class StereoResonator
         float nextFrequency;
         float dispersion;
         bool loopFilterKeytrack = false;
-        float loopFilterFrequency;
-        float loopFilterResonance;
-        float loopFilterMode;
         bool postFilterKeytrack = false;
-        float postFilterCutoff;
-        float postFilterResonance;
-        float postFilterMode;
         float postFilterNormalizationScalar = 1;
         float loopFilterPhaseDelay;
 

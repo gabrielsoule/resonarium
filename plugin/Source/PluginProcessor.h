@@ -57,6 +57,7 @@ public:
     juce::String samplePath = "";
     int id = -1;
     bool prepared = false; //indicates that prepareToPlay has been called at least once
+    juce::String logPrefix = "[default]"; //a prefix that identifies this instance, for debugging
 
 #if PERFETTO
     std::unique_ptr<perfetto::TracingSession> tracingSession;

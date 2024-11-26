@@ -20,8 +20,8 @@ public:
     void setDispersionAmount(float amount);
 
     float state[2] = {0, 0};
-    float c = 1;
-    float s = 0;
+    float c = 1.0f;
+    float s = 0.0f;
 };
 
 /**

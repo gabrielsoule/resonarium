@@ -23,6 +23,7 @@ void ImpulseExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::d
     if (!params.enabled->isOn()) return;
 
     juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)exciterBlock.getNumSamples());
+    truncatedBlock.clear();
     auto adjustedGain = level / static_cast<float>(thickness);
     const int impulsesThisBlock = juce::jmin<int>(truncatedBlock.getNumSamples(), impulsesRemaining);
     for (int i = 0; i < impulsesThisBlock; i++)
@@ -37,7 +38,6 @@ void ImpulseExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::d
     filter.process(truncatedBlock);
     //TODO Add proper multi channel support here
     exciterBlock.add(truncatedBlock);
-    scratchBlock.clear();
 }
 
 void ImpulseExciter::reset()
@@ -58,7 +58,8 @@ void ImpulseExciter::noteStopped(bool avoidTailOff)
 void ImpulseExciter::updateParameters()
 {
     if (!params.enabled->isOn()) return;
-    thickness = voice.getValue(params.thickness);
+    thickness = static_cast<int>(voice.getValue(params.thickness));
+    if (thickness < 1) thickness = 1;
     level = voice.getValue(params.level);
     filter.updateParameters();
 }
@@ -246,6 +247,7 @@ void ImpulseTrainExciter::updateParameters()
     character = voice.getValue(params.character);
     entropy = voice.getValue(params.entropy);
     periodInSamples = static_cast<int>(std::round(sampleRate / voice.getValue(params.rate)));
+    jassert(periodInSamples > 0);
 
     //compute values for the different impulse train modes
     if (mode == IMPULSE)

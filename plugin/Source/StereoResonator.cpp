@@ -9,7 +9,9 @@ float StereoResonator::Resonator::processSample(float input)
     }
     float outSample = popSample();
     pushSample(outSample + input);
+    jassert(!std::isnan(outSample + input));
     return outSample;
+
 }
 
 float StereoResonator::Resonator::popSample()
@@ -23,7 +25,9 @@ float StereoResonator::Resonator::popSample()
     float outSample = delayLine.popSample(0);
     outSample = loopFilter.processSample(0, outSample);
     outSample = apf.processSample(outSample);
+    jassert(!std::isnan(outSample * decayCoefficient));
     return outSample * decayCoefficient;
+
 }
 
 void StereoResonator::Resonator::pushSample(float input)
@@ -34,12 +38,14 @@ void StereoResonator::Resonator::pushSample(float input)
         return;
     }
     delayLine.pushSample(0, input);
+    jassert(!std::isnan(input));
 }
 
 float StereoResonator::Resonator::postProcess(float input)
 {
     const float sample = postFilter.processSample(0, input);
     // float sample = input;
+    jassert(!std::isnan(sample));
     return sample;
 }
 
@@ -78,7 +84,6 @@ void StereoResonator::Resonator::prepare(const juce::dsp::ProcessSpec& spec)
     postFilter.prepare({spec.sampleRate, spec.maximumBlockSize, 1});
     apf.prepare(spec);
     delayLine.prepare(spec);
-    this->reset();
 }
 
 //This function is the worst. It always ends up being the worst. Just a mess.

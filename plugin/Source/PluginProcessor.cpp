@@ -59,10 +59,10 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
     uiParams.setup(*this);
 
     //Setup the synth class
-    synth.setupParameters();
-    synth.enableLegacyMode();
-    synth.setVoiceStealingEnabled(true);
     synth.setMPE(true);
+    synth.setupParameters();
+    synth.enableLegacyMode(48);
+    synth.setVoiceStealingEnabled(true);
     for (int i = 0; i < 64; i++)
     {
         ResonatorVoice* voice = new ResonatorVoice(*this, synth.params.voiceParams);
@@ -241,6 +241,9 @@ void ResonariumProcessor::stateUpdated()
         resonariumEditor->sampleExciterParamBox->sampleDropper->updateFromSampler();
     }
 
+    logPrefix = "[" + getProgramName(getCurrentProgram()) + "] ";
+    DBG(logPrefix + " State updated from disk successfully!");
+
     if (prepared) reset();
 }
 
@@ -305,10 +308,39 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         {
             if (std::isnan(buffer.getSample(i, j)))
             {
-                DBG("NaN detected in channel " + juce::String(i) + " at sample " + juce::String(j));
-                jassertfalse;
+                DBG(logPrefix + " NaN detected in channel " + juce::String(i) + " at sample " + juce::String(j));
+                juce::String blockString = "";
+                for (int k = 0; k < buffer.getNumSamples(); k++)
+                {
+                    blockString += juce::String(buffer.getSample(i, k)) + " ";
+                }
+                DBG(blockString);
+                if (synth.getNumActiveVoices() == 0)
+                {
+                    DBG(logPrefix + "However, no active voices are present." );
+                }
+                else
+                {
+                    jassertfalse;
+                }
+                break;
             }
         }
+    }
+
+    int numMidiEvents = midi.getNumEvents();
+    if (numMidiEvents > 0)
+    {
+        for (auto it = midi.findNextSamplePosition(0); it != midi.cend(); ++it)
+        {
+            const auto metadata = *it;
+            const auto msg = metadata.getMessage();
+            if (msg.isNoteOn())
+            {
+                DBG("[" + getProgramName(getCurrentProgram()) + "] Note On: " + juce::String(msg.getNoteNumber()) + " at " + juce::String(metadata.samplePosition));
+            }
+        }
+
     }
 #endif
 

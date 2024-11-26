@@ -125,9 +125,9 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
 
 void ResonatorVoice::noteStarted()
 {
-    DBG("Starting note on voice " + juce::String(id));
     startVoice();
     auto note = getCurrentlyPlayingNote();
+    DBG(proc.logPrefix + " Starting note on voice " + juce::String(id) + " with MIDI " + juce::String(note.initialNote) + " at Hz " + juce::String(note.getFrequencyInHertz()));
     if (glideInfo.fromNote >= 0 && (glideInfo.glissando || glideInfo.portamento))
     {
         DBG("WARNING: Portamento and glissando are not yet implemented.");
@@ -209,13 +209,13 @@ void ResonatorVoice::noteStopped(bool allowTailOff)
     noteReleased = true;
     if (!allowTailOff)
     {
-        DBG("Forcefully stopping note " + juce::String(id));
+        DBG(proc.logPrefix + " Forcefully stopping note " + juce::String(id));
         clearCurrentNote();
         stopVoice();
     }
     else
     {
-        DBG("Released note " + juce::String(id));
+        DBG(proc.logPrefix + " Released note " + juce::String(id));
     }
 
     for (auto* exciter : exciters)
@@ -355,6 +355,24 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
         exciter->process(exciterBlock, tempOutputBlock);
     }
 
+    float testSample = tempOutputBlock.getSample(0, 0);
+    // if (testSample > 100.0f)
+    // {
+    //     DBG("Loud sample " << testSample << " detected at beginning of block number " << numBlocksSinceNoteOn << ", stopping note " + juce::String(id));
+    //     //dump entire value of block to debug string
+    //     juce::String blockString = "";
+    //     for (int j = 0; j < numSamples; j++)
+    //     {
+    //         blockString += juce::String(outputBuffer.getSample(0, startSample + j)) + " ";
+    //     }
+    //     DBG(blockString);
+    //     jassertfalse;
+    //     finishBlock(numSamples);
+    //     stopVoice();
+    //     clearCurrentNote();
+    //     return;
+    // }
+
     if (!bypassResonators)
     {
         for (int i = 0; i < resonatorBanks.size(); i++)
@@ -364,11 +382,46 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
             resonatorBank->process(exciterBlock, previousBankBlock);
             dcBlockers[i].process(juce::dsp::ProcessContextReplacing<float>(previousBankBlock));
             tempOutputBlock.add(previousBankBlock);
+
+            // testSample = tempOutputBlock.getSample(0, 0);
+            // if (testSample > 100.0f)
+            // {
+            //     DBG("Loud sample " << testSample << " detected at beginning of block number " << numBlocksSinceNoteOn << ", stopping note " + juce::String(id));
+            //     //dump entire value of block to debug string
+            //     juce::String blockString = "";
+            //     for (int j = 0; j < numSamples; j++)
+            //     {
+            //         blockString += juce::String(outputBuffer.getSample(0, startSample + j)) + " ";
+            //     }
+            //     DBG(blockString);
+            //     jassertfalse;
+            //     finishBlock(numSamples);
+            //     stopVoice();
+            //     clearCurrentNote();
+            //     return;
+            // }
         }
 
         if (!proc.synth.soloActive)
         {
             effectChain.process(tempOutputBlock);
+            testSample = tempOutputBlock.getSample(0, 0);
+            // if (testSample > 100.0f)
+            // {
+            //     DBG("Loud sample " << testSample << " detected at beginning of block number " << numBlocksSinceNoteOn << ", stopping note " + juce::String(id));
+            //     //dump entire value of block to debug string
+            //     juce::String blockString = "";
+            //     for (int i = 0; i < numSamples; i++)
+            //     {
+            //         blockString += juce::String(outputBuffer.getSample(0, startSample + i)) + " ";
+            //     }
+            //     DBG(blockString);
+            //     jassertfalse;
+            //     finishBlock(numSamples);
+            //     stopVoice();
+            //     clearCurrentNote();
+            //     return;
+            // }
             outputBlock.add(tempOutputBlock);
         }
         else //if a solo is active, discard the full output and just send out the solo block
@@ -384,11 +437,10 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     }
 
     // Silence detection code
-    testForSilenceBlockCount++;
-    const float testSample = outputBuffer.getSample(0, startSample);
+    testSample = outputBuffer.getSample(0, startSample);
     if (testSample > 100.0f)
     {
-        DBG("Loud sample " << testSample << " detected at beginning of block, stopping note " + juce::String(id));
+        DBG("Loud sample " << testSample << " detected at beginning of block number " << numBlocksSinceNoteOn << ", stopping note " + juce::String(id));
         //dump entire value of block to debug string
         juce::String blockString = "";
         for (int i = 0; i < numSamples; i++)
@@ -397,9 +449,13 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
         }
         DBG(blockString);
         jassertfalse;
+        finishBlock(numSamples);
         stopVoice();
         clearCurrentNote();
+        return;
     }
+
+    testForSilenceBlockCount++;
     if (testForSilenceBlockCount > testForSilenceBlockPeriod && noteReleased && numBlocksSinceNoteOn > 10)
     {
         testForSilenceBlockCount = 0;

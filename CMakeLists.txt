@@ -120,8 +120,8 @@ juce_add_plugin(${PLUGIN_NAME}
         NEEDS_MIDI_OUTPUT OFF
         IS_MIDI_EFFECT OFF
         EDITOR_WANTS_KEYBOARD_FOCUS ON
-        VST2_CATEGORY "kPlugCategEffect"
-        VST3_CATEGORIES Fx
+        VST2_CATEGORY "kPlugCategUnknown"
+        VST3_CATEGORIES Instrument Fx Synth
         AU_MAIN_TYPE "kAudioUnitType_Effect"
         AU_EXPORT_PREFIX ${AU_ID}
         AU_SANDBOX_SAFE FALSE
