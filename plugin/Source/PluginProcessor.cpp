@@ -24,8 +24,6 @@ ResonariumProcessor::ResonariumProcessor() : gin::Processor(
 #endif
 
     juce::Random random;
-    id = static_cast<int>(random.nextFloat()) * 100;
-    DBG("Processor ID:" + juce::String(id));
     lf = std::make_unique<ResonariumLookAndFeel>();
     //Load tooltips from binary data
     int size = BinaryData::tooltips_jsonSize;
@@ -293,8 +291,13 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     juce::ScopedNoDenormals noDenormals;
     inputBuffer.copyFrom(0, 0, buffer.getReadPointer(0), buffer.getNumSamples());
     inputBuffer.copyFrom(1, 0, buffer.getReadPointer(1), buffer.getNumSamples());
-    buffer.applyGain(std::cos(
-        synth.params.voiceParams.externalInputExciterParams.mix->getProcValue() * juce::MathConstants<float>::halfPi));
+    if (synth.params.voiceParams.externalInputExciterParams.enabled->isOn())
+    {
+        buffer.applyGain(std::cos(
+            synth.params.voiceParams.externalInputExciterParams.mix->getProcValue() *
+            juce::MathConstants<float>::halfPi));
+    }
+    if (!buffer.hasBeenCleared()) buffer.clear();
     synth.startBlock();
     synth.renderNextBlock(buffer, midi, 0, buffer.getNumSamples());
     modMatrix.finishBlock(buffer.getNumSamples());
@@ -317,7 +320,7 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
                 DBG(blockString);
                 if (synth.getNumActiveVoices() == 0)
                 {
-                    DBG(logPrefix + "However, no active voices are present." );
+                    DBG(logPrefix + "However, no active voices are present.");
                 }
                 else
                 {
@@ -337,10 +340,10 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
             const auto msg = metadata.getMessage();
             if (msg.isNoteOn())
             {
-                DBG("[" + getProgramName(getCurrentProgram()) + "] Note On: " + juce::String(msg.getNoteNumber()) + " at " + juce::String(metadata.samplePosition));
+                DBG("[" + getProgramName(getCurrentProgram()) + "] Note On: " + juce::String(msg.getNoteNumber()) +
+                    " at " + juce::String(metadata.samplePosition));
             }
         }
-
     }
 #endif
 

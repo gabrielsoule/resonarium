@@ -61,7 +61,7 @@ void StereoResonator::Resonator::reset()
     // {
     //     sample = 0.0f;
     // }
-#ifdef JUCE_DEBUG
+#if JUCE_DEBUG
     auto readSpan = delayLine.getRawDelayBuffer().getReadSpan(0);
     for (auto sample : readSpan)
     {

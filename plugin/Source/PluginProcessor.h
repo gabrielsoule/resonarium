@@ -55,7 +55,7 @@ public:
     //every sample exciter is polyphonic, they all share the same sample buffer.
     Sampler sampler;
     juce::String samplePath = "";
-    int id = -1;
+    int pluginInstanceID = -1;
     bool prepared = false; //indicates that prepareToPlay has been called at least once
     juce::String logPrefix = "[default]"; //a prefix that identifies this instance, for debugging
 
