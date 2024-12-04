@@ -77,7 +77,7 @@ class StereoResonator
         bool loopFilterKeytrack = false;
         bool postFilterKeytrack = false;
         float postFilterNormalizationScalar = 1;
-        float loopFilterPhaseDelay;
+        float loopFilterPhaseDelay = -999999;
 
         InterpolatedValue delayLengthInterpolator;
 
@@ -90,10 +90,9 @@ class StereoResonator
 public:
     StereoResonator(ResonatorVoice& voice, ResonatorParams params)
         : voice(voice), params(params),
-          resonators{{voice, params, 0}, {voice, params, 1}}, left(resonators[0]), right(resonators[1]), index(params.resonatorIndex)
+          resonators{{voice, params, 0}, {voice, params, 1}}, left(resonators[0]), right(resonators[1]), resonatorIndex(params.resonatorIndex)
     {
     }
-
 
     ResonatorVoice& voice;
     ResonatorParams params;
@@ -101,7 +100,7 @@ public:
     Resonator& left; //handy aliases
     Resonator& right;
     bool enabled;
-    int index;
+    int resonatorIndex;
 
     float processSample(float input, int channel);
 

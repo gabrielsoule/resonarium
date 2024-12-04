@@ -6,6 +6,12 @@ Distortion::Distortion(ResonariumProcessor& p, DistortionParams params)
 {
 }
 
+void Distortion::prepare(const juce::dsp::ProcessSpec& spec)
+{
+    filter.prepare(spec);
+    reset();
+}
+
 void Distortion::reset()
 {
     lastDownSampleValue = 0.0f;

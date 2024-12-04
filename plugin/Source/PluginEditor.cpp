@@ -296,6 +296,8 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
 ResonariumEditor::~ResonariumEditor()
 {
+    scope->stopTimer();
+    DBG("Deleting editor...");
 }
 
 void ResonariumEditor::paint(juce::Graphics& g)

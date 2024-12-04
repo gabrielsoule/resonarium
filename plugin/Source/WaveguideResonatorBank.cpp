@@ -143,7 +143,7 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
 
                     if (voice.proc.synth.soloActive &&
                         voice.proc.synth.soloBankIndex == index &&
-                        voice.proc.synth.soloResonatorIndex == resonators[j]->index)
+                        voice.proc.synth.soloResonatorIndex == resonators[j]->resonatorIndex)
                     {
                         voice.soloBuffer.setSample(0, voice.startSample + i, soloOutSampleL);
                         voice.soloBuffer.setSample(1, voice.startSample + i, soloOutSampleR);
@@ -259,7 +259,7 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
 
                     if (voice.proc.synth.soloActive &&
                         voice.proc.synth.soloBankIndex == index &&
-                        voice.proc.synth.soloResonatorIndex == resonators[j]->index)
+                        voice.proc.synth.soloResonatorIndex == resonators[j]->resonatorIndex)
                     {
                         voice.soloBuffer.setSample(0, voice.startSample + i, soloOutSampleL);
                         voice.soloBuffer.setSample(1, voice.startSample + i, soloOutSampleR);

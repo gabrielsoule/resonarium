@@ -12,6 +12,7 @@ void MultiDelay::prepare(const juce::dsp::ProcessSpec& spec)
 {
     delayLine.prepare(spec);
     sampleRate = spec.sampleRate;
+    reset();
 }
 
 void MultiDelay::reset()

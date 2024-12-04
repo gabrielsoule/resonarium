@@ -26,6 +26,8 @@ public:
 
     explicit Distortion(ResonariumProcessor& p, DistortionParams params);
 
+    void prepare(const juce::dsp::ProcessSpec& spec);
+
     void reset();
 
     template <typename T>
@@ -48,14 +50,14 @@ private:
     DistortionParams params;
 
     DistortionMode distortionMode;
-    float drive[2];
-    float outputGain[2];
-    FilterMode filterMode;
+    float drive[2] = {1.0f, 1.0f};
+    float outputGain[2] = {1.0f, 1.0f};
+    FilterMode filterMode = disabled;
     chowdsp::SVFMultiMode<float, 2> filter;
 
     // State variables for downsampling
-    float lastDownSampleValue;
-    float downSampleCounter;
+    float lastDownSampleValue = 0.0f;
+    float downSampleCounter = 0.0f;
 };
 
 #endif // DISTORTION_H

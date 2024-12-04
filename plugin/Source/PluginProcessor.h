@@ -63,6 +63,31 @@ public:
     std::unique_ptr<perfetto::TracingSession> tracingSession;
 #endif
 
+    static bool checkBufferForNaN(juce::dsp::AudioBlock<float> block, juce::String caller = "")
+    {
+        for (int channelIdx = 0; channelIdx < block.getNumChannels(); channelIdx++)
+        {
+            for (int sampleIdx = 0; sampleIdx < block.getNumSamples(); sampleIdx++)
+            {
+                if (std::isnan(block.getSample(channelIdx, sampleIdx)))
+                {
+                    DBG(caller + ": NaN detected in channel " + juce::String(i) + " at sample " + juce::String(j));
+                    juce::Logger::writeToLog(caller + ": NaN detected in channel " + juce::String(channelIdx) + " at sample " + juce::String(sampleIdx));
+                    juce::String blockString = "";
+                    for (int k = 0; k < block.getNumSamples(); k++)
+                    {
+                        blockString += juce::String(block.getSample(channelIdx, k)) + " ";
+                    }
+                    DBG(blockString);
+                    juce::Logger::writeToLog(blockString);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     template <bool unity = true>
     static void testFilter(float cutoff, float mode, float Q, bool readout, bool peak = false)
     {

@@ -31,9 +31,9 @@ public:
     ResonatorVoice& voice;
     WaveguideResonatorBankParams params;
     int index = -1;
-    CouplingMode couplingMode;
-    float frequency;
-    float sampleRate;
+    CouplingMode couplingMode = PARALLEL;
+    float frequency = 44100.0f;
+    float sampleRate = 440.0f;
     juce::OwnedArray<StereoResonator> resonators;
 
     float previousResonatorBankMix = 0.0f; //how much of the previous resonator bank's output should we mix in?

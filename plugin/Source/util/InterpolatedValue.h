@@ -10,7 +10,7 @@
 class InterpolatedValue
 {
 public:
-    InterpolatedValue()
+    InterpolatedValue(): resetFlag(false)
     {
     }
 

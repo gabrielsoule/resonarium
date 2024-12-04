@@ -355,24 +355,6 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
         exciter->process(exciterBlock, tempOutputBlock);
     }
 
-    float testSample = tempOutputBlock.getSample(0, 0);
-    // if (testSample > 100.0f)
-    // {
-    //     DBG("Loud sample " << testSample << " detected at beginning of block number " << numBlocksSinceNoteOn << ", stopping note " + juce::String(id));
-    //     //dump entire value of block to debug string
-    //     juce::String blockString = "";
-    //     for (int j = 0; j < numSamples; j++)
-    //     {
-    //         blockString += juce::String(outputBuffer.getSample(0, startSample + j)) + " ";
-    //     }
-    //     DBG(blockString);
-    //     jassertfalse;
-    //     finishBlock(numSamples);
-    //     stopVoice();
-    //     clearCurrentNote();
-    //     return;
-    // }
-
     if (!bypassResonators)
     {
         for (int i = 0; i < resonatorBanks.size(); i++)
@@ -382,46 +364,11 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
             resonatorBank->process(exciterBlock, previousBankBlock);
             dcBlockers[i].process(juce::dsp::ProcessContextReplacing<float>(previousBankBlock));
             tempOutputBlock.add(previousBankBlock);
-
-            // testSample = tempOutputBlock.getSample(0, 0);
-            // if (testSample > 100.0f)
-            // {
-            //     DBG("Loud sample " << testSample << " detected at beginning of block number " << numBlocksSinceNoteOn << ", stopping note " + juce::String(id));
-            //     //dump entire value of block to debug string
-            //     juce::String blockString = "";
-            //     for (int j = 0; j < numSamples; j++)
-            //     {
-            //         blockString += juce::String(outputBuffer.getSample(0, startSample + j)) + " ";
-            //     }
-            //     DBG(blockString);
-            //     jassertfalse;
-            //     finishBlock(numSamples);
-            //     stopVoice();
-            //     clearCurrentNote();
-            //     return;
-            // }
         }
 
         if (!proc.synth.soloActive)
         {
             effectChain.process(tempOutputBlock);
-            testSample = tempOutputBlock.getSample(0, 0);
-            // if (testSample > 100.0f)
-            // {
-            //     DBG("Loud sample " << testSample << " detected at beginning of block number " << numBlocksSinceNoteOn << ", stopping note " + juce::String(id));
-            //     //dump entire value of block to debug string
-            //     juce::String blockString = "";
-            //     for (int i = 0; i < numSamples; i++)
-            //     {
-            //         blockString += juce::String(outputBuffer.getSample(0, startSample + i)) + " ";
-            //     }
-            //     DBG(blockString);
-            //     jassertfalse;
-            //     finishBlock(numSamples);
-            //     stopVoice();
-            //     clearCurrentNote();
-            //     return;
-            // }
             outputBlock.add(tempOutputBlock);
         }
         else //if a solo is active, discard the full output and just send out the solo block
@@ -436,25 +383,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
         outputBlock.add(exciterBlock);
     }
 
-    // Silence detection code
-    testSample = outputBuffer.getSample(0, startSample);
-    if (testSample > 100.0f)
-    {
-        DBG("Loud sample " << testSample << " detected at beginning of block number " << numBlocksSinceNoteOn << ", stopping note " + juce::String(id));
-        //dump entire value of block to debug string
-        juce::String blockString = "";
-        for (int i = 0; i < numSamples; i++)
-        {
-            blockString += juce::String(outputBuffer.getSample(0, startSample + i)) + " ";
-        }
-        DBG(blockString);
-        jassertfalse;
-        finishBlock(numSamples);
-        stopVoice();
-        clearCurrentNote();
-        return;
-    }
-
+    //Silence detection code
     testForSilenceBlockCount++;
     if (testForSilenceBlockCount > testForSilenceBlockPeriod && noteReleased && numBlocksSinceNoteOn > 10)
     {

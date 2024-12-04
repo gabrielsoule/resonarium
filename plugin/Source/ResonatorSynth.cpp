@@ -44,16 +44,16 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
         dynamic_cast<ResonatorVoice*>(v)->prepare(spec);
     }
 
-    for (int i = 0; i < NUM_LFOS; i++)
+    for (auto & monoLFO : monoLFOs)
     {
-        monoLFOs[i].reset();
-        monoLFOs[i].prepare(spec);
+        monoLFO.reset();
+        monoLFO.prepare(spec);
     }
 
-    for (int i = 0; i < NUM_RANDOMS; i++)
+    for (auto & monoRandomLFO : monoRandomLFOs)
     {
-        monoRandomLFOs[i].reset();
-        monoRandomLFOs[i].prepare(spec);
+        monoRandomLFO.reset();
+        monoRandomLFO.prepare(spec);
     }
 
     for (int i = 0; i < NUM_MSEGS; i++)

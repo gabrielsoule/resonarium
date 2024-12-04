@@ -44,7 +44,6 @@ void StereoResonator::Resonator::pushSample(float input)
 float StereoResonator::Resonator::postProcess(float input)
 {
     const float sample = postFilter.processSample(0, input);
-    // float sample = input;
     jassert(!std::isnan(sample));
     return sample;
 }
