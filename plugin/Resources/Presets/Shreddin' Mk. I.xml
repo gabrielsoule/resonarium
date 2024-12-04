@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<state name="Modal Keys I" author="" tags="">
+<state name="Shreddin' Mk. I" author="" tags="">
   <state>
     <instance/>
-    <MODMATRIX/>
+    <MODMATRIX>
+      <MODITEM srcId="env1" depth="1.0" enabled="1" dstId="decayTime wb0r0"
+               function="linear" biPolarMapping="0"/>
+      <MODITEM srcId="mpep" depth="0.3085624873638153" enabled="1" dstId="postFilterCutoff wb0r0"
+               function="linear" biPolarMapping="0"/>
+    </MODMATRIX>
     <MSEG1 startIndex="0" endIndex="2">
       <PT t="0.0" v="0.0" c="5.5"/>
       <PT t="0.5" v="1.0" c="5.5"/>
@@ -24,45 +29,30 @@
       <PT t="0.5" v="1.0" c="5.5"/>
       <PT t="1.0" v="0.0" c="5.5"/>
     </MSEG4>
-    <samplePath path=""/>
   </state>
+  <param uid="uiActiveModWindow" val="1.0"/>
   <param uid="enabled wb0r0" val="1.0"/>
-  <param uid="decayTime wb0r0" val="0.0"/>
-  <param uid="decayFilterCutoff wb0r0" val="5935.3896484375"/>
+  <param uid="decayTime wb0r0" val="1.766546249389648"/>
+  <param uid="decayFilterCutoff wb0r0" val="1684.836791992188"/>
   <param uid="decayFilterPitch wb0r0" val="-1.341104507446289e-6"/>
-  <param uid="decayFilterResonance wb0r0" val="0.7071065902709961"/>
+  <param uid="postFilterCutoff wb0r0" val="134.7516174316406"/>
   <param uid="postFilterPitch wb0r0" val="-1.341104507446289e-6"/>
-  <param uid="postFilterResonance wb0r0" val="501.1609191894531"/>
-  <param uid="postFilterMode wb0r0" val="0.5"/>
-  <param uid="postFilterKeytrack wb0r0" val="1.0"/>
-  <param uid="enabled wb0r1" val="1.0"/>
-  <param uid="pitch wb0r1" val="1.5"/>
-  <param uid="decayTime wb0r1" val="0.0"/>
-  <param uid="decayFilterCutoff wb0r1" val="7734.806640625"/>
+  <param uid="postFilterResonance wb0r0" val="0.7071064710617065"/>
+  <param uid="pitch wb0r1" val="6.670000076293945"/>
+  <param uid="decayTime wb0r1" val="0.09647375345230103"/>
   <param uid="decayFilterPitch wb0r1" val="-1.341104507446289e-6"/>
-  <param uid="decayFilterResonance wb0r1" val="0.7071065902709961"/>
-  <param uid="postFilterPitch wb0r1" val="6.999998569488525"/>
-  <param uid="postFilterResonance wb0r1" val="434.6471557617188"/>
-  <param uid="postFilterMode wb0r1" val="0.5"/>
-  <param uid="postFilterKeytrack wb0r1" val="1.0"/>
-  <param uid="enabled wb0r2" val="1.0"/>
-  <param uid="pitch wb0r2" val="1.329999923706055"/>
-  <param uid="decayTime wb0r2" val="6.302083969116211"/>
-  <param uid="dispersion wb0r2" val="100.0"/>
-  <param uid="decayFilterCutoff wb0r2" val="19078.65625"/>
+  <param uid="decayFilterResonance wb0r1" val="4.382973670959473"/>
+  <param uid="decayFilterKeytrack wb0r1" val="1.0"/>
+  <param uid="postFilterPitch wb0r1" val="-1.341104507446289e-6"/>
+  <param uid="postFilterResonance wb0r1" val="0.7071064710617065"/>
+  <param uid="decayTime wb0r2" val="3.000000715255737"/>
   <param uid="decayFilterPitch wb0r2" val="-1.341104507446289e-6"/>
-  <param uid="postFilterCutoff wb0r2" val="11989.6962890625"/>
-  <param uid="postFilterPitch wb0r2" val="4.999998569488525"/>
-  <param uid="postFilterResonance wb0r2" val="365.0159912109375"/>
-  <param uid="postFilterKeytrack wb0r2" val="1.0"/>
-  <param uid="pitch wb0r3" val="1.319999933242798"/>
-  <param uid="decayTime wb0r3" val="4.893449306488037"/>
-  <param uid="dispersion wb0r3" val="100.0"/>
-  <param uid="decayFilterCutoff wb0r3" val="20000.0"/>
+  <param uid="postFilterPitch wb0r2" val="-1.341104507446289e-6"/>
+  <param uid="postFilterResonance wb0r2" val="0.7071064710617065"/>
+  <param uid="decayTime wb0r3" val="3.000000715255737"/>
   <param uid="decayFilterPitch wb0r3" val="-1.341104507446289e-6"/>
   <param uid="postFilterPitch wb0r3" val="-1.341104507446289e-6"/>
   <param uid="postFilterResonance wb0r3" val="0.7071064710617065"/>
-  <param uid="gain wb0r3" val="-18.76646423339844"/>
   <param uid="decayTime wb0r4" val="3.000000715255737"/>
   <param uid="decayFilterPitch wb0r4" val="-1.341104507446289e-6"/>
   <param uid="postFilterPitch wb0r4" val="-1.341104507446289e-6"/>
@@ -75,9 +65,9 @@
   <param uid="postFilterPitch wb0r6" val="-1.341104507446289e-6"/>
   <param uid="decayTime wb0r7" val="3.000000715255737"/>
   <param uid="decayFilterPitch wb0r7" val="-1.341104507446289e-6"/>
-  <param uid="decayFilterResonance wb0r7" val="0.7071065902709961"/>
   <param uid="postFilterPitch wb0r7" val="-1.341104507446289e-6"/>
-  <param uid="cascadeAmount wb0" val="0.01999997720122337"/>
+  <param uid="outputGain wb0" val="13.50624561309814"/>
+  <param uid="cascadeAmount wb0" val="-2.235174179077148e-8"/>
   <param uid="cascadeFilterResonance wb0" val="0.7071064710617065"/>
   <param uid="decayTime wb1r0" val="3.000000715255737"/>
   <param uid="decayFilterPitch wb1r0" val="-1.341104507446289e-6"/>
@@ -124,38 +114,25 @@
   <param uid="decayFilterPitch wb2r7" val="-1.341104507446289e-6"/>
   <param uid="postFilterPitch wb2r7" val="-1.341104507446289e-6"/>
   <param uid="cascadeAmount wb2" val="-2.235174179077148e-8"/>
-  <param uid="decayFilterPitch wb3r0" val="-1.341104507446289e-6"/>
-  <param uid="postFilterPitch wb3r0" val="-1.341104507446289e-6"/>
-  <param uid="decayFilterPitch wb3r1" val="-1.341104507446289e-6"/>
-  <param uid="postFilterPitch wb3r1" val="-1.341104507446289e-6"/>
-  <param uid="decayFilterPitch wb3r2" val="-1.341104507446289e-6"/>
-  <param uid="postFilterPitch wb3r2" val="-1.341104507446289e-6"/>
-  <param uid="decayFilterPitch wb3r3" val="-1.341104507446289e-6"/>
-  <param uid="postFilterPitch wb3r3" val="-1.341104507446289e-6"/>
-  <param uid="decayFilterPitch wb3r4" val="-1.341104507446289e-6"/>
-  <param uid="postFilterPitch wb3r4" val="-1.341104507446289e-6"/>
-  <param uid="decayFilterPitch wb3r5" val="-1.341104507446289e-6"/>
-  <param uid="postFilterPitch wb3r5" val="-1.341104507446289e-6"/>
-  <param uid="decayFilterPitch wb3r6" val="-1.341104507446289e-6"/>
-  <param uid="postFilterPitch wb3r6" val="-1.341104507446289e-6"/>
-  <param uid="decayFilterPitch wb3r7" val="-1.341104507446289e-6"/>
-  <param uid="postFilterPitch wb3r7" val="-1.341104507446289e-6"/>
-  <param uid="cascadeAmount wb3" val="-2.235174179077148e-8"/>
   <param uid="impExciter0 enabled" val="1.0"/>
   <param uid="impExciter0filterType" val="1.0"/>
-  <param uid="impExciter0frequency" val="544.0761108398438"/>
-  <param uid="impExciter0_resonance" val="0.7071065902709961"/>
+  <param uid="impExciter0frequency" val="5101.142578125"/>
   <param uid="noiseExciter1Env0attack" val="0.09999998658895493"/>
   <param uid="noiseExciter1Env0decay" val="0.09999998658895493"/>
   <param uid="noiseExciter1Env0release" val="0.09999998658895493"/>
   <param uid="noiseExciter0_resonance" val="0.7071065902709961"/>
   <param uid="impTrainExciter0_resonance" val="0.7071065902709961"/>
   <param uid="reverbEnable" val="1.0"/>
-  <param uid="delayEnable" val="1.0"/>
-  <param uid="delayTimeL" val="0.2878450751304626"/>
-  <param uid="delayPingPong" val="0.5799999833106995"/>
-  <param uid="delayFeedback" val="0.3607343733310699"/>
-  <param uid="Env 1attack" val="0.09999998658895493"/>
+  <param uid="distEnable" val="1.0"/>
+  <param uid="distDrive" val="22.50900077819824"/>
+  <param uid="distOutputGain" val="-18.14400291442871"/>
+  <param uid="ampEnable" val="1.0"/>
+  <param uid="ampParamA" val="0.9272968769073486"/>
+  <param uid="ampParamB" val="1.0"/>
+  <param uid="ampParamC" val="0.7905312776565552"/>
+  <param uid="ampParamD" val="0.7760624885559082"/>
+  <param uid="Env 1enabled" val="1.0"/>
+  <param uid="Env 1attack" val="0.0"/>
   <param uid="Env 1decay" val="0.09999998658895493"/>
   <param uid="Env 1release" val="0.09999998658895493"/>
 </state>
