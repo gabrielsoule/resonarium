@@ -9,7 +9,7 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
     options.programmingCredits.clear();
     options.programmingCredits.add("Gabriel Soule");
     options.developer = "Gabriel Soule";
-    options.pluginVersion = "0.0.5 ALPHA";
+    options.pluginVersion = "0.0.6 ALPHA";
     options.pluginName = "Resonarium";
     return options;
 }

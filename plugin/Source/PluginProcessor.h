@@ -65,16 +65,16 @@ public:
 
     static bool checkBufferForNaN(juce::dsp::AudioBlock<float> block, juce::String caller = "")
     {
-        for (int channelIdx = 0; channelIdx < block.getNumChannels(); channelIdx++)
+        for (size_t channelIdx = 0; channelIdx < block.getNumChannels(); channelIdx++)
         {
-            for (int sampleIdx = 0; sampleIdx < block.getNumSamples(); sampleIdx++)
+            for (size_t sampleIdx = 0; sampleIdx < block.getNumSamples(); sampleIdx++)
             {
                 if (std::isnan(block.getSample(channelIdx, sampleIdx)))
                 {
-                    DBG(caller + ": NaN detected in channel " + juce::String(i) + " at sample " + juce::String(j));
+                    DBG(caller + ": NaN detected in channel " + juce::String(channelIdx) + " at sample " + juce::String(sampleIdx));
                     juce::Logger::writeToLog(caller + ": NaN detected in channel " + juce::String(channelIdx) + " at sample " + juce::String(sampleIdx));
                     juce::String blockString = "";
-                    for (int k = 0; k < block.getNumSamples(); k++)
+                    for (size_t k = 0; k < block.getNumSamples(); k++)
                     {
                         blockString += juce::String(block.getSample(channelIdx, k)) + " ";
                     }
