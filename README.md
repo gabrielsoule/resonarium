@@ -4,6 +4,8 @@
 
 Resonarium is a MPE-compatible expressive physical modeling synthesizer. It is designed to encourage abstract sound design, exploration, and open-ended play. 
 
+**This software is still in development.** The primary focus at present is stability and performance. Use at your own risk, and expect bugs or crashes.
+
 # Installation and Usage
 
 > [!NOTE]
