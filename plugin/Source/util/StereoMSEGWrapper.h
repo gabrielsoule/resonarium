@@ -8,7 +8,7 @@
 class StereoMSEGWrapper
 {
 public:
-    StereoMSEGWrapper(MSEGParams params) : params(params), dataPointer(params.msegData), left(*dataPointer), right(*dataPointer)
+    StereoMSEGWrapper(MSEGParams params) : dataPointer(params.msegData), left(*dataPointer), right(*dataPointer), params(params)
     {
 
     }
@@ -43,7 +43,6 @@ public:
     MSEGParams params;
     gin::MSEG::Parameters ginParams;
 
-    float frequency = 1.0f;
     float phase = 0.0f;
     float offset = 0.0f;
     float depth = 1.0f;

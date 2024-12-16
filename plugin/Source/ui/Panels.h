@@ -853,8 +853,8 @@ public:
         }
     }
 
-    ChorusParams chorusParams;
     ResonariumProcessor& proc;
+    ChorusParams chorusParams;
 
     gin::Knob* r = nullptr;
     gin::Select* b = nullptr;

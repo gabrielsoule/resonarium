@@ -6,20 +6,20 @@
 
 ResonariumEffectChain::ResonariumEffectChain(ResonariumProcessor& p, int channel, EffectChainParams params)
     : chorusParams(params.chorusParams),
-      delayParams(params.delayParams),
-      distortionParams(params.distortionParams),
-      multiAmpParams(params.multiAmpParams),
-      compressorParams(params.compressorParams),
-      filter1Params(params.filterParams[0]),
-      filter2Params(params.filterParams[1]),
-      phaserParams(params.phaserParams),
-      reverbParams(params.reverbParams),
-      effectChainParams(params),
       delay(p, MAX_DELAY_IN_SECONDS),
+      delayParams(params.delayParams),
       distortion(p, params.distortionParams),
+      distortionParams(params.distortionParams),
       multiAmp(p, params.multiAmpParams),
+      multiAmpParams(params.multiAmpParams),
+      phaserParams(params.phaserParams),
+      compressorParams(params.compressorParams),
+      reverbParams(params.reverbParams),
       filter1(params.filterParams[0]),
       filter2(params.filterParams[1]),
+      filter1Params(params.filterParams[0]),
+      filter2Params(params.filterParams[1]),
+      effectChainParams(params),
       proc(p)
 {
     this->channel = channel;

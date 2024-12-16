@@ -68,23 +68,7 @@ public:
     {
         if (! isBeingEdited())
             Label::paint (g);
-        auto textBounds = getBorderSize().subtractedFrom(getLocalBounds()).toFloat();
-
-        // Measure the width of the current text
-
-        //compute the length of the label text, and add the unit "s"
     }
-
-    // juce::TextEditor* createEditorComponent() override
-    // {
-    //     auto e = juce::Label::createEditorComponent();
-    //     e->removeColour (juce::TextEditor::textColourId);
-    //     e->setColour (juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
-    //     e->setColour (juce::TextEditor::focusedOutlineColourId, juce::Colours::transparentBlack);
-    //     e->applyFontToAllText (getLookAndFeel().getLabelFont (*this), true);
-    //     e->setJustification (getJustificationType());
-    //     return e;
-    // }
 
     void showEditorAndMoveToFront()
     {
@@ -129,7 +113,7 @@ public:
             mainReadoutTextWidth = mainReadout.getFont().getStringWidthFloat(mainReadout.getText());
             int unitWidth = 20;
             int unitHeight = 15;
-            unitLabel.setBounds(juce::jmin(mainReadout.getBounds().getCentreX() + mainReadoutTextWidth / 2, static_cast<float>(mainReadout.getBounds().getRight())), getHeight() - unitHeight, unitWidth, unitHeight);
+            unitLabel.setBounds(static_cast<int>(juce::jmin(mainReadout.getBounds().getCentreX() + mainReadoutTextWidth / 2, static_cast<float>(mainReadout.getBounds().getRight()))), getHeight() - unitHeight, unitWidth, unitHeight);
             unitLabel.setBounds(unitLabel.getBounds().translated(-3, -3));
         };
     }
@@ -202,7 +186,6 @@ public:
         gin::Knob::resized();
         this->knob.toFront(false);
         this->modDepthSlider.toFront(false);
-        auto bounds = getLocalBounds();
         mainReadout.setBounds(this->getLocalBounds().reduced(10, 0));
         mainReadout.setFont(mainReadout.getFont().withHeight(fontSize));
         mainReadout.setJustificationType(juce::Justification::centred);

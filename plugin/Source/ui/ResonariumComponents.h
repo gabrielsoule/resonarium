@@ -11,12 +11,12 @@
 #include "../Parameters.h"
 #include "../defines.h"
 
-static constexpr float SPACING_X = 10; // how far apart are resonator columns?
-static constexpr float SPACING_Y_SMALL = 1;
-static constexpr float SPACING_Y_LARGE = 10;
-static constexpr float PARAMETER_WIDTH = 68;
-static constexpr float PARAMETER_HEIGHT = 25;
-static constexpr float PARAMETER_TEXT_HEIGHT = 14;
+static constexpr int SPACING_X = 10; // how far apart are resonator columns?
+static constexpr int SPACING_Y_SMALL = 1;
+static constexpr int SPACING_Y_LARGE = 10;
+static constexpr int PARAMETER_WIDTH = 68;
+static constexpr int PARAMETER_HEIGHT = 25;
+static constexpr int PARAMETER_TEXT_HEIGHT = 14;
 
 // inline juce::String pianoKeyboardSVG = "m79.398 7.1992h-58.797c-7.3984 0-13.5 6.1016-13.5 13.5v58.801c0 7.3984 6.1016 13.5 13.5 13.5h58.801c7.3984 0 13.5-6.1016 13.5-13.5l-0.003906-58.801c0-7.5-6-13.5-13.5-13.5zm-40.699 53.699c2.3008 0 4.3008-1.8984 4.3008-4.3008v-46.398h14v46.5c0 2.3008 1.8984 4.3008 4.3008 4.3008h2v29h-26.602v-29.102zm-28.598 18.602v-58.801c0-5.8008 4.6992-10.5 10.5-10.5h6.8008v46.5c0 2.3008 1.8984 4.3008 4.3008 4.3008h2l-0.003906 29h-13.098c-5.8008 0-10.5-4.6992-10.5-10.5zm79.797 0c0 5.8008-4.6992 10.5-10.5 10.5h-13.098v-29.102h2c2.3008 0 4.3008-1.8984 4.3008-4.3008v-46.398h6.8008c5.8008 0 10.5 4.6992 10.5 10.5z";
 static inline juce::String pianoKeyboardSVG =
@@ -343,7 +343,7 @@ public:
         g.fillPath(valueTrack);
     }
 
-    void resized()
+    void resized() override
     {
         valueTrack.clear();
         valueTrack.addEllipse(40, 5, 120, 100);

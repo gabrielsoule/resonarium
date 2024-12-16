@@ -26,7 +26,7 @@ public:
     bool hasEditor() const override;
     bool supportsMPE() const override { return true; }
     void setupModMatrix();
-    static static gin::ProcessorOptions getOptions();
+    static gin::ProcessorOptions getOptions();
 
     ResonatorSynth synth;
     gin::ModMatrix modMatrix;

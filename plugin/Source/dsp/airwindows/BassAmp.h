@@ -4,7 +4,7 @@
  *  Copyright (c) 2011 __MyCompanyName__, Airwindows uses the MIT license
  * ======================================== */
 
-#pragma once;
+#pragma once
 
 #include "FXBase.h"
 #include <set>

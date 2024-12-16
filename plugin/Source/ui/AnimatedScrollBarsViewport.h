@@ -16,7 +16,7 @@ public:
     {
         setScrollBarsShown(false, false, true, true);
 
-        scrollBarListener.updateFunction = [=](juce::ScrollBar* bar, double newRangeStart)
+        scrollBarListener.updateFunction = [this](juce::ScrollBar* bar, double newRangeStart)
         {
             auto newRangeStartInt = juce::roundToInt(newRangeStart);
 
