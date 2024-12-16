@@ -396,9 +396,9 @@ void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& exciterBlock,
     float gainL = voice.getValue(params.gain, 0) * mix;
     float gainR = voice.getValue(params.gain, 1) * mix;
     jassert(gainL == gainR);
-    extInBuffer.copyFrom(0, v.startSample, proc.inputBuffer.getReadPointer(0), v.numSamples, gainL);
-    extInBuffer.copyFrom(1, v.startSample, proc.inputBuffer.getReadPointer(1), v.numSamples, gainR);
-    juce::dsp::AudioBlock<float> extInBlock = juce::dsp::AudioBlock<float>(extInBuffer, v.startSample);
+    extInBuffer.copyFrom(0, v.currentBlockStartSample, proc.inputBuffer.getReadPointer(0), v.currentBlockNumSamples, gainL);
+    extInBuffer.copyFrom(1, v.currentBlockStartSample, proc.inputBuffer.getReadPointer(1), v.currentBlockNumSamples, gainR);
+    juce::dsp::AudioBlock<float> extInBlock = juce::dsp::AudioBlock<float>(extInBuffer, v.currentBlockStartSample);
     // filter.process(extInBlock);
     exciterBlock.add(extInBlock);
 }

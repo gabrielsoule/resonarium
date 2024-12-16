@@ -211,11 +211,11 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     juce::String suffix = " wb" + std::to_string(bankIndex) + "r" + std::to_string(resonatorIndex);
 
     enabled = p.addExtParam("enabled" + suffix, "Enabled" + suffix, "On/Off", " ",
-                            {0.0, 1.0, 1.0, 1.0f}, 0.0f,
+                            {0.0f, 1.0, 1.0, 1.0f}, 0.0f,
                             0.0f);
 
     pitch = p.addExtParam("pitch" + suffix, "Pitch Multiplier" + suffix, "Pitch", "",
-                          {0.10, 10.0f, 0.01f, 0.7f}, 1.0f,
+                          {0.10f, 10.0f, 0.01f, 0.7f}, 1.0f,
                           0.0f, "resonator.pitch");
 
     frequency = p.addExtParam("resonatorFrequency" + suffix, "Frequency" + suffix, "Freq", "Hz",
@@ -254,7 +254,7 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
                                        0.0f);
 
     loopFilterMode = p.addExtParam("svfMode" + suffix, "Mode" + suffix, "Loop Filter Mode", "",
-                                   {0.0f, 1.0f, 0.01, 1.0f}, 0.0f,
+                                   {0.0f, 1.0f, 0.01f, 1.0f}, 0.0f,
                                    0.0f);
     loopFilterType = p.addExtParam("svfType" + suffix, "Type" + suffix, "Loop Filter Type", "",
                                    {0.0f, 2.0f, 1.0, 1.0f}, 0.0f,

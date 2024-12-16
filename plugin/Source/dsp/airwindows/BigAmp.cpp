@@ -7,6 +7,8 @@
 #include "BigAmp.h"
 #endif
 
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wfloat-conversion", "-Wimplicit-float-conversion", "-Wunused-parameter")
+
 BigAmp::BigAmp(audioMasterCallback audioMaster) :
     AudioEffectX(audioMaster, kNumPrograms, kNumParameters)
 {

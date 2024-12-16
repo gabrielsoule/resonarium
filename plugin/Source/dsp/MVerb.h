@@ -16,6 +16,9 @@
 
 #pragma once
 
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wfloat-conversion", "-Wimplicit-float-conversion", "-Wunused-parameter", "-Wshadow")
+
+
 //forward declaration
 template<typename T, int maxLength> class Allpass;
 template<typename T, int maxLength> class StaticAllpassFourTap;

@@ -7,6 +7,9 @@
 #include "BigAmp.h"
 #endif
 
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wfloat-conversion", "-Wimplicit-float-conversion", "-Wunused-parameter")
+
+
 void BigAmp::processReplacing(float **inputs, float **outputs, VstInt32 sampleFrames) 
 {
     float* in1  =  inputs[0];

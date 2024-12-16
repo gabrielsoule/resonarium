@@ -892,17 +892,17 @@ public:
         {
             if (auto* knob = dynamic_cast<gin::Knob*>(controls[i]))
             {
-                knob->setBounds(knob->getBounds().translated(KNOB_W * 0.5, 0));
+                knob->setBounds(knob->getBounds().translated(KNOB_W * 0.5f, 0.0f));
             }
 
             if (auto* select = dynamic_cast<gin::Select*>(controls[i]))
             {
-                select->setBounds(select->getBounds().translated(KNOB_W * 0.5, 0));
+                select->setBounds(select->getBounds().translated(KNOB_W * 0.5f, 0.0f));
             }
 
             if (auto* switchControl = dynamic_cast<gin::Switch*>(controls[i]))
             {
-                switchControl->setBounds(switchControl->getBounds().translated(KNOB_W * 0.5, 0));
+                switchControl->setBounds(switchControl->getBounds().translated(KNOB_W * 0.5f, 0.0f));
             }
         }
     }

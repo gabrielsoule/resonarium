@@ -21,12 +21,6 @@ public:
     void setDelayTime(int channel, float time);
     void setMix(int channel, float mix);
 
-    template <typename T>
-    void updateParameters(T& source, int channel)
-    {
-        //unused, but the parameters are indeed updated in every block
-    }
-
     template <typename ProcessContext>
     void process(ProcessContext& context) noexcept
     {

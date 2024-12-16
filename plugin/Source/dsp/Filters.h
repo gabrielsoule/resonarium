@@ -38,7 +38,7 @@ public:
     void reset();
     void setBrightness(float brightness);
 
-    float state = 0;;
+    float state = 0;
     float p = 0.5;
 };
 

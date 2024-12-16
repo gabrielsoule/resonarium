@@ -41,8 +41,8 @@ public:
     int id = 0;
     juce::OwnedArray<WaveguideResonatorBank> resonatorBanks;
 
-    int startSample = 0; //start sample of the current block
-    int numSamples = 64; //num samples in the current block
+    int currentBlockStartSample = 0; //start sample of the current block
+    int currentBlockNumSamples = 64; //num samples in the current block
 
     bool noteReleased = false;
     int silenceCount = 0;

@@ -7,6 +7,8 @@
 #include "BassAmp.h"
 #endif
 
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wfloat-conversion", "-Wimplicit-float-conversion", "-Wunused-parameter")
+
 BassAmp::BassAmp(audioMasterCallback audioMaster) :
     AudioEffectX(audioMaster, kNumPrograms, kNumParameters)
 {

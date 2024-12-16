@@ -7,6 +7,9 @@
 #include "LeadAmp.h"
 #endif
 
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wfloat-conversion", "-Wimplicit-float-conversion", "-Wunused-parameter")
+
+
 LeadAmp::LeadAmp(audioMasterCallback audioMaster) :
     AudioEffectX(audioMaster, kNumPrograms, kNumParameters)
 {

@@ -5,7 +5,6 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
                                                                              effectChain(p, 0, params.effectChainParams)
 {
     frequency = 440.0f;
-    int resonatorBankIndex = 0;
     this->disableSmoothing = true;
 
     polyMSEGs.clear();
@@ -17,7 +16,6 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
     {
         auto* waveguideBank = new WaveguideResonatorBank(*this, params.waveguideResonatorBankParams[i]);
         resonatorBanks.add(waveguideBank);
-        resonatorBankIndex++;
         dcBlockers[i].state = dcBlockerCoefficients;
     }
 
@@ -330,8 +328,8 @@ void ResonatorVoice::updateParameters(int numSamples)
 
 void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
-    this->startSample = startSample;
-    this->numSamples = numSamples;
+    this->currentBlockStartSample = startSample;
+    this->currentBlockNumSamples = numSamples;
     updateParameters(numSamples);
 
     juce::dsp::AudioBlock<float> exciterBlock = juce::dsp::AudioBlock<float>(exciterBuffer)

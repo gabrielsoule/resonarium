@@ -145,8 +145,8 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                         voice.proc.synth.soloBankIndex == index &&
                         voice.proc.synth.soloResonatorIndex == resonators[j]->resonatorIndex)
                     {
-                        voice.soloBuffer.setSample(0, voice.startSample + i, soloOutSampleL);
-                        voice.soloBuffer.setSample(1, voice.startSample + i, soloOutSampleR);
+                        voice.soloBuffer.setSample(0, voice.currentBlockStartSample + i, soloOutSampleL);
+                        voice.soloBuffer.setSample(1, voice.currentBlockStartSample + i, soloOutSampleR);
                     }
                 }
             }
@@ -183,9 +183,9 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
 
             if (voice.proc.synth.soloActive && voice.proc.synth.soloBankIndex == index)
             {
-                voice.soloBuffer.setSample(0, voice.startSample + i,
+                voice.soloBuffer.setSample(0, voice.currentBlockStartSample + i,
                                            resonatorOutSamplesL[voice.proc.synth.soloResonatorIndex]);
-                voice.soloBuffer.setSample(1, voice.startSample + i,
+                voice.soloBuffer.setSample(1, voice.currentBlockStartSample + i,
                                            resonatorOutSamplesR[voice.proc.synth.soloResonatorIndex]);
             }
 
@@ -261,8 +261,8 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                         voice.proc.synth.soloBankIndex == index &&
                         voice.proc.synth.soloResonatorIndex == resonators[j]->resonatorIndex)
                     {
-                        voice.soloBuffer.setSample(0, voice.startSample + i, soloOutSampleL);
-                        voice.soloBuffer.setSample(1, voice.startSample + i, soloOutSampleR);
+                        voice.soloBuffer.setSample(0, voice.currentBlockStartSample + i, soloOutSampleL);
+                        voice.soloBuffer.setSample(1, voice.currentBlockStartSample + i, soloOutSampleR);
                     }
                 }
             }
