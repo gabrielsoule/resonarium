@@ -49,9 +49,7 @@ public:
     {
         if (applyValue (getText()))
         {
-            DBG("text " << getText());
             float v = getText().getFloatValue();
-            DBG("v: " << v);
             if(textToParamConversionFunction) v = textToParamConversionFunction(v);
             p->setUserValueAsUserAction (v);
         }

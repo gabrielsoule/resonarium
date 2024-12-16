@@ -55,7 +55,7 @@ public:
 
     virtual void prepare(const juce::dsp::ProcessSpec& spec)
     {
-        this->sampleRate = spec.sampleRate;
+        this->sampleRate = static_cast<float>(spec.sampleRate);
         this->maximumBlockSize = spec.maximumBlockSize;
         jassert(spec.numChannels == 2); //exciters are stereo
     }

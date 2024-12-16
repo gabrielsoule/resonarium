@@ -135,19 +135,14 @@ void ResonariumLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
 {
     if (slider.getProperties()["textOnly"])
     {
-        float value = slider.getValue();
-        float min = slider.getMinimum();
-        float max = slider.getMaximum();
-
         g.setColour(slider.findColour(juce::Slider::thumbColourId).withAlpha(1.0f));
         bool showModDepth = slider.getProperties().contains("modDepth");
         int barX = x + 3;
         int barWidth = width - 3;
         int barY = y + 17;;
         int barHeight = 3;
-        if ((slider.isEnabled() && (slider.isMouseOverOrDragging() || showModDepth)))
+        if (slider.isEnabled() && (slider.isMouseOverOrDragging() || showModDepth))
         {
-            // g.fillRect(x + 3, y + 18, static_cast<int>(sliderPos * (width - 3)), 2);
             g.fillRect(barX, barY, static_cast<int>(sliderPos * (width - 3)), barHeight);
         }
 
@@ -266,10 +261,6 @@ void ResonariumLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
 
     if (slider.isEnabled())
     {
-        // if(slider.getProperties().contains("customColour"))
-        // {
-        //     g.setColour(slider.getProperties()["customColour"]);
-        // }
         g.setColour(slider.findColour(juce::Slider::rotarySliderFillColourId).withAlpha(isMouseOver ? 0.95f : 0.85f));
     }
 

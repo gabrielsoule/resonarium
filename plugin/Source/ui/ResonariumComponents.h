@@ -439,7 +439,7 @@ public:
         soloButton = new SVGFilePluginButton(enclosingBankParams.soloResonator, BinaryData::letter_s_svg, BinaryData::letter_s_svg);
         // soloButton->setColour(juce::TextButton::buttonOnColourId, juce::Colours::red);
         // soloButton->setColour(juce::TextButton::buttonColourId, juce::Colours::blue);
-        soloButton->onClick = [this, param = enclosingBankParams.soloResonator, bankIndex = enclosingBankParams.index, resonatorIndex = resonatorParams.resonatorIndex]() {
+        soloButton->onClick = [param = enclosingBankParams.soloResonator, bankIndex = enclosingBankParams.index, resonatorIndex = resonatorParams.resonatorIndex]() {
 
             //map the resonator index and bank index to a single integer
             const int id = NUM_RESONATORS * bankIndex + resonatorIndex;
