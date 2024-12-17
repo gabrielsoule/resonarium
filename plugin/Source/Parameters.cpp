@@ -159,10 +159,8 @@ static juce::String distortionFilterModeTextFunction(const gin::Parameter&, floa
     }
 }
 
-void MultiFilterParams::setup(ResonariumProcessor& p, juce::String prefix)
+MultiFilterParams::MultiFilterParams(ResonariumProcessor& p, juce::String prefix) : prefix(prefix)
 {
-    this->prefix = prefix;
-
     type = p.addExtParam(prefix + "filterType", prefix + " Filter Type", "Filter", "",
                          {0.0f, 5.0f, 1.0f, 1.0f},
                          0.0f, 0.0f, "", filterTextFunction);
@@ -175,11 +173,8 @@ void MultiFilterParams::setup(ResonariumProcessor& p, juce::String prefix)
                               1.0f / std::sqrt(2.0f), 0.0f);
 }
 
-void ADSRParams::setup(ResonariumProcessor& p, juce::String prefix, int index)
+ADSRParams::ADSRParams(ResonariumProcessor& p, juce::String prefix, int index) : prefix(prefix), index(index)
 {
-    this->prefix = prefix;
-    this->index = index;
-
     enabled = p.addExtParam(prefix + "enabled", prefix + " Enabled", "On/Off", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                             0.0f);
@@ -197,16 +192,14 @@ void ADSRParams::setup(ResonariumProcessor& p, juce::String prefix, int index)
                             {0.0f, 60.0f, 0.0f, 0.2f},
                             0.1f, 0.0f);
 
-    sustain->conversionFunction = [](float in) { return in / 100.0f; };
+    sustain->conversionFunction = [](const float in) { return in / 100.0f; };
 }
 
-void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bankIndex)
+ResonatorParams::ResonatorParams(ResonariumProcessor& p, int resonatorIndex, int bankIndex) :
+    resonatorIndex(resonatorIndex), bankIndex(bankIndex)
 {
     jassert(resonatorIndex >= 0 && resonatorIndex < NUM_RESONATORS);
     jassert(bankIndex >= 0 && bankIndex < NUM_RESONATOR_BANKS);
-
-    this->resonatorIndex = resonatorIndex;
-    this->bankIndex = bankIndex;
 
     juce::String suffix = " wb" + std::to_string(bankIndex) + "r" + std::to_string(resonatorIndex);
 
@@ -286,13 +279,13 @@ void ResonatorParams::setup(ResonariumProcessor& p, int resonatorIndex, int bank
     gain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 }
 
-void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
+WaveguideResonatorBankParams::WaveguideResonatorBankParams(ResonariumProcessor& p, int index) : index(index)
 {
     jassert(index >= 0 && index < NUM_RESONATOR_BANKS);
-    this->index = index;
+
     for (int i = 0; i < NUM_RESONATORS; i++)
     {
-        resonatorParams[i].setup(p, i, index);
+        resonatorParams[i] = ResonatorParams(p, i, index);
     }
 
     juce::String suffix = " wb" + std::to_string(index);
@@ -330,7 +323,8 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
 
     cascadeFilterCutoff = p.addExtParam("cascadeFilterCutoff" + suffix, "Cascade Filter Cutoff" + suffix, "Cutoff",
                                         "Hz",
-                                        {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, 3000.0f,
+                                        {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW},
+                                        3000.0f,
                                         gin::SmoothingType::linear, "resonatorbank.cascadefiltercutoff");
 
     cascadeFilterResonance = p.addExtParam("cascadeFilterResonance" + suffix, "Cascade Filter Resonance" + suffix,
@@ -343,9 +337,10 @@ void WaveguideResonatorBankParams::setup(ResonariumProcessor& p, int index)
                                       0.0f, "resonatorbank.cascadefiltermode");
 }
 
-void ImpulseExciterParams::setup(ResonariumProcessor& p, int index)
+ImpulseExciterParams::ImpulseExciterParams(ResonariumProcessor& p, int index) :
+    index(index),
+    filterParams(p, "impExciter" + std::to_string(index))
 {
-    this->index = index;
     juce::String prefix = "impExciter" + std::to_string(index) + " ";
 
     this->enabled = p.addExtParam(prefix + "enabled", prefix + " Enabled", "On/Off", "",
@@ -361,12 +356,11 @@ void ImpulseExciterParams::setup(ResonariumProcessor& p, int index)
     this->level = p.addExtParam(prefix + "level", prefix + " Level", "Level", "",
                                 {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
                                 0.0f);
-    // level->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
-
-    filterParams.setup(p, "impExciter" + std::to_string(index));
 }
 
-void NoiseExciterParams::setup(ResonariumProcessor& p, int index)
+NoiseExciterParams::NoiseExciterParams(ResonariumProcessor& p, int index) :
+    adsrParams(p, "noiseExciterEnv" + std::to_string(index), -1),
+    filterParams(p, "noiseExciter" + std::to_string(index))
 {
     this->index = index;
     juce::String prefix = "noiseExciter" + std::to_string(index);
@@ -384,13 +378,11 @@ void NoiseExciterParams::setup(ResonariumProcessor& p, int index)
     this->level = p.addExtParam(prefix + "level", prefix + " Level", "Level", "",
                                 {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
                                 0.0f);
-    // level->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
-
-    adsrParams.setup(p, "noiseExciter1Env" + juce::String(index));
-    filterParams.setup(p, prefix);
 }
 
-void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
+ImpulseTrainExciterParams::ImpulseTrainExciterParams(ResonariumProcessor& p, int index)
+    : filterParams(p, "impTrainExciter" + juce::String(index)),
+      adsrParams(p, "impTrainExciterEnv" + juce::String(index), -1)
 {
     this->index = index;
     juce::String prefix = "impTrainExciter" + juce::String(index);
@@ -422,16 +414,11 @@ void ImpulseTrainExciterParams::setup(ResonariumProcessor& p, int index)
     this->level = p.addExtParam(prefix + "level", prefix + " Level", "Level", "",
                                 {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
                                 0.0f);
-    // level->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
-
-    adsrParams.setup(p, "impTrainExciterEnv" + juce::String(index));
-    filterParams.setup(p, prefix);
 }
 
-void ExternalInputExciterParams::setup(ResonariumProcessor& p)
+ExternalInputExciterParams::ExternalInputExciterParams(ResonariumProcessor& p) :
+    filterParams(p, "extIn")
 {
-    filterParams.setup(p, "Ext. In");
-
     enabled = p.addExtParam("extInEnable", "Ext. In Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                             0.0f, "", enableTextFunction);
@@ -446,10 +433,10 @@ void ExternalInputExciterParams::setup(ResonariumProcessor& p)
                         0.0f);
 }
 
-void SampleExciterParams::setup(ResonariumProcessor& p)
+SampleExciterParams::SampleExciterParams(ResonariumProcessor& p)
+    : filterParams(p, "Sample"), adsrParams(p, "Sample", -1)
+
 {
-    filterParams.setup(p, "Sample");
-    adsrParams.setup(p, "Sample");
     enabled = p.addExtParam("sampleEnable", "Sample Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                             0.0f, "", enableTextFunction);
@@ -474,9 +461,8 @@ void SampleExciterParams::setup(ResonariumProcessor& p)
                         0.0f, "exciter.sampler.end");
 }
 
-void LFOParams::setup(ResonariumProcessor& p, int index)
+LFOParams::LFOParams(ResonariumProcessor& p, int index) : index(index)
 {
-    this->index = index;
     juce::String prefix = "lfo" + std::to_string(index);
     auto notes = gin::NoteDuration::getNoteDurations();
 
@@ -530,9 +516,8 @@ void LFOParams::setup(ResonariumProcessor& p, int index)
     stereo->conversionFunction = [](const float x) { return x * 0.5f; };
 }
 
-void RandomLFOParams::setup(ResonariumProcessor& p, int index)
+RandomLFOParams::RandomLFOParams(ResonariumProcessor& p, int index) : index(index)
 {
-    this->index = index;
     seed = juce::Random::getSystemRandom().nextInt();
     juce::String prefix = "rnd" + std::to_string(index);
     auto notes = gin::NoteDuration::getNoteDurations();
@@ -583,9 +568,8 @@ void RandomLFOParams::setup(ResonariumProcessor& p, int index)
                            0.0f, 0.0f, "modulation.rand.stereo");
 }
 
-void MSEGParams::setup(ResonariumProcessor& p, int index)
+MSEGParams::MSEGParams(ResonariumProcessor& p, int index) : index(index)
 {
-    this->index = index;
     juce::String prefix = "mseg" + std::to_string(index);
     msegData = std::make_shared<gin::MSEG::Data>();
     msegData->reset();
@@ -635,31 +619,31 @@ void MSEGParams::setup(ResonariumProcessor& p, int index)
                          0.0f, "", enableTextFunction);
 }
 
-void VoiceParams::setup(ResonariumProcessor& p)
+VoiceParams::VoiceParams(ResonariumProcessor& p)
 {
     for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
-        waveguideResonatorBankParams[i].setup(p, i);
+        waveguideResonatorBankParams[i] = WaveguideResonatorBankParams(p, i);
     }
     for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
     {
-        impulseExciterParams[i].setup(p, i);
+        impulseExciterParams[i] = ImpulseExciterParams(p, i);
     }
     for (int i = 0; i < NUM_NOISE_EXCITERS; i++)
     {
-        noiseExciterParams[i].setup(p, i);
+        noiseExciterParams[i] = NoiseExciterParams(p, i);
     }
     for (int i = 0; i < NUM_IMPULSE_TRAIN_EXCITERS; i++)
     {
-        impulseTrainExciterParams[i].setup(p, i);
+        impulseTrainExciterParams[i] = ImpulseTrainExciterParams(p, i);
     }
 
-    externalInputExciterParams.setup(p);
-    sampleExciterParams.setup(p);
+    externalInputExciterParams = ExternalInputExciterParams(p);
+    sampleExciterParams = SampleExciterParams(p);
     //Do NOT set up LFO params; these are set later by the enclosing synth
 }
 
-void ChorusParams::setup(ResonariumProcessor& p)
+ChorusParams::ChorusParams(ResonariumProcessor& p)
 {
     enabled = p.addExtParam("chorusEnable", "Chorus Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
@@ -695,7 +679,7 @@ void ChorusParams::setup(ResonariumProcessor& p)
                         0.5f, 0.0f);
 }
 
-void DelayParams::setup(ResonariumProcessor& p)
+DelayParams::DelayParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("delayEnable", "Delay Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
@@ -742,7 +726,7 @@ void DelayParams::setup(ResonariumProcessor& p)
                         0.5f, 0.0f);
 }
 
-void DistortionParams::setup(ResonariumProcessor& p)
+DistortionParams::DistortionParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("distEnable", "Distortion Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
@@ -781,7 +765,7 @@ void DistortionParams::setup(ResonariumProcessor& p)
                                0.0f);
 }
 
-void MultiAmpParams::setup(ResonariumProcessor& p)
+MultiAmpParams::MultiAmpParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("ampEnable", "Amp Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
@@ -808,7 +792,7 @@ void MultiAmpParams::setup(ResonariumProcessor& p)
                            0.0f);
 }
 
-void PhaserParams::setup(ResonariumProcessor& p)
+PhaserParams::PhaserParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("phaserEnable", "Phaser Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
@@ -843,7 +827,7 @@ void PhaserParams::setup(ResonariumProcessor& p)
                         0.5f, 0.0f);
 }
 
-void CompressorParams::setup(ResonariumProcessor& p)
+CompressorParams::CompressorParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("compressorEnable", "Compressor Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
@@ -866,7 +850,7 @@ void CompressorParams::setup(ResonariumProcessor& p)
                             0.0f);
 }
 
-void ReverbParams::setup(ResonariumProcessor& p)
+ReverbParams::ReverbParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("reverbEnable", "Reverb Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
@@ -905,7 +889,7 @@ void ReverbParams::setup(ResonariumProcessor& p)
                         0.5f, 0.0f);
 }
 
-void SVFParams::setup(ResonariumProcessor& p, juce::String name)
+SVFParams::SVFParams(ResonariumProcessor& p, juce::String name)
 {
     juce::String prefix = name + " ";
 
@@ -914,7 +898,8 @@ void SVFParams::setup(ResonariumProcessor& p, juce::String name)
                             0.0f, "", enableTextFunction);
 
     cutoff = p.addExtParam(prefix + "cutoff", prefix + "Freq", "Freq", "Hz",
-                           {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, MAX_FILTER_FREQUENCY,
+                           {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW},
+                           MAX_FILTER_FREQUENCY,
                            0.0f);
 
     mode = p.addExtParam(prefix + "mode", prefix + "Mode", "Mode", "",
@@ -926,27 +911,27 @@ void SVFParams::setup(ResonariumProcessor& p, juce::String name)
                               0.0f);
 }
 
-void EffectChainParams::setup(ResonariumProcessor& p)
+EffectChainParams::EffectChainParams(ResonariumProcessor& p) :
+    chorusParams(p),
+    phaserParams(p),
+    reverbParams(p),
+    delayParams(p),
+    distortionParams(p),
+    multiAmpParams(p),
+    compressorParams(p),
+    filterParams{SVFParams(p, "Filter 1"), SVFParams(p, "Filter 2")}
 {
-    chorusParams.setup(p);
-    phaserParams.setup(p);
-    reverbParams.setup(p);
-    delayParams.setup(p);
-    distortionParams.setup(p);
-    multiAmpParams.setup(p);
-    compressorParams.setup(p);
-    filterParams[0].setup(p, "Filter 1");
-    filterParams[1].setup(p, "Filter 2");
 }
 
-void SynthParams::setup(ResonariumProcessor& p)
+SynthParams::SynthParams(ResonariumProcessor& p)
 {
-    voiceParams.setup(p);
-    effectChainParams.setup(p);
+    voiceParams = VoiceParams(p);
+    globalParams = GlobalParams(p);
+    effectChainParams = EffectChainParams(p);
     voiceParams.effectChainParams = effectChainParams;
     for (int i = 0; i < NUM_LFOS; i++)
     {
-        lfoParams[i].setup(p, i);
+        lfoParams[i] = LFOParams(p, i);
         //ensure that the same parameters are used for the synth-level monophonic LFOs
         //and the voice-level polyphonic LFOs
         //the result is that each LFO is actually two LFOs under the hood,
@@ -956,20 +941,20 @@ void SynthParams::setup(ResonariumProcessor& p)
 
     for (int i = 0; i < NUM_RANDOMS; i++)
     {
-        randomLfoParams[i].setup(p, i);
+        randomLfoParams[i] = RandomLFOParams(p, i);
         voiceParams.randomLfoParams[i] = randomLfoParams[i];
     }
 
     for (int i = 0; i < NUM_ENVELOPES; i++)
     {
         juce::String prefix = "Env " + std::to_string(i + 1);
-        adsrParams[i].setup(p, prefix, i);
+        adsrParams[i] = ADSRParams(p, prefix, i);
         voiceParams.adsrParams[i] = adsrParams[i];
     }
 
     for (int i = 0; i < NUM_MSEGS; i++)
     {
-        msegParams[i].setup(p, i);
+        msegParams[i] = MSEGParams(p, i);
         voiceParams.msegParams[i] = msegParams[i];
     }
 
@@ -991,7 +976,26 @@ void SynthParams::setup(ResonariumProcessor& p)
     }
 }
 
-void UIParams::setup(ResonariumProcessor& p)
+GlobalParams::GlobalParams(ResonariumProcessor& p)
+{
+    numVoices = p.addIntParam("numVoices", "Num Voices", "Voices", "",
+                              {1.0f, 16.0f, 1.0f, 1.0f}, 1.0f,
+                              0.0f, "global.voices");
+
+    stereoResonators = p.addIntParam("stereoResonators", "Stereo Resonators", "Stereo", "",
+                                     {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                                     0.0f, "global.stereo");
+
+    polyEffectChain = p.addIntParam("polyEffectChain", "Poly Effect Chain", "Poly FX", "",
+                                    {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                                    0.0f, "global.polyfx");
+
+    gain = p.addExtParam("masterGain", "Master Gain", "Gain", "dB",
+                         {-60.0f, 12.0f, 0.0f, 1.0f}, 0.0f,
+                         0.0f, "global.gain");
+}
+
+UIParams::UIParams(ResonariumProcessor& p)
 {
     resonatorBankSelect = p.addIntParam("uiActiveResonatorBank", "Bank", "", "",
                                         {0, NUM_RESONATOR_BANKS - 1, 1.0f, 1.0f},

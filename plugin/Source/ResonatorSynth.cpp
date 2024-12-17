@@ -6,15 +6,8 @@
 #include "ResonatorVoice.h"
 #include "PluginProcessor.h"
 
-ResonatorSynth::ResonatorSynth(ResonariumProcessor& p) : proc(p)
+ResonatorSynth::ResonatorSynth(ResonariumProcessor& p) : proc(p), params(p)
 {
-
-}
-
-void ResonatorSynth::setupParameters()
-{
-    params.setup(proc);
-
     monoMSEGs.clear();
     msegData.clear();
 
@@ -34,7 +27,6 @@ void ResonatorSynth::setupParameters()
         monoMSEGs.add(mseg);
     }
 }
-
 void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
 {
     setCurrentPlaybackSampleRate(spec.sampleRate);

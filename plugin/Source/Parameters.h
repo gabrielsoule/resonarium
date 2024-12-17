@@ -36,8 +36,7 @@ struct MultiFilterParams
         resonance = nullptr;
 
     MultiFilterParams() = default;
-
-    void setup(ResonariumProcessor& p, juce::String suffix);
+    MultiFilterParams(ResonariumProcessor& p, juce::String prefix);
 };
 
 /**
@@ -59,8 +58,7 @@ struct ADSRParams
         release = nullptr;
 
     ADSRParams() = default;
-
-    void setup(ResonariumProcessor& p, juce::String prefix, int index = -1);
+    ADSRParams(ResonariumProcessor& p, juce::String prefix, int index);
 };
 
 /**
@@ -79,8 +77,6 @@ struct ResonatorParams
         resonatorKeytrack,
         decayTime,
         dispersion,
-        decayFilterType, //EKS, BQD, SVF, EQ3
-        biquadFilterType, //LP, HP, BP, NOTCH, AP
         loopFilterCutoff,
         loopFilterPitchInSemis,
         loopFilterResonance, //for both SVF and BQD filter modes
@@ -92,14 +88,11 @@ struct ResonatorParams
         postFilterResonance,
         postFilterMode,
         postFilterKeytrack, // bool y/n
-        decayFilterKeytrack, //bool y/n
-        eksFilterBrightness, //for EKS filter mode only
         gain,
         testParameter = nullptr;
 
     ResonatorParams() = default;
-
-    void setup(ResonariumProcessor& p, int resonatorIndex, int bankIndex);
+    ResonatorParams(ResonariumProcessor& p, int resonatorIndex, int bankIndex);
 };
 
 /**
@@ -110,7 +103,8 @@ struct WaveguideResonatorBankParams
     int index = -1;
     std::array<ResonatorParams, NUM_RESONATORS> resonatorParams;
     gin::Parameter::Ptr
-        soloResonator, //<--this parameter is the SAME parameter as the one that the synth uses, it should NOT be setup from scratch here
+        soloResonator,
+        //<--this parameter is the SAME parameter as the one that the synth uses, it should NOT be setup from scratch here
         noteOffset,
         useSemitones,
         couplingMode,
@@ -123,8 +117,7 @@ struct WaveguideResonatorBankParams
         cascadeFilterMode = nullptr;
 
     WaveguideResonatorBankParams() = default;
-
-    void setup(ResonariumProcessor& p, int index);
+    WaveguideResonatorBankParams(ResonariumProcessor& p, int index);
 };
 
 struct ImpulseExciterParams
@@ -138,8 +131,7 @@ struct ImpulseExciterParams
         level = nullptr;
 
     ImpulseExciterParams() = default;
-
-    void setup(ResonariumProcessor& p, int index);
+    ImpulseExciterParams(ResonariumProcessor& p, int index);
 };
 
 struct NoiseExciterParams
@@ -154,8 +146,7 @@ struct NoiseExciterParams
         level = nullptr;
 
     NoiseExciterParams() = default;
-
-    void setup(ResonariumProcessor& p, int index);
+    NoiseExciterParams(ResonariumProcessor& p, int index);
 };
 
 struct ImpulseTrainExciterParams
@@ -173,8 +164,7 @@ struct ImpulseTrainExciterParams
         level = nullptr;
 
     ImpulseTrainExciterParams() = default;
-
-    void setup(ResonariumProcessor& p, int index);
+    ImpulseTrainExciterParams(ResonariumProcessor& p, int index);
 };
 
 struct ExternalInputExciterParams
@@ -186,8 +176,7 @@ struct ExternalInputExciterParams
         mix = nullptr;
 
     ExternalInputExciterParams() = default;
-
-    void setup(ResonariumProcessor& p);
+    ExternalInputExciterParams(ResonariumProcessor& p);
 };
 
 struct SampleExciterParams
@@ -203,8 +192,7 @@ struct SampleExciterParams
         level = nullptr;
 
     SampleExciterParams() = default;
-
-    void setup(ResonariumProcessor& p);
+    SampleExciterParams(ResonariumProcessor& p);
 };
 
 struct LFOParams
@@ -225,8 +213,7 @@ struct LFOParams
         stereo = nullptr;
 
     LFOParams() = default;
-
-    void setup(ResonariumProcessor& p, int index);
+    LFOParams(ResonariumProcessor& p, int index);
 };
 
 struct RandomLFOParams
@@ -247,8 +234,7 @@ struct RandomLFOParams
         stereo = nullptr;
 
     RandomLFOParams() = default;
-
-    void setup(ResonariumProcessor& p, int index);
+    RandomLFOParams(ResonariumProcessor& p, int index);
 };
 
 struct MSEGParams
@@ -272,8 +258,7 @@ struct MSEGParams
         loop = nullptr;
 
     MSEGParams() = default;
-
-    void setup(ResonariumProcessor& p, int index);
+    MSEGParams(ResonariumProcessor& p, int index);
 };
 
 struct ChorusParams
@@ -289,8 +274,7 @@ struct ChorusParams
         mix = nullptr;
 
     ChorusParams() = default;
-
-    void setup(ResonariumProcessor& p);
+    ChorusParams(ResonariumProcessor& p);
 };
 
 struct DelayParams
@@ -309,8 +293,7 @@ struct DelayParams
         mix = nullptr;
 
     DelayParams() = default;
-
-    void setup(ResonariumProcessor& p);
+    DelayParams(ResonariumProcessor& p);
 };
 
 struct DistortionParams
@@ -327,8 +310,7 @@ struct DistortionParams
         resonance = nullptr;
 
     DistortionParams() = default;
-
-    void setup(ResonariumProcessor& p);
+    DistortionParams(ResonariumProcessor& p);
 };
 
 struct MultiAmpParams
@@ -342,8 +324,7 @@ struct MultiAmpParams
         paramD = nullptr;
 
     MultiAmpParams() = default;
-
-    void setup(ResonariumProcessor& p);
+    MultiAmpParams(ResonariumProcessor& p);
 };
 
 struct PhaserParams
@@ -358,7 +339,8 @@ struct PhaserParams
         feedback,
         mix = nullptr;
 
-    void setup(ResonariumProcessor& p);
+    PhaserParams() = default;
+    PhaserParams(ResonariumProcessor& p);
 };
 
 struct CompressorParams
@@ -370,7 +352,8 @@ struct CompressorParams
         attack,
         release = nullptr;
 
-    void setup(ResonariumProcessor& p);
+    CompressorParams() = default;
+    CompressorParams(ResonariumProcessor& p);
 };
 
 struct ReverbParams
@@ -387,7 +370,8 @@ struct ReverbParams
         earlyMix,
         mix = nullptr;
 
-    void setup(ResonariumProcessor& p);
+    ReverbParams() = default;
+    ReverbParams(ResonariumProcessor& p);
 };
 
 struct SVFParams
@@ -399,7 +383,8 @@ struct SVFParams
         cutoff,
         resonance = nullptr;
 
-    void setup(ResonariumProcessor& p, juce::String name);
+    SVFParams() = default;
+    SVFParams(ResonariumProcessor& p, juce::String name);
 };
 
 struct EffectChainParams
@@ -418,8 +403,7 @@ struct EffectChainParams
         gain;
 
     EffectChainParams() = default;
-
-    void setup(ResonariumProcessor& p);
+    EffectChainParams(ResonariumProcessor& p);
 };
 
 /**
@@ -452,8 +436,18 @@ struct VoiceParams
     EffectChainParams effectChainParams;
 
     VoiceParams() = default;
+    VoiceParams(ResonariumProcessor& p);
+};
 
-    void setup(ResonariumProcessor& p);
+struct GlobalParams
+{
+    gin::Parameter::Ptr numVoices,
+                        stereoResonators,
+                        polyEffectChain,
+                        gain = nullptr;
+
+    GlobalParams() = default;
+    GlobalParams(ResonariumProcessor& p);
 };
 
 /**
@@ -469,24 +463,12 @@ struct SynthParams
     std::array<MSEGParams, NUM_MSEGS> msegParams;
     std::array<gin::Parameter::Ptr, NUM_MACROS> macroParams;
     EffectChainParams effectChainParams;
+    GlobalParams globalParams;
     gin::Parameter::Ptr soloResonator;
 
     SynthParams() = default;
-
-    void setup(ResonariumProcessor& p);
+    SynthParams(ResonariumProcessor& p);
 };
-
-struct GlobalParams
-{
-    gin::Parameter::Ptr numVoices,
-    stereoResonators,
-    polyEffectChain = nullptr;
-
-    GlobalParams() = default;
-
-    void setup(ResonariumProcessor& p);
-};
-
 
 struct UIParams
 {
@@ -499,8 +481,7 @@ struct UIParams
     gin::Parameter::Ptr bypassResonators;
 
     UIParams() = default;
-
-    void setup(ResonariumProcessor& p);
+    UIParams(ResonariumProcessor& p);
 };
 
 
