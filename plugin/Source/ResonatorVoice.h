@@ -18,7 +18,7 @@ class ResonariumProcessor;
 class ResonatorVoice : public gin::SynthesiserVoice, public gin::ModVoice
 {
 public:
-    ResonatorVoice(ResonariumProcessor& p, VoiceParams params);
+    ResonatorVoice(GlobalState& state, VoiceParams params);
     ~ResonatorVoice() override;
     void noteStarted() override;
     void noteStopped(bool allowTailOff) override;
@@ -33,7 +33,7 @@ public:
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
     bool isVoiceActive() override;
 
-    ResonariumProcessor& proc;
+    GlobalState& state;
     VoiceParams params;
     float frequency = 440.0f;
     gin::EasedValueSmoother<float> noteSmoother;

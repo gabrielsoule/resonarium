@@ -83,14 +83,14 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     sampleExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_LARGE_HEIGHT));
     excitersViewportContentComponent->addAndMakeVisible(sampleExciterParamBox);
 
-    if(proc.samplePath.isNotEmpty())
+    if(proc.globalState.samplePath.isNotEmpty())
     {
-        DBG("Loading preset sample from " + proc.samplePath);
-        juce::File file = juce::File(proc.samplePath);
+        DBG(proc.globalState.logPrefix + "Editor: Loading preset sample from " + proc.globalState.samplePath);
+        juce::File file = juce::File(proc.globalState.samplePath);
         sampleExciterParamBox->sampleDropper->loadFile(file);
     } else
     {
-        DBG("No sample path found in preset, skipping");
+        DBG(proc.globalState.logPrefix + "Editor: No sample path found in preset, skipping");
     }
 
     extInParamBox = new ExternalInputExciterParamBox("External In", proc, voiceParams.externalInputExciterParams);

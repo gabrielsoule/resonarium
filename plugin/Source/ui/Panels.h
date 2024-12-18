@@ -102,7 +102,7 @@ public:
         setName("sampleExciterParams");
         addEnable(sampleParams.enabled);
 
-        addControl(sampleDropper = new SampleDropperComponent(proc.sampler), 0, 0, 4, 1);
+        addControl(sampleDropper = new SampleDropperComponent(proc.globalState.sampler), 0, 0, 4, 1);
 
         addControl(new gin::Knob(sampleParams.level), 0, 1);
         addControl(new gin::Knob(sampleParams.mix), 1, 1);
@@ -456,7 +456,7 @@ public:
         addHeader(adsrNames, adsrParams.index, proc.uiParams.adsrSelect);
         headerTabButtonWidth = 75;
 
-        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcPolyENV[adsrParams.index], true));
+        addModSource(new gin::ModulationSourceButton(proc.globalState.modMatrix, proc.globalState.modSrcPolyENV[adsrParams.index], true));
 
         addControl(new gin::Knob(adsrParams.attack), 0, 0);
         addControl(new gin::Knob(adsrParams.decay), 1, 0);
@@ -512,8 +512,8 @@ public:
         headerTabButtonWidth = 75;
 
         // addModSource (new gin::ModulationSourceButton (proc.modMatrix, proc.modSrcLfo[idx], true));
-        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoLFO[lfoParams.index], false));
-        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcPolyLFO[lfoParams.index], true));
+        addModSource(new gin::ModulationSourceButton(proc.globalState.modMatrix, proc.globalState.modSrcMonoLFO[lfoParams.index], false));
+        addModSource(new gin::ModulationSourceButton(proc.globalState.modMatrix, proc.globalState.modSrcPolyLFO[lfoParams.index], true));
 
         addControl(r = new gin::Knob(lfoParams.rate), 1, 0);
         addControl(b = new gin::Select(lfoParams.beat), 1, 0);
@@ -593,8 +593,8 @@ public:
         addHeader(lfoNames, randomLfoParams.index, proc.uiParams.randomLfoSelect);
         headerTabButtonWidth = 75;
 
-        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoRND[randomLfoParams.index], false));
-        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcPolyRND[randomLfoParams.index], true));
+        addModSource(new gin::ModulationSourceButton(proc.globalState.modMatrix, proc.globalState.modSrcMonoRND[randomLfoParams.index], false));
+        addModSource(new gin::ModulationSourceButton(proc.globalState.modMatrix, proc.globalState.modSrcPolyRND[randomLfoParams.index], true));
 
         addControl(new gin::Switch(randomLfoParams.sync), 0, 0);
         addControl(r = new gin::Knob(randomLfoParams.rate), 1, 0);
@@ -656,8 +656,8 @@ public:
         addHeader(lfoNames, msegParams.index, proc.uiParams.msegSelect);
         headerTabButtonWidth = 75;
 
-        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcPolyMSEG[msegParams.index], true));
-        addModSource(new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMonoMSEG[msegParams.index], false));
+        addModSource(new gin::ModulationSourceButton(proc.globalState.modMatrix, proc.globalState.modSrcPolyMSEG[msegParams.index], true));
+        addModSource(new gin::ModulationSourceButton(proc.globalState.modMatrix, proc.globalState.modSrcMonoMSEG[msegParams.index], false));
         gridWidth = KNOB_W_SMALL;
         gridHeight = KNOB_H_SMALL;
         addControl(new gin::Switch(msegParams.sync), 8, 0);
@@ -742,7 +742,7 @@ public:
             knobs[i]->getSlider().setTooltip(
                 "Control the value of this macro's outgoing modulation signal.");
             // knobs[i]->getSlider().setTooltip("This is a test tooltip,it doesn't do much");f
-            modSrcButtons[i] = new gin::ModulationSourceButton(proc.modMatrix, proc.modSrcMacro[i], false);
+            modSrcButtons[i] = new gin::ModulationSourceButton(proc.globalState.modMatrix, proc.globalState.modSrcMacro[i], false);
             frame.addAndMakeVisible(modSrcButtons[i]);
         }
     }
@@ -781,7 +781,7 @@ public:
 
         addHeader({"MACROS", "SOURCES", "MATRIX"}, 1, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
-        addControl(modSrcListComponent = new gin::ModSrcListBox(proc.modMatrix));
+        addControl(modSrcListComponent = new gin::ModSrcListBox(proc.globalState.modMatrix));
     }
 
     void resized() override
@@ -803,7 +803,7 @@ public:
         setName("mtx");
         addHeader({"MACROS", "SOURCES", "MATRIX"}, 2, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
-        addControl(modMatrixComponent = new gin::ModMatrixBox(proc, proc.modMatrix, 50));
+        addControl(modMatrixComponent = new gin::ModMatrixBox(proc, proc.globalState.modMatrix, 50));
     }
 
     void resized() override

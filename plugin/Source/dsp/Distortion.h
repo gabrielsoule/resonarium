@@ -1,7 +1,6 @@
 #ifndef DISTORTION_H
 #define DISTORTION_H
-
-#include "../PluginProcessor.h"
+#include "../Parameters.h"
 
 class Distortion
 {

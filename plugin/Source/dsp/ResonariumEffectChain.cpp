@@ -1,7 +1,6 @@
 #include "ResonariumEffectChain.h"
 
 #include "../ResonatorVoice.h"
-#include "../PluginProcessor.h"
 #include "../defines.h"
 
 ResonariumEffectChain::ResonariumEffectChain(EffectChainParams params)

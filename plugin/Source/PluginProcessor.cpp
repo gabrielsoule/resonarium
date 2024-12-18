@@ -17,7 +17,7 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
 //==============================================================================
 ResonariumProcessor::ResonariumProcessor() :
     gin::Processor(false, getOptions()),
-    synth(*this),
+    synth(globalState, SynthParams(*this)),
     uiParams(*this)
 {
 #if PERFETTO
@@ -62,8 +62,8 @@ ResonariumProcessor::ResonariumProcessor() :
     synth.setVoiceStealingEnabled(true);
     for (int i = 0; i < 64; i++)
     {
-        ResonatorVoice* voice = new ResonatorVoice(*this, synth.params.voiceParams);
-        modMatrix.addVoice(voice);
+        ResonatorVoice* voice = new ResonatorVoice(globalState, synth.params.voiceParams);
+        globalState.modMatrix.addVoice(voice);
         synth.addVoice(voice);
         voice->id = i;
     }
@@ -81,68 +81,69 @@ ResonariumProcessor::~ResonariumProcessor()
 
 void ResonariumProcessor::setupModMatrix()
 {
-    modSrcPressure = modMatrix.addPolyModSource("mpep", "MPE Pressure", false);
-    modSrcTimbre = modMatrix.addPolyModSource("mpet", "MPE Timbre", false);
-    modSrcPitchbend = modMatrix.addMonoModSource("pb", "Pitch Bend", true);
-    modSrcNote = modMatrix.addPolyModSource("note", "MIDI Note Number", false);
-    modSrcVelocity = modMatrix.addPolyModSource("vel", "MIDI Velocity", false);
+    globalState.modSrcPressure = globalState.modMatrix.addPolyModSource("mpep", "MPE Pressure", false);
+    globalState.modSrcTimbre = globalState.modMatrix.addPolyModSource("mpet", "MPE Timbre", false);
+    globalState.modSrcPitchbend = globalState.modMatrix.addMonoModSource("pb", "Pitch Bend", true);
+    globalState.modSrcNote = globalState.modMatrix.addPolyModSource("note", "MIDI Note Number", false);
+    globalState.modSrcVelocity = globalState.modMatrix.addPolyModSource("vel", "MIDI Velocity", false);
 
     for (int i = 0; i < NUM_LFOS; i++)
     {
-        modSrcMonoLFO.add(modMatrix.addMonoModSource(juce::String::formatted("mlfo%d", i + 1),
+        globalState.modSrcMonoLFO[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("mlfo%d", i + 1),
                                                      juce::String::formatted("LFO %d (Mono)", i + 1),
-                                                     true));
+                                                     true);
 
-        modSrcPolyLFO.add(modMatrix.addPolyModSource(juce::String::formatted("lfo%d", i + 1),
-                                                     juce::String::formatted("LFO %d", i + 1),
-                                                     true));
+        globalState.modSrcPolyLFO[i] = globalState.modMatrix.addPolyModSource(juce::String::formatted("lfo%d", i + 1),
+                                                                  juce::String::formatted("LFO %d", i + 1),
+                                                                  true);
     }
 
     for (int i = 0; i < NUM_RANDOMS; i++)
     {
-        modSrcMonoRND.add(modMatrix.addMonoModSource(juce::String::formatted("mrnd%d", i + 1),
-                                                     juce::String::formatted("RAND %d (Mono)", i + 1),
-                                                     true));
+        globalState.modSrcMonoRND[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("mrnd%d", i + 1),
+                                                            juce::String::formatted("RAND %d (Mono)", i + 1),
+                                                            true);
 
-        modSrcPolyRND.add(modMatrix.addPolyModSource(juce::String::formatted("mrnd%d", i + 1),
-                                                     juce::String::formatted("RAND %d", i + 1),
-                                                     true));
+        globalState.modSrcPolyRND[i] = globalState.modMatrix.addPolyModSource(juce::String::formatted("rnd%d", i + 1),
+                                                            juce::String::formatted("RAND %d", i + 1),
+                                                            true);
     }
 
     for (int i = 0; i < NUM_ENVELOPES; i++)
     {
-        modSrcPolyENV.add(modMatrix.addPolyModSource(juce::String::formatted("env%d", i + 1),
+        globalState.modSrcPolyENV[i] = globalState.modMatrix.addPolyModSource(juce::String::formatted("env%d", i + 1),
                                                      juce::String::formatted("ENV %d", i + 1),
-                                                     false));
+                                                     false);
     }
 
     for (int i = 0; i < NUM_MSEGS; i++)
     {
-        modSrcMonoMSEG.add(modMatrix.addMonoModSource(juce::String::formatted("mmseg%d", i + 1),
+        globalState.modSrcMonoMSEG[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("mmseg%d", i + 1),
                                                       juce::String::formatted("MSEG %d (Mono)", i + 1),
-                                                      true));
+                                                      true);
 
-        modSrcPolyMSEG.add(modMatrix.addPolyModSource(juce::String::formatted("env%d", i + 1),
+
+        globalState.modSrcPolyMSEG[i] = globalState.modMatrix.addPolyModSource(juce::String::formatted("mseg%d", i + 1),
                                                       juce::String::formatted("MSEG %d", i + 1),
-                                                      false));
+                                                      false);
     }
 
     for (int i = 0; i < NUM_MACROS; i++)
     {
-        modSrcMacro.add(modMatrix.addMonoModSource(juce::String::formatted("macro%d", i + 1),
-                                                   juce::String::formatted("Macro %d", i + 1),
-                                                   false));
+        globalState.modSrcMacro[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("macro%d", i + 1),
+                                                                juce::String::formatted("Macro %d", i + 1),
+                                                                false);
     }
 
     for (int i = 0; i <= 119; i++)
     {
         juce::String name = juce::MidiMessage::getControllerName(i);
         if (name.isEmpty())
-            modSrcCC.add(modMatrix.addMonoModSource(juce::String::formatted("cc%d", i),
-                                                    juce::String::formatted("CC %d", i), false));
+            globalState.modSrcCC[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("cc%d", i),
+                                                    juce::String::formatted("CC %d", i), false);
         else
-            modSrcCC.add(modMatrix.addMonoModSource(juce::String::formatted("cc%d", i),
-                                                    juce::String::formatted("CC %d ", i) + name, false));
+            globalState.modSrcCC[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("cc%d", i),
+                                                    juce::String::formatted("CC %d ", i) + name, false);
     }
 
     for (auto pp : getPluginParameters())
@@ -151,19 +152,19 @@ void ResonariumProcessor::setupModMatrix()
         if (!pp->isInternal())
         {
             DBG("  Adding parameter " + pp->getName(40) + " to mod matrix as a poly parameter");
-            modMatrix.addParameter(pp, true, 0.02);
+            globalState.modMatrix.addParameter(pp, true, 0.02);
         }
     }
     DBG("TOTAL PARAMETERS REGISTERED: " + juce::String(getPluginParameters().size()));
 
-    modMatrix.build();
+    globalState.modMatrix.build();
 }
 
 //==============================================================================
 void ResonariumProcessor::stateUpdated()
 {
     DBG("Updating state FROM disk");
-    modMatrix.stateUpdated(state);
+    globalState.modMatrix.stateUpdated(state);
 
     for (int i = 0; i < NUM_MSEGS; i++)
     {
@@ -196,12 +197,13 @@ void ResonariumProcessor::stateUpdated()
     if (!pathXML.isValid() || pathXML.getProperty("path").toString().isEmpty())
     {
         DBG("Processor: No sample path found in preset, clearing sampler");
-        sampler.clear();
+        globalState.sampler.clear();
     }
     else
     {
         DBG("Processor: Loading sample from path: " + pathXML.getProperty("path").toString());
-        sampler.loadFile(pathXML.getProperty("path").toString());
+        globalState.sampler.loadFile(pathXML.getProperty("path").toString());
+        globalState.samplePath = pathXML.getProperty("path").toString();
     }
 
     //force an editor update, this is a little janky and should be improved
@@ -215,8 +217,8 @@ void ResonariumProcessor::stateUpdated()
         resonariumEditor->sampleExciterParamBox->sampleDropper->updateFromSampler();
     }
 
-    logPrefix = "[" + getProgramName(getCurrentProgram()) + "] ";
-    DBG(logPrefix + " State updated from disk successfully!");
+    globalState.logPrefix = "[" + getProgramName(getCurrentProgram()) + "] ";
+    DBG(globalState.logPrefix + " State updated from disk successfully!");
 
     if (prepared) reset();
 }
@@ -224,7 +226,7 @@ void ResonariumProcessor::stateUpdated()
 void ResonariumProcessor::updateState()
 {
     DBG("Updating plugin state TO disk");
-    modMatrix.updateState(state);
+    globalState.modMatrix.updateState(state);
     for (int i = 0; i < NUM_MSEGS; i++)
     {
         auto msegTree = state.getOrCreateChildWithName("MSEG" + juce::String(i + 1), nullptr);
@@ -232,7 +234,7 @@ void ResonariumProcessor::updateState()
     }
 
     //write the sample path from the sampler to the xml
-    state.getOrCreateChildWithName("samplePath", nullptr).setProperty("path", sampler.getFilePath(), nullptr);
+    state.getOrCreateChildWithName("samplePath", nullptr).setProperty("path", globalState.sampler.getFilePath(), nullptr);
 }
 
 void ResonariumProcessor::reset()
@@ -245,10 +247,10 @@ void ResonariumProcessor::prepareToPlay(double newSampleRate, int newSamplesPerB
 {
     prepared = true;
     Processor::prepareToPlay(newSampleRate, newSamplesPerBlock);
-    modMatrix.setSampleRate(newSampleRate);
+    globalState.modMatrix.setSampleRate(newSampleRate);
     synth.prepare({newSampleRate, static_cast<juce::uint32>(newSamplesPerBlock), 2});
-    inputBuffer = juce::AudioBuffer<float>(2, newSamplesPerBlock);
-    inputBuffer.clear();
+    globalState.extInputBuffer = juce::AudioBuffer<float>(2, newSamplesPerBlock);
+    globalState.extInputBuffer.clear();
     reset();
     DBG("Resonarium instance preparing to play:");
     DBG("   Input channels: " + juce::String(getMainBusNumInputChannels()));
@@ -265,8 +267,10 @@ void ResonariumProcessor::releaseResources()
 void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     juce::ScopedNoDenormals noDenormals;
-    inputBuffer.copyFrom(0, 0, buffer.getReadPointer(0), buffer.getNumSamples());
-    inputBuffer.copyFrom(1, 0, buffer.getReadPointer(1), buffer.getNumSamples());
+
+    //deal with external input for the External Input Exciter
+    globalState.extInputBuffer.copyFrom(0, 0, buffer.getReadPointer(0), buffer.getNumSamples());
+    globalState.extInputBuffer.copyFrom(1, 0, buffer.getReadPointer(1), buffer.getNumSamples());
     if (synth.params.voiceParams.externalInputExciterParams.enabled->isOn())
     {
         buffer.applyGain(std::cos(
@@ -274,9 +278,14 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
             juce::MathConstants<float>::halfPi));
     }
     if (!buffer.hasBeenCleared()) buffer.clear();
+
+    //update the global state for the rest of the program
+    globalState.playHead = getPlayHead();
+
+    //process audio
     synth.startBlock();
     synth.renderNextBlock(buffer, midi, 0, buffer.getNumSamples());
-    modMatrix.finishBlock(buffer.getNumSamples());
+    globalState.modMatrix.finishBlock(buffer.getNumSamples());
     synth.endBlock(buffer.getNumSamples());
 
 #if JUCE_DEBUG
@@ -287,7 +296,7 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         {
             if (std::isnan(buffer.getSample(i, j)))
             {
-                DBG(logPrefix + " NaN detected in channel " + juce::String(i) + " at sample " + juce::String(j));
+                DBG(globalState.logPrefix + " NaN detected in channel " + juce::String(i) + " at sample " + juce::String(j));
                 juce::String blockString = "";
                 for (int k = 0; k < buffer.getNumSamples(); k++)
                 {
@@ -296,7 +305,7 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
                 DBG(blockString);
                 if (synth.getNumActiveVoices() == 0)
                 {
-                    DBG(logPrefix + "However, no active voices are present.");
+                    DBG(globalState.logPrefix + "However, no active voices are present.");
                 }
                 else
                 {

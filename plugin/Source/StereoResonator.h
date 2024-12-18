@@ -1,7 +1,3 @@
-//
-// Created by Gabriel Soule on 7/22/24.
-//
-
 #ifndef STEREORESONATOR_H
 #define STEREORESONATOR_H
 

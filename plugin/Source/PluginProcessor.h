@@ -6,6 +6,7 @@
 #include "Parameters.h"
 #include <melatonin_perfetto/melatonin_perfetto.h>
 
+#include "GlobalState.h"
 #include "dsp/Sampler.h"
 
 //==============================================================================
@@ -29,35 +30,12 @@ public:
     static gin::ProcessorOptions getOptions();
 
     ResonatorSynth synth;
-    gin::ModMatrix modMatrix;
-    gin::ModSrcId
-        modSrcPressure,
-        modSrcTimbre,
-        modSrcPitchbend,
-        modSrcNote,
-        modSrcVelocity;
-    juce::Array<gin::ModSrcId>
-        modSrcMonoLFO,
-        modSrcPolyLFO,
-        modSrcMonoRND,
-        modSrcPolyRND,
-        modSrcPolyENV,
-        modSrcMonoMSEG,
-        modSrcPolyMSEG,
-        modSrcCC,
-        modSrcMacro;
-    //contains all the parameters that a voice needs modulated polyphonically (which is almost all of 'em)
     UIParams uiParams;
+    GlobalState globalState;
     gin::AudioFifo scopeFifo { 2, 44100 };
-
-    //A copy of the input buffer, which is accessed by Ext. In exciters.
-    juce::AudioBuffer<float> inputBuffer;
-    //every sample exciter is polyphonic, they all share the same sample buffer.
-    Sampler sampler;
-    juce::String samplePath = "";
     int pluginInstanceID = -1;
     bool prepared = false; //indicates that prepareToPlay has been called at least once
-    juce::String logPrefix = "[default]"; //a prefix that identifies this instance, for debugging
+    bool soloActive = false; //true if a resonator is in solo mode
 
 #if PERFETTO
     std::unique_ptr<perfetto::TracingSession> tracingSession;

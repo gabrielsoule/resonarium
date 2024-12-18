@@ -280,11 +280,11 @@ void SampleExciter::nextSample()
 
 void SampleExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
 {
-    if (!params.enabled->isOn() || !proc.sampler.isLoaded() || !isPlaying)
+    if (!params.enabled->isOn() || !state.sampler.isLoaded() || !isPlaying)
         return;
 
     const int numSamples = exciterBlock.getNumSamples();
-    const int totalSamples = proc.sampler.getNumSamples();
+    const int totalSamples = state.sampler.getNumSamples();
     const int loopLength = endSample - startSample;
     int remainingSamples = numSamples;
     int blockOffset = 0;
@@ -311,7 +311,7 @@ void SampleExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::ds
         const int samplesToProcess = std::min(remainingSamples, samplesAvailable);
 
         // Get the raw sample data
-        auto sampleBlock = proc.sampler.getSubBlock(currentSample, samplesToProcess);
+        auto sampleBlock = state.sampler.getSubBlock(currentSample, samplesToProcess);
 
         // Copy to our scratch buffer
         juce::dsp::AudioBlock<float> tempBlock = scratchBlock.getSubBlock(0, samplesToProcess);
@@ -352,8 +352,8 @@ void SampleExciter::noteStarted()
 {
     isPlaying = true;
     envelope.noteOn();
-    startSample = static_cast<int>(proc.sampler.getNumSamples() * voice.getValue(params.start));
-    endSample = static_cast<int>(proc.sampler.getNumSamples() * voice.getValue(params.end));
+    startSample = static_cast<int>(state.sampler.getNumSamples() * voice.getValue(params.start));
+    endSample = static_cast<int>(state.sampler.getNumSamples() * voice.getValue(params.end));
 }
 
 void SampleExciter::noteStopped(bool avoidTailOff)
@@ -396,8 +396,8 @@ void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& exciterBlock,
     float gainL = voice.getValue(params.gain, 0) * mix;
     float gainR = voice.getValue(params.gain, 1) * mix;
     jassert(gainL == gainR);
-    extInBuffer.copyFrom(0, v.currentBlockStartSample, proc.inputBuffer.getReadPointer(0), v.currentBlockNumSamples, gainL);
-    extInBuffer.copyFrom(1, v.currentBlockStartSample, proc.inputBuffer.getReadPointer(1), v.currentBlockNumSamples, gainR);
+    extInBuffer.copyFrom(0, v.currentBlockStartSample, state.extInputBuffer.getReadPointer(0), v.currentBlockNumSamples, gainL);
+    extInBuffer.copyFrom(1, v.currentBlockStartSample, state.extInputBuffer.getReadPointer(1), v.currentBlockNumSamples, gainR);
     juce::dsp::AudioBlock<float> extInBlock = juce::dsp::AudioBlock<float>(extInBuffer, v.currentBlockStartSample);
     // filter.process(extInBlock);
     exciterBlock.add(extInBlock);

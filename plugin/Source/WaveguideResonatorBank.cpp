@@ -1,11 +1,11 @@
 #include "WaveguideResonatorBank.h"
-
-#include <sys/proc.h>
-
 #include "ResonatorVoice.h"
 
-WaveguideResonatorBank::WaveguideResonatorBank(ResonatorVoice& parentVoice, WaveguideResonatorBankParams params) :
-    voice(parentVoice), params(params)
+WaveguideResonatorBank::WaveguideResonatorBank(GlobalState& state, ResonatorVoice& parentVoice,
+                                               WaveguideResonatorBankParams params) :
+    state(state),
+    voice(parentVoice),
+    params(params)
 {
     dcBlockerCoefficients =
         new juce::dsp::IIR::Coefficients<float>(1, -1, 1, -0.995f);
@@ -141,9 +141,9 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                     outSampleL += soloOutSampleL;
                     outSampleR += soloOutSampleR;
 
-                    if (voice.proc.synth.soloActive &&
-                        voice.proc.synth.soloBankIndex == index &&
-                        voice.proc.synth.soloResonatorIndex == resonators[j]->resonatorIndex)
+                    if (state.soloActive &&
+                        state.soloBankIndex == index &&
+                        state.soloResonatorIndex == resonators[j]->resonatorIndex)
                     {
                         voice.soloBuffer.setSample(0, voice.currentBlockStartSample + i, soloOutSampleL);
                         voice.soloBuffer.setSample(1, voice.currentBlockStartSample + i, soloOutSampleR);
@@ -181,12 +181,12 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                     gain;
             }
 
-            if (voice.proc.synth.soloActive && voice.proc.synth.soloBankIndex == index)
+            if (state.soloActive && state.soloBankIndex == index)
             {
                 voice.soloBuffer.setSample(0, voice.currentBlockStartSample + i,
-                                           resonatorOutSamplesL[voice.proc.synth.soloResonatorIndex]);
+                                           resonatorOutSamplesL[state.soloResonatorIndex]);
                 voice.soloBuffer.setSample(1, voice.currentBlockStartSample + i,
-                                           resonatorOutSamplesR[voice.proc.synth.soloResonatorIndex]);
+                                           resonatorOutSamplesR[state.soloResonatorIndex]);
             }
 
             //apply the bridge filter H(z) = -2 / totalGain. This is a necessary criterion for stability
@@ -257,9 +257,9 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                     outSampleR += soloOutSampleR;
                     outSampleL += soloOutSampleL;
 
-                    if (voice.proc.synth.soloActive &&
-                        voice.proc.synth.soloBankIndex == index &&
-                        voice.proc.synth.soloResonatorIndex == resonators[j]->resonatorIndex)
+                    if (state.soloActive &&
+                        state.soloBankIndex == index &&
+                        state.soloResonatorIndex == resonators[j]->resonatorIndex)
                     {
                         voice.soloBuffer.setSample(0, voice.currentBlockStartSample + i, soloOutSampleL);
                         voice.soloBuffer.setSample(1, voice.currentBlockStartSample + i, soloOutSampleR);

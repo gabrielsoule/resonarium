@@ -3,8 +3,6 @@
 
 #include <JuceHeader.h>
 
-#include "../PluginProcessor.h"
-
 /**
 * A delay effect with a continuous blend between stereo and ping-pong modes.
 */

@@ -1,12 +1,8 @@
-//
-// Created by Gabriel Soule on 5/1/24.
-//
-
 #include "ResonatorSynth.h"
 #include "ResonatorVoice.h"
 #include "PluginProcessor.h"
 
-ResonatorSynth::ResonatorSynth(ResonariumProcessor& p) : proc(p), params(p)
+ResonatorSynth::ResonatorSynth(GlobalState& state, SynthParams params) : state(state), params(params), effectChain(params.effectChainParams)
 {
     monoMSEGs.clear();
     msegData.clear();
@@ -57,11 +53,11 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
 void ResonatorSynth::updateParameters()
 {
     int rawIndex = static_cast<int>(params.soloResonator->getProcValue());
-    soloActive = rawIndex > -1.0f;
-    if(soloActive)
+    state.soloActive = rawIndex > -1.0f;
+    if(state.soloActive)
     {
-        soloBankIndex = std::floor(rawIndex / NUM_RESONATORS);
-        soloResonatorIndex = rawIndex % NUM_RESONATORS;
+        state.soloBankIndex = std::floor(rawIndex / NUM_RESONATORS);
+        state.soloResonatorIndex = rawIndex % NUM_RESONATORS;
         // DBG("Solo active at bank " << soloBankIndex << " resonator " << soloResonatorIndex);
         // DBG(rawIndex);
     }
@@ -72,18 +68,18 @@ void ResonatorSynth::updateParameters()
             float freq = 0;
             if (params.lfoParams[i].sync->getProcValue() > 0.0f)
                 freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
-                    toSeconds(proc.getPlayHead());
+                    toSeconds(state.playHead);
             else
-                freq = proc.modMatrix.getValue(params.lfoParams[i].rate);
-            monoLFOs[i].updateParameters(proc.modMatrix, freq);
+                freq = state.modMatrix.getValue(params.lfoParams[i].rate);
+            monoLFOs[i].updateParameters(state.modMatrix, freq);
             monoLFOs[i].process(currentBlockSize);
-            proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], monoLFOs[i].getOutput(0), 0);
-            proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], monoLFOs[i].getOutput(1), 1);
+            state.modMatrix.setMonoValue(state.modSrcMonoLFO[i], monoLFOs[i].getOutput(0), 0);
+            state.modMatrix.setMonoValue(state.modSrcMonoLFO[i], monoLFOs[i].getOutput(1), 1);
         }
         else
         {
-            proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], 0, 0);
-            proc.modMatrix.setMonoValue(proc.modSrcMonoLFO[i], 0, 1);
+            state.modMatrix.setMonoValue(state.modSrcMonoLFO[i], 0, 0);
+            state.modMatrix.setMonoValue(state.modSrcMonoLFO[i], 0, 1);
         }
     }
 
@@ -95,13 +91,13 @@ void ResonatorSynth::updateParameters()
             if (params.randomLfoParams[i].sync->getProcValue() > 0.0f)
                 rate = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(
                         params.randomLfoParams[i].beat->getProcValue())].
-                    toSeconds(proc.getPlayHead());
+                    toSeconds(state.playHead);
             else
-                rate = proc.modMatrix.getValue(params.randomLfoParams[i].rate);
-            monoRandomLFOs[i].updateParametersMono(proc.modMatrix, rate);
+                rate = state.modMatrix.getValue(params.randomLfoParams[i].rate);
+            monoRandomLFOs[i].updateParametersMono(state.modMatrix, rate);
             monoRandomLFOs[i].process(currentBlockSize);
-            proc.modMatrix.setMonoValue(proc.modSrcMonoRND[i], monoRandomLFOs[i].getOutput(0), 0);
-            proc.modMatrix.setMonoValue(proc.modSrcMonoRND[i], monoRandomLFOs[i].getOutput(1), 1);
+            state.modMatrix.setMonoValue(state.modSrcMonoRND[i], monoRandomLFOs[i].getOutput(0), 0);
+            state.modMatrix.setMonoValue(state.modSrcMonoRND[i], monoRandomLFOs[i].getOutput(1), 1);
         }
     }
 
@@ -112,25 +108,25 @@ void ResonatorSynth::updateParameters()
             float rate = 0;
             if (params.msegParams[i].sync->getProcValue() > 0.0f)
                 rate = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.msegParams[i].beat->getProcValue())].
-                    toSeconds(proc.getPlayHead());
+                    toSeconds(state.playHead);
             else
-                rate = proc.modMatrix.getValue(params.msegParams[i].rate);
-            monoMSEGs.getReference(i).updateParameters(proc.modMatrix, rate);
+                rate = state.modMatrix.getValue(params.msegParams[i].rate);
+            monoMSEGs.getReference(i).updateParameters(state.modMatrix, rate);
             monoMSEGs.getReference(i).process(currentBlockSize);
-            proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], monoMSEGs.getReference(i).getOutput(0), 0);
-            proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], monoMSEGs.getReference(i).getOutput(1), 1);
+            state.modMatrix.setMonoValue(state.modSrcMonoMSEG[i], monoMSEGs.getReference(i).getOutput(0), 0);
+            state.modMatrix.setMonoValue(state.modSrcMonoMSEG[i], monoMSEGs.getReference(i).getOutput(1), 1);
         }
         else
         {
-            proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], 0, 0);
-            proc.modMatrix.setMonoValue(proc.modSrcMonoMSEG[i], 0, 1);
+            state.modMatrix.setMonoValue(state.modSrcMonoMSEG[i], 0, 0);
+            state.modMatrix.setMonoValue(state.modSrcMonoMSEG[i], 0, 1);
         }
     }
 
     for(int i = 0; i < NUM_MACROS; i++)
     {
-        proc.modMatrix.setMonoValue(proc.modSrcMacro[i], proc.modMatrix.getValue(params.macroParams[i]), 0);
-        proc.modMatrix.setMonoValue(proc.modSrcMacro[i], proc.modMatrix.getValue(params.macroParams[i]), 1);
+        state.modMatrix.setMonoValue(state.modSrcMacro[i], state.modMatrix.getValue(params.macroParams[i]), 0);
+        state.modMatrix.setMonoValue(state.modSrcMacro[i], state.modMatrix.getValue(params.macroParams[i]), 1);
     }
 }
 

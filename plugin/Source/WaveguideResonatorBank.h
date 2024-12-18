@@ -1,6 +1,7 @@
 #ifndef WAVEGUIDERESONATORBANK_H
 #define WAVEGUIDERESONATORBANK_H
 #include "defines.h"
+#include "GlobalState.h"
 #include "ResonatorBank.h"
 #include "StereoResonator.h"
 
@@ -18,7 +19,7 @@ public:
         CASCADE,
     };
 
-    WaveguideResonatorBank(ResonatorVoice& parentVoice, WaveguideResonatorBankParams params);
+    WaveguideResonatorBank(GlobalState& state, ResonatorVoice& parentVoice, WaveguideResonatorBankParams params);
     ~WaveguideResonatorBank();
     void process(
         juce::dsp::AudioBlock<float>& exciterBlock,
@@ -28,6 +29,7 @@ public:
     void updateParameters(float newFrequency, int numSamples);
     void setFeedbackMode(CouplingMode newMode);
 
+    GlobalState& state;
     ResonatorVoice& voice;
     WaveguideResonatorBankParams params;
     int index = -1;

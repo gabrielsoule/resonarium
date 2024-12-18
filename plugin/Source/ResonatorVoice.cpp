@@ -1,7 +1,6 @@
 #include "ResonatorVoice.h"
-#include "PluginProcessor.h"
 
-ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : proc(p), params(params),
+ResonatorVoice::ResonatorVoice(GlobalState& state, VoiceParams params) : state(state), params(params),
                                                                              effectChain(params.effectChainParams)
 {
     frequency = 440.0f;
@@ -14,28 +13,28 @@ ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : pro
 
     for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
-        auto* waveguideBank = new WaveguideResonatorBank(*this, params.waveguideResonatorBankParams[i]);
+        auto* waveguideBank = new WaveguideResonatorBank(state, *this, params.waveguideResonatorBankParams[i]);
         resonatorBanks.add(waveguideBank);
         dcBlockers[i].state = dcBlockerCoefficients;
     }
 
     for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
     {
-        exciters.add(new ImpulseExciter(proc, *this, params.impulseExciterParams[i]));
+        exciters.add(new ImpulseExciter(state, *this, params.impulseExciterParams[i]));
     }
 
     for (int i = 0; i < NUM_NOISE_EXCITERS; i++)
     {
-        exciters.add(new NoiseExciter(proc, *this, params.noiseExciterParams[i]));
+        exciters.add(new NoiseExciter(state, *this, params.noiseExciterParams[i]));
     }
 
     for (int i = 0; i < NUM_IMPULSE_TRAIN_EXCITERS; i++)
     {
-        exciters.add(new ImpulseTrainExciter(proc, *this, params.impulseTrainExciterParams[i]));
+        exciters.add(new ImpulseTrainExciter(state, *this, params.impulseTrainExciterParams[i]));
     }
 
-    exciters.add(new SampleExciter(proc, *this, params.sampleExciterParams));
-    exciters.add(extInExciter = new ExternalInputExciter(proc, *this, params.externalInputExciterParams));
+    exciters.add(new SampleExciter(state, *this, params.sampleExciterParams));
+    exciters.add(extInExciter = new ExternalInputExciter(state, *this, params.externalInputExciterParams));
 
     for (int i = 0; i < NUM_LFOS; i++)
     {
@@ -125,7 +124,7 @@ void ResonatorVoice::noteStarted()
 {
     startVoice();
     auto note = getCurrentlyPlayingNote();
-    DBG(proc.logPrefix + " Starting note on voice " + juce::String(id) + " with MIDI " + juce::String(note.initialNote) + " at Hz " + juce::String(note.getFrequencyInHertz()));
+    DBG(state.logPrefix + " Starting note on voice " + juce::String(id) + " with MIDI " + juce::String(note.initialNote) + " at Hz " + juce::String(note.getFrequencyInHertz()));
     if (glideInfo.fromNote >= 0 && (glideInfo.glissando || glideInfo.portamento))
     {
         DBG("WARNING: Portamento and glissando are not yet implemented.");
@@ -137,12 +136,12 @@ void ResonatorVoice::noteStarted()
         noteSmoother.setValueUnsmoothed(note.initialNote / 127.0f);
     }
 
-    proc.modMatrix.setPolyValue(*this, proc.modSrcVelocity, note.noteOnVelocity.asUnsignedFloat(), 0);
-    proc.modMatrix.setPolyValue(*this, proc.modSrcVelocity, note.noteOnVelocity.asUnsignedFloat(), 1);
-    proc.modMatrix.setPolyValue(*this, proc.modSrcTimbre, note.initialTimbre.asUnsignedFloat(), 0);
-    proc.modMatrix.setPolyValue(*this, proc.modSrcTimbre, note.initialTimbre.asUnsignedFloat(), 1);
-    proc.modMatrix.setPolyValue(*this, proc.modSrcPressure, note.pressure.asUnsignedFloat(), 0);
-    proc.modMatrix.setPolyValue(*this, proc.modSrcPressure, note.pressure.asUnsignedFloat(), 1);
+    state.modMatrix.setPolyValue(*this, state.modSrcVelocity, note.noteOnVelocity.asUnsignedFloat(), 0);
+    state.modMatrix.setPolyValue(*this, state.modSrcVelocity, note.noteOnVelocity.asUnsignedFloat(), 1);
+    state.modMatrix.setPolyValue(*this, state.modSrcTimbre, note.initialTimbre.asUnsignedFloat(), 0);
+    state.modMatrix.setPolyValue(*this, state.modSrcTimbre, note.initialTimbre.asUnsignedFloat(), 1);
+    state.modMatrix.setPolyValue(*this, state.modSrcPressure, note.pressure.asUnsignedFloat(), 0);
+    state.modMatrix.setPolyValue(*this, state.modSrcPressure, note.pressure.asUnsignedFloat(), 1);
 
     noteReleased = false;
     silenceCount = 0;
@@ -207,13 +206,13 @@ void ResonatorVoice::noteStopped(bool allowTailOff)
     noteReleased = true;
     if (!allowTailOff)
     {
-        DBG(proc.logPrefix + " Forcefully stopping note " + juce::String(id));
+        DBG(state.logPrefix + " Forcefully stopping note " + juce::String(id));
         clearCurrentNote();
         stopVoice();
     }
     else
     {
-        DBG(proc.logPrefix + " Released note " + juce::String(id));
+        DBG(state.logPrefix + " Released note " + juce::String(id));
     }
 
     for (auto* exciter : exciters)
@@ -235,7 +234,7 @@ bool ResonatorVoice::isVoiceActive()
 void ResonatorVoice::updateParameters(int numSamples)
 {
     auto note = getCurrentlyPlayingNote();
-    proc.modMatrix.setPolyValue(*this, proc.modSrcNote, note.initialNote / 127.0f);
+    state.modMatrix.setPolyValue(*this, state.modSrcNote, note.initialNote / 127.0f);
     currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
@@ -247,19 +246,19 @@ void ResonatorVoice::updateParameters(int numSamples)
             float freq = 0;
             if (params.lfoParams[i].sync->getProcValue() > 0.0f)
                 freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
-                    toSeconds(proc.getPlayHead());
+                    toSeconds(state.playHead);
             else
                 freq = getValue(params.lfoParams[i].rate);
             polyLFOs[i].updateParameters(*this, freq);
             polyLFOs[i].process(numSamples);
             //TODO optimize this call to avoid two searches to getreference
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyLFO[i], polyLFOs[i].getOutput(0), 0);
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyLFO[i], polyLFOs[i].getOutput(1), 1);
+            state.modMatrix.setPolyValue(*this, state.modSrcPolyLFO[i], polyLFOs[i].getOutput(0), 0);
+            state.modMatrix.setPolyValue(*this, state.modSrcPolyLFO[i], polyLFOs[i].getOutput(1), 1);
         }
         else
         {
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyLFO[i], polyLFOs[i].getOutput(0), 0);
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyLFO[i], polyLFOs[i].getOutput(1), 1);
+            state.modMatrix.setPolyValue(*this, state.modSrcPolyLFO[i], polyLFOs[i].getOutput(0), 0);
+            state.modMatrix.setPolyValue(*this, state.modSrcPolyLFO[i], polyLFOs[i].getOutput(1), 1);
         }
     }
 
@@ -271,13 +270,13 @@ void ResonatorVoice::updateParameters(int numSamples)
             if (params.randomLfoParams[i].sync->getProcValue() > 0.0f)
                 rate = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(
                         params.randomLfoParams[i].beat->getProcValue())].
-                    toSeconds(proc.getPlayHead());
+                    toSeconds(state.playHead);
             else
                 rate = getValue(params.randomLfoParams[i].rate);
             polyRandomLFOs[i].updateParameters(rate);
             polyRandomLFOs[i].process(numSamples);
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyRND[i], polyRandomLFOs[i].getOutput(0), 0);
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyRND[i], polyRandomLFOs[i].getOutput(1), 1);
+            state.modMatrix.setPolyValue(*this, state.modSrcPolyRND[i], polyRandomLFOs[i].getOutput(0), 0);
+            state.modMatrix.setPolyValue(*this, state.modSrcPolyRND[i], polyRandomLFOs[i].getOutput(1), 1);
         }
     }
 
@@ -285,8 +284,8 @@ void ResonatorVoice::updateParameters(int numSamples)
     {
         polyEnvelopes[i].updateParameters(*this);
         polyEnvelopes[i].process(numSamples);
-        proc.modMatrix.setPolyValue(*this, proc.modSrcPolyENV[i], polyEnvelopes[i].getOutput(), 0);
-        proc.modMatrix.setPolyValue(*this, proc.modSrcPolyENV[i], polyEnvelopes[i].getOutput(), 1);
+        state.modMatrix.setPolyValue(*this, state.modSrcPolyENV[i], polyEnvelopes[i].getOutput(), 0);
+        state.modMatrix.setPolyValue(*this, state.modSrcPolyENV[i], polyEnvelopes[i].getOutput(), 1);
     }
 
     for (int i = 0; i < NUM_MSEGS; i++)
@@ -296,18 +295,18 @@ void ResonatorVoice::updateParameters(int numSamples)
             float freq = 0;
             if (params.lfoParams[i].sync->getProcValue() > 0.0f)
                 freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
-                    toSeconds(proc.getPlayHead());
+                    toSeconds(state.playHead);
             else
                 freq = getValue(params.lfoParams[i].rate);
             polyMSEGs.getReference(i).updateParameters(*this, freq);
             polyMSEGs.getReference(i).process(numSamples);
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyMSEG[i], polyMSEGs.getReference(i).getOutput(0), 0);
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyMSEG[i], polyMSEGs.getReference(i).getOutput(1), 1);
+            state.modMatrix.setPolyValue(*this, state.modSrcPolyMSEG[i], polyMSEGs.getReference(i).getOutput(0), 0);
+            state.modMatrix.setPolyValue(*this, state.modSrcPolyMSEG[i], polyMSEGs.getReference(i).getOutput(1), 1);
         }
         else
         {
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyMSEG[i], 0, 0);
-            proc.modMatrix.setPolyValue(*this, proc.modSrcPolyMSEG[i], 0, 1);
+            state.modMatrix.setPolyValue(*this, state.modSrcPolyMSEG[i], 0, 0);
+            state.modMatrix.setPolyValue(*this, state.modSrcPolyMSEG[i], 0, 1);
         }
     }
 
@@ -321,9 +320,9 @@ void ResonatorVoice::updateParameters(int numSamples)
         exciter->updateParameters();
     }
 
-    effectChain.updateParameters(*this, proc.getPlayHead());
+    effectChain.updateParameters(*this, state.playHead);
 
-    bypassResonators = proc.uiParams.bypassResonators->isOn();
+    bypassResonators = state.bypassResonators;
 }
 
 void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
@@ -364,7 +363,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
             tempOutputBlock.add(previousBankBlock);
         }
 
-        if (!proc.synth.soloActive)
+        if (!state.soloActive)
         {
             effectChain.process(tempOutputBlock);
             outputBlock.add(tempOutputBlock);
@@ -416,15 +415,15 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 void ResonatorVoice::notePressureChanged()
 {
     auto note = getCurrentlyPlayingNote();
-    proc.modMatrix.setPolyValue(*this, proc.modSrcPressure, note.pressure.asUnsignedFloat(), 0);
-    proc.modMatrix.setPolyValue(*this, proc.modSrcPressure, note.pressure.asUnsignedFloat(), 1);
+    state.modMatrix.setPolyValue(*this, state.modSrcPressure, note.pressure.asUnsignedFloat(), 0);
+    state.modMatrix.setPolyValue(*this, state.modSrcPressure, note.pressure.asUnsignedFloat(), 1);
 }
 
 void ResonatorVoice::noteTimbreChanged()
 {
     auto note = getCurrentlyPlayingNote();
-    proc.modMatrix.setPolyValue(*this, proc.modSrcTimbre, note.timbre.asUnsignedFloat(), 0);
-    proc.modMatrix.setPolyValue(*this, proc.modSrcTimbre, note.timbre.asUnsignedFloat(), 1);
+    state.modMatrix.setPolyValue(*this, state.modSrcTimbre, note.timbre.asUnsignedFloat(), 0);
+    state.modMatrix.setPolyValue(*this, state.modSrcTimbre, note.timbre.asUnsignedFloat(), 1);
 }
 
 void ResonatorVoice::notePitchbendChanged()
