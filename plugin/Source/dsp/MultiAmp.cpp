@@ -1,35 +1,12 @@
-//
-// Created by Gabriel Soule on 8/2/24.
-//
-
 #include "MultiAmp.h"
 
-MultiAmp::MultiAmp(ResonariumProcessor& p, MultiAmpParams params) : proc(p),
-                                                                      params(params),
-                                                                      bassAmp(FXBaseCallback([this]
-                                                                      {
-                                                                          return proc.getSampleRate();
-                                                                      })),
-                                                                      bigAmp(FXBaseCallback([this]
-                                                                      {
-                                                                          return proc.getSampleRate();
-                                                                      })),
-                                                                      deRez2(FXBaseCallback([this]
-                                                                      {
-                                                                          return proc.getSampleRate();
-                                                                      })),
-                                                                      fireAmp(FXBaseCallback([this]
-                                                                      {
-                                                                          return proc.getSampleRate();
-                                                                      })),
-                                                                      grindAmp(FXBaseCallback([this]
-                                                                      {
-                                                                          return proc.getSampleRate();
-                                                                      })),
-                                                                      leadAmp(FXBaseCallback([this]
-                                                                      {
-                                                                          return proc.getSampleRate();
-                                                                      }))
+MultiAmp::MultiAmp(std::function<double()> sampleRateCallback, MultiAmpParams params) :
+    params(params),
+    bassAmp(sampleRateCallback),
+    bigAmp(sampleRateCallback),
+    deRez2(sampleRateCallback),
+    fireAmp(sampleRateCallback),
+    grindAmp(sampleRateCallback), leadAmp(sampleRateCallback)
 {
 }
 

@@ -1,7 +1,6 @@
 #include "MultiDelay.h"
 
-MultiDelay::MultiDelay(ResonariumProcessor& p, float maxDelayInSeconds) :
-    proc(p),
+MultiDelay::MultiDelay(float maxDelayInSeconds) :
     maxDelayInSeconds(maxDelayInSeconds),
     delayLine(48000 * maxDelayInSeconds)
 {

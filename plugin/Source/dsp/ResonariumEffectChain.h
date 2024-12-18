@@ -13,14 +13,14 @@
 class ResonariumEffectChain
 {
 public:
-    ResonariumEffectChain(ResonariumProcessor& p, int channel, EffectChainParams params);
+    explicit ResonariumEffectChain(EffectChainParams params);
 
     void prepare(const juce::dsp::ProcessSpec& spec);
 
     void reset();
 
     template <typename T>
-    void updateParameters(T& source, float frequency);
+    void updateParameters(T& source, juce::AudioPlayHead* playhead);
 
     void process(juce::dsp::AudioBlock<float> block) noexcept;
 
@@ -52,13 +52,10 @@ public:
     SVFParams filter1Params;
     SVFParams filter2Params;
 
-
     juce::dsp::Gain<float> gain;
 
     EffectChainParams effectChainParams;
-
-    ResonariumProcessor& proc;
-
+    double sampleRate = -1;
 };
 
 #endif //RESONARIUMEFFECTCHAIN_H

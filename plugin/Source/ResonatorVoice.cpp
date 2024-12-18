@@ -2,7 +2,7 @@
 #include "PluginProcessor.h"
 
 ResonatorVoice::ResonatorVoice(ResonariumProcessor& p, VoiceParams params) : proc(p), params(params),
-                                                                             effectChain(p, 0, params.effectChainParams)
+                                                                             effectChain(params.effectChainParams)
 {
     frequency = 440.0f;
     this->disableSmoothing = true;
@@ -321,7 +321,7 @@ void ResonatorVoice::updateParameters(int numSamples)
         exciter->updateParameters();
     }
 
-    effectChain.updateParameters(*this, frequency);
+    effectChain.updateParameters(*this, proc.getPlayHead());
 
     bypassResonators = proc.uiParams.bypassResonators->isOn();
 }

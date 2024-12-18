@@ -11,7 +11,7 @@
 class MultiDelay
 {
 public:
-    MultiDelay(ResonariumProcessor& p, float maxDelayInSeconds);
+    explicit MultiDelay(float maxDelayInSeconds);
 
     void prepare(const juce::dsp::ProcessSpec& spec);
     void reset();
@@ -61,8 +61,6 @@ public:
             outputBlock.setSample(1, i, rightOut);
         }
     }
-
-    ResonariumProcessor& proc;
 
     float sampleRate;
     float maxDelayInSeconds;

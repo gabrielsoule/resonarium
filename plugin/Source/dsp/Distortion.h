@@ -24,7 +24,7 @@ public:
         post
     };
 
-    explicit Distortion(ResonariumProcessor& p, DistortionParams params);
+    explicit Distortion(DistortionParams params);
 
     void prepare(const juce::dsp::ProcessSpec& spec);
 
@@ -46,7 +46,6 @@ public:
     void process(juce::dsp::ProcessContextReplacing<float> context);
 
 private:
-    ResonariumProcessor& proc;
     DistortionParams params;
 
     DistortionMode distortionMode;

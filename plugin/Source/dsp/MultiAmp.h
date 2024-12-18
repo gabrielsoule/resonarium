@@ -1,13 +1,16 @@
 #ifndef MULTIAMP_H
 #define MULTIAMP_H
-#include "../PluginProcessor.h"
+
+#include <JuceHeader.h>
 #include "airwindows/BassAmp.h"
 #include "airwindows/BigAmp.h"
 #include "airwindows/DeRez2.h"
 #include "airwindows/GrindAmp.h"
 #include "airwindows/FireAmp.h"
 #include "airwindows/LeadAmp.h"
+#include "../Parameters.h"
 
+struct MultiAmpParams;
 /**
 * A distortion multi-effect that wraps several amp simulation algorithms,
 * as well as several Airwindows amp simulators.
@@ -25,7 +28,7 @@ public:
         BASS
     };
 
-    explicit MultiAmp(ResonariumProcessor& p, MultiAmpParams params);
+    explicit MultiAmp(std::function<double()> sampleRateCallback, MultiAmpParams params);
 
     void reset();
 
@@ -80,7 +83,6 @@ public:
 
     void process(juce::dsp::ProcessContextReplacing<float> context);
 
-    ResonariumProcessor& proc;
     MultiAmpParams params;
 
     BassAmp bassAmp;

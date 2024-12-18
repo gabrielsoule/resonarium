@@ -4,13 +4,13 @@
 #include "../PluginProcessor.h"
 #include "../defines.h"
 
-ResonariumEffectChain::ResonariumEffectChain(ResonariumProcessor& p, int channel, EffectChainParams params)
+ResonariumEffectChain::ResonariumEffectChain(EffectChainParams params)
     : chorusParams(params.chorusParams),
-      delay(p, MAX_DELAY_IN_SECONDS),
+      delay(MAX_DELAY_IN_SECONDS),
       delayParams(params.delayParams),
-      distortion(p, params.distortionParams),
+      distortion(params.distortionParams),
       distortionParams(params.distortionParams),
-      multiAmp(p, params.multiAmpParams),
+      multiAmp([this]() -> double { return sampleRate; }, params.multiAmpParams),
       multiAmpParams(params.multiAmpParams),
       phaserParams(params.phaserParams),
       compressorParams(params.compressorParams),
@@ -19,10 +19,8 @@ ResonariumEffectChain::ResonariumEffectChain(ResonariumProcessor& p, int channel
       filter2(params.filterParams[1]),
       filter1Params(params.filterParams[0]),
       filter2Params(params.filterParams[1]),
-      effectChainParams(params),
-      proc(p)
+      effectChainParams(params)
 {
-    this->channel = channel;
 }
 
 void ResonariumEffectChain::prepare(const juce::dsp::ProcessSpec& spec)
@@ -36,6 +34,7 @@ void ResonariumEffectChain::prepare(const juce::dsp::ProcessSpec& spec)
     gain.prepare(spec);
     filter1.prepare(spec);
     filter2.prepare(spec);
+    this->sampleRate = spec.sampleRate;
 }
 
 void ResonariumEffectChain::reset()
@@ -54,7 +53,7 @@ void ResonariumEffectChain::reset()
 }
 
 template <typename T>
-void ResonariumEffectChain::updateParameters(T& source, float frequency)
+void ResonariumEffectChain::updateParameters(T& source, juce::AudioPlayHead* playhead)
 {
     chorus.setRate(source.getValue(chorusParams.rate, channel));
     chorus.setDepth(source.getValue(chorusParams.depth, channel));
@@ -101,7 +100,7 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
     if (delayParams.syncL->getProcValue() > 0.0f)
     {
         delayTimeL = gin::NoteDuration::getNoteDurations()[size_t(delayParams.beatL->getProcValue())].
-            toSeconds(proc.getPlayHead());
+            toSeconds(playhead);
     }
     else
     {
@@ -119,7 +118,7 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
         if (delayParams.syncR->getProcValue() > 0.0f)
         {
             delayTimeR = gin::NoteDuration::getNoteDurations()[size_t(delayParams.beatR->getProcValue())].
-                toSeconds(proc.getPlayHead());
+                toSeconds(playhead);
         }
         else
         {
@@ -139,7 +138,6 @@ void ResonariumEffectChain::updateParameters(T& source, float frequency)
     compressor.setRatio(source.getValue(compressorParams.ratio));
     compressor.setAttack(source.getValue(compressorParams.attack));
     compressor.setRelease(source.getValue(compressorParams.release));
-
 
     distortion.updateParameters(source);
 
@@ -169,6 +167,6 @@ void ResonariumEffectChain::process(juce::dsp::AudioBlock<float> block) noexcept
 }
 
 
-template void ResonariumEffectChain::updateParameters<gin::ModVoice>(gin::ModVoice&, float);
-template void ResonariumEffectChain::updateParameters<gin::ModMatrix>(gin::ModMatrix&, float);
-template void ResonariumEffectChain::updateParameters<ResonatorVoice>(ResonatorVoice&, float);
+template void ResonariumEffectChain::updateParameters<gin::ModVoice>(gin::ModVoice&, juce::AudioPlayHead*);
+template void ResonariumEffectChain::updateParameters<gin::ModMatrix>(gin::ModMatrix&, juce::AudioPlayHead*);
+template void ResonariumEffectChain::updateParameters<ResonatorVoice>(ResonatorVoice&, juce::AudioPlayHead*);
