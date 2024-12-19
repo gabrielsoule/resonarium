@@ -36,15 +36,17 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 ```
 Then, you can build a target, e.g. the VST3 target, like so:
 ```
-cmake --build build --target Resonarium_VST3
+cmake --build build --target Resonarium_Instrument_VST3
 ```
 This should install the VST3 plugin directly into your system's plugin folder, where host software should be able to scan and load it. If this doesn't work, you may have to manually install the plugin from the build directory into your system's VST3 directory.
 
 If you'd rather cut right to the chase and explore Resonarium without all the hassle of spinning up a DAW, the standalone configuration may be more suitable:
 ```
-cmake --build build --target Resonarium_Standalone
+cmake --build build --target Resonarium_Instrument_Standalone
 ```
 When the standalone application is first run, you may need to configure your audio settings in the `Options` menu before any sound can be produced. You'll also need a MIDI input source, since the plugin doesn't include a virtual on-screen keyboard. 
+
+Resonarium can also be used as an audio effect with live external audio input, or as part of an effect chain in a DAW. Many DAWs require that plugins be _either_ instruments or effects; therefore, to compile the effect version of the software, replace "Instrument" with "Effect" in your build target (e.g `cmake --build build --target Resonarium_Effect_VST3`). Both versions of the software can be used in parallel, in the same hosted environment.
 
 > [!NOTE]
 > Resonarium is reasonably stable when run in a lightweight testing environment such as Juce's AudioPluginHost; however, smooth operation across most DAWs is not assured at this time. I am working on it. There are still some rare issues that pop up in specific DAWs, so I recommend using AudioPluginHost for a cleaner demo experience.
