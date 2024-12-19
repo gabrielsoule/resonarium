@@ -21,7 +21,7 @@ public:
 
     void process(juce::dsp::AudioBlock<float> block) noexcept;
 
-    int channel;
+    int channel = 0;
 
     juce::dsp::Chorus<float> chorus;
     ChorusParams chorusParams;
