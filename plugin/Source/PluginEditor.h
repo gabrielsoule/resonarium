@@ -66,6 +66,7 @@ public:
     SafePointer<ReverbParamBox> reverbParamBox;
     SafePointer<SVFParamBox> filter1ParamBox;
     SafePointer<SVFParamBox> filter2ParamBox;
+    SafePointer<GlobalParamBox> globalParamBox;
 
     std::unique_ptr<melatonin::Inspector> inspector;
     gin::SynthesiserUsage usage { proc.synth };

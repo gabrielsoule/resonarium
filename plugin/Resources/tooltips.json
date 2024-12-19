@@ -63,5 +63,11 @@
       "chaos": "Choose how similar each random value is to the previous random value. A value of 0 corresponds to a constant signal, whereas a value of 1 corresponds to a completely random signal.",
       "smooth": "Smooth the transition between successive random samples."
     }
+  },
+  "global": {
+    "gain": "Set the gain of the main output signal, in decibels.",
+    "polyfx": "Choose whether to use polyphonic effect chains. If enabled, each note will have its own effect chain. If disabled, all notes will share a single effect chain. Disabling improves performance, but effect parameters will no longer be polyphonically modulable.",
+    "numvoices": "Set the number of voices in the synthesizer. Each voice has its own effect chain and modulation sources. Increasing the number of voices will increase the CPU load.",
+    "stereo": "Choose whether to enable stereo resonators. If enabled, resonators will maintain a different internal state for the left and right channels, and will support stereo modulation. Disabling will improve performance, but disable stereo effects from the resonators."
   }
 }

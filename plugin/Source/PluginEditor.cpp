@@ -219,6 +219,10 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     filter2ParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
     effectsViewportContentComponent->addAndMakeVisible(filter2ParamBox);
 
+    globalParamBox = new GlobalParamBox("Global", proc, proc.synth.params.globalParams);
+    globalParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
+    effectsViewportContentComponent->addAndMakeVisible(globalParamBox);
+
     //compute a rectangle that is the size of all the components in the viewport
     scrollableAreaFinalHeight = effectsColumnLocal.getY();
     effectsViewportContentComponent->setBounds(effectsViewportContentComponent->getBounds().withHeight(scrollableAreaFinalHeight + PARAM_BOX_XSMALL_HEIGHT));

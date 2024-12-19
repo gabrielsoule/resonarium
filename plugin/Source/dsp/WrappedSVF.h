@@ -6,7 +6,7 @@
 #include "../Parameters.h"
 
 /**
-* Wraps a state variable filter in a convienient class that contains its own parameters struct,
+* Wraps a state variable filter in a convenient class that contains its own parameters struct,
 * along with a simple method for updating the filter coefficients.
 *
 * TODO Add stereo modulation support
@@ -22,12 +22,14 @@ public:
     template <typename T>
     void updateParameters(T& source)
     {
-        svfL.updateParameters(source.getValue(params.cutoff, 0),
-                              source.getValue(params.resonance, 0),
-                              source.getValue(params.mode, 0));
-        svfR.updateParameters(source.getValue(params.cutoff, 1),
-                              source.getValue(params.resonance, 1),
-                              source.getValue(params.mode, 1));
+        const float cutoffL = source.getValue(params.cutoff, 0);
+        const float resonanceL = source.getValue(params.resonance, 0);
+        const float modeL = source.getValue(params.mode, 0);
+        const float cutoffR = source.getValue(params.cutoff, 1);
+        const float resonanceR = source.getValue(params.resonance, 1);
+        const float modeR = source.getValue(params.mode, 1);
+        svfL.updateParameters(cutoffL, resonanceL, modeL);
+        svfR.updateParameters(cutoffR, resonanceR, modeR);
     }
 
     template <typename ProcessContext>

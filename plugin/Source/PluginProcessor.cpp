@@ -16,7 +16,7 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
 
 //==============================================================================
 ResonariumProcessor::ResonariumProcessor() :
-    gin::Processor(false, getOptions()),
+    gin::Processor(false, getOptions(), juce::JSON::parse(juce::String(BinaryData::tooltips_json, BinaryData::tooltips_jsonSize))),
     synth(globalState, SynthParams(*this)),
     uiParams(*this)
 {
@@ -28,19 +28,20 @@ ResonariumProcessor::ResonariumProcessor() :
     juce::Random random;
     lf = std::make_unique<ResonariumLookAndFeel>();
     //Load tooltips from binary data
-    int size = BinaryData::tooltips_jsonSize;
-    const char* jsonData = BinaryData::tooltips_json;
-
-    if (jsonData != nullptr)
-    {
-        juce::String jsonContent(jsonData, size);
-        getTooltipManager().loadFromJson(juce::JSON::parse(jsonContent));
-    }
-    else
-    {
-        juce::Logger::writeToLog("WARNING: Failed to load tooltips.json from BinaryData");
-        jassertfalse;
-    }
+    // int size = BinaryData::tooltips_jsonSize;
+    // const char* jsonData = BinaryData::tooltips_json;
+    //
+    // if (jsonData != nullptr)
+    // {
+    //     juce::String jsonContent(jsonData, size);
+    //     DBG("JSON CONTENT: " + jsonContent);
+    //     getTooltipManager().loadFromJson(juce::JSON::parse(jsonContent));
+    // }
+    // else
+    // {
+    //     juce::Logger::writeToLog("WARNING: Failed to load tooltips.json from BinaryData");
+    //     jassertfalse;
+    // }
 
     //Load built-in presets from binary data
     auto sz = 0;
@@ -56,6 +57,7 @@ ResonariumProcessor::ResonariumProcessor() :
         }
     }
 
+
     //Setup the synth class
     synth.setMPE(true);
     synth.enableLegacyMode(48);
@@ -67,8 +69,10 @@ ResonariumProcessor::ResonariumProcessor() :
         synth.addVoice(voice);
         voice->id = i;
     }
-    synth.setNumVoices(NUM_SYNTH_VOICES);
+
     setupModMatrix(); //set up the modulation matrix
+
+    synth.setNumVoices(NUM_SYNTH_VOICES);
     init(); //internal init
 }
 
@@ -151,7 +155,7 @@ void ResonariumProcessor::setupModMatrix()
         //TODO Add a way to choose whether parameters are mono or poly, right now everything is poly
         if (!pp->isInternal())
         {
-            DBG("  Adding parameter " + pp->getName(40) + " to mod matrix as a poly parameter");
+            DBG("  Adding parameter " + pp->getName(40) + " with id " + pp->getParameterID() + " to mod matrix as a poly parameter");
             globalState.modMatrix.addParameter(pp, true, 0.02);
         }
     }

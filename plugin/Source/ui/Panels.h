@@ -1111,7 +1111,6 @@ public:
     void paramChanged() override
     {
         gin::ParamBox::paramChanged();
-        const auto value = multiAmpParams.mode->getProcValue();
         const auto mode = static_cast<MultiAmp::Mode>(multiAmpParams.mode->getProcValue());
         paramAKnob->setDisplayName(MultiAmp::getParameterName(mode, 0));
         paramBKnob->setDisplayName(MultiAmp::getParameterName(mode, 1));
@@ -1152,6 +1151,28 @@ public:
 
     ResonariumProcessor& proc;
     SVFParams svfParams;
+};
+
+class GlobalParamBox : public gin::ParamBox
+{
+public:
+    GlobalParamBox(const juce::String& name, ResonariumProcessor& proc, GlobalParams globalParams) :
+        gin::ParamBox(name), proc(proc), globalParams(globalParams)
+    {
+        setName("global");
+        addControl(masterGainKnob = new gin::Knob(globalParams.gain), 0, 0);
+        addControl(polyFXSwitch = new gin::Switch(globalParams.polyEffectChain), 1, 0);
+        addControl(stereoResonatorsSwitch = new gin::Switch(globalParams.stereoResonators), 2, 0);
+        addControl(numVoicesKnob = new gin::Knob(globalParams.numVoices), 3, 0);
+    }
+
+    ResonariumProcessor& proc;
+    GlobalParams globalParams;
+
+    gin::Knob* masterGainKnob = nullptr;
+    gin::Switch* polyFXSwitch = nullptr;
+    gin::Switch* stereoResonatorsSwitch = nullptr;
+    gin::Knob* numVoicesKnob = nullptr;
 };
 
 #endif //PANELS_H

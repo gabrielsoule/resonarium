@@ -48,6 +48,11 @@ void ResonatorSynth::prepare(const juce::dsp::ProcessSpec& spec)
     {
         monoMSEGs.getReference(i).prepare(spec);
     }
+    effectChain.reset();
+    effectChain.prepare(spec);
+    updateParameters();
+    state.modMatrix.snapParams();
+
 }
 
 void ResonatorSynth::updateParameters()
@@ -58,9 +63,8 @@ void ResonatorSynth::updateParameters()
     {
         state.soloBankIndex = std::floor(rawIndex / NUM_RESONATORS);
         state.soloResonatorIndex = rawIndex % NUM_RESONATORS;
-        // DBG("Solo active at bank " << soloBankIndex << " resonator " << soloResonatorIndex);
-        // DBG(rawIndex);
     }
+    state.polyFX = params.globalParams.polyEffectChain->isOn();
     for (int i = 0; i < NUM_LFOS; i++)
     {
         if (params.lfoParams[i].enabled->isOn())
@@ -128,6 +132,11 @@ void ResonatorSynth::updateParameters()
         state.modMatrix.setMonoValue(state.modSrcMacro[i], state.modMatrix.getValue(params.macroParams[i]), 0);
         state.modMatrix.setMonoValue(state.modSrcMacro[i], state.modMatrix.getValue(params.macroParams[i]), 1);
     }
+
+    if (! state.polyFX)
+    {
+        effectChain.updateParameters(state.modMatrix, state.playHead);
+    }
 }
 
 void ResonatorSynth::renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, int startSample, int numSamples)
@@ -135,6 +144,10 @@ void ResonatorSynth::renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, i
     currentBlockSize = numSamples;
     updateParameters();
     Synthesiser::renderNextSubBlock(outputAudio, startSample, numSamples);
+    if (! state.polyFX )
+    {
+        effectChain.process(juce::dsp::AudioBlock<float>(outputAudio).getSubBlock(startSample, numSamples));
+    }
 }
 
 void ResonatorSynth::panic()

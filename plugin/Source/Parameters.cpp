@@ -976,16 +976,16 @@ SynthParams::SynthParams(ResonariumProcessor& p)
 GlobalParams::GlobalParams(ResonariumProcessor& p)
 {
     numVoices = p.addIntParam("numVoices", "Num Voices", "Voices", "",
-                              {1.0f, 16.0f, 1.0f, 1.0f}, 1.0f,
-                              0.0f, "global.voices");
+                              {1.0f, 16.0f, 1.0f, 1.0f}, 16.0f,
+                              0.0f, "global.numvoices");
 
     stereoResonators = p.addIntParam("stereoResonators", "Stereo Resonators", "Stereo", "",
-                                     {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                                     0.0f, "global.stereo");
+                                     {0.0f, 1.0f, 1.0f, 1.0f}, 1.0f,
+                                     0.0f, "global.stereo", enableTextFunction);
 
     polyEffectChain = p.addIntParam("polyEffectChain", "Poly Effect Chain", "Poly FX", "",
                                     {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                                    0.0f, "global.polyfx");
+                                    0.0f, "global.polyfx", enableTextFunction);
 
     gain = p.addExtParam("masterGain", "Master Gain", "Gain", "dB",
                          {-60.0f, 12.0f, 0.0f, 1.0f}, 0.0f,

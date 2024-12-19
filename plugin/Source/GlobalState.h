@@ -35,10 +35,11 @@ public:
     Sampler sampler;
     juce::String samplePath = "";
     juce::String logPrefix = "";
-    bool bypassResonators;
-    bool soloActive;
-    int soloBankIndex;
-    int soloResonatorIndex;
+    bool bypassResonators =  false;
+    bool soloActive = false;
+    int soloBankIndex = 0;
+    int soloResonatorIndex = 0;
+    bool polyFX = false;
     juce::AudioPlayHead* playHead;
     juce::AudioBuffer<float> extInputBuffer;
 };

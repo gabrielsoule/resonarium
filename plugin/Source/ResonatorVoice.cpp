@@ -365,7 +365,10 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
 
         if (!state.soloActive)
         {
-            effectChain.process(tempOutputBlock);
+            if (state.polyFX)
+            {
+                effectChain.process(tempOutputBlock);
+            }
             outputBlock.add(tempOutputBlock);
         }
         else //if a solo is active, discard the full output and just send out the solo block
