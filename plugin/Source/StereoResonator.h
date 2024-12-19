@@ -1,11 +1,11 @@
 #ifndef STEREORESONATOR_H
 #define STEREORESONATOR_H
 
-#include <JuceHeader.h>
-
 #include "Parameters.h"
 #include "dsp/Filters.h"
 #include "util/InterpolatedValue.h"
+#include <chowdsp_filters/chowdsp_filters.h>
+#include <chowdsp_dsp_utils/chowdsp_dsp_utils.h>
 
 class ResonatorVoice;
 

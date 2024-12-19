@@ -1,6 +1,5 @@
 #pragma once
 
-#include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "melatonin_inspector/melatonin_inspector.h"
 #include "ui/AnimatedScrollBarsViewport.h"

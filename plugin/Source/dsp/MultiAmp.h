@@ -1,7 +1,6 @@
 #ifndef MULTIAMP_H
 #define MULTIAMP_H
 
-#include <JuceHeader.h>
 #include "airwindows/BassAmp.h"
 #include "airwindows/BigAmp.h"
 #include "airwindows/DeRez2.h"

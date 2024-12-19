@@ -1,11 +1,7 @@
-//
-// Created by Gabriel Soule on 5/20/24.
-//
-
 #ifndef FILTERS_H
 #define FILTERS_H
-#include <JuceHeader.h>
 
+#include <juce_dsp/juce_dsp.h>
 
 /**
  * A first order allpass filter based on a lattice structure.

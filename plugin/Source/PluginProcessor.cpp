@@ -2,6 +2,7 @@
 #include "PluginEditor.h"
 #include "ResonatorVoice.h"
 #include "ui/ResonariumLookAndFeel.h"
+#include "BinaryData.h"
 
 gin::ProcessorOptions ResonariumProcessor::getOptions()
 {
@@ -22,7 +23,8 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
 
 //==============================================================================
 ResonariumProcessor::ResonariumProcessor() :
-    gin::Processor(false, getOptions(), juce::JSON::parse(juce::String(BinaryData::tooltips_json, BinaryData::tooltips_jsonSize))),
+    gin::Processor(false, getOptions(),
+                   juce::JSON::parse(juce::String(BinaryData::tooltips_json, BinaryData::tooltips_jsonSize))),
     synth(globalState, SynthParams(*this)),
     uiParams(*this)
 {
@@ -31,25 +33,8 @@ ResonariumProcessor::ResonariumProcessor() :
     MelatoninPerfetto::get().beginSession();
 #endif
 
-    juce::Random random;
     lf = std::make_unique<ResonariumLookAndFeel>();
-    //Load tooltips from binary data
-    // int size = BinaryData::tooltips_jsonSize;
-    // const char* jsonData = BinaryData::tooltips_json;
-    //
-    // if (jsonData != nullptr)
-    // {
-    //     juce::String jsonContent(jsonData, size);
-    //     DBG("JSON CONTENT: " + jsonContent);
-    //     getTooltipManager().loadFromJson(juce::JSON::parse(jsonContent));
-    // }
-    // else
-    // {
-    //     juce::Logger::writeToLog("WARNING: Failed to load tooltips.json from BinaryData");
-    //     jassertfalse;
-    // }
 
-    //Load built-in presets from binary data
     auto sz = 0;
     for (auto i = 0; i < BinaryData::namedResourceListSize; i++)
     {
@@ -63,8 +48,6 @@ ResonariumProcessor::ResonariumProcessor() :
         }
     }
 
-
-    //Setup the synth class
     synth.setMPE(true);
     synth.enableLegacyMode(48);
     synth.setVoiceStealingEnabled(true);
@@ -100,49 +83,53 @@ void ResonariumProcessor::setupModMatrix()
     for (int i = 0; i < NUM_LFOS; i++)
     {
         globalState.modSrcMonoLFO[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("mlfo%d", i + 1),
-                                                     juce::String::formatted("LFO %d (Mono)", i + 1),
-                                                     true);
+                                                                              juce::String::formatted(
+                                                                                  "LFO %d (Mono)", i + 1),
+                                                                              true);
 
         globalState.modSrcPolyLFO[i] = globalState.modMatrix.addPolyModSource(juce::String::formatted("lfo%d", i + 1),
-                                                                  juce::String::formatted("LFO %d", i + 1),
-                                                                  true);
+                                                                              juce::String::formatted("LFO %d", i + 1),
+                                                                              true);
     }
 
     for (int i = 0; i < NUM_RANDOMS; i++)
     {
         globalState.modSrcMonoRND[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("mrnd%d", i + 1),
-                                                            juce::String::formatted("RAND %d (Mono)", i + 1),
-                                                            true);
+                                                                              juce::String::formatted(
+                                                                                  "RAND %d (Mono)", i + 1),
+                                                                              true);
 
         globalState.modSrcPolyRND[i] = globalState.modMatrix.addPolyModSource(juce::String::formatted("rnd%d", i + 1),
-                                                            juce::String::formatted("RAND %d", i + 1),
-                                                            true);
+                                                                              juce::String::formatted("RAND %d", i + 1),
+                                                                              true);
     }
 
     for (int i = 0; i < NUM_ENVELOPES; i++)
     {
         globalState.modSrcPolyENV[i] = globalState.modMatrix.addPolyModSource(juce::String::formatted("env%d", i + 1),
-                                                     juce::String::formatted("ENV %d", i + 1),
-                                                     false);
+                                                                              juce::String::formatted("ENV %d", i + 1),
+                                                                              false);
     }
 
     for (int i = 0; i < NUM_MSEGS; i++)
     {
-        globalState.modSrcMonoMSEG[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("mmseg%d", i + 1),
-                                                      juce::String::formatted("MSEG %d (Mono)", i + 1),
-                                                      true);
+        globalState.modSrcMonoMSEG[i] = globalState.modMatrix.addMonoModSource(
+            juce::String::formatted("mmseg%d", i + 1),
+            juce::String::formatted("MSEG %d (Mono)", i + 1),
+            true);
 
 
         globalState.modSrcPolyMSEG[i] = globalState.modMatrix.addPolyModSource(juce::String::formatted("mseg%d", i + 1),
-                                                      juce::String::formatted("MSEG %d", i + 1),
-                                                      false);
+                                                                               juce::String::formatted(
+                                                                                   "MSEG %d", i + 1),
+                                                                               false);
     }
 
     for (int i = 0; i < NUM_MACROS; i++)
     {
         globalState.modSrcMacro[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("macro%d", i + 1),
-                                                                juce::String::formatted("Macro %d", i + 1),
-                                                                false);
+                                                                            juce::String::formatted("Macro %d", i + 1),
+                                                                            false);
     }
 
     for (int i = 0; i <= 119; i++)
@@ -150,10 +137,12 @@ void ResonariumProcessor::setupModMatrix()
         juce::String name = juce::MidiMessage::getControllerName(i);
         if (name.isEmpty())
             globalState.modSrcCC[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("cc%d", i),
-                                                    juce::String::formatted("CC %d", i), false);
+                                                                             juce::String::formatted("CC %d", i),
+                                                                             false);
         else
             globalState.modSrcCC[i] = globalState.modMatrix.addMonoModSource(juce::String::formatted("cc%d", i),
-                                                    juce::String::formatted("CC %d ", i) + name, false);
+                                                                             juce::String::formatted("CC %d ", i) +
+                                                                             name, false);
     }
 
     for (auto pp : getPluginParameters())
@@ -161,7 +150,8 @@ void ResonariumProcessor::setupModMatrix()
         //TODO Add a way to choose whether parameters are mono or poly, right now everything is poly
         if (!pp->isInternal())
         {
-            DBG("  Adding parameter " + pp->getName(40) + " with id " + pp->getParameterID() + " to mod matrix as a poly parameter");
+            DBG("  Adding parameter " + pp->getName(40) + " with id " + pp->getParameterID() +
+                " to mod matrix as a poly parameter");
             globalState.modMatrix.addParameter(pp, true, 0.02);
         }
     }
@@ -244,7 +234,8 @@ void ResonariumProcessor::updateState()
     }
 
     //write the sample path from the sampler to the xml
-    state.getOrCreateChildWithName("samplePath", nullptr).setProperty("path", globalState.sampler.getFilePath(), nullptr);
+    state.getOrCreateChildWithName("samplePath", nullptr).setProperty("path", globalState.sampler.getFilePath(),
+                                                                      nullptr);
 }
 
 void ResonariumProcessor::reset()

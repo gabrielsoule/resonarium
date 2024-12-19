@@ -1,6 +1,7 @@
 #ifndef DISTORTION_H
 #define DISTORTION_H
 #include "../Parameters.h"
+#include <chowdsp_filters/chowdsp_filters.h>
 
 class Distortion
 {

@@ -1,7 +1,6 @@
 #ifndef MULTIFILTER_H
 #define MULTIFILTER_H
 
-#include <JuceHeader.h>
 #include "../Parameters.h"
 /**
 * Light wrapper over to easily enable multiple filter types in a single class,

@@ -1,8 +1,6 @@
 #ifndef INTERPOLATEDVALUE_H
 #define INTERPOLATEDVALUE_H
 
-#include <JuceHeader.h>
-
 /**
  * Smoothly interpolates between two values of a gin::Parameter over a specified number of samples.
  * For use within a single block of processing.

@@ -5,6 +5,7 @@
 
 #ifndef __DeRez2_H
 #include "DeRez2.h"
+#include <juce_core/juce_core.h>
 #endif
 
 JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wfloat-conversion", "-Wimplicit-float-conversion", "-Wunused-parameter")

@@ -1,8 +1,6 @@
 #ifndef EXCITERS_H
 #define EXCITERS_H
 
-#include <JuceHeader.h>
-
 #include "GlobalState.h"
 #include "dsp/MultiFilter.h"
 

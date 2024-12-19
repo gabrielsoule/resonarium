@@ -1,7 +1,3 @@
-//
-// Created by Gabriel Soule on 7/10/24.
-//
-
 #include "RandomLFO.h"
 
 RandomLFO::RandomLFO(gin::ModVoice* voice, bool stereo) : voice(voice), stereo(stereo),

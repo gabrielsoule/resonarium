@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.24.0 FATAL_ERROR)
 
-#
-# Set for each plugin
-#
 set(PLUGIN_NAME Resonarium)
 set(DEV_CODE Soul)
 set(PLUGIN_VERSION 0.0.7)
@@ -24,12 +21,12 @@ set(CMAKE_CXX_FLAGS_DEVELOPMENT ${CMAKE_CXX_FLAGS_RELEASE})
 
 project(${PLUGIN_NAME} VERSION ${PLUGIN_VERSION} LANGUAGES CXX C HOMEPAGE_URL "https://gabrielsoule.com/")
 
-if(CMAKE_BUILD_TYPE)
+if (CMAKE_BUILD_TYPE)
     message(STATUS "Current build type: ${CMAKE_BUILD_TYPE}")
     message(STATUS "Current C++ flags: ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
-else()
+else ()
     message(STATUS "No build type selected")
-endif()
+endif ()
 
 include(CMakeDependentOption)
 
@@ -37,7 +34,7 @@ set_property(DIRECTORY APPEND PROPERTY LABELS ${PLUGIN_NAME})
 set_property(DIRECTORY APPEND PROPERTY LABELS gabrielsoule)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PLUGIN_NAME}_Standalone)
 
-set(CMAKE_OSX_DEPLOYMENT_TARGET 10.13)
+set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION ON)
@@ -67,7 +64,6 @@ set_property(GLOBAL PROPERTY REPORT_UNDEFINED_PROPERTIES "${CMAKE_BINARY_DIR}/un
 set_property(GLOBAL PROPERTY JUCE_COPY_PLUGIN_AFTER_BUILD YES)
 set_property(DIRECTORY APPEND PROPERTY LABELS External)
 
-# JUCE
 set(JUCE_MODULES_ONLY OFF)
 set(JUCE_ENABLE_MODULE_SOURCE_GROUPS ON)
 set(JUCE_BUILD_EXTRAS OFF)
@@ -104,30 +100,27 @@ file(GLOB_RECURSE source_files CONFIGURE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/plugin/*.h)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/plugin PREFIX Source FILES ${source_files})
 
-#
-# Create the instrument plugin target
-#
 juce_add_plugin(${PLUGIN_NAME}_Instrument
-        PRODUCT_NAME              ${PLUGIN_NAME}
-        VERSION                   ${PLUGIN_VERSION}
-        COMPANY_NAME              "Soule DSP"
-        COMPANY_WEBSITE           ${WEBSITE}
-        BUNDLE_ID                 ${BUNDLE_ID}.instrument
-        FORMATS                   ${FORMATS}
-        PLUGIN_MANUFACTURER_CODE  ${DEV_CODE}
-        PLUGIN_CODE               ${PLUGIN_CODE}I
-        IS_SYNTH                  ON
-        NEEDS_MIDI_INPUT          ON
-        NEEDS_MIDI_OUTPUT         OFF
-        IS_MIDI_EFFECT            OFF
+        PRODUCT_NAME ${PLUGIN_NAME}
+        VERSION ${PLUGIN_VERSION}
+        COMPANY_NAME "Soule DSP"
+        COMPANY_WEBSITE ${WEBSITE}
+        BUNDLE_ID ${BUNDLE_ID}.instrument
+        FORMATS ${FORMATS}
+        PLUGIN_MANUFACTURER_CODE ${DEV_CODE}
+        PLUGIN_CODE ${PLUGIN_CODE}I
+        IS_SYNTH ON
+        NEEDS_MIDI_INPUT ON
+        NEEDS_MIDI_OUTPUT OFF
+        IS_MIDI_EFFECT OFF
         EDITOR_WANTS_KEYBOARD_FOCUS ON
-        VST2_CATEGORY             "kPlugCategUnknown"
-        VST3_CATEGORIES           Instrument Fx Synth
-        AU_MAIN_TYPE              "kAudioUnitType_MusicDevice"
-        AU_EXPORT_PREFIX          ${AU_ID}Ins
-        AU_SANDBOX_SAFE           FALSE
-        LV2URI                    ${LV2_URI}
-        COPY_PLUGIN_AFTER_BUILD   TRUE
+        VST2_CATEGORY "kPlugCategUnknown"
+        VST3_CATEGORIES Instrument Fx Synth
+        AU_MAIN_TYPE "kAudioUnitType_MusicDevice"
+        AU_EXPORT_PREFIX ${AU_ID}Ins
+        AU_SANDBOX_SAFE FALSE
+        LV2URI ${LV2_URI}
+        COPY_PLUGIN_AFTER_BUILD TRUE
 )
 
 target_sources(${PLUGIN_NAME}_Instrument PRIVATE ${source_files})
@@ -164,15 +157,6 @@ target_link_libraries(${PLUGIN_NAME}_Instrument PRIVATE
         juce::juce_recommended_config_flags
 )
 
-juce_generate_juce_header(${PLUGIN_NAME}_Instrument)
-target_include_directories(${PLUGIN_NAME}_Instrument PUBLIC
-        "${CMAKE_CURRENT_BINARY_DIR}/${PLUGIN_NAME}_Instrument_artefacts/JuceLibraryCode"
-)
-target_include_directories(${PLUGIN_NAME}_Instrument_VST3 PUBLIC
-        "${CMAKE_CURRENT_BINARY_DIR}/${PLUGIN_NAME}_Instrument_artefacts/JuceLibraryCode"
-)
-
-
 target_compile_definitions(${PLUGIN_NAME}_Instrument PRIVATE
         JUCE_DISPLAY_SPLASH_SCREEN=0
         JUCE_MODAL_LOOPS_PERMITTED=0
@@ -184,30 +168,27 @@ target_compile_definitions(${PLUGIN_NAME}_Instrument PRIVATE
         RESONARIUM_IS_INSTRUMENT=1
 )
 
-#
-# Create the effect plugin target
-#
 juce_add_plugin(${PLUGIN_NAME}_Effect
-        PRODUCT_NAME              "${PLUGIN_NAME} Effect"
-        VERSION                   ${PLUGIN_VERSION}
-        COMPANY_NAME              "Soule DSP"
-        COMPANY_WEBSITE           ${WEBSITE}
-        BUNDLE_ID                 ${BUNDLE_ID}.effect
-        FORMATS                   ${FORMATS}
-        PLUGIN_MANUFACTURER_CODE  ${DEV_CODE}
-        PLUGIN_CODE               ${PLUGIN_CODE}E
-        IS_SYNTH                  OFF
-        NEEDS_MIDI_INPUT          OFF
-        NEEDS_MIDI_OUTPUT         OFF
-        IS_MIDI_EFFECT            OFF
+        PRODUCT_NAME "${PLUGIN_NAME} Effect"
+        VERSION ${PLUGIN_VERSION}
+        COMPANY_NAME "Soule DSP"
+        COMPANY_WEBSITE ${WEBSITE}
+        BUNDLE_ID ${BUNDLE_ID}.effect
+        FORMATS ${FORMATS}
+        PLUGIN_MANUFACTURER_CODE ${DEV_CODE}
+        PLUGIN_CODE ${PLUGIN_CODE}E
+        IS_SYNTH OFF
+        NEEDS_MIDI_INPUT OFF
+        NEEDS_MIDI_OUTPUT OFF
+        IS_MIDI_EFFECT OFF
         EDITOR_WANTS_KEYBOARD_FOCUS ON
-        VST2_CATEGORY             "kPlugCategEffect"
-        VST3_CATEGORIES           Fx
-        AU_MAIN_TYPE              "kAudioUnitType_Effect"
-        AU_EXPORT_PREFIX          ${AU_ID}Fx
-        AU_SANDBOX_SAFE           FALSE
-        LV2URI                    ${LV2_URI}/effect
-        COPY_PLUGIN_AFTER_BUILD   TRUE
+        VST2_CATEGORY "kPlugCategEffect"
+        VST3_CATEGORIES Fx
+        AU_MAIN_TYPE "kAudioUnitType_Effect"
+        AU_EXPORT_PREFIX ${AU_ID}Fx
+        AU_SANDBOX_SAFE FALSE
+        LV2URI ${LV2_URI}/effect
+        COPY_PLUGIN_AFTER_BUILD TRUE
 )
 
 target_sources(${PLUGIN_NAME}_Effect PRIVATE ${source_files})
@@ -242,11 +223,6 @@ target_link_libraries(${PLUGIN_NAME}_Effect PRIVATE
         juce::juce_gui_basics
         juce::juce_gui_extra
         juce::juce_recommended_config_flags
-)
-
-juce_generate_juce_header(${PLUGIN_NAME}_Effect)
-target_include_directories(${PLUGIN_NAME}_Effect PRIVATE
-        "${CMAKE_CURRENT_BINARY_DIR}/${PLUGIN_NAME}_Effect_artefacts/JuceLibraryCode"
 )
 
 target_compile_definitions(${PLUGIN_NAME}_Effect PRIVATE

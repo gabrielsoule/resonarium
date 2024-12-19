@@ -1,8 +1,6 @@
 #ifndef CLICKTHRUSELECT_H
 #define CLICKTHRUSELECT_H
 
-#include <JuceHeader.h>
-
 #include "ResonariumLookAndFeel.h"
 /**
 An select-like that allows for click-through selection.

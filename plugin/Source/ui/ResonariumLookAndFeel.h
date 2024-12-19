@@ -1,7 +1,6 @@
 #pragma once
 
-#include <JuceHeader.h>
-
+#include <gin_plugin/gin_plugin.h>
 //Code adapted from gin::PluginLookAndFeel
 class ResonariumLookAndFeel : public gin::PluginLookAndFeel
 {

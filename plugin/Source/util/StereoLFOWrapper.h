@@ -1,21 +1,19 @@
 #ifndef STEREOLFOWRAPPER_H
 #define STEREOLFOWRAPPER_H
 
-
-#include <JuceHeader.h>
 #include "../Parameters.h"
 /**
 * This class wraps around (two copies of) Gin's excellent LFO to provide stereo functionality.
 
 */
-class StereoLFOWrapper {
+class StereoLFOWrapper
+{
 public:
-
     StereoLFOWrapper() = default;
 
     void prepare(const juce::dsp::ProcessSpec& spec);
 
-    template<typename T>
+    template <typename T>
     void updateParameters(T& source, float frequency)
     {
         this->ginParams.frequency = frequency;
@@ -30,6 +28,7 @@ public:
         ginParams.phase += source.getValue(params.stereo);
         right.setParameters(ginParams);
     }
+
     void reset();
     void noteOn(float phase);
     void process(int numSamples);
@@ -50,9 +49,7 @@ public:
     float delay = 0.0f;
     float fade = 0.0f;
     float stereo = 0.0f;
-
 };
-
 
 
 #endif //STEREOLFOWRAPPER_H

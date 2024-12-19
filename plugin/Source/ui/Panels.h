@@ -1,7 +1,6 @@
 #ifndef PANELS_H
 #define PANELS_H
 
-#include <JuceHeader.h>
 
 #include "ClickThruSelect.h"
 #include "RandomLFOComponent.h"
@@ -11,6 +10,7 @@
 #include "ResonariumComponents.h"
 #include "SampleDropperComponent.h"
 #include "../ResonatorVoice.h"
+#include "BinaryData.h"
 
 class GraphicsUtils
 {

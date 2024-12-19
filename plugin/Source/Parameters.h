@@ -1,8 +1,9 @@
 #ifndef PARAMETERS_H
 #define PARAMETERS_H
 
-#include <JuceHeader.h>
 #include "defines.h"
+#include <juce_core/juce_core.h>
+#include <gin_plugin/gin_plugin.h>
 
 /**
 * The Parameters file includes structs that manage the host-visible parameters of the synthesizer.

@@ -1,7 +1,3 @@
-//
-// Created by Gabriel Soule on 7/10/24.
-//
-
 #ifndef RANDOMLFO_H
 #define RANDOMLFO_H
 #include "../Parameters.h"

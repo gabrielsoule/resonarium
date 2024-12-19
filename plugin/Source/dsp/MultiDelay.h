@@ -1,8 +1,7 @@
 #ifndef MULTIDELAY_H
 #define MULTIDELAY_H
 
-#include <JuceHeader.h>
-
+#include <chowdsp_dsp_utils/chowdsp_dsp_utils.h>
 /**
 * A delay effect with a continuous blend between stereo and ping-pong modes.
 */

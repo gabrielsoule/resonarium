@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <JuceHeader.h>
 #include "Exciters.h"
 #include "WaveguideResonatorBank.h"
 #include "dsp/ResonariumEffectChain.h"

@@ -1,6 +1,9 @@
 #pragma once
 
-#include <JuceHeader.h>
+#include <cmath>
+#include <functional>
+#include <cstring>
+#include <juce_core/juce_core.h>
 
 #define VstInt32                int32_t
 #define AudioEffect             FXBase

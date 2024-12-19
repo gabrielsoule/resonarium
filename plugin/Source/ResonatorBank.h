@@ -1,7 +1,7 @@
 #ifndef RESONATORBANK_H
 #define RESONATORBANK_H
 
-#include<JuceHeader.h>
+#include <juce_dsp/juce_dsp.h>
 
 class ResonatorVoice;
 

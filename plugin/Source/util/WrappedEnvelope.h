@@ -5,8 +5,6 @@
 #ifndef ENVELOPE_H
 #define ENVELOPE_H
 
-#include <JuceHeader.h>
-
 #include "../Parameters.h"
 
 class WrappedEnvelope {

@@ -1,10 +1,6 @@
 #ifndef TEXTSLIDER_H
 #define TEXTSLIDER_H
 
-
-#include <JuceHeader.h>
-
-#include "ResonariumLookAndFeel.h"
 /**
 * An hijacking, er, extension of gin::Knob that essentially creates a text field that can be interacted with as if it was a knob.
 * The user can slide the mouse up and down to change the value of the text field.

@@ -1,13 +1,14 @@
 #pragma once
 
-#include <JuceHeader.h>
 #include "../dsp/Sampler.h"
+#include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_audio_utils/juce_audio_utils.h>
 
 class SampleDropperComponent : public juce::Component,
-                             public juce::FileDragAndDropTarget,
-                             public juce::DragAndDropContainer,
-                             public juce::ChangeListener,
-public juce::SettableTooltipClient// Add this to listen for thumbnail changes
+                               public juce::FileDragAndDropTarget,
+                               public juce::DragAndDropContainer,
+                               public juce::ChangeListener,
+                               public juce::SettableTooltipClient// Add this to listen for thumbnail changes
 {
 public:
     explicit SampleDropperComponent(Sampler& sampler);

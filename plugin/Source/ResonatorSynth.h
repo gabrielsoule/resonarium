@@ -7,7 +7,6 @@
 
 #pragma once
 #include "defines.h"
-#include <JuceHeader.h>
 
 #include "GlobalState.h"
 #include "Parameters.h"

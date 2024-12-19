@@ -1,8 +1,6 @@
 #ifndef STEREOMSEGWRAPPER_H
 #define STEREOMSEGWRAPPER_H
 
-#include <JuceHeader.h>
-
 #include "../Parameters.h"
 
 class StereoMSEGWrapper

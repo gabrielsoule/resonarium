@@ -55,11 +55,6 @@ void StereoResonator::Resonator::reset()
     loopFilter.reset();
     postFilter.reset();
     apf.reset();
-    // auto span = delayLine.getRawDelayBuffer().getWriteSpan(0);
-    // for (auto& sample : span)
-    // {
-    //     sample = 0.0f;
-    // }
 #if JUCE_DEBUG
     auto readSpan = delayLine.getRawDelayBuffer().getReadSpan(0);
     for (auto sample : readSpan)
@@ -174,20 +169,6 @@ void StereoResonator::Resonator::updateParameters(float frequency, int numSample
     loopFilter.snapToZero();
 #endif
 }
-
-/**
- * Copy the raw parameter values from another Resonator, skipping all the intermediate calculations.
- * Useful when there are no stereo modulation signals affecting this StereoResonator.
- */
-// void StereoResonator::Resonator::copyParameters(StereoResonator::Resonator& other)
-// {
-//     this->gain = other.gain;
-//     this->lastFrequency = other.lastFrequency;
-//     this->nextFrequency = other.nextFrequency;
-//     this->delayLengthInSamples = other.delayLengthInSamples;
-//     delayLine.setDelay(delayLengthInSamples);
-//
-// }
 
 float StereoResonator::processSample(const float input, const int channel)
 {

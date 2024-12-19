@@ -1,10 +1,8 @@
 #ifndef WRAPPEDSVF_H
 #define WRAPPEDSVF_H
 
-#include <JuceHeader.h>
-
 #include "../Parameters.h"
-
+#include <chowdsp_filters/chowdsp_filters.h>
 /**
 * Wraps a state variable filter in a convenient class that contains its own parameters struct,
 * along with a simple method for updating the filter coefficients.

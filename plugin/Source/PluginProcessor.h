@@ -1,13 +1,11 @@
 #pragma once
 
-#include <JuceHeader.h>
-
 #include "ResonatorSynth.h"
 #include "Parameters.h"
 #include <melatonin_perfetto/melatonin_perfetto.h>
-
 #include "GlobalState.h"
-#include "dsp/Sampler.h"
+#include <gin/gin.h>
+#include <gin_plugin/gin_plugin.h>
 
 //==============================================================================
 class ResonariumProcessor : public gin::Processor

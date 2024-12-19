@@ -1,7 +1,5 @@
 #pragma once
 
-#include <JuceHeader.h>
-#include <melatonin_perfetto/melatonin_perfetto.h>
 #include "../Parameters.h"
 
 class RandomLFOComponent : public juce::Component, private juce::Timer

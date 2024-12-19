@@ -1,7 +1,7 @@
 #ifndef GLOBALSTATE_H
 #define GLOBALSTATE_H
 
-#include <JuceHeader.h>
+#include <gin_plugin/gin_plugin.h>
 #include "defines.h"
 #include "dsp/Sampler.h"
 

@@ -4,12 +4,12 @@
 #ifndef RESONARIUMCOMPONENTS_H
 #define RESONARIUMCOMPONENTS_H
 
-#include <JuceHeader.h>
-
 #include "ClickThruSelect.h"
 #include "TextSlider.h"
 #include "../Parameters.h"
 #include "../defines.h"
+#include "BinaryData.h"
+#include <melatonin_blur/melatonin_blur.h>
 
 static constexpr int SPACING_X = 10; // how far apart are resonator columns?
 static constexpr int SPACING_Y_SMALL = 1;
