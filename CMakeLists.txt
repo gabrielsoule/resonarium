@@ -5,12 +5,12 @@ cmake_minimum_required(VERSION 3.24.0 FATAL_ERROR)
 #
 set(PLUGIN_NAME Resonarium)
 set(DEV_CODE Soul)
-set(PLUGIN_VERSION 0.0.6)
+set(PLUGIN_VERSION 0.0.7)
 set(BUNDLE_ID com.gabrielsoule.resonarium)
 set(AU_ID ResonariumAU)
 set(LV2_URI "https://gabrielsoule.com/resonarium")
 set(WEBSITE "https://gabrielsoule.com")
-set(PLUGIN_CODE Res0)
+set(PLUGIN_CODE Res)
 
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -34,7 +34,6 @@ endif()
 include(CMakeDependentOption)
 
 set_property(DIRECTORY APPEND PROPERTY LABELS ${PLUGIN_NAME})
-
 set_property(DIRECTORY APPEND PROPERTY LABELS gabrielsoule)
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PLUGIN_NAME}_Standalone)
 
@@ -66,11 +65,9 @@ set_property(GLOBAL PROPERTY USE_FOLDERS YES)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER utility)
 set_property(GLOBAL PROPERTY REPORT_UNDEFINED_PROPERTIES "${CMAKE_BINARY_DIR}/undefined_properties.log")
 set_property(GLOBAL PROPERTY JUCE_COPY_PLUGIN_AFTER_BUILD YES)
-
 set_property(DIRECTORY APPEND PROPERTY LABELS External)
 
 # JUCE
-
 set(JUCE_MODULES_ONLY OFF)
 set(JUCE_ENABLE_MODULE_SOURCE_GROUPS ON)
 set(JUCE_BUILD_EXTRAS OFF)
@@ -85,10 +82,7 @@ juce_add_module(modules/melatonin_blur)
 set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/modules/juce" APPEND PROPERTY LABELS JUCE)
 
 foreach (module_name IN ITEMS gin gin_dsp gin_graphics gin_gui gin_metadata gin_network gin_plugin gin_webp gin_simd)
-    juce_add_module(
-            "${CMAKE_CURRENT_LIST_DIR}/modules/gin/modules/${module_name}"
-    )
-
+    juce_add_module("${CMAKE_CURRENT_LIST_DIR}/modules/gin/modules/${module_name}")
     set_property(TARGET "${module_name}" APPEND PROPERTY LABELS Gin)
 endforeach ()
 
@@ -103,39 +97,42 @@ file(GLOB_RECURSE binary_files CONFIGURE_DEPENDS
         "./plugin/Resources/Fonts/*.otf")
 
 juce_add_binary_data(${PLUGIN_NAME}_Assets SOURCES ${binary_files})
-
 set_target_properties(${PLUGIN_NAME}_Assets PROPERTIES UNITY_BUILD ON UNITY_BUILD_MODE BATCH UNITY_BUILD_BATCH_SIZE 10)
-
-juce_add_plugin(${PLUGIN_NAME}
-        PRODUCT_NAME ${PLUGIN_NAME}
-        VERSION ${PLUGIN_VERSION}
-        COMPANY_NAME "Soule DSP"
-        COMPANY_WEBSITE ${WEBSITE}
-        BUNDLE_ID ${BUNDLE_ID}
-        FORMATS ${FORMATS}
-        PLUGIN_MANUFACTURER_CODE ${DEV_CODE}
-        PLUGIN_CODE ${PLUGIN_CODE}
-        IS_SYNTH ON
-        NEEDS_MIDI_INPUT ON
-        NEEDS_MIDI_OUTPUT OFF
-        IS_MIDI_EFFECT OFF
-        EDITOR_WANTS_KEYBOARD_FOCUS ON
-        VST2_CATEGORY "kPlugCategUnknown"
-        VST3_CATEGORIES Instrument Fx Synth
-        AU_MAIN_TYPE "kAudioUnitType_Effect"
-        AU_EXPORT_PREFIX ${AU_ID}
-        AU_SANDBOX_SAFE FALSE
-        LV2URI ${LV2_URI}
-        COPY_PLUGIN_AFTER_BUILD TRUE)
 
 file(GLOB_RECURSE source_files CONFIGURE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/plugin/*.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/plugin/*.h)
-
-target_sources(${PLUGIN_NAME} PRIVATE ${source_files})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/plugin PREFIX Source FILES ${source_files})
 
-target_link_libraries(${PLUGIN_NAME} PRIVATE
+#
+# Create the instrument plugin target
+#
+juce_add_plugin(${PLUGIN_NAME}_Instrument
+        PRODUCT_NAME              ${PLUGIN_NAME}
+        VERSION                   ${PLUGIN_VERSION}
+        COMPANY_NAME              "Soule DSP"
+        COMPANY_WEBSITE           ${WEBSITE}
+        BUNDLE_ID                 ${BUNDLE_ID}.instrument
+        FORMATS                   ${FORMATS}
+        PLUGIN_MANUFACTURER_CODE  ${DEV_CODE}
+        PLUGIN_CODE               ${PLUGIN_CODE}I
+        IS_SYNTH                  ON
+        NEEDS_MIDI_INPUT          ON
+        NEEDS_MIDI_OUTPUT         OFF
+        IS_MIDI_EFFECT            OFF
+        EDITOR_WANTS_KEYBOARD_FOCUS ON
+        VST2_CATEGORY             "kPlugCategUnknown"
+        VST3_CATEGORIES           Instrument Fx Synth
+        AU_MAIN_TYPE              "kAudioUnitType_MusicDevice"
+        AU_EXPORT_PREFIX          ${AU_ID}Ins
+        AU_SANDBOX_SAFE           FALSE
+        LV2URI                    ${LV2_URI}
+        COPY_PLUGIN_AFTER_BUILD   TRUE
+)
+
+target_sources(${PLUGIN_NAME}_Instrument PRIVATE ${source_files})
+
+target_link_libraries(${PLUGIN_NAME}_Instrument PRIVATE
         ${PLUGIN_NAME}_Assets
         gin
         gin_dsp
@@ -143,20 +140,14 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
         gin_gui
         gin_plugin
         gin_simd
-
         Melatonin::Perfetto
         melatonin_perfetto
-
         melatonin_inspector
-
         melatonin_blur
-
-
         chowdsp::chowdsp_dsp_utils
         chowdsp::chowdsp_gui
         chowdsp::chowdsp_plugin_base
         chowdsp::chowdsp_filters
-
         juce::juce_audio_basics
         juce::juce_audio_devices
         juce::juce_audio_formats
@@ -173,9 +164,16 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
         juce::juce_recommended_config_flags
 )
 
-juce_generate_juce_header(${PLUGIN_NAME})
+juce_generate_juce_header(${PLUGIN_NAME}_Instrument)
+target_include_directories(${PLUGIN_NAME}_Instrument PUBLIC
+        "${CMAKE_CURRENT_BINARY_DIR}/${PLUGIN_NAME}_Instrument_artefacts/JuceLibraryCode"
+)
+target_include_directories(${PLUGIN_NAME}_Instrument_VST3 PUBLIC
+        "${CMAKE_CURRENT_BINARY_DIR}/${PLUGIN_NAME}_Instrument_artefacts/JuceLibraryCode"
+)
 
-target_compile_definitions(${PLUGIN_NAME} PRIVATE
+
+target_compile_definitions(${PLUGIN_NAME}_Instrument PRIVATE
         JUCE_DISPLAY_SPLASH_SCREEN=0
         JUCE_MODAL_LOOPS_PERMITTED=0
         JUCE_COREGRAPHICS_DRAW_ASYNC=1
@@ -183,6 +181,83 @@ target_compile_definitions(${PLUGIN_NAME} PRIVATE
         JUCE_WEB_BROWSER=0
         DONT_SET_USING_JUCE_NAMESPACE=1
         JUCE_SILENCE_XCODE_15_LINKER_WARNING=1
+        RESONARIUM_IS_INSTRUMENT=1
+)
+
+#
+# Create the effect plugin target
+#
+juce_add_plugin(${PLUGIN_NAME}_Effect
+        PRODUCT_NAME              "${PLUGIN_NAME} Effect"
+        VERSION                   ${PLUGIN_VERSION}
+        COMPANY_NAME              "Soule DSP"
+        COMPANY_WEBSITE           ${WEBSITE}
+        BUNDLE_ID                 ${BUNDLE_ID}.effect
+        FORMATS                   ${FORMATS}
+        PLUGIN_MANUFACTURER_CODE  ${DEV_CODE}
+        PLUGIN_CODE               ${PLUGIN_CODE}E
+        IS_SYNTH                  OFF
+        NEEDS_MIDI_INPUT          OFF
+        NEEDS_MIDI_OUTPUT         OFF
+        IS_MIDI_EFFECT            OFF
+        EDITOR_WANTS_KEYBOARD_FOCUS ON
+        VST2_CATEGORY             "kPlugCategEffect"
+        VST3_CATEGORIES           Fx
+        AU_MAIN_TYPE              "kAudioUnitType_Effect"
+        AU_EXPORT_PREFIX          ${AU_ID}Fx
+        AU_SANDBOX_SAFE           FALSE
+        LV2URI                    ${LV2_URI}/effect
+        COPY_PLUGIN_AFTER_BUILD   TRUE
+)
+
+target_sources(${PLUGIN_NAME}_Effect PRIVATE ${source_files})
+
+target_link_libraries(${PLUGIN_NAME}_Effect PRIVATE
+        ${PLUGIN_NAME}_Assets
+        gin
+        gin_dsp
+        gin_graphics
+        gin_gui
+        gin_plugin
+        gin_simd
+        Melatonin::Perfetto
+        melatonin_perfetto
+        melatonin_inspector
+        melatonin_blur
+        chowdsp::chowdsp_dsp_utils
+        chowdsp::chowdsp_gui
+        chowdsp::chowdsp_plugin_base
+        chowdsp::chowdsp_filters
+        juce::juce_audio_basics
+        juce::juce_audio_devices
+        juce::juce_audio_formats
+        juce::juce_audio_plugin_client
+        juce::juce_audio_processors
+        juce::juce_audio_utils
+        juce::juce_core
+        juce::juce_cryptography
+        juce::juce_data_structures
+        juce::juce_events
+        juce::juce_graphics
+        juce::juce_gui_basics
+        juce::juce_gui_extra
+        juce::juce_recommended_config_flags
+)
+
+juce_generate_juce_header(${PLUGIN_NAME}_Effect)
+target_include_directories(${PLUGIN_NAME}_Effect PRIVATE
+        "${CMAKE_CURRENT_BINARY_DIR}/${PLUGIN_NAME}_Effect_artefacts/JuceLibraryCode"
+)
+
+target_compile_definitions(${PLUGIN_NAME}_Effect PRIVATE
+        JUCE_DISPLAY_SPLASH_SCREEN=0
+        JUCE_MODAL_LOOPS_PERMITTED=0
+        JUCE_COREGRAPHICS_DRAW_ASYNC=1
+        JUCE_VST3_CAN_REPLACE_VST2=0
+        JUCE_WEB_BROWSER=0
+        DONT_SET_USING_JUCE_NAMESPACE=1
+        JUCE_SILENCE_XCODE_15_LINKER_WARNING=1
+        RESONARIUM_IS_EFFECT=1
 )
 
 if (APPLE)
@@ -196,7 +271,6 @@ if (APPLE)
         if (TARGET ${tgt})
             set_target_properties(${tgt} PROPERTIES
                     XCODE_ATTRIBUTE_CLANG_LINK_OBJC_RUNTIME NO
-                    #XCODE_ATTRIBUTE_DEPLOYMENT_POSTPROCESSING[variant=Release] YES
                     XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES"
             )
             if (NOT t STREQUAL "All")
@@ -205,7 +279,8 @@ if (APPLE)
                         -Wunreachable-code -Winconsistent-missing-destructor-override -Wshift-sign-overflow -Wnullable-to-nonnull-conversion -Wuninitialized -Wno-missing-field-initializers
                         -Wno-ignored-qualifiers -Wno-missing-braces -Wno-char-subscripts -Wno-unused-private-field -fno-aligned-allocation -Wunused-private-field -Wunreachable-code
                         -Wenum-compare -Wshadow -Wfloat-conversion -Wshadow-uncaptured-local -Wshadow-field -Wsign-compare -Wdeprecated-this-capture -Wimplicit-float-conversion -Wno-deprecated-declarations
-                        -ffast-math -fno-finite-math-only -Ofast)
+                        -ffast-math -fno-finite-math-only -Ofast
+                )
             endif ()
         endif ()
     endforeach ()
@@ -225,9 +300,9 @@ if (WIN32)
 endif ()
 
 if (UNIX AND NOT APPLE)
-    target_link_libraries(${PLUGIN_NAME} PRIVATE curl)
+    target_link_libraries(${PLUGIN_NAME}_Instrument PRIVATE curl)
+    target_link_libraries(${PLUGIN_NAME}_Effect PRIVATE curl)
 endif ()
-
 
 if (WIN32)
     set(dest "Program Files")
@@ -235,4 +310,5 @@ else ()
     set(dest "Applications")
 endif ()
 
-install(TARGETS ${PLUGIN_NAME} DESTINATION "${dest}")
+install(TARGETS ${PLUGIN_NAME}_Instrument DESTINATION "${dest}")
+install(TARGETS ${PLUGIN_NAME}_Effect DESTINATION "${dest}")
