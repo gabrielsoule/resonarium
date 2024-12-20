@@ -61,3 +61,9 @@ Resonarium can also be used as an audio effect with live external audio input, o
 
 > [!NOTE]
 > Since this repository is self-contained, all its dependencies (including JUCE) must be downloaded and built from scratch. This may take some time. Many C++ build tools support parallel compilation, the use of which is recommended.
+> 
+## Dependencies
+
+This project uses a modified fork of [Gin](https://github.com/FigBug/Gin), which includes several wonderful GUI widgets and backend utilities. Go check it out, it's great!
+
+This project uses a modified fork of [chowdsp-utils](https://github.com/Chowdhury-DSP/chowdsp_utils); in particular, we adapt and extend the state variable filter implementation. Go check it out, it's (also) great! 
