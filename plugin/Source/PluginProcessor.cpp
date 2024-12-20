@@ -270,15 +270,20 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     juce::ScopedNoDenormals noDenormals;
 
     //deal with external input for the External Input Exciter
-    globalState.extInputBuffer.copyFrom(0, 0, buffer.getReadPointer(0), buffer.getNumSamples());
-    globalState.extInputBuffer.copyFrom(1, 0, buffer.getReadPointer(1), buffer.getNumSamples());
-    if (synth.params.voiceParams.externalInputExciterParams.enabled->isOn())
+    bool extInputEnabled = synth.params.voiceParams.externalInputExciterParams.enabled->isOn();
+    if (extInputEnabled)
     {
+        globalState.extInputBuffer.copyFrom(0, 0, buffer.getReadPointer(0), buffer.getNumSamples());
+        globalState.extInputBuffer.copyFrom(1, 0, buffer.getReadPointer(1), buffer.getNumSamples());
+        globalState.extInputBuffer.applyGain(0.05f); //for some reason, external input is super loud for most signals and blows up the resonators
         buffer.applyGain(std::cos(
             synth.params.voiceParams.externalInputExciterParams.mix->getProcValue() *
             juce::MathConstants<float>::halfPi));
     }
+
+#if RESONARIUM_IS_INSTRUMENT
     if (!buffer.hasBeenCleared()) buffer.clear();
+#endif
 
     //update the global state for the rest of the program
     globalState.playHead = getPlayHead();
@@ -288,6 +293,7 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     synth.renderNextBlock(buffer, midi, 0, buffer.getNumSamples());
     globalState.modMatrix.finishBlock(buffer.getNumSamples());
     synth.endBlock(buffer.getNumSamples());
+    globalState.extInputBuffer.clear();
 
 #if JUCE_DEBUG
     //check the buffer for NaNs

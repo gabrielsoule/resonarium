@@ -94,7 +94,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     }
 
     extInParamBox = new ExternalInputExciterParamBox("External In", proc, voiceParams.externalInputExciterParams);
-    extInParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
+    extInParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_MEDIUM_HEIGHT));
     excitersViewportContentComponent->addAndMakeVisible(extInParamBox);
 
     float scrollableAreaFinalHeight = excitersColumnLocal.getY();

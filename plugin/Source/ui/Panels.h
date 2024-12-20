@@ -134,9 +134,13 @@ public:
         addEnable(extInParams.enabled);
         addControl(new gin::Knob(extInParams.gain), 0, 0);
         addControl(new gin::Knob(extInParams.mix), 1, 0);
-        addControl(new gin::Select(externalInputParams.filterParams.type), 0, 1);
-        addControl(new gin::Knob(externalInputParams.filterParams.frequency), 1, 1);
-        addControl(new gin::Knob(externalInputParams.filterParams.resonance), 2, 1);
+        addControl(new gin::Knob(extInParams.adsrParams.attack), 0, 1);
+        addControl(new gin::Knob(extInParams.adsrParams.decay), 1, 1);
+        addControl(new gin::Knob(extInParams.adsrParams.sustain), 2, 1);
+        addControl(new gin::Knob(extInParams.adsrParams.release), 3, 1);
+        addControl(new gin::Select(externalInputParams.filterParams.type), 0, 2);
+        addControl(new gin::Knob(externalInputParams.filterParams.frequency), 1, 2);
+        addControl(new gin::Knob(externalInputParams.filterParams.resonance), 2, 2);
     }
 
     ExternalInputExciterParams extInParams;

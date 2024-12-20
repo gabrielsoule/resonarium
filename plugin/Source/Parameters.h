@@ -171,6 +171,7 @@ struct ImpulseTrainExciterParams
 struct ExternalInputExciterParams
 {
     MultiFilterParams filterParams;
+    ADSRParams adsrParams;
     gin::Parameter::Ptr
         enabled,
         gain,

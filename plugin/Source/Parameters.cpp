@@ -414,7 +414,7 @@ ImpulseTrainExciterParams::ImpulseTrainExciterParams(ResonariumProcessor& p, int
 }
 
 ExternalInputExciterParams::ExternalInputExciterParams(ResonariumProcessor& p) :
-    filterParams(p, "extIn")
+    filterParams(p, "extIn"), adsrParams(p, "extIn", 0)
 {
     enabled = p.addExtParam("extInEnable", "Ext. In Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,

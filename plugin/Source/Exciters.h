@@ -36,12 +36,10 @@ public:
         maximumBlockSize = 512;
     }
 
-    Exciter() = default;
+    Exciter() = delete;
 
     virtual ~Exciter()
     = default;
-
-    virtual void nextSample() = 0;
 
     /**
      * Processes a block of audio samples additively.
@@ -83,7 +81,6 @@ public:
     }
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
-    void nextSample() override;
     void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
@@ -113,7 +110,6 @@ public:
     }
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
-    void nextSample() override;
     void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
@@ -162,7 +158,6 @@ public:
     }
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
-    void nextSample() override;
     void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
@@ -202,7 +197,6 @@ public:
     }
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
-    void nextSample() override;
     void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
@@ -236,7 +230,6 @@ public:
     }
 
     void prepare(const juce::dsp::ProcessSpec& spec) override;
-    void nextSample() override;
     void process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock) override;
     void reset() override;
     void noteStarted() override;
@@ -245,6 +238,7 @@ public:
 
     ExternalInputExciterParams params;
     MultiFilter filter;
+    gin::AnalogADSR envelope;
     juce::AudioBuffer<float> extInBuffer;
     juce::dsp::AudioBlock<float> extInBlock;
 };

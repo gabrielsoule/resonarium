@@ -13,10 +13,6 @@ void ImpulseExciter::prepare(const juce::dsp::ProcessSpec& spec)
     reset();
 }
 
-void ImpulseExciter::nextSample()
-{
-}
-
 void ImpulseExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
 {
     jassert(exciterBlock.getNumChannels() == 2);
@@ -72,11 +68,6 @@ void NoiseExciter::prepare(const juce::dsp::ProcessSpec& spec)
     scratchBuffer.clear();
     scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
     reset();
-}
-
-
-void NoiseExciter::nextSample()
-{
 }
 
 void NoiseExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
@@ -138,10 +129,6 @@ void ImpulseTrainExciter::prepare(const juce::dsp::ProcessSpec& spec)
     scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
     sampleRate = spec.sampleRate;
     reset();
-}
-
-void ImpulseTrainExciter::nextSample()
-{
 }
 
 void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
@@ -264,7 +251,6 @@ void ImpulseTrainExciter::updateParameters()
     jassert(periodInSamples > 0);
 }
 
-
 void SampleExciter::prepare(const juce::dsp::ProcessSpec& spec)
 {
     Exciter::prepare(spec);
@@ -274,17 +260,12 @@ void SampleExciter::prepare(const juce::dsp::ProcessSpec& spec)
     scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
 }
 
-void SampleExciter::nextSample()
-{
-}
-
 void SampleExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
 {
     if (!params.enabled->isOn() || !state.sampler.isLoaded() || !isPlaying)
         return;
 
     const int numSamples = exciterBlock.getNumSamples();
-    const int totalSamples = state.sampler.getNumSamples();
     const int loopLength = endSample - startSample;
     int remainingSamples = numSamples;
     int blockOffset = 0;
@@ -333,7 +314,7 @@ void SampleExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::ds
         remainingSamples -= samplesToProcess;
         blockOffset += samplesToProcess;
 
-        if(envelope.getState() == gin::AnalogADSR::State::idle)
+        if (envelope.getState() == gin::AnalogADSR::State::idle)
         {
             isPlaying = false;
         }
@@ -380,10 +361,7 @@ void ExternalInputExciter::prepare(const juce::dsp::ProcessSpec& spec)
     this->extInBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
     extInBuffer.clear();
     this->extInBlock = juce::dsp::AudioBlock<float>(extInBuffer);
-}
-
-void ExternalInputExciter::nextSample()
-{
+    reset();
 }
 
 void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& exciterBlock,
@@ -391,31 +369,42 @@ void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& exciterBlock,
 {
     if (!params.enabled->isOn()) return;
 
-    ResonatorVoice& v = static_cast<ResonatorVoice&>(this->voice);
-    float mix = std::sin(voice.getValue(params.mix) * juce::MathConstants<float>::halfPi);
-    float gainL = voice.getValue(params.gain, 0) * mix;
-    float gainR = voice.getValue(params.gain, 1) * mix;
-    jassert(gainL == gainR);
-    extInBuffer.copyFrom(0, v.currentBlockStartSample, state.extInputBuffer.getReadPointer(0), v.currentBlockNumSamples, gainL);
-    extInBuffer.copyFrom(1, v.currentBlockStartSample, state.extInputBuffer.getReadPointer(1), v.currentBlockNumSamples, gainR);
+    const auto& v = dynamic_cast<ResonatorVoice&>(this->voice);
+    const float mix = std::sin(voice.getValue(params.mix) * juce::MathConstants<float>::halfPi);
+    const float gainL = voice.getValue(params.gain, 0) * mix;
+    const float gainR = voice.getValue(params.gain, 1) * mix;
+    extInBuffer.copyFrom(0, v.currentBlockStartSample, state.extInputBuffer.getReadPointer(0), v.currentBlockNumSamples,
+                         gainL);
+    extInBuffer.copyFrom(1, v.currentBlockStartSample, state.extInputBuffer.getReadPointer(1), v.currentBlockNumSamples,
+                         gainR);
     juce::dsp::AudioBlock<float> extInBlock = juce::dsp::AudioBlock<float>(extInBuffer, v.currentBlockStartSample);
     // filter.process(extInBlock);
+    envelope.processMultiplying(extInBuffer, v.currentBlockStartSample, v.currentBlockNumSamples);
     exciterBlock.add(extInBlock);
 }
 
 void ExternalInputExciter::reset()
 {
     filter.reset();
+    envelope.reset();
 }
 
 void ExternalInputExciter::noteStarted()
 {
+    envelope.noteOn();
 }
 
 void ExternalInputExciter::noteStopped(bool avoidTailOff)
 {
+    envelope.noteOff();
 }
 
 void ExternalInputExciter::updateParameters()
 {
+    if (!params.enabled->isOn()) return;
+
+    envelope.setAttack(voice.getValue(params.adsrParams.attack));
+    envelope.setDecay(voice.getValue(params.adsrParams.decay));
+    envelope.setSustainLevel(voice.getValue(params.adsrParams.sustain));
+    envelope.setRelease(voice.getValue(params.adsrParams.release));
 }
