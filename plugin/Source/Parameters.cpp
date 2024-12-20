@@ -145,7 +145,7 @@ static juce::String distortionTypeTextFunction(const gin::Parameter&, float v)
 
 static juce::String distortionFilterModeTextFunction(const gin::Parameter&, float v)
 {
-    switch (Distortion::DistortionMode(int(v)))
+    switch (Distortion::FilterMode(int(v)))
     {
     case Distortion::FilterMode::disabled: return "Off";
     case Distortion::FilterMode::pre: return "Pre";
