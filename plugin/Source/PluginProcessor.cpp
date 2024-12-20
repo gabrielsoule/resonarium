@@ -3,6 +3,7 @@
 #include "ResonatorVoice.h"
 #include "ui/ResonariumLookAndFeel.h"
 #include "BinaryData.h"
+#include "util/ResonariumUtilities.h"
 
 gin::ProcessorOptions ResonariumProcessor::getOptions()
 {
@@ -267,12 +268,17 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 {
     juce::ScopedNoDenormals noDenormals;
 
+    //toggle the constant note on or off based on the note parameters
     bool constantNote = synth.params.voiceParams.externalInputExciterParams.constantNote->isOn();
     if (constantNote && !constantNoteActive)
     {
         DBG(globalState.logPrefix + "Constant note toggled ON, sending note on message to synth");
         midi.addEvent(juce::MidiMessage::noteOn(constantNoteChannel, constantNoteNumber, constantNoteVelocity), 0);
         constantNoteActive = true;
+        const float freq = synth.params.voiceParams.externalInputExciterParams.constantNoteFrequency->getProcValue();
+        int pitchBend = ResonariumUtilities::calculateMPEPitchBendForFrequency(freq, constantNoteNumber, 48.0f);
+        midi.addEvent(juce::MidiMessage::pitchWheel(constantNoteChannel, pitchBend), 0);
+        constantNoteFrequency = freq;
     }
     else if (!constantNote && constantNoteActive)
     {
@@ -283,6 +289,17 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 
     if (constantNoteActive)
     {
+        //update the constant note MPE pitchbend to the constant note frequency parameter
+        const float freq = synth.params.voiceParams.externalInputExciterParams.constantNoteFrequency->getProcValue();
+        if (freq != constantNoteFrequency)
+        {
+            DBG(globalState.logPrefix + "Constant note frequency changed, updating pitch bend to " + juce::String(freq));
+            int pitchBend = ResonariumUtilities::calculateMPEPitchBendForFrequency(freq, constantNoteNumber, 48.0f);
+            midi.addEvent(juce::MidiMessage::pitchWheel(constantNoteChannel, pitchBend), 0);
+            constantNoteFrequency = freq;
+        }
+
+        //if we see a all notes off or all sound off message, retrigger the constant note on the next block
         for (const auto metadata : midi)
         {
             const auto msg = metadata.getMessage();

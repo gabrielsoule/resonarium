@@ -16,7 +16,7 @@
     "external": {
       "gain": "Control the gain of the external input signal, in decibels.",
       "constantnote": "If enabled, a constant MIDI note will be supplied to the instrument at all times, allowing Resonarium to be used as an audio effect without complex MIDI routing. MIDI input from the host will still be processed and played as normal while this parameter is engaged.",
-      "constantnotefrequency": "Set the frequency of the constant MIDI note."
+      "constantnotefrequency": "Set the frequency of the constant MIDI note. This is implemented via a MIDI MPE pitch bend signal; therefore, the frequency range is limited by the MPE pitch bend range. At a default value of +-48 semitones, this parameter is bounded between ~10 Hz and ~3000 Hz. Values exceeding this range are clamped appropriately."
     }
   },
   "resonator": {

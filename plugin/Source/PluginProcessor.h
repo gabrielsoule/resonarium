@@ -39,7 +39,8 @@ public:
     bool constantNoteActive;
     const int constantNoteNumber = 48 + 5;
     const float constantNoteVelocity = 0.5f;
-    const int constantNoteChannel = 2;
+    const int constantNoteChannel = 15;
+    float constantNoteFrequency = 440.0f;
 
 #if PERFETTO
     std::unique_ptr<perfetto::TracingSession> tracingSession;
