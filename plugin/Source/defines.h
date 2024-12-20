@@ -29,7 +29,7 @@
 #define NUM_MACROS 6
 
 //effects
-#define MAX_DELAY_IN_SECONDS 1.0f
+#define MAX_DELAY_IN_SECONDS 2.0f
 
 //misc. UI stuff
 #define WINDOW_WIDTH (1300 - 18)

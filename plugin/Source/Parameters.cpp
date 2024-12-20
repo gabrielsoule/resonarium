@@ -683,11 +683,11 @@ DelayParams::DelayParams(ResonariumProcessor& p)
                             0.0f, "", enableTextFunction);
 
     timeL = p.addExtParam("delayTimeL", "Delay Time L", "Time L", "s",
-                          {0.01f, 4.0f, 0.0f, 0.4f},
+                          {0.01f, MAX_DELAY_IN_SECONDS, 0.0f, 0.4f},
                           0.5f, 0.0f);
 
     timeR = p.addExtParam("delayTimeR", "Delay Time R", "Time R", "s",
-                          {0.01f, 4.0f, 0.0f, 0.4f},
+                          {0.01f, MAX_DELAY_IN_SECONDS, 0.0f, 0.4f},
                           0.5f, 0.0f);
 
     beatL = p.addExtParam("delayBeatL", "Delay Beat L", "Beat L", "",
