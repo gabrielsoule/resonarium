@@ -428,6 +428,14 @@ ExternalInputExciterParams::ExternalInputExciterParams(ResonariumProcessor& p) :
     mix = p.addExtParam("extInMix", "Ext. In Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
                         0.0f);
+
+    constantNote = p.addIntParam("extInConstantNote", "Ext. In Constant Note", "Hold Note", "",
+                                 {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                                 0.0f, "exciter.external.constantnote", enableTextFunction);
+
+    constantNoteFrequency = p.addExtParam("extInConstantNoteFrequency", "Ext. In Constant Note Frequency", "Freq", "Hz",
+                                         {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, 440.0f,
+                                         0.0f, "exciter.external.constantnotefrequency");
 }
 
 SampleExciterParams::SampleExciterParams(ResonariumProcessor& p)

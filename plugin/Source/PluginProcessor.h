@@ -35,6 +35,12 @@ public:
     bool prepared = false; //indicates that prepareToPlay has been called at least once
     bool soloActive = false; //true if a resonator is in solo mode
 
+    bool simulateConstantNote;
+    bool constantNoteActive;
+    const int constantNoteNumber = 48 + 5;
+    const float constantNoteVelocity = 0.5f;
+    const int constantNoteChannel = 2;
+
 #if PERFETTO
     std::unique_ptr<perfetto::TracingSession> tracingSession;
 #endif

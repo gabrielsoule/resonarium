@@ -175,7 +175,9 @@ struct ExternalInputExciterParams
     gin::Parameter::Ptr
         enabled,
         gain,
-        mix = nullptr;
+        mix,
+        constantNote,
+        constantNoteFrequency = nullptr;
 
     ExternalInputExciterParams() = default;
     ExternalInputExciterParams(ResonariumProcessor& p);

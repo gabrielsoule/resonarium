@@ -12,6 +12,11 @@
       "loop": "If enabled, the sampler will loop the sample indefinitely, between the start and end positions. If disabled, the sampler will play the sample once and then stop.",
       "start": "Choose where playback should start. A value of 0 corresponds to the beginning of the sample, and a value of 1 corresponds to the end of the sample.",
       "end": "Choose where playback should end. A value of 0 corresponds to the beginning of the sample, and a value of 1 corresponds to the end of the sample."
+    },
+    "external": {
+      "gain": "Control the gain of the external input signal, in decibels.",
+      "constantnote": "If enabled, a constant MIDI note will be supplied to the instrument at all times, allowing Resonarium to be used as an audio effect without complex MIDI routing. MIDI input from the host will still be processed and played as normal while this parameter is engaged.",
+      "constantnotefrequency": "Set the frequency of the constant MIDI note."
     }
   },
   "resonator": {

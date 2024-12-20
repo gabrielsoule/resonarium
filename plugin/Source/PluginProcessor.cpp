@@ -58,9 +58,7 @@ ResonariumProcessor::ResonariumProcessor() :
         synth.addVoice(voice);
         voice->id = i;
     }
-
     setupModMatrix(); //set up the modulation matrix
-
     synth.setNumVoices(NUM_SYNTH_VOICES);
     init(); //internal init
 }
@@ -269,6 +267,34 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 {
     juce::ScopedNoDenormals noDenormals;
 
+    bool constantNote = synth.params.voiceParams.externalInputExciterParams.constantNote->isOn();
+    if (constantNote && !constantNoteActive)
+    {
+        DBG(globalState.logPrefix + "Constant note toggled ON, sending note on message to synth");
+        midi.addEvent(juce::MidiMessage::noteOn(constantNoteChannel, constantNoteNumber, constantNoteVelocity), 0);
+        constantNoteActive = true;
+    }
+    else if (!constantNote && constantNoteActive)
+    {
+        DBG(globalState.logPrefix + "Constant note toggled OFF, sending note off message to synth");
+        midi.addEvent(juce::MidiMessage::noteOff(constantNoteChannel, constantNoteNumber), 0);
+        constantNoteActive = false;
+    }
+
+    if (constantNoteActive)
+    {
+        for (const auto metadata : midi)
+        {
+            const auto msg = metadata.getMessage();
+            if (msg.isAllNotesOff() || msg.isAllSoundOff())
+            {
+                constantNoteActive = false;
+                DBG(globalState.logPrefix + "All notes off message processed. Toggling constant note OFF for one block; it will be retriggered next block.");
+            }
+        }
+    }
+
+
     //deal with external input for the External Input Exciter
     bool extInputEnabled = synth.params.voiceParams.externalInputExciterParams.enabled->isOn();
     if (extInputEnabled)
@@ -293,6 +319,7 @@ void ResonariumProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     synth.renderNextBlock(buffer, midi, 0, buffer.getNumSamples());
     globalState.modMatrix.finishBlock(buffer.getNumSamples());
     synth.endBlock(buffer.getNumSamples());
+    midi.clear();
     globalState.extInputBuffer.clear();
 
 #if JUCE_DEBUG

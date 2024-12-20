@@ -134,6 +134,8 @@ public:
         addEnable(extInParams.enabled);
         addControl(new gin::Knob(extInParams.gain), 0, 0);
         addControl(new gin::Knob(extInParams.mix), 1, 0);
+        addControl(new gin::Switch(extInParams.constantNote), 2, 0);
+        addControl(new gin::Knob(extInParams.constantNoteFrequency), 3, 0);
         addControl(new gin::Knob(extInParams.adsrParams.attack), 0, 1);
         addControl(new gin::Knob(extInParams.adsrParams.decay), 1, 1);
         addControl(new gin::Knob(extInParams.adsrParams.sustain), 2, 1);
