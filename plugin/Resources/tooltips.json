@@ -70,7 +70,7 @@
     }
   },
   "global": {
-    "gain": "Set the gain of the main output signal, in decibels.",
+    "gain": "Set the gain of the output signal. This parameter is always polyphonic, and can be used by an envelope or LFO to modulate the output level.",
     "polyfx": "Choose whether to use polyphonic effect chains. If enabled, each note will have its own effect chain. If disabled, all notes will share a single effect chain. Disabling improves performance, but effect parameters will no longer be polyphonically modulable.",
     "numvoices": "Set the number of voices in the synthesizer. Each voice has its own effect chain and modulation sources. Increasing the number of voices will increase the CPU load.",
     "stereo": "Choose whether to enable stereo resonators. If enabled, resonators will maintain a different internal state for the left and right channels, and will support stereo modulation. Disabling will improve performance, but disable stereo effects from the resonators."
