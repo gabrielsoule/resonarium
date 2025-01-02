@@ -144,9 +144,11 @@ void ResonatorSynth::renderNextSubBlock(juce::AudioBuffer<float>& outputAudio, i
     currentBlockSize = numSamples;
     updateParameters();
     Synthesiser::renderNextSubBlock(outputAudio, startSample, numSamples);
+    juce::dsp::AudioBlock<float> block = juce::dsp::AudioBlock<float>(outputAudio).getSubBlock(startSample, numSamples);
+
     if (! state.polyFX )
     {
-        effectChain.process(juce::dsp::AudioBlock<float>(outputAudio).getSubBlock(startSample, numSamples));
+        effectChain.process(block);
     }
 }
 

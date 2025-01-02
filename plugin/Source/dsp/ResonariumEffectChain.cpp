@@ -145,6 +145,7 @@ void ResonariumEffectChain::updateParameters(T& source, juce::AudioPlayHead* pla
     filter1.updateParameters(source);
 
     filter2.updateParameters(source);
+
 }
 
 void ResonariumEffectChain::process(juce::dsp::AudioBlock<float> block) noexcept

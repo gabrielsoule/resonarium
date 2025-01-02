@@ -321,8 +321,8 @@ void ResonatorVoice::updateParameters(int numSamples)
     }
 
     effectChain.updateParameters(*this, state.playHead);
-
     bypassResonators = state.bypassResonators;
+    gain = getValue(params.masterGain);
 }
 
 void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
@@ -382,6 +382,8 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     {
         outputBlock.add(exciterBlock);
     }
+
+    outputBlock.multiplyBy(gain);
 
     //Silence detection code
     testForSilenceBlockCount++;

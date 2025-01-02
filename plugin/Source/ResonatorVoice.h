@@ -39,6 +39,7 @@ public:
     float currentMidiNote = 64;
     int id = 0;
     juce::OwnedArray<WaveguideResonatorBank> resonatorBanks;
+    float gain = 1.0f;
 
     int currentBlockStartSample = 0; //start sample of the current block
     int currentBlockNumSamples = 64; //num samples in the current block

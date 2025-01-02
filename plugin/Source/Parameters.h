@@ -402,10 +402,6 @@ struct EffectChainParams
     PhaserParams phaserParams;
     ReverbParams reverbParams;
 
-    gin::Parameter::Ptr
-        poly,
-        gain;
-
     EffectChainParams() = default;
     EffectChainParams(ResonariumProcessor& p);
 };
@@ -438,6 +434,7 @@ struct VoiceParams
     std::array<MSEGParams, NUM_MSEGS> msegParams;
 
     EffectChainParams effectChainParams;
+    gin::Parameter::Ptr masterGain;
 
     VoiceParams() = default;
     VoiceParams(ResonariumProcessor& p);
@@ -448,7 +445,7 @@ struct GlobalParams
     gin::Parameter::Ptr numVoices,
                         stereoResonators,
                         polyEffectChain,
-                        gain = nullptr;
+                        gain;
 
     GlobalParams() = default;
     GlobalParams(ResonariumProcessor& p);

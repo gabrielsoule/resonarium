@@ -645,7 +645,12 @@ VoiceParams::VoiceParams(ResonariumProcessor& p)
 
     externalInputExciterParams = ExternalInputExciterParams(p);
     sampleExciterParams = SampleExciterParams(p);
-    //Do NOT set up LFO params; these are set later by the enclosing synth
+    masterGain = p.addExtParam("masterGain", "Output Gain", "Gain", "dB",
+                               {-100.0f, 24.0f, 0.0f, 4.0f}, 0.0f,
+                               0.0f);
+    masterGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
+
+    //Do NOT set up modulation params; these are set later by the enclosing synth
 }
 
 ChorusParams::ChorusParams(ResonariumProcessor& p)
@@ -932,6 +937,10 @@ SynthParams::SynthParams(ResonariumProcessor& p)
 {
     voiceParams = VoiceParams(p);
     globalParams = GlobalParams(p);
+    //since each voice needs polyphonic access to the master gain,
+    //but the gain is displayed in the global param box, we copy the
+    //pointer over here
+    globalParams.gain = voiceParams.masterGain;
     effectChainParams = EffectChainParams(p);
     voiceParams.effectChainParams = effectChainParams;
     for (int i = 0; i < NUM_LFOS; i++)
@@ -994,10 +1003,6 @@ GlobalParams::GlobalParams(ResonariumProcessor& p)
     polyEffectChain = p.addIntParam("polyEffectChain", "Poly Effect Chain", "Poly FX", "",
                                     {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                                     0.0f, "global.polyfx", enableTextFunction);
-
-    gain = p.addExtParam("masterGain", "Master Gain", "Gain", "dB",
-                         {-60.0f, 12.0f, 0.0f, 1.0f}, 0.0f,
-                         0.0f, "global.gain");
 }
 
 UIParams::UIParams(ResonariumProcessor& p)
