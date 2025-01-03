@@ -34,7 +34,7 @@ public:
                            ImpulseExciterParams impulseParams) :
         gin::ParamBox(name), impulseParams(impulseParams)
     {
-        setName("impulseExciterParams");
+        setName("Impulse Exciter Box");
         addEnable(impulseParams.enabled);
         addControl(new gin::Knob(impulseParams.thickness), 0, 0);
         addControl(new gin::Knob(impulseParams.level), 0, 1);
@@ -52,7 +52,7 @@ public:
     NoiseExciterParamBox(const juce::String& name, ResonariumProcessor& proc, int index,
                          NoiseExciterParams noiseParams) : gin::ParamBox(name), noiseParams(noiseParams)
     {
-        setName("noiseExciterParams");
+        setName("Noise Exciter Box");
         addEnable(noiseParams.enabled);
         addControl(new gin::Knob(noiseParams.adsrParams.attack), 0, 0);
         addControl(new gin::Knob(noiseParams.adsrParams.decay), 1, 0);
@@ -74,7 +74,7 @@ public:
                                 ImpulseTrainExciterParams impulseTrainParams) : gin::ParamBox(name),
         impulseTrainParams(impulseTrainParams)
     {
-        setName("impulseTrainExciterParams");
+        setName("Impulse Train Exciter Box");
         addEnable(impulseTrainParams.enabled);
         addControl(new gin::Select(impulseTrainParams.mode), 0, 0);
         addControl(new gin::Knob(impulseTrainParams.rate), 1, 0);
@@ -99,7 +99,7 @@ public:
     SampleExciterParamBox(const juce::String& name, ResonariumProcessor& proc, SampleExciterParams sampleParams) :
         gin::ParamBox(name), sampleParams(sampleParams)
     {
-        setName("sampleExciterParams");
+        setName("Sample Exciter Box");
         addEnable(sampleParams.enabled);
 
         addControl(sampleDropper = new SampleDropperComponent(proc.globalState.sampler), 0, 0, 4, 1);
@@ -130,7 +130,7 @@ public:
                                  ExternalInputExciterParams externalInputParams) : gin::ParamBox(name),
         extInParams(externalInputParams)
     {
-        setName("externalInputExciterParams");
+        setName("External Input Exciter Box");
         addEnable(extInParams.enabled);
         addControl(new gin::Knob(extInParams.gain), 0, 0);
         addControl(new gin::Knob(extInParams.mix), 1, 0);
@@ -169,7 +169,7 @@ public:
         {
             resonatorColors.set(i, resonatorColors[i].withSaturation(1.0).withLightness(0.7));
         }
-        setName("waveguideResonatorBankParams " + juce::String(resonatorNum));
+        setName("Resonator Bank Box " + juce::String(resonatorNum));
         this->headerTabButtonWidth = 150;
         juce::StringArray headerButtonNames;
         for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
@@ -452,7 +452,7 @@ public:
     ADSRParamBox(const juce::String& name, ResonariumProcessor& proc, ADSRParams adsrParams) :
         gin::ParamBox(name), proc(proc), adsrParams(adsrParams)
     {
-        setName("env" + juce::String(adsrParams.index + 1));
+        setName("Envelope Box " + juce::String(adsrParams.index + 1));
         addEnable(adsrParams.enabled);
         juce::StringArray adsrNames;
         for (int i = 0; i < NUM_ENVELOPES; i++)
@@ -507,7 +507,7 @@ public:
         gin::ParamBox(name), proc(proc), lfoParams(lfoParams)
     {
         jassert(lfoParams.index != -1);
-        setName("lfo" + juce::String(lfoParams.index + 1));
+        setName("LFO Box " + juce::String(lfoParams.index + 1));
         addEnable(lfoParams.enabled);
         juce::StringArray lfoNames;
         for (int i = 0; i < NUM_LFOS; i++)
@@ -589,7 +589,7 @@ public:
                       RandomLFOParams randomLfoParams) :
         gin::ParamBox(name), proc(proc), randomLfoParams(randomLfoParams)
     {
-        setName("rnd" + juce::String(randomLfoParams.index + 1));
+        setName("Random Box " + juce::String(randomLfoParams.index + 1));
         addEnable(randomLfoParams.enabled);
         juce::StringArray lfoNames;
         for (int i = 0; i < NUM_LFOS; i++)
@@ -651,7 +651,7 @@ public:
     MSEGParamBox(const juce::String& name, ResonariumProcessor& proc, MSEGParams msegParams) :
         gin::ParamBox(name), proc(proc), msegParams(msegParams)
     {
-        setName("mseg" + juce::String(msegParams.index + 1));
+        setName("MSEG Box" + juce::String(msegParams.index + 1));
 
         addEnable(msegParams.enabled);
         juce::StringArray lfoNames;
@@ -739,7 +739,7 @@ public:
                   std::array<gin::Parameter::Ptr, NUM_MACROS> macroParams) :
         gin::ParamBox(name), proc(proc), macroParams(macroParams)
     {
-        setName("macro");
+        setName("Macro Box");
         addHeader({"MACROS", "SOURCES", "MATRIX"}, 0, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
         for (int i = 0; i < NUM_MACROS; i++)
@@ -783,7 +783,7 @@ public:
     ModSourceParamBox(const juce::String& name, ResonariumProcessor& proc)
         : gin::ParamBox(name), proc(proc)
     {
-        setName("mod");
+        setName("Modulation Source Box");
 
         addHeader({"MACROS", "SOURCES", "MATRIX"}, 1, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
@@ -806,7 +806,7 @@ public:
     MatrixParamBox(const juce::String& name, ResonariumProcessor& proc)
         : gin::ParamBox(name), proc(proc)
     {
-        setName("mtx");
+        setName("Modulation Matrix Box");
         addHeader({"MACROS", "SOURCES", "MATRIX"}, 2, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
         addControl(modMatrixComponent = new gin::ModMatrixBox(proc, proc.globalState.modMatrix, 50));
@@ -828,7 +828,7 @@ public:
     ChorusParamBox(const juce::String& name, ResonariumProcessor& proc, ChorusParams chorusParams) :
         gin::ParamBox(name), proc(proc), chorusParams(chorusParams)
     {
-        setName("chorus");
+        setName("Chorus Box");
         addEnable(chorusParams.enabled);
         addControl(new gin::Switch(chorusParams.sync), 0, 0);
         addControl(r = new gin::Knob(chorusParams.rate), 1, 0);
@@ -882,7 +882,7 @@ public:
     PhaserParamBox(const juce::String& name, ResonariumProcessor& proc, PhaserParams phaserParams) :
         gin::ParamBox(name), proc(proc), phaserParams(phaserParams)
     {
-        setName("phaser");
+        setName("Phaser Box");
         addEnable(phaserParams.enabled);
         addControl(new gin::Switch(phaserParams.sync), 0, 0);
         addControl(r = new gin::Knob(phaserParams.rate), 1, 0);
@@ -936,6 +936,7 @@ public:
     CompressorParamBox(const juce::String& name, ResonariumProcessor& proc, CompressorParams compressorParams) :
         gin::ParamBox(name), proc(proc), compressorParams(compressorParams)
     {
+        setName("Compressor Box");
         addEnable(compressorParams.enabled);
         addControl(new gin::Knob(compressorParams.threshold), 0, 0);
         addControl(new gin::Knob(compressorParams.ratio), 1, 0);
@@ -953,7 +954,7 @@ public:
     ReverbParamBox(const juce::String& name, ResonariumProcessor& proc, ReverbParams reverbParams) :
         gin::ParamBox(name), proc(proc), reverbParams(reverbParams)
     {
-        setName("reverb");
+        setName("Reverb Box");
         addEnable(reverbParams.enabled);
         addControl(new gin::Knob(reverbParams.size), 0, 0);
         addControl(new gin::Knob(reverbParams.density), 1, 0);
@@ -975,7 +976,7 @@ public:
     DelayParamBox(const juce::String& name, ResonariumProcessor& proc, DelayParams delayParams) :
         gin::ParamBox(name), proc(proc), delayParams(delayParams)
     {
-        setName("delay");
+        setName("Delay Box");
         gridWidth = KNOB_W_SMALL;
         gridHeight = KNOB_H_SMALL;
         gridOffsetY += 4;
@@ -1049,7 +1050,7 @@ public:
     DistortionParamBox(const juce::String& name, ResonariumProcessor& proc, DistortionParams distortionParams) :
     gin::ParamBox(name), proc(proc), distortionParams(distortionParams)
     {
-        setName("dist");
+        setName("Distortion Box");
         addEnable(distortionParams.enabled);
         addControl(distortionModeKnob = new gin::Select(distortionParams.distortionMode), 0, 0);
         addControl(driveKnob = new gin::Knob(distortionParams.drive), 1, 0);
@@ -1091,7 +1092,7 @@ public:
     MultiAmpParamBox(const juce::String& name, ResonariumProcessor& proc, MultiAmpParams multiAmpParams) :
         gin::ParamBox(name), proc(proc), multiAmpParams(multiAmpParams)
     {
-        setName("amp");
+        setName("Amp Box");
         addEnable(multiAmpParams.enabled);
         gridWidth = KNOB_W_SMALL;
         gridHeight = KNOB_H_SMALL;
@@ -1139,7 +1140,7 @@ public:
     SVFParamBox(const juce::String& name, ResonariumProcessor& proc, SVFParams svfParams) :
         gin::ParamBox(name), proc(proc), svfParams(svfParams)
     {
-        setName(name);
+        setName("Filter Box");
         addEnable(svfParams.enabled);
 
         addControl(new gin::Knob(svfParams.mode), 0, 0);
@@ -1165,7 +1166,7 @@ public:
     GlobalParamBox(const juce::String& name, ResonariumProcessor& proc, GlobalParams globalParams) :
         gin::ParamBox(name), proc(proc), globalParams(globalParams)
     {
-        setName("global");
+        setName("Global Params Box");
         addControl(masterGainKnob = new gin::Knob(globalParams.gain), 0, 0);
         addControl(polyFXSwitch = new gin::Switch(globalParams.polyEffectChain), 1, 0);
         addControl(stereoResonatorsSwitch = new gin::Switch(globalParams.stereoResonators), 2, 0);
