@@ -74,5 +74,6 @@ public:
     //debug buttons, invisible on a release build
     juce::TextButton inspectButton{"INSPECT UI"};
     juce::TextButton bypassResonatorsButton{"BYPASS RESONATORS"};
+    juce::TextButton captureButton{"CAPTURE"};
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ResonariumEditor)
 };

@@ -651,7 +651,7 @@ public:
     MSEGParamBox(const juce::String& name, ResonariumProcessor& proc, MSEGParams msegParams) :
         gin::ParamBox(name), proc(proc), msegParams(msegParams)
     {
-        setName("MSEG Box" + juce::String(msegParams.index + 1));
+        setName("MSEG Box " + juce::String(msegParams.index + 1));
 
         addEnable(msegParams.enabled);
         juce::StringArray lfoNames;

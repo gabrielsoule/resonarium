@@ -1,6 +1,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include "util/ResonariumUtilities.h"
+
 
 ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     : gin::ProcessorEditor(p), proc(p), uiParams(p.uiParams)
@@ -17,7 +19,6 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
     logo = new ResonariumLogo();
     logo->setBounds(7, 2, 37, 37);
-    addAndMakeVisible(logo);
 
     logoText = new juce::Label();
     logoText->setText("RESONARIUM", juce::dontSendNotification);
@@ -25,14 +26,18 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     logoText->setBounds(50, 0, 210, 40);
     logoText->setFont(logoText->getFont().withHeight(26.0f).withExtraKerningFactor(0.25f));
     logoText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.85f));
-    addAndMakeVisible(logoText);
 
     versionText = new juce::Label();
     versionText->setText(proc.getOptions().pluginVersion, juce::dontSendNotification);
     versionText->setBounds(248, 0, 100, 40);
     versionText->setFont(versionText->getFont().withStyle(juce::Font::italic).withHeight(13.0f));
     versionText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.2f));
+
+#if ! JUCE_DEBUG //we use the navbar space for debugging controls when in a debug build, so don't show the logo
+    addAndMakeVisible(logo);
+    addAndMakeVisible(logoText);
     addAndMakeVisible(versionText);
+#endif
 
     addChildComponent(modOverview);
     modOverview.setBounds(350, 10, 150, 20);
@@ -275,7 +280,39 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
             DBG("No longer bypassing resonators!");
         }
     };
+    addAndMakeVisible(captureButton);
+    captureButton.onClick = [&]
+    {
+        DBG("Capturing UI components to " + juce::File::getCurrentWorkingDirectory().getFullPathName());
+        juce::File imageDirectory = juce::File::getCurrentWorkingDirectory().getChildFile("captures");
+        if (!imageDirectory.exists())
+            imageDirectory.createDirectory(); // Returns true if successful
+        for (juce::Component* c : this->getChildren())
+        {
+            if (c->getWidth() > 0 && c->getHeight() > 0 && c->getName().isNotEmpty())
+            {
+                ResonariumUtilities::saveComponentToImage(*c, imageDirectory.getChildFile (c->getName() + ".png"), 4.0f);
+            }
+        }
 
+        for (juce::Component* c : this->effectsViewportContentComponent->getChildren())
+        {
+            if (c->getWidth() > 0 && c->getHeight() > 0 && c->getName().isNotEmpty())
+            {
+                ResonariumUtilities::saveComponentToImage(*c, imageDirectory.getChildFile (c->getName() + ".png"), 4.0f);
+            }
+        }
+
+        for (juce::Component* c : this->excitersViewportContentComponent->getChildren())
+        {
+            if (c->getWidth() > 0 && c->getHeight() > 0)
+            {
+                ResonariumUtilities::saveComponentToImage(*c, imageDirectory.getChildFile (c->getName() + ".png"), 5.0f);
+            }
+        }
+
+        DBG("Done capturing UI components!");
+    };
 #endif
 
 #ifndef JUCE_DEBUG
@@ -289,10 +326,6 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
     this->ResonariumEditor::resized();
 #endif
-
-    // auto* blurDemoComponent = new melatonin::BlurDemoComponent();
-    // blurDemoComponent->setBounds(100, 100, 600, 600);
-    // addAndMakeVisible(blurDemoComponent);
 
     juce::Timer::callAfterDelay(300, [this] {showOnboardingWarning();});
     DBG("Done setting up ResonariumEditor!");
@@ -314,8 +347,9 @@ void ResonariumEditor::paint(juce::Graphics& g)
 void ResonariumEditor::resized()
 {
 #if JUCE_DEBUG
-    inspectButton.setBounds(200, 0, 100, 40);
-    bypassResonatorsButton.setBounds(300, 0, 150, 40);
+    inspectButton.setBounds(10, 0, 100, 40);
+    bypassResonatorsButton.setBounds(120, 0, 150, 40);
+    captureButton.setBounds(120 + 150 + 20, 0, 100, 40);
 #endif
     ProcessorEditor::resized();
     for (auto* c : this->getChildren())
