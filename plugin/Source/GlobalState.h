@@ -30,7 +30,7 @@ public:
     std::array<gin::ModSrcId, NUM_ENVELOPES> modSrcPolyENV;
     std::array<gin::ModSrcId, NUM_MSEGS> modSrcMonoMSEG;
     std::array<gin::ModSrcId, NUM_MSEGS> modSrcPolyMSEG;
-    std::array<gin::ModSrcId, 119> modSrcCC;
+    std::array<gin::ModSrcId, 120> modSrcCC;
     std::array<gin::ModSrcId, NUM_MACROS> modSrcMacro;
     Sampler sampler;
     juce::String samplePath = "";
