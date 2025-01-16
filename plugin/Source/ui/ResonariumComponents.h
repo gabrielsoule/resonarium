@@ -224,8 +224,15 @@ public:
         {
             if (auto* path = dynamic_cast<juce::DrawablePath*>(drawableSVGEnabled->getChildComponent(i)))
             {
-                path->setFill(getLookAndFeel().findColour(ResonariumLookAndFeel::accentColourId));
-                path->setStrokeFill(getLookAndFeel().findColour(ResonariumLookAndFeel::accentColourId));
+                if (getLookAndFeel().isColourSpecified(ResonariumLookAndFeel::accentColourId))
+                {
+                    path->setFill(getLookAndFeel().findColour(ResonariumLookAndFeel::accentColourId));
+                    path->setStrokeFill(getLookAndFeel().findColour(ResonariumLookAndFeel::accentColourId));
+                } else
+                {
+                    path->setFill(juce::Colours::white);
+                    path->setStrokeFill(juce::Colours::white);
+                }
             }
         }
     }
@@ -351,7 +358,10 @@ public:
 
     void lookAndFeelChanged() override
     {
-        shadow.setColor(findColour(ResonariumLookAndFeel::accentColourId).brighter(0.2f));
+        if (getLookAndFeel().isColourSpecified(ResonariumLookAndFeel::accentColourId))
+        {
+            shadow.setColor(findColour(ResonariumLookAndFeel::accentColourId).brighter(0.2f));
+        }
 #if RESONARIUM_IS_EFFECT
         shadow.setColor(juce::Colour(0xE000FFAE).brighter(0.2));
 #endif //RESONARIUM_IS_EFFECT
