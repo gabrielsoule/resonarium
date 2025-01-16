@@ -1,7 +1,7 @@
 #include "ResonatorVoice.h"
 
 ResonatorVoice::ResonatorVoice(GlobalState& state, VoiceParams params) : state(state), params(params),
-                                                                             effectChain(params.effectChainParams)
+                                                                         effectChain(params.effectChainParams)
 {
     frequency = 440.0f;
     this->disableSmoothing = true;
@@ -56,6 +56,8 @@ ResonatorVoice::ResonatorVoice(GlobalState& state, VoiceParams params) : state(s
         auto mseg = StereoMSEGWrapper(params.msegParams[i]);
         polyMSEGs.add(mseg);
     }
+
+    skewedFrequencyRange = {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW};
 }
 
 ResonatorVoice::~ResonatorVoice()
@@ -124,7 +126,8 @@ void ResonatorVoice::noteStarted()
 {
     startVoice();
     auto note = getCurrentlyPlayingNote();
-    DBG(state.logPrefix + " Starting note on voice " + juce::String(id) + " with MIDI " + juce::String(note.initialNote) + " at Hz " + juce::String(note.getFrequencyInHertz()));
+    DBG(state.logPrefix + " Starting note on voice " + juce::String(id) + " with MIDI " + juce::String(note.initialNote)
+        + " at Hz " + juce::String(note.getFrequencyInHertz()));
     if (glideInfo.fromNote >= 0 && (glideInfo.glissando || glideInfo.portamento))
     {
         DBG("WARNING: Portamento and glissando are not yet implemented.");
@@ -238,6 +241,11 @@ void ResonatorVoice::updateParameters(int numSamples)
     currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
+    DBG(frequency);
+    const float normalizedFrequency = skewedFrequencyRange.convertTo0to1(frequency);
+    DBG(normalizedFrequency);
+    DBG(" ");
+    state.modMatrix.setPolyValue(*this, state.modSrcFrequency, normalizedFrequency);
 
     for (int i = 0; i < NUM_LFOS; i++)
     {
@@ -339,7 +347,7 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
         .getSubBlock(startSample, numSamples);
 
     juce::dsp::AudioBlock<float> previousBankBlock = juce::dsp::AudioBlock<float>(resonatorBankBuffer)
-    .getSubBlock(startSample, numSamples);
+        .getSubBlock(startSample, numSamples);
     previousBankBlock.clear();
 
     //the output of all banks is summed into this block, which is sent to the effect chain

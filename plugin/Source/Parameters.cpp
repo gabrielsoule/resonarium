@@ -251,7 +251,7 @@ ResonatorParams::ResonatorParams(ResonariumProcessor& p, int resonatorIndex, int
                                    0.0f, "", loopFilterTypeTextFunction);
 
     postFilterCutoff = p.addExtParam("postFilterCutoff" + suffix, "Post Filter Cutoff" + suffix, "Cutoff", "Hz",
-                                     {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, 0.2f}, 9000.0f,
+                                     {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, 9000.0f,
                                      0.0f);
 
     postFilterPitchInSemis = p.addExtParam("postFilterPitch" + suffix, "Post Filter Pitch" + suffix, "Pitch", "ST",

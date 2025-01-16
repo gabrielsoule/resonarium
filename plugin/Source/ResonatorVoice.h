@@ -66,6 +66,7 @@ public:
     std::array<RandomLFO, NUM_RANDOMS> polyRandomLFOs;
     std::array<WrappedEnvelope, NUM_ENVELOPES> polyEnvelopes;
     juce::Array<StereoMSEGWrapper> polyMSEGs; //have to use heap array since mseg has no default constructor,
+    juce::NormalisableRange<float> skewedFrequencyRange; //required to appropriately skew the frequency modulation src
 
     ResonariumEffectChain effectChain;
 

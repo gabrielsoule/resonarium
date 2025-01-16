@@ -73,6 +73,7 @@ ResonariumProcessor::~ResonariumProcessor()
 
 void ResonariumProcessor::setupModMatrix()
 {
+    globalState.modSrcFrequency = globalState.modMatrix.addPolyModSource("mfreq", "Note Frequency", false);
     globalState.modSrcPressure = globalState.modMatrix.addPolyModSource("mpep", "MPE Pressure", false);
     globalState.modSrcTimbre = globalState.modMatrix.addPolyModSource("mpet", "MPE Timbre", false);
     globalState.modSrcPitchbend = globalState.modMatrix.addMonoModSource("pb", "Pitch Bend", true);

@@ -23,6 +23,7 @@ public:
     gin::ModSrcId modSrcPitchbend;
     gin::ModSrcId modSrcNote;
     gin::ModSrcId modSrcVelocity;
+    gin::ModSrcId modSrcFrequency;
     std::array<gin::ModSrcId, NUM_LFOS> modSrcMonoLFO;
     std::array<gin::ModSrcId, NUM_LFOS> modSrcPolyLFO;
     std::array<gin::ModSrcId, NUM_RANDOMS> modSrcMonoRND;
