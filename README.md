@@ -28,7 +28,7 @@ Building from source is easy! This project is entirely self-contained, and bundl
 You'll first want to clone the repository to a location of your choice. Once this is done, you'll want to populate the submodules:
 ```
 cd resonarium
-git submodule update --init --rescursive
+git submodule update --init --recursive
 ```
 This will download and configure all the project dependencies, including JUCE, into your local repository. Once this done, configure the CMake project and create your build directory:
 ```
