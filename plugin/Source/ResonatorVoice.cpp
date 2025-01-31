@@ -30,7 +30,7 @@ ResonatorVoice::ResonatorVoice(GlobalState& state, VoiceParams params) : state(s
 
     for (int i = 0; i < NUM_IMPULSE_TRAIN_EXCITERS; i++)
     {
-        exciters.add(new ImpulseTrainExciter(state, *this, params.impulseTrainExciterParams[i]));
+        exciters.add(new SequenceExciter(state, *this, params.impulseTrainExciterParams[i]));
     }
 
     exciters.add(new SampleExciter(state, *this, params.sampleExciterParams));
@@ -241,10 +241,7 @@ void ResonatorVoice::updateParameters(int numSamples)
     currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
-    DBG(frequency);
     const float normalizedFrequency = skewedFrequencyRange.convertTo0to1(frequency);
-    DBG(normalizedFrequency);
-    DBG(" ");
     state.modMatrix.setPolyValue(*this, state.modSrcFrequency, normalizedFrequency);
 
     for (int i = 0; i < NUM_LFOS; i++)
@@ -389,6 +386,8 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     else
     {
         outputBlock.add(exciterBlock);
+        DBG("Bypasing");
+        DBG(outputBlock.findMinAndMax().getEnd());
     }
 
     outputBlock.multiplyBy(gain);

@@ -119,7 +119,7 @@ void NoiseExciter::updateParameters()
     filter.updateParameters();
 }
 
-void ImpulseTrainExciter::prepare(const juce::dsp::ProcessSpec& spec)
+void SequenceExciter::prepare(const juce::dsp::ProcessSpec& spec)
 {
     Exciter::prepare(spec);
     filter.prepare(spec);
@@ -131,7 +131,7 @@ void ImpulseTrainExciter::prepare(const juce::dsp::ProcessSpec& spec)
     reset();
 }
 
-void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
+void SequenceExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
 {
     if (!params.enabled->isOn()) return;
 
@@ -182,18 +182,30 @@ void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, ju
                 truncatedBlock.setSample(1, i, 0.0f);
             }
         }
-        else if (mode == PULSE)
+        else if (mode == TRIANGULAR)
+        {
+            const float value = currentTriValue +
+                               (targetTriValue - currentTriValue) * triPhase;
+
+            const float sample = (value * 2 - 1.0f) * envelopeSample;
+
+            truncatedBlock.setSample(0, i, sample);
+            truncatedBlock.setSample(1, i, sample);
+
+            triPhase += triPhaseInc;
+
+            if (triPhase >= 1.0f)
+            {
+                currentTriValue = targetTriValue;
+                targetTriValue = rng.nextFloat() * (triAmpMax - triAmpMin) + triAmpMin;
+                triPhase -= 1.0f;
+                DBG("Setting target to" + juce::String(targetTriValue));
+            }
+        } else
         {
             jassertfalse;
         }
-        else if (mode == NOISE_BURST)
-        {
-            jassertfalse;
-        }
-        else
-        {
-            jassertfalse;
-        }
+
     }
 
     filter.process(truncatedBlock);
@@ -201,7 +213,7 @@ void ImpulseTrainExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, ju
     exciterBlock.add(truncatedBlock);
 }
 
-void ImpulseTrainExciter::reset()
+void SequenceExciter::reset()
 {
     noise.reset();
     envelope.reset();
@@ -209,19 +221,28 @@ void ImpulseTrainExciter::reset()
     samplesSinceLastImpulse = 0;
     rng.setSeedRandomly();
     impulsesLeft = impulseLength;
+
+    currentTriValue = 0.0f;
+    targetTriValue = 0.0f;
+    triPhase = 0.0f;
+    triPhaseInc = 0.0f;
+    triAmpMin = 0.0f;
+    triAmpMax = 1.0f;
+    prevPeriodInSamples = -1;
 }
 
-void ImpulseTrainExciter::noteStarted()
+void SequenceExciter::noteStarted()
 {
+    periodInSamples = static_cast<int>(std::round(sampleRate / voice.getValue(params.rate)));
     envelope.noteOn();
 }
 
-void ImpulseTrainExciter::noteStopped(bool avoidTailOff)
+void SequenceExciter::noteStopped(bool avoidTailOff)
 {
     envelope.noteOff();
 }
 
-void ImpulseTrainExciter::updateParameters()
+void SequenceExciter::updateParameters()
 {
     if (!params.enabled->isOn()) return;
 
@@ -233,8 +254,7 @@ void ImpulseTrainExciter::updateParameters()
     mode = static_cast<Mode>(voice.getValue(params.mode));
     character = voice.getValue(params.character);
     entropy = voice.getValue(params.entropy);
-    periodInSamples = static_cast<int>(std::round(sampleRate / voice.getValue(params.rate)));
-    jassert(periodInSamples > 0);
+    const float newPeriod = static_cast<int>(std::round(sampleRate / voice.getValue(params.rate)));
 
     //compute values for the different impulse train modes
     if (mode == IMPULSE)
@@ -247,7 +267,29 @@ void ImpulseTrainExciter::updateParameters()
         staticProbability = (character / 7.0f);
         staticProbability = staticProbability * staticProbability;
     }
+    else if (mode == TRIANGULAR)
+    {
+        // Handle period changes and phase continuity
+        if (newPeriod != periodInSamples)
+        {
+            const float periodRatio = static_cast<float>(periodInSamples) / newPeriod;
+            triPhase *= periodRatio;
 
+            // Handle phase overflow from period decreases
+            while (triPhase >= 1.0f)
+            {
+                triPhase -= 1.0f;
+                currentTriValue = targetTriValue;
+                targetTriValue = rng.nextFloat() * (triAmpMax - triAmpMin) + triAmpMin;
+            }
+        }
+
+        triPhaseInc = 1.0f / newPeriod;
+        triAmpMin = 0.0f; // Add these parameters
+        triAmpMax = 1.0f;  // to your parameter struct
+    }
+
+    periodInSamples = newPeriod;
     jassert(periodInSamples > 0);
 }
 

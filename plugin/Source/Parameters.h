@@ -150,7 +150,7 @@ struct NoiseExciterParams
     NoiseExciterParams(ResonariumProcessor& p, int index);
 };
 
-struct ImpulseTrainExciterParams
+struct SequenceExciterParams
 {
     int index = -1;
     MultiFilterParams filterParams;
@@ -164,8 +164,8 @@ struct ImpulseTrainExciterParams
         character,
         level = nullptr;
 
-    ImpulseTrainExciterParams() = default;
-    ImpulseTrainExciterParams(ResonariumProcessor& p, int index);
+    SequenceExciterParams() = default;
+    SequenceExciterParams(ResonariumProcessor& p, int index);
 };
 
 struct ExternalInputExciterParams
@@ -422,7 +422,7 @@ struct VoiceParams
 {
     std::array<ImpulseExciterParams, NUM_IMPULSE_EXCITERS> impulseExciterParams;
     std::array<NoiseExciterParams, NUM_NOISE_EXCITERS> noiseExciterParams;
-    std::array<ImpulseTrainExciterParams, NUM_IMPULSE_TRAIN_EXCITERS> impulseTrainExciterParams;
+    std::array<SequenceExciterParams, NUM_IMPULSE_TRAIN_EXCITERS> impulseTrainExciterParams;
     ExternalInputExciterParams externalInputExciterParams;
     SampleExciterParams sampleExciterParams;
 

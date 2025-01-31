@@ -46,14 +46,13 @@ static juce::String couplingModeTextFunction(const gin::Parameter&, float v)
     }
 }
 
-static juce::String impulseTrainExciterModeTextFunction(const gin::Parameter&, float v)
+static juce::String sequenceExciterModeTextFunction(const gin::Parameter&, float v)
 {
     switch (int(v))
     {
     case 0: return "Impulse";
     case 1: return "Static";
-    case 2: return "Pulse";
-    case 3: return "Noise Burst";
+    case 2: return "Triangle";
     default:
         jassertfalse;
         return {};
@@ -377,7 +376,7 @@ NoiseExciterParams::NoiseExciterParams(ResonariumProcessor& p, int index) :
                                 0.0f);
 }
 
-ImpulseTrainExciterParams::ImpulseTrainExciterParams(ResonariumProcessor& p, int index)
+SequenceExciterParams::SequenceExciterParams(ResonariumProcessor& p, int index)
     : filterParams(p, "impTrainExciter" + juce::String(index)),
       adsrParams(p, "impTrainExciterEnv" + juce::String(index), -1)
 {
@@ -389,8 +388,8 @@ ImpulseTrainExciterParams::ImpulseTrainExciterParams(ResonariumProcessor& p, int
                                   0.0f);
 
     this->mode = p.addExtParam(prefix + "mode", prefix + " Mode", "Mode", "",
-                               {0.0f, 3.0f, 1.0f, 1.0f}, 0.0f,
-                               0.0f, "", impulseTrainExciterModeTextFunction);
+                               {0.0f, 2.0f, 1.0f, 1.0f}, 0.0f,
+                               0.0f, "", sequenceExciterModeTextFunction);
 
     this->rate = p.addExtParam(prefix + "rate", prefix + " Rate", "Rate", "Hz",
                                {0.1f, 1000.0f, 0.01f, 0.4f}, 1.0f,
@@ -640,7 +639,7 @@ VoiceParams::VoiceParams(ResonariumProcessor& p)
     }
     for (int i = 0; i < NUM_IMPULSE_TRAIN_EXCITERS; i++)
     {
-        impulseTrainExciterParams[i] = ImpulseTrainExciterParams(p, i);
+        impulseTrainExciterParams[i] = SequenceExciterParams(p, i);
     }
 
     externalInputExciterParams = ExternalInputExciterParams(p);

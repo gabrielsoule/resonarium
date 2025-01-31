@@ -71,7 +71,7 @@ class ImpulseTrainExciterParamBox : public gin::ParamBox
 {
 public:
     ImpulseTrainExciterParamBox(const juce::String& name, ResonariumProcessor& proc, int index,
-                                ImpulseTrainExciterParams impulseTrainParams) : gin::ParamBox(name),
+                                SequenceExciterParams impulseTrainParams) : gin::ParamBox(name),
         impulseTrainParams(impulseTrainParams)
     {
         setName("Impulse Train Exciter Box");
@@ -90,7 +90,7 @@ public:
         addControl(new gin::Knob(impulseTrainParams.filterParams.resonance), 3, 2);
     }
 
-    ImpulseTrainExciterParams impulseTrainParams;
+    SequenceExciterParams impulseTrainParams;
 };
 
 class SampleExciterParamBox : public gin::ParamBox

@@ -141,18 +141,17 @@ public:
  *      MODIFIER changes the shape of the burst envelope.
  *      ENTROPY applies nonlinear scaling to eahc sample
  */
-class ImpulseTrainExciter : public Exciter
+class SequenceExciter : public Exciter
 {
 public:
     enum Mode
     {
         IMPULSE,
         STATIC,
-        PULSE,
-        NOISE_BURST
+        TRIANGULAR
     };
 
-    ImpulseTrainExciter(GlobalState& state, gin::ModVoice& voice, ImpulseTrainExciterParams params) :
+    SequenceExciter(GlobalState& state, gin::ModVoice& voice, SequenceExciterParams params) :
         Exciter(state, voice), params(params), filter(&voice, params.filterParams, false)
     {
     }
@@ -164,7 +163,7 @@ public:
     void noteStopped(bool avoidTailOff) override;
     void updateParameters() override;
 
-    ImpulseTrainExciterParams params;
+    SequenceExciterParams params;
     NoiseGenerator noise;
     gin::AnalogADSR envelope;
     MultiFilter filter;
@@ -182,6 +181,15 @@ public:
     //for the IMPULSE mode -- how long is the impulse, and how many impulses left to send out?
     int impulseLength = -1;
     int impulsesLeft = 0;
+
+    //for the TRIANGULAR mode
+    int prevPeriodInSamples = -1;  // Track previous period for phase remapping
+    float triPhase = 0.0f;     // Phase of the triangular wave
+    float currentTriValue = 0.0f;
+    float targetTriValue = 0.0f;
+    float triPhaseInc = 0.0f;
+    float triAmpMin = 0.0f;
+    float triAmpMax = 1.0f;
 };
 
 /**
