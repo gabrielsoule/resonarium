@@ -272,11 +272,13 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
         if (!uiParams.bypassResonators->isOn())
         {
             uiParams.bypassResonators->setValue(1.0f);
+            proc.globalState.bypassResonators = true;
             DBG("Bypassing resonators!");
         }
         else
         {
             uiParams.bypassResonators->setValue(0.0f);
+            proc.globalState.bypassResonators = false;
             DBG("No longer bypassing resonators!");
         }
     };
