@@ -235,7 +235,7 @@ void ResonariumLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
         knob.closeSubPath();
         if (slider.isEnabled())
         {
-            juce::DropShadow shadow(juce::Colours::black, 24, juce::Point<int>{0, 4});
+            juce::DropShadow shadow(juce::Colours::black.withAlpha(0.7f), 18, juce::Point<int>{0, 1});
             shadow.drawForPath(g, knob);
         }
         if (!slider.isEnabled())
