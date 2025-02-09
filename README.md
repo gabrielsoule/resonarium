@@ -11,7 +11,7 @@ Many of the presets work best when used in conjunction with a MPE control device
 # Installation
 
 > [!NOTE]
-> This software has only been tested on Apple Silicon machines running MacOS. It should be able to compile and run on Windows machines that have been configured with the appropriate development environment (CMake).
+> Development and testing of this software is done on Apple Silicon machines running MacOS. However, it should be able to compile and run on Windows machines that have been configured with the appropriate development environment (CMake). There may be unforseen caveats and complications on Windows machines.
 
 > [!CAUTION]
 > The sounds produced by waveguide modeling can be unpredictable. Resonarium tries to keep the user safe by proactively terminating voices that produce dangerously loud samples, but the software is still in development and glitches may occur. __The maximum volume of your system _must_ be set to a safe level before using this software.__ We urge particular caution with headphones or large speakers. Be gentle with the gain knobs, and protect your ears!
@@ -46,10 +46,10 @@ cmake --build build --target Resonarium_Instrument_Standalone
 ```
 When the standalone application is first run, you may need to configure your audio settings in the `Options` menu before any sound can be produced. You'll also need a MIDI input source, since the plugin doesn't include a virtual on-screen keyboard. 
 
-Resonarium can also be used as an audio effect with live external audio input, or as part of an effect chain in a DAW. Many DAWs require that plugins be _either_ instruments or effects; therefore, to compile the effect version of the software, replace "Instrument" with "Effect" in your build target (e.g `cmake --build build --target Resonarium_Effect_VST3`). Both versions of the software can be used in parallel, in the same hosted environment.
+Resonarium can also be used as an audio effect with live external audio input, or as part of an effect chain in a DAW. Many DAWs require that plugins be _either_ instruments or effects; therefore, to compile the effect version of the software, replace "Instrument" with "Effect" in your build target (e.g `cmake --build build --target Resonarium_Effect_VST3`). The _effect_ version of the plugin is distinguished by a handsome green color scheme. Both versions of the software can be used in parallel, in the same hosted environment.
 
 > [!NOTE]
-> Resonarium is reasonably stable when run in a lightweight testing environment such as Juce's AudioPluginHost; however, smooth operation across most DAWs is not assured at this time. I am working on it. There are still some rare issues that pop up in specific DAWs, so I recommend using AudioPluginHost for a cleaner demo experience. 
+> Resonarium is reasonably stable when run in a lightweight testing environment such as Juce's AudioPluginHost; however, smooth operation across most DAWs is not assured at this time. Ableton and Bitwig are known to be compatible; despite this, there are still some rare issues that pop up in specific DAWs. The AudioPluginHost host is recommended for a cleaner demo experience. 
 > To compile AudioPluginHost, do the following:
 > ```cd
 > cd /path/to/JUCE
