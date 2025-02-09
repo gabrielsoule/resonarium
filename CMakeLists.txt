@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24.0 FATAL_ERROR)
 
 set(PLUGIN_NAME Resonarium)
 set(DEV_CODE Soul)
-set(PLUGIN_VERSION 0.0.7)
+set(PLUGIN_VERSION 0.1.0)
 set(BUNDLE_ID com.gabrielsoule.resonarium)
 set(AU_ID ResonariumAU)
 set(LV2_URI "https://gabrielsoule.com/resonarium")
