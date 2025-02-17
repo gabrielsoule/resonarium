@@ -25,6 +25,7 @@ for param in synth.get_all_params():
     print(param.id + " : " + param.name)
 
 # Everything is disabled by default. Let's enable the impulse exciter and a single string model, with a bright loop filter
+# "wb0r0" corresponds to the first string model in the first waveguide bank -- indexing starts at zero. There are four waveguide banks, with eight string models apiece.
 synth.set_param("impExciter0 enabled", 1.0)
 synth.set_param("enabled wb0r0", 1.0)
 synth.set_param("decayFilterCutoff wb0r0", 7000)
