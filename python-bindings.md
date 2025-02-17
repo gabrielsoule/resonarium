@@ -1,0 +1,72 @@
+# Python Bindings
+
+Resonarium supports basic Python bindings. They are a work in progress. At the moment, the bindings support getting/setting synth parameters, playing MIDI notes, and recording audio to memory. MPE and modulation support is not yet implemented. 
+
+To compile the Python library, build the `Resonarium_Python` CMake target, e.g.:
+
+```bash
+cmake --build build --target Resonarium_Python
+```
+
+You'll find the `.so` library file in the build directory. By default, the library is not installed system-wide. Only MacOS is supported as of writing.
+
+The bindings can be found in `ResonariumPy.cpp`. The simple script below demonstrates how to manipulate parameters, play MIDI, and record the result.
+
+```python
+import resonarium
+import numpy as np
+from scipy.io import wavfile  
+
+# Initialize the synth with default settings (44.1kHz, 512 block size)
+synth = resonarium.Resonarium()
+
+# Let's see what parameters we can play with...
+for param in synth.get_all_params():
+    print(param.id + " : " + param.name)
+
+# Everything is disabled by default. Let's enable the impulse exciter and a single string model, with a bright loop filter
+synth.set_param("impExciter0 enabled", 1.0)
+synth.set_param("enabled wb0r0", 1.0)
+synth.set_param("decayFilterCutoff wb0r0", 7000)
+
+# Create an audio buffer that stores about 4 seconds of audio
+sample_rate = synth.get_sample_rate()
+block_size = synth.get_block_size()
+seconds = 4.0
+
+# Calculate how many blocks we need for 4 seconds
+blocks_needed = int(np.ceil((sample_rate * seconds) / block_size))
+
+# Allocate the corresponding memory
+audio_buffer = synth.create_multi_block(blocks_needed)
+
+# Play a MIDI note (middle C = 60) with velocity 100
+synth.play_note(0, 60, 100)
+
+# Process audio. This will fill the buffer with audio, and stop when the buffer is full.
+# We allocated about two seconds of audio blocks, so we should get a two second sample back.
+synth.process_multi_block(audio_buffer)
+
+# We might want to add MIDI events or change parameters during processing. 
+# In that case, we can call process_multi_block multiple times and specify the start and end blocks,
+# as long as we keep track of the current block index.
+# e.g.: synth.process_multi_block(audio_buffer, start_block, end_block)
+
+# Convert the numpy array to the right format for saving
+# The audio_buffer is in (channels, samples) format, we need (samples, channels)
+audio_data = audio_buffer.T
+
+# Normalize the audio to prevent clipping
+max_val = np.max(np.abs(audio_data))
+if max_val > 0:
+    audio_data = audio_data / max_val
+
+# Convert to 16-bit PCM format
+audio_data_16bit = (audio_data * 32767).astype(np.int16)
+
+# Save as WAV file
+wavfile.write('resonarium_output.wav', int(sample_rate), audio_data_16bit)
+print("All done! :)")
+```
+
+The internal parameter IDs are a little messy and inconsistent. You can use the `get_all_params()` method to see what's available. I'll migrate to a more consistent naming scheme in the near future.
