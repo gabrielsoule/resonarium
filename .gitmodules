@@ -22,3 +22,6 @@
 	path = modules/melatonin_blur
 	url = https://github.com/sudara/melatonin_blur.git
 	branch = main
+[submodule "modules/pybind11"]
+	path = modules/pybind11
+	url = https://github.com/pybind/pybind11.git

@@ -73,6 +73,7 @@ add_subdirectory(modules/juce)
 add_subdirectory(modules/melatonin_inspector)
 add_subdirectory(modules/chowdsp_utils)
 add_subdirectory(modules/melatonin_perfetto)
+add_subdirectory(modules/pybind11)
 juce_add_module(modules/melatonin_blur)
 
 set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/modules/juce" APPEND PROPERTY LABELS JUCE)
@@ -234,6 +235,63 @@ target_compile_definitions(${PLUGIN_NAME}_Effect PRIVATE
         DONT_SET_USING_JUCE_NAMESPACE=1
         JUCE_SILENCE_XCODE_15_LINKER_WARNING=1
         RESONARIUM_IS_EFFECT=1
+)
+
+pybind11_add_module(${PLUGIN_NAME}_Python
+        plugin/Source/ResonariumPy.cpp    # Your PyBind wrapper code
+)
+
+target_sources(${PLUGIN_NAME}_Python PRIVATE ${source_files})
+
+target_link_libraries(${PLUGIN_NAME}_Python PRIVATE
+        ${PLUGIN_NAME}_Assets
+        gin
+        gin_dsp
+        gin_graphics
+        gin_gui
+        gin_plugin
+        gin_simd
+        Melatonin::Perfetto
+        melatonin_perfetto
+        melatonin_inspector
+        melatonin_blur
+        chowdsp::chowdsp_dsp_utils
+        chowdsp::chowdsp_gui
+        chowdsp::chowdsp_plugin_base
+        chowdsp::chowdsp_filters
+        juce::juce_audio_basics
+        juce::juce_audio_devices
+        juce::juce_audio_formats
+        juce::juce_audio_plugin_client
+        juce::juce_audio_processors
+        juce::juce_audio_utils
+        juce::juce_core
+        juce::juce_cryptography
+        juce::juce_data_structures
+        juce::juce_events
+        juce::juce_graphics
+        juce::juce_gui_basics
+        juce::juce_gui_extra
+        juce::juce_recommended_config_flags
+)
+
+target_compile_definitions(${PLUGIN_NAME}_Python PRIVATE
+        JUCE_DISPLAY_SPLASH_SCREEN=0
+        JUCE_MODAL_LOOPS_PERMITTED=0
+        JUCE_VST3_CAN_REPLACE_VST2=0
+        JUCE_WEB_BROWSER=0
+        DONT_SET_USING_JUCE_NAMESPACE=1
+        RESONARIUM_IS_INSTRUMENT=1  # If you need this flag
+)
+
+target_include_directories(${PLUGIN_NAME}_Python PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/plugin
+)
+
+set_target_properties(${PLUGIN_NAME}_Python PROPERTIES
+        OUTPUT_NAME "resonarium"  # This will be the import name in Python
+        PREFIX ""                 # Remove lib prefix on Unix
+        SUFFIX ".so"            # Use .pyd extension on Windows
 )
 
 if (APPLE)
