@@ -99,6 +99,7 @@ set_target_properties(${PLUGIN_NAME}_Assets PROPERTIES UNITY_BUILD ON UNITY_BUIL
 file(GLOB_RECURSE source_files CONFIGURE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/plugin/*.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/plugin/*.h)
+list(REMOVE_ITEM source_files "${CMAKE_CURRENT_SOURCE_DIR}/plugin/Source/ResonariumPy.cpp")
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/plugin PREFIX Source FILES ${source_files})
 
 juce_add_plugin(${PLUGIN_NAME}_Instrument
