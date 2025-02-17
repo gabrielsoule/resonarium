@@ -44,12 +44,12 @@ audio_buffer = synth.create_multi_block(blocks_needed)
 synth.play_note(0, 60, 100)
 
 # Process audio. This will fill the buffer with audio, and stop when the buffer is full.
-# We allocated about two seconds of audio blocks, so we should get a two second sample back.
+# We allocated about 4 seconds worth of audio blocks, so we should get a 4 second sample back.
 synth.process_multi_block(audio_buffer)
 
 # We might want to add MIDI events or change parameters during processing. 
-# In that case, we can call process_multi_block multiple times and specify the start and end blocks,
-# as long as we keep track of the current block index.
+# In that case, we can call process_multi_block multiple times and specify the start and end blocks.
+# We'll have to increment the current block index on the Python side, since the buffer doesn't "remember" the current write position.
 # e.g.: synth.process_multi_block(audio_buffer, start_block, end_block)
 
 # Convert the numpy array to the right format for saving
