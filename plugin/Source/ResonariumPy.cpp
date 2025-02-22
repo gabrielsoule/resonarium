@@ -58,6 +58,12 @@ public:
         return processor->getBlockSize();
     }
 
+    void reset() const
+    {
+        processor->reset();
+        processor->prepareToPlay(processor->getSampleRate(), processor->getBlockSize());
+    }
+
     // MIDI Control
     void playNote(int channel, int note, int velocity)
     {
@@ -234,6 +240,7 @@ PYBIND11_MODULE(resonarium, m)
         .def("get_sample_rate", &ResonariumWrapper::getSampleRate)
         .def("get_block_size", &ResonariumWrapper::getBlockSize)
         .def("get_all_params", &ResonariumWrapper::getAllParams)
+        .def("reset", &ResonariumWrapper::reset)
         .def("get_param", &ResonariumWrapper::getParamInfo,
             py::arg("uid"))
         .def("set_param", &ResonariumWrapper::setParam,
