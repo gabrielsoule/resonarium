@@ -36,3 +36,6 @@
 Builds
 cmake-build-debug
 .idea/
+
+# Claude.md file for Claude Code AI helpers
+CLAUDE.md

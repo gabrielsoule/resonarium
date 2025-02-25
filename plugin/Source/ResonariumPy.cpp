@@ -17,10 +17,25 @@ struct PyParameterInfo
     float minValue; //min (user) value
     float maxValue; //max (user) value
 
-    // Optional: Add string representation for Python
     std::string toString() const
     {
         return name + " [" + std::to_string(currentValue) + "]";
+    }
+};
+
+/**
+* A struct that provides information about a modulation source.
+*/
+struct PyModSourceInfo
+{
+    std::string id;
+    std::string name;
+    bool isPoly;
+    bool isBipolar;
+
+    std::string toString() const
+    {
+        return name + " [" + id + "]";
     }
 };
 
@@ -141,6 +156,204 @@ public:
         param->setUserValueNotifingHost(value);
     }
 
+    /**
+     * Get all available modulation sources
+     */
+    std::vector<PyModSourceInfo> getAllModSources()
+    {
+        std::vector<PyModSourceInfo> sources;
+        auto& modMatrix = processor->globalState.modMatrix;
+        
+        for (int i = 0; i < modMatrix.getNumModSources(); ++i)
+        {
+            gin::ModSrcId srcId(i);
+            PyModSourceInfo info;
+            info.id = modMatrix.getModSrcName(srcId).toStdString();
+            info.name = info.id; // Name and ID are the same in this implementation
+            info.isPoly = modMatrix.getModSrcPoly(srcId);
+            info.isBipolar = modMatrix.getModSrcBipolar(srcId);
+            sources.push_back(info);
+        }
+        
+        return sources;
+    }
+
+    /**
+     * Connect a modulation source to a destination parameter
+     */
+    void connectModulation(const std::string& sourceId, const std::string& destId, float depth, 
+                          const std::string& functionName = "linear", bool bipolarMapping = false)
+    {
+        auto& modMatrix = processor->globalState.modMatrix;
+        gin::Parameter* destParam = processor->getParameter(destId);
+        
+        if (destParam == nullptr)
+        {
+            throw std::runtime_error("Destination parameter not found: " + destId);
+        }
+        
+        // Find the source ID
+        gin::ModSrcId srcId;
+        bool sourceFound = false;
+        
+        for (int i = 0; i < modMatrix.getNumModSources(); ++i)
+        {
+            gin::ModSrcId testId(i);
+            if (modMatrix.getModSrcName(testId).toStdString() == sourceId)
+            {
+                srcId = testId;
+                sourceFound = true;
+                break;
+            }
+        }
+        
+        if (!sourceFound)
+        {
+            throw std::runtime_error("Modulation source not found: " + sourceId);
+        }
+        
+        // Get the destination ID
+        gin::ModDstId dstId(destParam->getModIndex());
+        if (dstId.id < 0)
+        {
+            throw std::runtime_error("Parameter is not modulation-capable: " + destId);
+        }
+        
+        // Set modulation function if provided
+        gin::ModMatrix::Function func = gin::ModMatrix::linear;
+        if (!functionName.empty())
+        {
+            if (functionName == "linear") func = gin::ModMatrix::linear;
+            else if (functionName == "quadraticIn") func = gin::ModMatrix::quadraticIn;
+            else if (functionName == "quadraticInOut") func = gin::ModMatrix::quadraticInOut;
+            else if (functionName == "quadraticOut") func = gin::ModMatrix::quadraticOut;
+            else if (functionName == "sineIn") func = gin::ModMatrix::sineIn;
+            else if (functionName == "sineInOut") func = gin::ModMatrix::sineInOut;
+            else if (functionName == "sineOut") func = gin::ModMatrix::sineOut;
+            else if (functionName == "exponentialIn") func = gin::ModMatrix::exponentialIn;
+            else if (functionName == "exponentialInOut") func = gin::ModMatrix::exponentialInOut;
+            else if (functionName == "exponentialOut") func = gin::ModMatrix::exponentialOut;
+            else if (functionName == "invLinear") func = gin::ModMatrix::invLinear;
+            else if (functionName == "invQuadraticIn") func = gin::ModMatrix::invQuadraticIn;
+            else if (functionName == "invQuadraticInOut") func = gin::ModMatrix::invQuadraticInOut;
+            else if (functionName == "invQuadraticOut") func = gin::ModMatrix::invQuadraticOut;
+            else if (functionName == "invSineIn") func = gin::ModMatrix::invSineIn;
+            else if (functionName == "invSineInOut") func = gin::ModMatrix::invSineInOut;
+            else if (functionName == "invSineOut") func = gin::ModMatrix::invSineOut;
+            else if (functionName == "invExponentialIn") func = gin::ModMatrix::invExponentialIn;
+            else if (functionName == "invExponentialInOut") func = gin::ModMatrix::invExponentialInOut;
+            else if (functionName == "invExponentialOut") func = gin::ModMatrix::invExponentialOut;
+            else throw std::runtime_error("Unknown modulation function: " + functionName);
+        }
+        
+        // Set the modulation depth
+        modMatrix.setModDepth(srcId, dstId, depth);
+        
+        // Set the mapping mode and function
+        modMatrix.setModBipolarMapping(srcId, dstId, bipolarMapping);
+        modMatrix.setModFunction(srcId, dstId, func);
+    }
+    
+    /**
+     * Disconnect a modulation source from a destination parameter
+     */
+    void disconnectModulation(const std::string& sourceId, const std::string& destId)
+    {
+        auto& modMatrix = processor->globalState.modMatrix;
+        gin::Parameter* destParam = processor->getParameter(destId);
+        
+        if (destParam == nullptr)
+        {
+            throw std::runtime_error("Destination parameter not found: " + destId);
+        }
+        
+        // Find the source ID
+        gin::ModSrcId srcId;
+        bool sourceFound = false;
+        
+        for (int i = 0; i < modMatrix.getNumModSources(); ++i)
+        {
+            gin::ModSrcId testId(i);
+            if (modMatrix.getModSrcName(testId).toStdString() == sourceId)
+            {
+                srcId = testId;
+                sourceFound = true;
+                break;
+            }
+        }
+        
+        if (!sourceFound)
+        {
+            throw std::runtime_error("Modulation source not found: " + sourceId);
+        }
+        
+        // Get the destination ID
+        gin::ModDstId dstId(destParam->getModIndex());
+        if (dstId.id < 0)
+        {
+            throw std::runtime_error("Parameter is not modulation-capable: " + destId);
+        }
+        
+        // Clear the modulation connection
+        modMatrix.clearModDepth(srcId, dstId);
+    }
+    
+    /**
+     * Get all active modulation connections for a parameter
+     */
+    std::vector<std::tuple<std::string, float, std::string, bool>> getParameterModulations(const std::string& destId)
+    {
+        auto& modMatrix = processor->globalState.modMatrix;
+        gin::Parameter* destParam = processor->getParameter(destId);
+        
+        if (destParam == nullptr)
+        {
+            throw std::runtime_error("Parameter not found: " + destId);
+        }
+        
+        // Get the destination ID
+        gin::ModDstId dstId(destParam->getModIndex());
+        if (dstId.id < 0)
+        {
+            throw std::runtime_error("Parameter is not modulation-capable: " + destId);
+        }
+        
+        std::vector<std::tuple<std::string, float, std::string, bool>> connections;
+        auto depths = modMatrix.getModDepths(dstId);
+        
+        for (auto& [srcId, depth] : depths)
+        {
+            std::string sourceName = modMatrix.getModSrcName(srcId).toStdString();
+            gin::ModMatrix::Function func = modMatrix.getModFunction(srcId, dstId);
+            bool bipolar = modMatrix.getModBipolarMapping(srcId, dstId);
+            
+            // Convert function to string
+            std::string funcName = "linear";
+            if (func == gin::ModMatrix::quadraticIn) funcName = "quadraticIn";
+            else if (func == gin::ModMatrix::quadraticInOut) funcName = "quadraticInOut";
+            else if (func == gin::ModMatrix::quadraticOut) funcName = "quadraticOut";
+            else if (func == gin::ModMatrix::sineIn) funcName = "sineIn";
+            else if (func == gin::ModMatrix::sineInOut) funcName = "sineInOut";
+            else if (func == gin::ModMatrix::sineOut) funcName = "sineOut";
+            else if (func == gin::ModMatrix::exponentialIn) funcName = "exponentialIn";
+            else if (func == gin::ModMatrix::exponentialInOut) funcName = "exponentialInOut";
+            else if (func == gin::ModMatrix::exponentialOut) funcName = "exponentialOut";
+            else if (func == gin::ModMatrix::invLinear) funcName = "invLinear";
+            else if (func == gin::ModMatrix::invQuadraticIn) funcName = "invQuadraticIn";
+            else if (func == gin::ModMatrix::invQuadraticInOut) funcName = "invQuadraticInOut";
+            else if (func == gin::ModMatrix::invQuadraticOut) funcName = "invQuadraticOut";
+            else if (func == gin::ModMatrix::invSineIn) funcName = "invSineIn";
+            else if (func == gin::ModMatrix::invSineInOut) funcName = "invSineInOut";
+            else if (func == gin::ModMatrix::invSineOut) funcName = "invSineOut";
+            else if (func == gin::ModMatrix::invExponentialIn) funcName = "invExponentialIn";
+            else if (func == gin::ModMatrix::invExponentialInOut) funcName = "invExponentialInOut";
+            else if (func == gin::ModMatrix::invExponentialOut) funcName = "invExponentialOut";
+            
+            connections.push_back(std::make_tuple(sourceName, depth, funcName, bipolar));
+        }
+        
+        return connections;
+    }
 
     /**
      * Allocate numBlocks worth of memory for a stereo audio buffer.
@@ -232,6 +445,13 @@ PYBIND11_MODULE(resonarium, m)
         .def_readonly("min_value", &PyParameterInfo::minValue)
         .def_readonly("max_value", &PyParameterInfo::maxValue)
         .def("__repr__", &PyParameterInfo::toString);
+    
+    py::class_<PyModSourceInfo>(m, "ModSourceInfo")
+        .def_readonly("id", &PyModSourceInfo::id)
+        .def_readonly("name", &PyModSourceInfo::name)
+        .def_readonly("is_poly", &PyModSourceInfo::isPoly)
+        .def_readonly("is_bipolar", &PyModSourceInfo::isBipolar)
+        .def("__repr__", &PyModSourceInfo::toString);
 
     py::class_<ResonariumWrapper>(m, "Resonarium")
         .def(py::init<double, int>(),
@@ -245,6 +465,16 @@ PYBIND11_MODULE(resonarium, m)
             py::arg("uid"))
         .def("set_param", &ResonariumWrapper::setParam,
             py::arg("uid"), py::arg("value"))
+        // Modulation methods
+        .def("get_all_mod_sources", &ResonariumWrapper::getAllModSources)
+        .def("connect_modulation", &ResonariumWrapper::connectModulation,
+             py::arg("source_id"), py::arg("dest_id"), py::arg("depth"),
+             py::arg("function_name") = "linear", py::arg("bipolar_mapping") = false)
+        .def("disconnect_modulation", &ResonariumWrapper::disconnectModulation,
+             py::arg("source_id"), py::arg("dest_id"))
+        .def("get_parameter_modulations", &ResonariumWrapper::getParameterModulations,
+             py::arg("dest_id"))
+        // Audio processing methods
         .def("create_multi_block", &ResonariumWrapper::createMultiBlock)
         .def("process_multi_block", &ResonariumWrapper::processMultiBlock,
              py::arg("buffer"),
@@ -254,7 +484,8 @@ PYBIND11_MODULE(resonarium, m)
              py::arg("channel"),
              py::arg("note"),
              py::arg("velocity") = 64)
-        .def("release_note", &ResonariumWrapper::releaseNote)
+        .def("release_note", &ResonariumWrapper::releaseNote,
+             py::arg("channel"), py::arg("note"), py::arg("velocity") = 0)
         .def("all_notes_off", &ResonariumWrapper::allNotesOff);
 
     m.def("get_version", []() { return "0.1.0"; });
