@@ -442,8 +442,8 @@ PYBIND11_MODULE(resonarium, m)
         .def_readonly("name", &PyParameterInfo::name)
         .def_readonly("value", &PyParameterInfo::currentValue)
         .def_readonly("default_value", &PyParameterInfo::defaultValue)
-        .def_readonly("min_value", &PyParameterInfo::minValue)
-        .def_readonly("max_value", &PyParameterInfo::maxValue)
+        .def_readonly("min", &PyParameterInfo::minValue)
+        .def_readonly("max", &PyParameterInfo::maxValue)
         .def("__repr__", &PyParameterInfo::toString);
     
     py::class_<PyModSourceInfo>(m, "ModSourceInfo")

@@ -1,6 +1,6 @@
 # Python Bindings
 
-Resonarium supports basic Python bindings. They are a work in progress. At the moment, the bindings support getting/setting synth parameters, playing MIDI notes, and recording audio to memory. MPE and modulation support is not yet implemented. 
+Resonarium supports basic Python bindings. They are a work in progress. At the moment, the bindings support getting/setting synth parameters, playing MIDI notes, modulating parameters, and recording audio to memory.
 
 To compile the Python library, build the `Resonarium_Python` CMake target, e.g.:
 
@@ -10,7 +10,7 @@ cmake --build build --target Resonarium_Python
 
 You'll find the `.so` library file in the build directory. By default, the library is not installed system-wide. Only MacOS is supported as of writing.
 
-The bindings can be found in `ResonariumPy.cpp`. The simple script below demonstrates how to manipulate parameters, play MIDI, and record the result.
+The bindings can be found in `ResonariumPy.cpp`. An LLM should be able to generate fantastic documentation given the `.cpp` file and the appropriate prompt. The simple script below demonstrates how to manipulate parameters, play MIDI, and record the result.
 
 ```python
 import resonarium
@@ -22,7 +22,8 @@ synth = resonarium.Resonarium()
 
 # Let's see what parameters we can play with...
 for param in synth.get_all_params():
-    print(param.id + " : " + param.name)
+    print(param.id + " : " + param.value)
+    print("     " + param.min + " to " + param.max)
 
 # Everything is disabled by default. Let's enable the impulse exciter and a single string model, with a bright loop filter
 # "wb0r0" corresponds to the first string model in the first waveguide bank -- indexing starts at zero. There are four waveguide banks, with eight string models apiece.
@@ -70,4 +71,7 @@ wavfile.write('resonarium_output.wav', int(sample_rate), audio_data_16bit)
 print("All done! :)")
 ```
 
-The internal parameter IDs are a little messy and inconsistent. You can use the `get_all_params()` method to see what's available. I'll migrate to a more consistent naming scheme in the near future.
+## Parameter IDs
+At the moment, there are no higher-level Python structures (e.g. LFOs, MSEGs, etc) that map directly to their internal C++ counterparts. Instead, Resonarium's internal state is manipulated through direct access to internal and external parameters. The parameter ID naming scheme is somewhat inconsistent; this will be changed eventually. 
+
+All the parameters are defined in `Parameters.cpp`. You can review this file manually to see what parameters are available, or feed it into an LLM and ask questions.
