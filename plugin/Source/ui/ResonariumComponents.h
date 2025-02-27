@@ -362,9 +362,6 @@ public:
         {
             shadow.setColor(findColour(ResonariumLookAndFeel::accentColourId).brighter(0.2f));
         }
-#if RESONARIUM_IS_EFFECT
-        shadow.setColor(juce::Colour(0xE000FFAE).brighter(0.2));
-#endif //RESONARIUM_IS_EFFECT
     }
 
 private:
