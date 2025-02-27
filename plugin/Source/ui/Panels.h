@@ -284,14 +284,6 @@ public:
         controlAreaGlow->setBounds(juce::Rectangle<int>(topControlBracket->getBounds().getTopLeft(),
                                                         bottomControlBracket->getBounds().getBottomRight()).
             expanded(50));
-        GlowComponent::GlowParameters glowParams;
-        glowParams.colour = juce::Colour(0xff775cff);
-        glowParams.radiusX = 20;
-        glowParams.radiusY = 100;
-        glowParams.opacity = 0.25;
-        glowParams.spread = 0;
-        glowParams.glowRadius = 80;
-        controlAreaGlow->setParameters(glowParams);
 
         //it's really annoying to position rotated text components, since the affine transforms affect the coordinates...
         //we just do it "by hand" here which is... also really annoying
@@ -332,6 +324,19 @@ public:
         {
             resonatorComponent->pitchKnob->mainReadout.valueUpdated(nullptr);
         }
+    }
+
+    void lookAndFeelChanged() override
+    {
+        GlowComponent::GlowParameters glowParams;
+        glowParams.colour = getLookAndFeel().findColour(ResonariumLookAndFeel::accentColourId);
+        glowParams.radiusX = 20;
+        glowParams.radiusY = 100;
+        glowParams.opacity = 0.25;
+        glowParams.spread = 0;
+        glowParams.glowRadius = 80;
+        controlAreaGlow->setParameters(glowParams);
+        controlAreaGlow->repaint();
     }
 
     void paint(juce::Graphics& g) override

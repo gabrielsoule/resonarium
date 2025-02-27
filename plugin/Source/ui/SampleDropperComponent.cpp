@@ -1,5 +1,7 @@
 #include "SampleDropperComponent.h"
 
+#include "ResonariumLookAndFeel.h"
+
 SampleDropperComponent::SampleDropperComponent(Sampler& s)
     : sampler(s),
       thumbnailCache(5),    // Cache 5 thumbnails
@@ -14,6 +16,7 @@ SampleDropperComponent::SampleDropperComponent(Sampler& s)
     emptyStateLabel.setMinimumHorizontalScale(1.0f);
     emptyStateLabel.setFont(18.0f);
     emptyStateLabel.setText("DRAG AND DROP SAMPLE", juce::dontSendNotification);
+    // Use explicit color for now and update it in lookAndFeelChanged
     emptyStateLabel.setColour(juce::Label::textColourId, juce::Colour(0xff775cff));
     emptyStateLabel.setInterceptsMouseClicks(false, false);
 
@@ -46,8 +49,14 @@ void SampleDropperComponent::paint(juce::Graphics& g)
 
     if (isFileLoaded)
     {
-        // Draw waveform
-        g.setColour(juce::Colour(0xff775cff).withAlpha(isEnabled() ? 1.0f : 0.5f));
+        // Draw waveform using accent color from look and feel
+        auto accentColor = juce::Colour(0xff775cff); // Default color
+        
+        // Try to get accent color from look and feel
+        if (auto* lf = dynamic_cast<ResonariumLookAndFeel*>(&getLookAndFeel()))
+            accentColor = lf->findColour(ResonariumLookAndFeel::accentColourId);
+            
+        g.setColour(accentColor.withAlpha(isEnabled() ? 1.0f : 0.5f));
         thumbnail.drawChannel(g,
                             bounds,
                             0.0,                          // start time
@@ -68,6 +77,21 @@ void SampleDropperComponent::changeListenerCallback(juce::ChangeBroadcaster* sou
 {
     if (source == &thumbnail)
         repaint();
+}
+
+void SampleDropperComponent::lookAndFeelChanged()
+{
+    // Update colors when look and feel changes
+    auto accentColor = juce::Colour(0xff775cff); // Default color
+    
+    // Try to get accent color from look and feel
+    if (auto* lf = dynamic_cast<ResonariumLookAndFeel*>(&getLookAndFeel()))
+        accentColor = lf->findColour(ResonariumLookAndFeel::accentColourId);
+    
+    // Update the label color
+    emptyStateLabel.setColour(juce::Label::textColourId, accentColor);
+    
+    repaint(); // Repaint to update waveform color
 }
 
 void SampleDropperComponent::updateFromSampler()

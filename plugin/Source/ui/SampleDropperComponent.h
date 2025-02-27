@@ -18,6 +18,7 @@ public:
     void resized() override;
     void mouseDown(const juce::MouseEvent& event) override;
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+    void lookAndFeelChanged() override;
     void updateFromSampler();
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
