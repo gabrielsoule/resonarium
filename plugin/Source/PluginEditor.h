@@ -5,6 +5,7 @@
 #include "ui/AnimatedScrollBarsViewport.h"
 #include "ui/ResonariumComponents.h"
 #include "ui/Panels.h"
+#include "ui/SettingsPanel.h"
 
 class ResonariumEditor : public gin::ProcessorEditor,
                          public juce::DragAndDropContainer
@@ -17,6 +18,18 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
     void showOnboardingWarning();
+    void showSettingsMenu();  // Method to show settings menu
+    
+    // Handle mouse clicks for logo and text
+    void mouseDown(const juce::MouseEvent& event) override
+    {
+        // Check if the click is on the logo or text
+        if (event.eventComponent == logo.getComponent() || 
+            event.eventComponent == logoText.getComponent())
+        {
+            showSettingsMenu();
+        }
+    }
 
     ResonariumProcessor& proc;
     UIParams uiParams;
@@ -30,6 +43,9 @@ public:
     SafePointer<ResonariumLogo> logo;
     SafePointer<juce::Label> versionText;
     SafePointer<gin::TriggeredScope> scope;
+    
+    // No need to store a reference to the settings panel
+    // since we'll create it on demand in showSettingsMenu()
 
     std::vector<SafePointer<WaveguideResonatorBankParamBox_V2>> resonatorBankParamBoxes;
 
@@ -75,5 +91,7 @@ public:
     juce::TextButton inspectButton{"INSPECT UI"};
     juce::TextButton bypassResonatorsButton{"BYPASS RESONATORS"};
     juce::TextButton captureButton{"CAPTURE"};
+    juce::TextButton settingsButton{"SETTINGS"};
+    SettingsPanel* settingsPanel;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ResonariumEditor)
 };

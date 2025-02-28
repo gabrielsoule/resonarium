@@ -5,7 +5,7 @@
 
 
 ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
-    : gin::ProcessorEditor(p), proc(p), uiParams(p.uiParams)
+    : gin::ProcessorEditor(p), proc(p), uiParams(p.uiParams), settingsPanel(nullptr)
 {
     setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
     setLookAndFeel(p.lf.get());
@@ -19,6 +19,8 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
     logo = new ResonariumLogo();
     logo->setBounds(7, 2, 37, 37);
+    logo->setInterceptsMouseClicks(true, false);
+    logo->addMouseListener(this, false);
 
     logoText = new juce::Label();
     logoText->setText("RESONARIUM", juce::dontSendNotification);
@@ -26,12 +28,19 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     logoText->setBounds(50, 0, 210, 40);
     logoText->setFont(logoText->getFont().withHeight(26.0f).withExtraKerningFactor(0.25f));
     logoText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.85f));
+    logoText->setInterceptsMouseClicks(true, false);
+    logoText->addMouseListener(this, false);
+    logoText->setTooltip("Click for settings");
 
     versionText = new juce::Label();
     versionText->setText(proc.getOptions().pluginVersion, juce::dontSendNotification);
     versionText->setBounds(248, 0, 100, 40);
     versionText->setFont(versionText->getFont().withStyle(juce::Font::italic).withHeight(13.0f));
     versionText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.2f));
+
+    // // Create and setup the settings panel
+    // settingsPanel = new SettingsPanel(proc);
+    // addChildComponent(settingsPanel);
 
 #if ! JUCE_DEBUG //we use the navbar space for debugging controls when in a debug build, so don't show the logo
     addAndMakeVisible(logo);
@@ -315,6 +324,12 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
         DBG("Done capturing UI components!");
     };
+    addAndMakeVisible(settingsButton);
+    settingsButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
+    settingsButton.onClick = [&]
+    {
+        showSettingsMenu();
+    };
 #endif
 
 #ifndef JUCE_DEBUG
@@ -322,7 +337,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                                                    .withIconType (juce::MessageBoxIconType::WarningIcon)
                                                    .withTitle ("WARNING - PROTECT YOUR EARS! ")
                                                    .withMessage (
-                                                       "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\n\nCertain parameter configurations may induce undesirable positive feedback loops. These often produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level. \n\nIf you do not do so, you may be unpredictably exposed to dangerously loud audio.\n\nRemember, you can hover over a UI component to show a pop-up tip. Have fun!")
+                                                       "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\n\nCertain parameter configurations may induce undesirable positive feedback loops. These often produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level. \n\nIf you do not do so, you may be unpredictably exposed to dangerously loud audio.\n\nRemember, you can hover over a UI component to show a pop-up tip. Have fun\!")
                                                    .withButton ("I understand and have taken appropriate action!"),
                                                nullptr);
 
@@ -336,6 +351,14 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 ResonariumEditor::~ResonariumEditor()
 {
     scope->stopTimer();
+    
+    // Clean up the settings panel if it exists
+    if (settingsPanel != nullptr)
+    {
+        delete settingsPanel;
+        settingsPanel = nullptr;
+    }
+    
     DBG("Deleting editor...");
 }
 
@@ -352,6 +375,7 @@ void ResonariumEditor::resized()
     inspectButton.setBounds(10, 0, 100, 40);
     bypassResonatorsButton.setBounds(120, 0, 150, 40);
     captureButton.setBounds(120 + 150 + 20, 0, 100, 40);
+    settingsButton.setBounds(120 + 150 + 20 + 110, 0, 100, 40);
 #endif
     ProcessorEditor::resized();
     for (auto* c : this->getChildren())
@@ -372,4 +396,30 @@ void ResonariumEditor::showOnboardingWarning()
     // {
     //     w->setVisible (false);
     // });
+}
+
+void ResonariumEditor::showSettingsMenu()
+{
+    // Create settings panel directly
+    if (settingsPanel != nullptr)
+    {
+        // If already exists, just show it
+        settingsPanel->show();
+        return;
+    }
+    
+    // Create a new settings panel
+    settingsPanel = new SettingsPanel(proc, this);
+    
+    // Set up the close button callback
+    settingsPanel->onCloseButtonClick = [this]()
+    {
+        if (settingsPanel != nullptr)
+        {
+            settingsPanel->hide();
+        }
+    };
+    
+    // Show the panel
+    settingsPanel->show();
 }
