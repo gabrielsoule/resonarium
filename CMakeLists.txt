@@ -12,7 +12,6 @@ set(PLUGIN_CODE Res)
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 set(CMAKE_SUPPRESS_REGENERATION true)
-set(CMAKE_SKIP_INSTALL_RULES YES)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set_property(GLOBAL PROPERTY DEBUG_CONFIGURATIONS "Debug")
 
@@ -289,11 +288,55 @@ target_include_directories(${PLUGIN_NAME}_Python PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/plugin
 )
 
+# Find Python3 to get the site-packages directory
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+
+# Get Python site-packages directory
+if(WIN32)
+    # For Windows, handle backslashes in path
+    execute_process(
+        COMMAND "${Python3_EXECUTABLE}" -c "import site; print(site.getsitepackages()[0].replace('\\\\', '/'))"
+        OUTPUT_VARIABLE PYTHON_SITE_PACKAGES
+        RESULT_VARIABLE PYTHON_SITE_RESULT
+        ERROR_VARIABLE PYTHON_SITE_ERROR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+else()
+    execute_process(
+        COMMAND "${Python3_EXECUTABLE}" -c "import site; print(site.getsitepackages()[0])"
+        OUTPUT_VARIABLE PYTHON_SITE_PACKAGES
+        RESULT_VARIABLE PYTHON_SITE_RESULT
+        ERROR_VARIABLE PYTHON_SITE_ERROR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif()
+
+# Check if the command was successful
+if(NOT PYTHON_SITE_RESULT EQUAL 0)
+    message(WARNING "Failed to determine Python site-packages directory: ${PYTHON_SITE_ERROR}")
+    # Fallback: use the sitelib directory from the Python3_SITELIB variable if available
+    if(Python3_SITELIB)
+        set(PYTHON_SITE_PACKAGES ${Python3_SITELIB})
+        message(STATUS "Using fallback Python site-packages directory: ${PYTHON_SITE_PACKAGES}")
+    else()
+        message(FATAL_ERROR "Cannot determine Python site-packages directory.")
+    endif()
+else()
+    message(STATUS "Python site-packages directory: ${PYTHON_SITE_PACKAGES}")
+endif()
+
 set_target_properties(${PLUGIN_NAME}_Python PROPERTIES
         OUTPUT_NAME "resonarium"  # This will be the import name in Python
         PREFIX ""                 # Remove lib prefix on Unix
-        SUFFIX ".so"            # Use .pyd extension on Windows
+        LIBRARY_OUTPUT_DIRECTORY "${PYTHON_SITE_PACKAGES}" # Copy to site-packages when built
 )
+
+# Set the correct file extension based on the platform
+if(WIN32)
+    set_target_properties(${PLUGIN_NAME}_Python PROPERTIES SUFFIX ".pyd")
+else()
+    set_target_properties(${PLUGIN_NAME}_Python PROPERTIES SUFFIX ".so")
+endif()
 
 if (APPLE)
     set_target_properties("juce_vst3_helper" PROPERTIES XCODE_ATTRIBUTE_CLANG_LINK_OBJC_RUNTIME NO)
@@ -347,3 +390,7 @@ endif ()
 
 install(TARGETS ${PLUGIN_NAME}_Instrument DESTINATION "${dest}")
 install(TARGETS ${PLUGIN_NAME}_Effect DESTINATION "${dest}")
+
+# We no longer need explicit install rules for the Python module
+# because the module is automatically copied to the site-packages directory
+# when built thanks to the LIBRARY_OUTPUT_DIRECTORY property set earlier
