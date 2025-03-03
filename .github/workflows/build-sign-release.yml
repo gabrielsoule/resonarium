@@ -1,0 +1,131 @@
+name: Build, Sign, and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags (v1.0.0, v2.1.3, etc)
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (without v prefix)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build-and-release-macos:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+          submodules: recursive  # Get all submodules if your project uses them
+      
+      - name: Get version
+        id: get_version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            # From tag
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            # From manual input
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install cmake
+          # Add any other dependencies your project needs
+      
+      - name: Setup Apple certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ github.run_id }}
+        run: |
+          # Create variables
+          CERTIFICATE_PATH=$RUNNER_TEMP/developer_id.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          
+          # Import certificate from secrets
+          echo -n "$CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
+          
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          
+          # Import certificate to keychain
+          security import $CERTIFICATE_PATH -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          
+          # Allow codesign to access the keys
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+      
+      - name: Build project
+        run: |
+          mkdir -p build
+          cd build
+          cmake ..
+          cmake --build . --config Release
+      
+      - name: Sign the VST3 plugin
+        run: |
+          # Adjust the path to match your build output location
+          PLUGIN_PATH="build/Resonarium.vst3"
+          
+          # Sign with the same options you used locally
+          codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$PLUGIN_PATH" --deep --strict --options=runtime --timestamp
+          
+          # Verify signing
+          codesign --verify --verbose "$PLUGIN_PATH"
+      
+      - name: Create ZIP archive
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          PLUGIN_PATH="build/Resonarium.vst3"
+          ZIP_NAME="Resonarium-$VERSION-macOS.zip"
+          
+          # Create ZIP archive
+          zip -r "$ZIP_NAME" "$PLUGIN_PATH"
+      
+      - name: Notarize the app
+        env:
+          APPLE_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          ZIP_NAME="Resonarium-$VERSION-macOS.zip"
+          
+          # Submit for notarization
+          xcrun notarytool submit "$ZIP_NAME" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$TEAM_ID" --wait
+          
+          # Check notarization history to make sure it succeeded
+          xcrun notarytool history --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$TEAM_ID"
+          
+          # Unzip to staple
+          mkdir -p notarized
+          unzip "$ZIP_NAME" -d notarized
+          
+          # Staple the notarization ticket
+          xcrun stapler staple "notarized/build/Resonarium.vst3"
+          
+          # Create final notarized zip
+          cd notarized
+          zip -r "../Resonarium-$VERSION-macOS-notarized.zip" .
+      
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: Resonarium ${{ steps.get_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          files: |
+            Resonarium-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
