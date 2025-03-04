@@ -68,54 +68,142 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake ..
+          cmake .. -DCMAKE_BUILD_TYPE=Release
           cmake --build . --config Release -j 8
       
-      - name: Sign the VST3 plugin
+      - name: Sign the plugins
         run: |
-          # Adjust the path to match your build output location
-          PLUGIN_PATH="build/Resonarium.vst3"
+          # Define paths for all the plugin formats (Instrument and Effect)
+          # Instrument plugins
+          INSTRUMENT_VST3_PATH="build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3"
+          INSTRUMENT_AU_PATH="build/Resonarium_Instrument_artefacts/Release/AU/Resonarium.component"
+          INSTRUMENT_STANDALONE_PATH="build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium.app"
           
-          # Sign with the same options you used locally
-          codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$PLUGIN_PATH" --deep --strict --options=runtime --timestamp
+          # Effect plugins
+          EFFECT_VST3_PATH="build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3"
+          EFFECT_AU_PATH="build/Resonarium_Effect_artefacts/Release/AU/Resonarium Effect.component"
+          EFFECT_STANDALONE_PATH="build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect.app"
           
-          # Verify signing
-          codesign --verify --verbose "$PLUGIN_PATH"
+          # Sign all formats with the same options
+          echo "Signing Instrument VST3..."
+          codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$INSTRUMENT_VST3_PATH" --deep --strict --options=runtime --timestamp
+          
+          echo "Signing Instrument AU..."
+          codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$INSTRUMENT_AU_PATH" --deep --strict --options=runtime --timestamp
+          
+          echo "Signing Instrument Standalone..."
+          codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$INSTRUMENT_STANDALONE_PATH" --deep --strict --options=runtime --timestamp
+          
+          echo "Signing Effect VST3..."
+          codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$EFFECT_VST3_PATH" --deep --strict --options=runtime --timestamp
+          
+          echo "Signing Effect AU..."
+          codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$EFFECT_AU_PATH" --deep --strict --options=runtime --timestamp
+          
+          echo "Signing Effect Standalone..."
+          codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$EFFECT_STANDALONE_PATH" --deep --strict --options=runtime --timestamp
+          
+          # Verify signing for all formats
+          echo "Verifying Instrument VST3..."
+          codesign --verify --verbose "$INSTRUMENT_VST3_PATH"
+          
+          echo "Verifying Instrument AU..."
+          codesign --verify --verbose "$INSTRUMENT_AU_PATH"
+          
+          echo "Verifying Instrument Standalone..."
+          codesign --verify --verbose "$INSTRUMENT_STANDALONE_PATH"
+          
+          echo "Verifying Effect VST3..."
+          codesign --verify --verbose "$EFFECT_VST3_PATH"
+          
+          echo "Verifying Effect AU..."
+          codesign --verify --verbose "$EFFECT_AU_PATH"
+          
+          echo "Verifying Effect Standalone..."
+          codesign --verify --verbose "$EFFECT_STANDALONE_PATH"
       
-      - name: Create ZIP archive
+      - name: Create ZIP archives
         run: |
           VERSION=${{ steps.get_version.outputs.VERSION }}
-          PLUGIN_PATH="build/Resonarium.vst3"
-          ZIP_NAME="Resonarium-$VERSION-macOS.zip"
           
-          # Create ZIP archive
-          zip -r "$ZIP_NAME" "$PLUGIN_PATH"
+          # Create separate ZIP archives for Instrument and Effect
+          INSTRUMENT_ZIP_NAME="Resonarium-Instrument-$VERSION-macOS.zip"
+          EFFECT_ZIP_NAME="Resonarium-Effect-$VERSION-macOS.zip"
+          
+          # Create directories for the plugins
+          mkdir -p instrument_package/VST3
+          mkdir -p instrument_package/Components
+          mkdir -p instrument_package/Standalone
+          
+          mkdir -p effect_package/VST3
+          mkdir -p effect_package/Components
+          mkdir -p effect_package/Standalone
+          
+          # Copy the plugins to their respective directories
+          cp -R "build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3" instrument_package/VST3/
+          cp -R "build/Resonarium_Instrument_artefacts/Release/AU/Resonarium.component" instrument_package/Components/
+          cp -R "build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium.app" instrument_package/Standalone/
+          
+          cp -R "build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3" effect_package/VST3/
+          cp -R "build/Resonarium_Effect_artefacts/Release/AU/Resonarium Effect.component" effect_package/Components/
+          cp -R "build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect.app" effect_package/Standalone/
+          
+          # Create ZIP archives
+          cd instrument_package
+          zip -r "../$INSTRUMENT_ZIP_NAME" .
+          cd ..
+          
+          cd effect_package
+          zip -r "../$EFFECT_ZIP_NAME" .
+          cd ..
       
-      - name: Notarize the app
+      - name: Notarize the packages
         env:
           APPLE_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           VERSION=${{ steps.get_version.outputs.VERSION }}
-          ZIP_NAME="Resonarium-$VERSION-macOS.zip"
+          INSTRUMENT_ZIP_NAME="Resonarium-Instrument-$VERSION-macOS.zip"
+          EFFECT_ZIP_NAME="Resonarium-Effect-$VERSION-macOS.zip"
           
-          # Submit for notarization
-          xcrun notarytool submit "$ZIP_NAME" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$TEAM_ID" --wait
+          # Notarize Instrument package
+          echo "Notarizing Instrument package..."
+          xcrun notarytool submit "$INSTRUMENT_ZIP_NAME" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$TEAM_ID" --wait
+          
+          # Notarize Effect package
+          echo "Notarizing Effect package..."
+          xcrun notarytool submit "$EFFECT_ZIP_NAME" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$TEAM_ID" --wait
           
           # Check notarization history to make sure it succeeded
           xcrun notarytool history --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$TEAM_ID"
           
-          # Unzip to staple
-          mkdir -p notarized
-          unzip "$ZIP_NAME" -d notarized
+          # Unzip to staple tickets
+          mkdir -p notarized_instrument
+          mkdir -p notarized_effect
           
-          # Staple the notarization ticket
-          xcrun stapler staple "notarized/build/Resonarium.vst3"
+          unzip "$INSTRUMENT_ZIP_NAME" -d notarized_instrument
+          unzip "$EFFECT_ZIP_NAME" -d notarized_effect
           
-          # Create final notarized zip
-          cd notarized
-          zip -r "../Resonarium-$VERSION-macOS-notarized.zip" .
+          # Staple the notarization tickets to each plugin
+          echo "Stapling tickets to Instrument plugins..."
+          xcrun stapler staple "notarized_instrument/VST3/Resonarium.vst3"
+          xcrun stapler staple "notarized_instrument/Components/Resonarium.component"
+          xcrun stapler staple "notarized_instrument/Standalone/Resonarium.app"
+          
+          echo "Stapling tickets to Effect plugins..."
+          xcrun stapler staple "notarized_effect/VST3/Resonarium Effect.vst3"
+          xcrun stapler staple "notarized_effect/Components/Resonarium Effect.component"
+          xcrun stapler staple "notarized_effect/Standalone/Resonarium Effect.app"
+          
+          # Create final notarized zips
+          cd notarized_instrument
+          zip -r "../Resonarium-Instrument-$VERSION-macOS-notarized.zip" .
+          cd ..
+          
+          cd notarized_effect
+          zip -r "../Resonarium-Effect-$VERSION-macOS-notarized.zip" .
+          cd ..
       
       - name: Create GitHub Release
         id: create_release
@@ -126,6 +214,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            Resonarium-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
+            Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
+            Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
