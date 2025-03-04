@@ -1,8 +1,7 @@
 #include "Distortion.h"
 
 Distortion::Distortion(DistortionParams params)
-    : params(params), distortionMode(SOFT_CLIP), drive(1.0f),
-      lastDownSampleValue(0.0f), downSampleCounter(0.0f)
+    : params(params), distortionMode(SOFT_CLIP)
 {
 }
 
