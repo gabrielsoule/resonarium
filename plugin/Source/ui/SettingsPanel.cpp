@@ -66,7 +66,7 @@ void SettingsPanel::paint(juce::Graphics& g)
     
     // Draw panel title
     g.setColour(juce::Colours::white);
-    g.setFont(juce::Font(20.0f, juce::Font::bold));
+    g.setFont(juce::FontOptions(20.0f, juce::Font::bold));
     g.drawText("Settings", getLocalBounds().removeFromTop(40), juce::Justification::centred, true);
     
     // Draw border around the panel

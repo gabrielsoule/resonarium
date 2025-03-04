@@ -342,8 +342,8 @@ public:
     void paint(juce::Graphics& g) override
     {
         ParamBox::paint(g);
-        juce::Font font = static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont.withHeight(19).
-            withExtraKerningFactor(0.05f);
+        juce::FontOptions font = static_cast<ResonariumLookAndFeel&>(getLookAndFeel()).defaultFont.withHeight(19).
+            withKerningFactor(0.05f);
         g.setFont(font);
         //draw some attractive background rectangles
 

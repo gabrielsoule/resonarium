@@ -44,9 +44,7 @@ public:
     void noteOn(float phase);
     void process(int numSamples);
     float getOutput();
-    float getOutputUnclamped();
     float getOutput(int channel);
-    float getOutputUnclamped(int channel);
 
     gin::ModVoice* voice = nullptr;
     RandomLFOParams params;

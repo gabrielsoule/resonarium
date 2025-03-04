@@ -104,7 +104,7 @@ public:
         mainReadout.setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
         knob.setMouseCursor(juce::MouseCursor::UpDownResizeCursor);
         mainReadout.onTextChange = [this] {
-            mainReadoutTextWidth = mainReadout.getFont().getStringWidthFloat(mainReadout.getText());
+            mainReadoutTextWidth = juce::GlyphArrangement::getStringWidth(mainReadout.getFont(), mainReadout.getText());
             int unitWidth = 20;
             int unitHeight = 15;
             unitLabel.setBounds(static_cast<int>(juce::jmin(mainReadout.getBounds().getCentreX() + mainReadoutTextWidth / 2, static_cast<float>(mainReadout.getBounds().getRight()))), getHeight() - unitHeight, unitWidth, unitHeight);

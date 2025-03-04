@@ -14,7 +14,7 @@ SampleDropperComponent::SampleDropperComponent(Sampler& s)
     addAndMakeVisible(emptyStateLabel);
     emptyStateLabel.setJustificationType(juce::Justification::centred);
     emptyStateLabel.setMinimumHorizontalScale(1.0f);
-    emptyStateLabel.setFont(18.0f);
+    emptyStateLabel.setFont(juce::FontOptions().withHeight(18.0f));
     emptyStateLabel.setText("DRAG AND DROP SAMPLE", juce::dontSendNotification);
     // Use explicit color for now and update it in lookAndFeelChanged
     emptyStateLabel.setColour(juce::Label::textColourId, juce::Colour(0xff775cff));
@@ -24,7 +24,7 @@ SampleDropperComponent::SampleDropperComponent(Sampler& s)
     addAndMakeVisible(loadedStateLabel);
     loadedStateLabel.setJustificationType(juce::Justification::centred);
     loadedStateLabel.setMinimumHorizontalScale(1.0f);
-    loadedStateLabel.setFont(14.0f);
+    loadedStateLabel.setFont(juce::FontOptions().withHeight(14.0f));
     loadedStateLabel.setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.7f));
     loadedStateLabel.setInterceptsMouseClicks(false, false);
 

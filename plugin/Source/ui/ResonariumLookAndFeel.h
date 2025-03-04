@@ -42,7 +42,7 @@ public:
 
     juce::SharedResourcePointer<gin::Images> images;
     juce::Typeface::Ptr typeface;
-    juce::Font defaultFont;
+    juce::FontOptions defaultFont;
 };
 
 class ResonariumLookAndFeelWrapper : public ResonariumLookAndFeel
