@@ -13,6 +13,8 @@ on:
 
 jobs:
   build-and-release-macos:
+    permissions:
+      contents: write  # Required for creating releases
     runs-on: macos-latest
     
     steps:
@@ -209,7 +211,7 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
+          tag_name: v${{ steps.get_version.outputs.VERSION }}
           name: Resonarium ${{ steps.get_version.outputs.VERSION }}
           draft: false
           prerelease: false
