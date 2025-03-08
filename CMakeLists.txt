@@ -293,39 +293,11 @@ target_include_directories(${PLUGIN_NAME}_Python PRIVATE
 # Find Python3 to get the site-packages directory
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
-# Get Python site-packages directory
-if(WIN32)
-    # For Windows, handle backslashes in path
-    execute_process(
-        COMMAND "${Python3_EXECUTABLE}" -c "import site; print(site.getsitepackages()[0].replace('\\\\', '/'))"
-        OUTPUT_VARIABLE PYTHON_SITE_PACKAGES
-        RESULT_VARIABLE PYTHON_SITE_RESULT
-        ERROR_VARIABLE PYTHON_SITE_ERROR
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-else()
-    execute_process(
-        COMMAND "${Python3_EXECUTABLE}" -c "import site; print(site.getsitepackages()[0])"
-        OUTPUT_VARIABLE PYTHON_SITE_PACKAGES
-        RESULT_VARIABLE PYTHON_SITE_RESULT
-        ERROR_VARIABLE PYTHON_SITE_ERROR
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-endif()
-
-# Check if the command was successful
-if(NOT PYTHON_SITE_RESULT EQUAL 0)
-    message(WARNING "Failed to determine Python site-packages directory: ${PYTHON_SITE_ERROR}")
-    # Fallback: use the sitelib directory from the Python3_SITELIB variable if available
-    if(Python3_SITELIB)
-        set(PYTHON_SITE_PACKAGES ${Python3_SITELIB})
-        message(STATUS "Using fallback Python site-packages directory: ${PYTHON_SITE_PACKAGES}")
-    else()
-        message(FATAL_ERROR "Cannot determine Python site-packages directory.")
-    endif()
-else()
-    message(STATUS "Python site-packages directory: ${PYTHON_SITE_PACKAGES}")
-endif()
+# Use a local directory in the build folder for the Python module
+set(PYTHON_SITE_PACKAGES "${CMAKE_BINARY_DIR}/python_modules")
+message(STATUS "Using local Python module directory: ${PYTHON_SITE_PACKAGES}")
+# Create the directory if it doesn't exist
+file(MAKE_DIRECTORY ${PYTHON_SITE_PACKAGES})
 
 set_target_properties(${PLUGIN_NAME}_Python PROPERTIES
         OUTPUT_NAME "resonarium"  # This will be the import name in Python
@@ -392,7 +364,3 @@ endif ()
 
 install(TARGETS ${PLUGIN_NAME}_Instrument DESTINATION "${dest}")
 install(TARGETS ${PLUGIN_NAME}_Effect DESTINATION "${dest}")
-
-# We no longer need explicit install rules for the Python module
-# because the module is automatically copied to the site-packages directory
-# when built thanks to the LIBRARY_OUTPUT_DIRECTORY property set earlier
