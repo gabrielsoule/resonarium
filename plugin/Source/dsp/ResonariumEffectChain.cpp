@@ -30,6 +30,7 @@ void ResonariumEffectChain::prepare(const juce::dsp::ProcessSpec& spec)
     filter1.prepare(spec);
     filter2.prepare(spec);
     phaser.prepare(spec);
+    compressor.prepare(spec);
     gain.prepare(spec);
     filter1.prepare(spec);
     filter2.prepare(spec);
