@@ -11,12 +11,11 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
     options.programmingCredits.clear();
     options.programmingCredits.add("Gabriel Soule");
     options.developer = "Gabriel Soule";
-    options.pluginVersion = "0.1.0 ALPHA";
 #if RESONARIUM_IS_INSTRUMENT
-    options.pluginVersion = "0.0.7 (INST) ALPHA";
+    options.pluginVersion = "0.0.8 (INST) ALPHA";
 #endif
 #if RESONARIUM_IS_EFFECT
-    options.pluginVersion = "0.1.0 (FX) ALPHA";
+    options.pluginVersion = "0.0.8 (FX) ALPHA";
 #endif
     options.pluginName = "Resonarium";
     return options;
