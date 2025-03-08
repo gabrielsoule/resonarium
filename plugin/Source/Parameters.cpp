@@ -656,246 +656,246 @@ ChorusParams::ChorusParams(ResonariumProcessor& p)
 {
     enabled = p.addExtParam("chorusEnable", "Chorus Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, "", enableTextFunction);
+                            0.0f, "fx.chorus.enable", enableTextFunction);
 
 
     sync = p.addIntParam("chorusSync", "Chorus Sync", "Sync", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, "", enableTextFunction);
+                         0.0f, "fx.chorus.sync", enableTextFunction);
 
     beat = p.addExtParam("chorusBeat", "Chorus Beat", "Beat", "",
                          {0.0f, 13.0f, 1.0f, 1.0f},
-                         13.0f, 0.0f, "", durationTextFunction);
+                         13.0f, 0.0f, "fx.chorus.beat", durationTextFunction);
 
     rate = p.addExtParam("chorusRate", "Chorus Rate", "Rate", "Hz",
                          {0.0f, 100.0f, 0.0f, 0.3f},
-                         0.5f, 0.0f);
+                         0.5f, 0.0f, "fx.chorus.rate");
 
     depth = p.addExtParam("chorusDepth", "Chorus Depth", "Depth", "",
                           {0.0f, 1.0f, 0.0f, 1.0f},
-                          0.5f, 0.0f);
+                          0.5f, 0.0f, "fx.chorus.depth");
 
     delay = p.addExtParam("chorusDelay", "Chorus Delay", "Delay", "s",
                           {0.0f, 0.1f, 0.0f, 1.0f},
-                          0.0f, 0.0f);
+                          0.0f, 0.0f, "fx.chorus.delay");
 
     feedback = p.addExtParam("chorusFeedback", "Chorus Feedback", "Feedback", "",
                              {-1.0f, 1.0f, 0.0f, 1.0f},
-                             0.0f, 0.0f);
+                             0.0f, 0.0f, "fx.chorus.feedback");
 
     mix = p.addExtParam("chorusMix", "Chorus Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f},
-                        0.5f, 0.0f);
+                        0.5f, 0.0f, "fx.chorus.mix");
 }
 
 DelayParams::DelayParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("delayEnable", "Delay Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, "", enableTextFunction);
+                            0.0f, "fx.delay.enable", enableTextFunction);
 
     timeL = p.addExtParam("delayTimeL", "Delay Time L", "Time L", "s",
                           {0.01f, MAX_DELAY_IN_SECONDS, 0.0f, 0.4f},
-                          0.5f, 0.0f);
+                          0.5f, 0.0f, "fx.delay.time");
 
     timeR = p.addExtParam("delayTimeR", "Delay Time R", "Time R", "s",
                           {0.01f, MAX_DELAY_IN_SECONDS, 0.0f, 0.4f},
-                          0.5f, 0.0f);
+                          0.5f, 0.0f, "fx.delay.time");
 
     beatL = p.addExtParam("delayBeatL", "Delay Beat L", "Beat L", "",
                           {0.0f, 13.0f, 1.0f, 1.0f},
-                          13.0f, 0.0f, "", durationTextFunction);
+                          13.0f, 0.0f, "fx.delay.beat", durationTextFunction);
 
     beatR = p.addExtParam("delayBeatR", "Delay Beat R", "Beat R", "",
                           {0.0f, 13.0f, 1.0f, 1.0f},
-                          13.0f, 0.0f, "", durationTextFunction);
+                          13.0f, 0.0f, "fx.delay.beat", durationTextFunction);
 
     pingPongAmount = p.addIntParam("delayPingPong", "Delay PingPong", "PingPong", "",
                                   {0.0f, 1.0f, 1.0f, 1.0f},
-                                  0.0f, 0.0f, "", enableTextFunction);
+                                  0.0f, 0.0f, "fx.delay.pingpong", enableTextFunction);
 
     syncL = p.addIntParam("delaySyncL", "Delay Sync L", "Sync L", "",
                           {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                          0.0f, "", enableTextFunction);
+                          0.0f, "fx.delay.sync", enableTextFunction);
 
     syncR = p.addIntParam("delaySyncR", "Delay Sync R", "Sync R", "",
                           {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                          0.0f, "", enableTextFunction);
+                          0.0f, "fx.delay.sync", enableTextFunction);
 
     feedback = p.addExtParam("delayFeedback", "Delay Feedback", "Feedback", "",
                              {0.0f, 1.0f, 0.0f, 1.0f},
-                             0.5f, 0.0f);
+                             0.5f, 0.0f, "fx.delay.feedback");
 
     lock = p.addIntParam("delayLock", "Delay Stereo Lock", "Lock", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 1.0f,
-                         0.0f, "", enableTextFunction);
+                         0.0f, "fx.delay.lock", enableTextFunction);
 
     mix = p.addExtParam("delayMix", "Delay Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f},
-                        0.5f, 0.0f);
+                        0.5f, 0.0f, "fx.delay.mix");
 }
 
 DistortionParams::DistortionParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("distEnable", "Distortion Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, "", enableTextFunction);
+                            0.0f, "fx.distortion.enable", enableTextFunction);
 
     distortionMode = p.addIntParam("distType", "Distortion Type", "Type", "",
                                    {0.0f, 5.0f, 1.0f, 1.0f}, 0.0f,
-                                   0.0f, "", distortionTypeTextFunction);
+                                   0.0f, "fx.distortion.type", distortionTypeTextFunction);
 
     drive = p.addExtParam("distDrive", "Distortion Drive", "Drive", "dB",
                           {-36.0f, 36.0f, 0.0f, 1.0f}, 0.0f,
-                          0.0f);
+                          0.0f, "fx.distortion.drive");
 
     outputGain = p.addExtParam("distOutputGain", "Distortion Output Gain", "Output", "dB",
                                {-36.0f, 36.0f, 0.0f, 1.0f}, 0.0f,
-                               0.0f);
+                               0.0f, "fx.distortion.outputgain");
 
     mix = p.addExtParam("distMix", "Distortion Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f},
-                        1.0f, 0.0f);
+                        1.0f, 0.0f, "fx.distortion.mix");
 
     prePostFilter = p.addIntParam("distPrePostFilter", "Distortion Pre/Post Filter", "Pre/Post", "",
                                   {0.0f, 2.0f, 1.0f, 1.0f}, 0.0f,
-                                  0.0f, "", distortionFilterModeTextFunction);
+                                  0.0f, "fx.distortion.prepostfilter", distortionFilterModeTextFunction);
 
     cutoff = p.addExtParam("distCutoff", "Distortion Cutoff", "Cutoff", "Hz",
                            {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, 3000.0f,
-                           0.0f);
+                           0.0f, "fx.distortion.cutoff");
 
     resonance = p.addExtParam("distResonance", "Distortion Resonance", "Res.", "",
                               {0.01f, 15.0f, 0.0f, 0.4f}, 1.0f / std::sqrt(2.0f),
-                              0.0f);
+                              0.0f, "fx.distortion.resonance");
 
     filterMode = p.addExtParam("distFilterMode", "Distortion Filter Mode", "Mode", "",
                                {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
-                               0.0f);
+                               0.0f, "fx.distortion.filtermode");
 }
 
 MultiAmpParams::MultiAmpParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("ampEnable", "Amp Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, "", enableTextFunction);
+                            0.0f, "fx.multiamp.enable", enableTextFunction);
 
     mode = p.addIntParam("ampMode", "Amp Mode", "Mode", "",
                          {0.0f, 5.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, "", multiAmpModeTextFunction);
+                         0.0f, "fx.multiamp.mode", multiAmpModeTextFunction);
 
     paramA = p.addExtParam("ampParamA", "Amp Param A", "Param A", "",
                            {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-                           0.0f);
+                           0.0f, "fx.multiamp.parama");
 
     paramB = p.addExtParam("ampParamB", "Amp Param B", "Param B", "",
                            {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-                           0.0f);
+                           0.0f, "fx.multiamp.paramb");
 
     paramC = p.addExtParam("ampParamC", "Amp Param C", "Param C", "",
                            {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-                           0.0f);
+                           0.0f, "fx.multiamp.paramc");
 
     paramD = p.addExtParam("ampParamD", "Amp Param D", "Param D", "",
                            {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-                           0.0f);
+                           0.0f, "fx.multiamp.paramd");
 }
 
 PhaserParams::PhaserParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("phaserEnable", "Phaser Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, "", enableTextFunction);
+                            0.0f, "fx.phaser.enable", enableTextFunction);
 
     sync = p.addIntParam("phaserSync", "Phaser Sync", "Sync", "",
                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                         0.0f, "", enableTextFunction);
+                         0.0f, "fx.phaser.sync", enableTextFunction);
 
     beat = p.addExtParam("phaserBeat", "Phaser Beat", "Beat", "",
                          {0.0f, 13.0f, 1.0f, 1.0f},
-                         13.0f, 0.0f, "", durationTextFunction);
+                         13.0f, 0.0f, "fx.phaser.beat", durationTextFunction);
 
     rate = p.addExtParam("phaserRate", "Phaser Rate", "Rate", "Hz",
                          {0.0f, 99.99f, 0.0f, 0.3f},
-                         0.5f, 0.0f);
+                         0.5f, 0.0f, "fx.phaser.rate");
 
     depth = p.addExtParam("phaserDepth", "Phaser Depth", "Depth", "",
                           {0.0f, 1.0f, 0.0f, 1.0f},
-                          0.5f, 0.0f);
+                          0.5f, 0.0f, "fx.phaser.depth");
 
     centreFrequency = p.addExtParam("phaserCentreFreq", "Phaser Centre Freq", "Centre Freq", "Hz",
                                     {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW}, 3000.0f,
-                                    0.0f);
+                                    0.0f, "fx.phaser.centrefreq");
 
     feedback = p.addExtParam("phaserFeedback", "Phaser Feedback", "Feedback", "",
                              {-1.0f, 1.0f, 0.0f, 1.0f},
-                             0.0f, 0.0f);
+                             0.0f, 0.0f, "fx.phaser.feedback");
 
     mix = p.addExtParam("phaserMix", "Phaser Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f},
-                        0.5f, 0.0f);
+                        0.5f, 0.0f, "fx.phaser.mix");
 }
 
 CompressorParams::CompressorParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("compressorEnable", "Compressor Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, "", enableTextFunction);
+                            0.0f, "fx.compressor.enable", enableTextFunction);
 
     threshold = p.addExtParam("compressorThreshold", "Compressor Threshold", "Thresh", "dB",
                               {-60.0f, 12.0f, 0.0f, 1.0f}, 0.0f,
-                              0.0f);
+                              0.0f, "fx.compressor.threshold");
 
     ratio = p.addExtParam("compressorRatio", "Compressor Ratio", "Ratio", "",
                           {1.0f, 9.0f, 0.0f, 1.0f}, 1.0f,
-                          0.0f);
+                          0.0f, "fx.compressor.ratio");
 
     attack = p.addExtParam("compressorAttack", "Compressor Attack", "Attack", "ms",
                            {1.0f, 1000.0f, 0.0f, 1.0f}, 1.0f,
-                           0.0f);
+                           0.0f, "fx.compressor.attack");
 
     release = p.addExtParam("compressorRelease", "Compressor Release", "Release", "ms",
                             {1.0f, 1000.0f, 0.0f, 1.0f}, 1.0f,
-                            0.0f);
+                            0.0f, "fx.compressor.release");
 }
 
 ReverbParams::ReverbParams(ResonariumProcessor& p)
 {
     enabled = p.addIntParam("reverbEnable", "Reverb Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, "", enableTextFunction);
+                            0.0f, "fx.reverb.enable", enableTextFunction);
 
     dampingFreq = p.addExtParam("reverbDampingFreq", "Reverb Damping Freq", "Damping", "Hz",
                                 {0.0f, 1.0f, 0.0f, 1.0f}, 0.2f,
-                                0.0f);
+                                0.0f, "fx.reverb.dampingfreq");
 
     density = p.addExtParam("reverbDensity", "Reverb Density", "Density", "",
                             {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-                            0.0f);
+                            0.0f, "fx.reverb.density");
 
     bandwidthFreq = p.addExtParam("reverbBandwidthFreq", "Reverb Bandwidth Freq", "BW", "Hz",
                                   {0.0f, 1.0f, 0.0f, 1.0f}, 0.2f,
-                                  0.0f);
+                                  0.0f, "fx.reverb.bandwidthfreq");
 
     decay = p.addExtParam("reverbDecay", "Reverb Decay", "Decay", "",
                           {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-                          0.0f);
+                          0.0f, "fx.reverb.decay");
 
     predelay = p.addExtParam("reverbPredelay", "Reverb Predelay", "Predelay", "s",
                              {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
-                             0.0f);
+                             0.0f, "fx.reverb.predelay");
 
     size = p.addExtParam("reverbSize", "Reverb Size", "Size", "",
                          {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-                         0.0f);
+                         0.0f, "fx.reverb.size");
 
     earlyMix = p.addExtParam("reverbEarlyMix", "Reverb Early Mix", "Early Mix", "",
                              {0.0f, 1.0f, 0.0f, 1.0f}, 0.5f,
-                             0.0f);
+                             0.0f, "fx.reverb.earlymix");
 
     mix = p.addExtParam("reverbMix", "Reverb Mix", "Mix", "",
                         {0.0f, 1.0f, 0.01f, 1.0f},
-                        0.5f, 0.0f);
+                        0.5f, 0.0f, "fx.reverb.mix");
 }
 
 SVFParams::SVFParams(ResonariumProcessor& p, juce::String name)
@@ -904,20 +904,20 @@ SVFParams::SVFParams(ResonariumProcessor& p, juce::String name)
 
     enabled = p.addIntParam(prefix + "enable", prefix + "Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                            0.0f, "", enableTextFunction);
+                            0.0f, "fx.filter.enable", enableTextFunction);
 
     cutoff = p.addExtParam(prefix + "cutoff", prefix + "Freq", "Freq", "Hz",
                            {MIN_FILTER_FREQUENCY, MAX_FILTER_FREQUENCY, 0.0f, FREQUENCY_KNOB_SKEW},
                            MAX_FILTER_FREQUENCY,
-                           0.0f);
+                           0.0f, "fx.filter.freq");
 
     mode = p.addExtParam(prefix + "mode", prefix + "Mode", "Mode", "",
                          {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
-                         0.0f);
+                         0.0f, "fx.filter.mode");
 
     resonance = p.addExtParam(prefix + "resonance", prefix + "Resonance", "Res", "",
                               {0.0f, 100.0f, 0.0f, 1.0f}, 1.0f / std::sqrt(2.0f),
-                              0.0f);
+                              0.0f, "fx.filter.res");
 }
 
 EffectChainParams::EffectChainParams(ResonariumProcessor& p) :

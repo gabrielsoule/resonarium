@@ -69,6 +69,81 @@
       "smooth": "Smooth the transition between successive random samples."
     }
   },
+  "fx": {
+    "delay": {
+      "enable": "Enable or disable the delay effect.",
+      "time": "Set the delay time in seconds for each channel.",
+      "sync": "Sync the delay time to the host tempo.",
+      "beat": "Set the delay time as a rhythmic division of the host tempo.",
+      "feedback": "Control how much of the delayed signal is fed back into the delay line. Higher values create more repeating echoes.",
+      "mix": "Set the balance between the dry (unprocessed) and wet (delayed) signals.",
+      "pingpong": "Enable ping-pong mode, which causes the echoes to alternate between left and right channels. Creates a wide stereo effect.",
+      "lock": "Link the left and right delay times. When enabled, both channels will use the left channel's time or beat setting."
+    },
+    "chorus": {
+      "enable": "Enable or disable the chorus effect, which creates a shimmering, ensemble-like sound by layering slightly detuned copies of the signal.",
+      "rate": "Set the rate at which the chorus effect modulates, affecting how quickly the sound waves together and apart.",
+      "sync": "Sync the chorus rate to the host tempo.",
+      "beat": "Set the chorus modulation rate as a rhythmic division of the host tempo.",
+      "depth": "Control the intensity of the chorus effect. Higher values create a wider, more pronounced effect.",
+      "delay": "Set the base delay time for the chorus, affecting the character of the effect. Longer delays create a more dramatic chorus sound.",
+      "feedback": "Control how much of the chorus output is fed back into the effect. Higher values create a more complex, resonant chorus sound.",
+      "mix": "Set the balance between the dry (unprocessed) and wet (chorus-processed) signals."
+    },
+    "phaser": {
+      "enable": "Enable or disable the phaser effect, which creates a sweeping, swirling sound by creating notches in the frequency spectrum.",
+      "rate": "Set the rate at which the phaser sweeps through the frequency spectrum.",
+      "sync": "Sync the phaser rate to the host tempo.",
+      "beat": "Set the phaser modulation rate as a rhythmic division of the host tempo.",
+      "depth": "Control the intensity of the phaser effect. Higher values create a more dramatic sweeping effect.",
+      "centrefreq": "Set the center frequency around which the phaser effect operates, affecting the tonal character of the effect.",
+      "feedback": "Control how much of the phaser output is fed back into the effect. Higher positive or negative values create a more resonant, intense phaser sound.",
+      "mix": "Set the balance between the dry (unprocessed) and wet (phaser-processed) signals."
+    },
+    "reverb": {
+      "enable": "Enable or disable the reverb effect, which simulates acoustic space and adds ambience to the sound.",
+      "dampingfreq": "Control how quickly high frequencies decay in the reverb. Higher values maintain more brightness in the reverb tail.",
+      "density": "Adjust the density of reflections in the reverb. Higher values create a smoother, more diffuse reverb sound.",
+      "bandwidthfreq": "Control the bandwidth of the input signal that gets processed by the reverb. Higher values maintain more of the original sound's character.",
+      "decay": "Set how long the reverb tail persists. Higher values create a longer-lasting reverb effect.",
+      "predelay": "Add a delay before the reverb begins, creating a sense of distance from the sound source.",
+      "size": "Control the perceived size of the reverberant space. Higher values simulate larger rooms or halls.",
+      "earlymix": "Adjust the balance between early reflections and the late reverb tail. Higher values emphasize the initial reflections.",
+      "mix": "Set the balance between the dry (unprocessed) and wet (reverb-processed) signals."
+    },
+    "compressor": {
+      "enable": "Enable or disable the compressor effect, which reduces the dynamic range of the audio by attenuating louder signals.",
+      "threshold": "Set the level above which the compressor begins to reduce gain. Lower threshold values affect more of the signal.",
+      "ratio": "Determine how strongly the compressor reduces signals above the threshold. Higher ratios create more aggressive compression.",
+      "attack": "Set how quickly the compressor responds to signals exceeding the threshold. Shorter attack times catch transients more aggressively.",
+      "release": "Control how long the compressor takes to stop reducing gain after the signal falls below the threshold. Longer release times create smoother compression."
+    },
+    "distortion": {
+      "enable": "Enable or disable the distortion effect, which adds harmonics to the signal by applying non-linear processing.",
+      "type": "Select the distortion algorithm. Options include soft clip for subtle warmth, hard clip for aggressive distortion, bit crush for digital artifacts, and more.",
+      "drive": "Control the amount of gain applied to the signal before distortion. Higher values create more intense distortion effects.",
+      "outputgain": "Adjust the level of the distorted signal, compensating for any volume increases caused by the distortion process.",
+      "mix": "Set the balance between the dry (unprocessed) and wet (distorted) signals.",
+      "prepostfilter": "Choose whether to apply filtering before distortion (pre), after distortion (post), or disable filtering entirely.",
+      "cutoff": "Set the cutoff frequency of the distortion filter, determining which frequencies are affected by the filter.",
+      "resonance": "Control the resonance of the distortion filter. Higher values create a peak at the cutoff frequency.",
+      "filtermode": "Set whether the distortion filter operates as a lowpass (0.0), bandpass (0.5), or highpass (1.0) filter."
+    },
+    "multiamp": {
+      "enable": "Enable or disable the amplifier simulation effect, which models various types of guitar amplifiers and tone-shaping circuits.",
+      "mode": "Select the amplifier model. Options include Lead, Bass, Fire, Big, Grind, and Bitcrush, each with its own characteristic sound.",
+      "parama": "Control the first parameter of the selected amp model. The effect varies depending on which amp model is selected.",
+      "paramb": "Control the second parameter of the selected amp model. The effect varies depending on which amp model is selected.",
+      "paramc": "Control the third parameter of the selected amp model. The effect varies depending on which amp model is selected.",
+      "paramd": "Control the fourth parameter of the selected amp model. The effect varies depending on which amp model is selected."
+    },
+    "filter": {
+      "enable": "Enable or disable the filter effect, which shapes the tone by attenuating certain frequencies.",
+      "freq": "Set the cutoff frequency of the filter. For lowpass filters, frequencies above this point are attenuated; for highpass, frequencies below.",
+      "mode": "Control whether the filter operates as a lowpass (0.0), bandpass (0.5), or highpass (1.0) filter, with smooth interpolation between types.",
+      "res": "Set the resonance of the filter, which creates a peak at the cutoff frequency. Higher values create a more pronounced resonant peak."
+    }
+  },
   "global": {
     "gain": "Set the gain of the output signal. This parameter is always polyphonic, and can be used by an envelope or LFO to modulate the output level.",
     "polyfx": "Choose whether to use polyphonic effect chains. If enabled, each note will have its own effect chain. If disabled, all notes will share a single effect chain. Disabling improves performance, but effect parameters will no longer be polyphonically modulable.",
