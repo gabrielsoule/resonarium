@@ -995,7 +995,7 @@ public:
         addControl(timeRKnob = new gin::Knob(delayParams.timeR), 3, 0);
         addControl(beatRKnob = new gin::Select(delayParams.beatR), 3, 0);
         addControl(syncRKnob = new gin::Switch(delayParams.syncR), 4, 0);
-        addControl(new gin::Knob(delayParams.pingPongAmount), 1, 1);
+        addControl(new gin::Switch(delayParams.pingPongAmount), 1, 1);
         addControl(new gin::Knob(delayParams.feedback), 2, 1);
         addControl(new gin::Knob(delayParams.mix), 3, 1);
 

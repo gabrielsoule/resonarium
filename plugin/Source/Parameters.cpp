@@ -710,9 +710,9 @@ DelayParams::DelayParams(ResonariumProcessor& p)
                           {0.0f, 13.0f, 1.0f, 1.0f},
                           13.0f, 0.0f, "", durationTextFunction);
 
-    pingPongAmount = p.addExtParam("delayPingPong", "Delay PingPong", "PingPong", "",
-                                   {0.0f, 1.0f, 0.01f, 1.0f},
-                                   0.0f, 0.0f);
+    pingPongAmount = p.addIntParam("delayPingPong", "Delay PingPong", "PingPong", "",
+                                  {0.0f, 1.0f, 1.0f, 1.0f},
+                                  0.0f, 0.0f, "", enableTextFunction);
 
     syncL = p.addIntParam("delaySyncL", "Delay Sync L", "Sync L", "",
                           {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,

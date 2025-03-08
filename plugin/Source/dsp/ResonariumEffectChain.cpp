@@ -128,8 +128,7 @@ void ResonariumEffectChain::updateParameters(T& source, juce::AudioPlayHead* pla
     delay.setDelayTime(1, delayTimeR);
     delay.setFeedback(0, source.getValue(delayParams.feedback, 0));
     delay.setFeedback(1, source.getValue(delayParams.feedback, 1));
-    delay.setPingPongAmount(0, source.getValue(delayParams.pingPongAmount, 0));
-    delay.setPingPongAmount(1, source.getValue(delayParams.pingPongAmount, 1));
+    delay.setPingPong(delayParams.pingPongAmount->isOn());
     delay.setMix(0, source.getValue(delayParams.mix, 0));
     delay.setMix(1, source.getValue(delayParams.mix, 1));
 
