@@ -172,11 +172,9 @@ public:
     juce::Random rng;
 
     Mode mode = IMPULSE;
-    float character;
-    float entropy;
     int periodInSamples = -1;
     int samplesSinceLastImpulse = -1;
-    float staticProbability;
+    float staticProbability = 0.0f;
 
     //for the IMPULSE mode -- how long is the impulse, and how many impulses left to send out?
     int impulseLength = -1;

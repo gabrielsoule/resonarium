@@ -7,6 +7,14 @@
     "noise": {
       "level": "Control the level of the white noise signal. The value of this parameter directly corresponds to the amplitude of the white noise"
     },
+    "sequence": {
+      "level": "Control the level of the sequence exciter output signal.",
+      "mode": "Select the operating mode of the sequence exciter: Impulse generates periodic impulses, Static creates randomly triggered noise bursts, and Triangle produces a smoothly interpolated triangular wave.",
+      "rate": "Set the rate at which the sequence exciter generates events, in Hertz. Controls the frequency of impulses in Impulse mode, the noise burst rate in Static mode, and the oscillation frequency in Triangle mode.",
+      "sync": "Sync the sequence exciter rate to the host tempo.",
+      "impulselength": "In Impulse mode, set the length of each impulse in samples. Higher values create wider impulses with a low-pass characteristic.",
+      "staticdensity": "In Static mode, control the probability of noise being generated at each trigger point. Higher values create denser noise patterns."
+    },
     "sampler": {
       "gain": "Control the gain of the sampler, in decibels.",
       "loop": "If enabled, the sampler will loop the sample indefinitely, between the start and end positions. If disabled, the sampler will play the sample once and then stop.",

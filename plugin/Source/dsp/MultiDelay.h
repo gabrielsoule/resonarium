@@ -25,7 +25,7 @@ public:
     template <typename ProcessContext>
     void process(ProcessContext& context) noexcept
     {
-        // For debugging, forceWy ping-pong on
+        // For debugging, forceWy ping-pong onOkay
         // pingPongEnabled = true;
         
         auto& inputBlock = context.getInputBlock();

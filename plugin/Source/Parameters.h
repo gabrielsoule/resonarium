@@ -160,9 +160,12 @@ struct SequenceExciterParams
         mode,
         rate,
         sync,
-        entropy,
-        character,
         level = nullptr;
+    
+    // Mode-specific parameters
+    gin::Parameter::Ptr
+        impulseLength,    // For IMPULSE mode
+        staticDensity;    // For STATIC mode
 
     SequenceExciterParams() = default;
     SequenceExciterParams(ResonariumProcessor& p, int index);

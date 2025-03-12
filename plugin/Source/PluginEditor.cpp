@@ -89,7 +89,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     noiseExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
     excitersViewportContentComponent->addAndMakeVisible(noiseExciterParamBox);
 
-    impulseTrainExciterParamBox = new ImpulseTrainExciterParamBox("Sequence Exciter", proc, 0, voiceParams.impulseTrainExciterParams[0]);
+    impulseTrainExciterParamBox = new SequenceExciterParamBox("Sequence Exciter", proc, 0, voiceParams.impulseTrainExciterParams[0]);
     impulseTrainExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_MEDIUM_HEIGHT));
     excitersViewportContentComponent->addAndMakeVisible(impulseTrainExciterParamBox);
 
@@ -337,7 +337,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                                                    .withIconType (juce::MessageBoxIconType::WarningIcon)
                                                    .withTitle ("WARNING - PROTECT YOUR EARS! ")
                                                    .withMessage (
-                                                       "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\n\nCertain parameter configurations may induce undesirable positive feedback loops. These often produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level. \n\nIf you do not do so, you may be unpredictably exposed to dangerously loud audio.\n\nRemember, you can hover over a UI component to show a pop-up tip. Have fun!")
+                                                       "Resonarium is an experimental digital waveguide synthesizer that is still in development. Waveguide synthesis is implemented via tightly-coupled audio feedback loops that interact with each other in potentially delightful - but unpredictable - ways.\/n\nCertain parameter configurations may induce undesirable positive feedback loops. These often produce high-frequency noise with unbounded gain that can damage your hearing or equipment. \n\nBefore continuing, please ensure that the maximum output gain of your host application and your audio device are configured at a safe level. \n\nIf you do not do so, you may be unpredictably exposed to dangerously loud audio.\n\nRemember, you can hover over a UI component to show a pop-up tip. Have fun!")
                                                    .withButton ("I understand and have taken appropriate action!"),
                                                nullptr);
 

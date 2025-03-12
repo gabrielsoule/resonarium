@@ -51,14 +51,14 @@ public:
 
     std::vector<SafePointer<ImpulseExciterParamBox>> impulseExciterParamBoxes;
     std::vector<SafePointer<NoiseExciterParamBox>> noiseExciterParamBoxes;
-    std::vector<SafePointer<ImpulseTrainExciterParamBox>> impulseTrainExciterParamBoxes;
+    std::vector<SafePointer<SequenceExciterParamBox>> impulseTrainExciterParamBoxes;
 
 
     SafePointer<AnimatedScrollBarsViewport> excitersViewport;
     SafePointer<Component> excitersViewportContentComponent;
     SafePointer<ImpulseExciterParamBox> impulseExciterParamBox;
     SafePointer<NoiseExciterParamBox> noiseExciterParamBox;
-    SafePointer<ImpulseTrainExciterParamBox> impulseTrainExciterParamBox;
+    SafePointer<SequenceExciterParamBox> impulseTrainExciterParamBox;
     SafePointer<SampleExciterParamBox> sampleExciterParamBox;
     SafePointer<ExternalInputExciterParamBox> extInParamBox;
 

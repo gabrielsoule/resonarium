@@ -169,17 +169,33 @@ void SequenceExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::
         }
         else if (mode == STATIC)
         {
-            float r = rng.nextFloat();
-            if (r < staticProbability)
+            // Use periodInSamples to control when noise is generated based on the rate parameter
+            if (samplesSinceLastImpulse == 0)
             {
-                const float sample = noise.nextValue() * envelopeSample;
-                truncatedBlock.setSample(0, i, sample);
-                truncatedBlock.setSample(1, i, sample);
+                // Time to generate a new noise impulse based on rate
+                // Use staticProbability to determine if this cycle will generate noise
+                float r = rng.nextFloat();
+                if (r < staticProbability)
+                {
+                    const float sample = noise.nextValue() * envelopeSample;
+                    truncatedBlock.setSample(0, i, sample);
+                    truncatedBlock.setSample(1, i, sample);
+                }
+                else
+                {
+                    truncatedBlock.setSample(0, i, 0.0f);
+                    truncatedBlock.setSample(1, i, 0.0f);
+                }
+                
+                // Reset counter
+                samplesSinceLastImpulse = periodInSamples - 1;
             }
             else
             {
+                // No noise between cycles
                 truncatedBlock.setSample(0, i, 0.0f);
                 truncatedBlock.setSample(1, i, 0.0f);
+                samplesSinceLastImpulse--;
             }
         }
         else if (mode == TRIANGULAR)
@@ -234,6 +250,8 @@ void SequenceExciter::reset()
 void SequenceExciter::noteStarted()
 {
     periodInSamples = static_cast<int>(std::round(sampleRate / voice.getValue(params.rate)));
+    // Initialize samplesSinceLastImpulse to ensure immediate first impulse for all modes
+    samplesSinceLastImpulse = 0;
     envelope.noteOn();
 }
 
@@ -252,19 +270,17 @@ void SequenceExciter::updateParameters()
     envelope.setRelease(voice.getValue(params.adsrParams.release));
     filter.updateParameters();
     mode = static_cast<Mode>(voice.getValue(params.mode));
-    character = voice.getValue(params.character);
-    entropy = voice.getValue(params.entropy);
     const float newPeriod = static_cast<int>(std::round(sampleRate / voice.getValue(params.rate)));
 
     //compute values for the different impulse train modes
     if (mode == IMPULSE)
     {
-        impulseLength = static_cast<int>(std::round((voice.getValue(params.character) * 15.0f)));
+        impulseLength = static_cast<int>(voice.getValue(params.impulseLength) * 15.0f);
         if (impulseLength <= 0) impulseLength = 1;
     }
     else if (mode == STATIC)
     {
-        staticProbability = (character / 7.0f);
+        staticProbability = (voice.getValue(params.staticDensity) / 3.0f);
         staticProbability = staticProbability * staticProbability;
     }
     else if (mode == TRIANGULAR)
@@ -285,8 +301,8 @@ void SequenceExciter::updateParameters()
         }
 
         triPhaseInc = 1.0f / newPeriod;
-        triAmpMin = 0.0f; // Add these parameters
-        triAmpMax = 1.0f;  // to your parameter struct
+        triAmpMin = 0.0f; // Hardcoded to 0
+        triAmpMax = 1.0f; // Hardcoded to 1
     }
 
     periodInSamples = newPeriod;

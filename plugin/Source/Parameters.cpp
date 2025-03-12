@@ -389,27 +389,27 @@ SequenceExciterParams::SequenceExciterParams(ResonariumProcessor& p, int index)
 
     this->mode = p.addExtParam(prefix + "mode", prefix + " Mode", "Mode", "",
                                {0.0f, 2.0f, 1.0f, 1.0f}, 0.0f,
-                               0.0f, "", sequenceExciterModeTextFunction);
+                               0.0f, "exciter.sequence.mode", sequenceExciterModeTextFunction);
 
     this->rate = p.addExtParam(prefix + "rate", prefix + " Rate", "Rate", "Hz",
                                {0.1f, 1000.0f, 0.01f, 0.4f}, 1.0f,
-                               0.0f);
+                               0.0f, "exciter.sequence.rate");
 
     this->sync = p.addExtParam(prefix + "sync", prefix + " Sync", "Sync", "",
                                {0.0f, 1.0f, 0.01f, 1.0f}, 0.0f,
-                               0.0f);
+                               0.0f, "exciter.sequence.sync");
 
-    this->entropy = p.addExtParam(prefix + "entropy", prefix + " Entropy", "Rnd", "",
-                                  {0.0f, 1.0f, 0.01f, 1.0f}, 0.0f,
-                                  0.0f);
+    this->impulseLength = p.addExtParam(prefix + "impulseLength", prefix + " Impulse Length", "Length", "",
+                                        {1.0f, 10.0f, 1.0f, 1.0f}, 1.0f,
+                                        0.0f, "exciter.sequence.impulselength");
 
-    this->character = p.addExtParam(prefix + "character", prefix + " Character", "Mod", "",
-                                    {0.0f, 1.0f, 0.01f, 1.0f}, 0.0f,
-                                    0.0f);
+    this->staticDensity = p.addExtParam(prefix + "staticDensity", prefix + " Static Density", "Density", "",
+                                        {0.0f, 1.0f, 0.01f, 1.0f}, 0.0f,
+                                        0.0f, "exciter.sequence.staticdensity");
 
     this->level = p.addExtParam(prefix + "level", prefix + " Level", "Level", "",
                                 {0.0f, 1.0f, 0.01f, 1.0f}, 1.0f,
-                                0.0f);
+                                0.0f, "exciter.sequence.level");
 }
 
 ExternalInputExciterParams::ExternalInputExciterParams(ResonariumProcessor& p) :

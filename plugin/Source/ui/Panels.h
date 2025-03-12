@@ -67,30 +67,66 @@ public:
     NoiseExciterParams noiseParams;
 };
 
-class ImpulseTrainExciterParamBox : public gin::ParamBox
+class SequenceExciterParamBox : public gin::ParamBox
 {
 public:
-    ImpulseTrainExciterParamBox(const juce::String& name, ResonariumProcessor& proc, int index,
-                                SequenceExciterParams impulseTrainParams) : gin::ParamBox(name),
-        impulseTrainParams(impulseTrainParams)
+    SequenceExciterParamBox(const juce::String& name, ResonariumProcessor& proc, int index,
+                                SequenceExciterParams sequenceExciterParams) : gin::ParamBox(name),
+        impulseTrainParams(sequenceExciterParams)
     {
         setName("Impulse Train Exciter Box");
-        addEnable(impulseTrainParams.enabled);
-        addControl(new gin::Select(impulseTrainParams.mode), 0, 0);
-        addControl(new gin::Knob(impulseTrainParams.rate), 1, 0);
-        addControl(new gin::Knob(impulseTrainParams.character), 2, 0);
-        addControl(new gin::Knob(impulseTrainParams.entropy), 3, 0);
-        addControl(new gin::Knob(impulseTrainParams.adsrParams.attack), 0, 1);
-        addControl(new gin::Knob(impulseTrainParams.adsrParams.decay), 1, 1);
-        addControl(new gin::Knob(impulseTrainParams.adsrParams.sustain), 2, 1);
-        addControl(new gin::Knob(impulseTrainParams.adsrParams.release), 3, 1);
-        addControl(new gin::Knob(impulseTrainParams.level), 0, 2);
-        addControl(new gin::Select(impulseTrainParams.filterParams.type), 1, 2);
-        addControl(new gin::Knob(impulseTrainParams.filterParams.frequency), 2, 2);
-        addControl(new gin::Knob(impulseTrainParams.filterParams.resonance), 3, 2);
+        addEnable(sequenceExciterParams.enabled);
+        
+        // Common parameters that are always visible
+        addControl(modeSelect = new gin::Select(sequenceExciterParams.mode), 0, 0);
+        addControl(new gin::Knob(sequenceExciterParams.rate), 1, 0);
+        
+        // Mode-specific parameters
+        addControl(impulseLengthKnob = new gin::Knob(sequenceExciterParams.impulseLength), 2, 0);
+        addControl(staticDensityKnob = new gin::Knob(sequenceExciterParams.staticDensity), 2, 0);
+        
+        // ADSR parameters
+        addControl(new gin::Knob(sequenceExciterParams.adsrParams.attack), 0, 1);
+        addControl(new gin::Knob(sequenceExciterParams.adsrParams.decay), 1, 1);
+        addControl(new gin::Knob(sequenceExciterParams.adsrParams.sustain), 2, 1);
+        addControl(new gin::Knob(sequenceExciterParams.adsrParams.release), 3, 1);
+        
+        // Level and filter parameters
+        addControl(new gin::Knob(sequenceExciterParams.level), 0, 2);
+        addControl(new gin::Select(sequenceExciterParams.filterParams.type), 1, 2);
+        addControl(new gin::Knob(sequenceExciterParams.filterParams.frequency), 2, 2);
+        addControl(new gin::Knob(sequenceExciterParams.filterParams.resonance), 3, 2);
+        
+        // Watch for mode parameter changes
+        watchParam(sequenceExciterParams.mode);
+        
+        // Initialize parameter visibility based on current mode
+        SequenceExciterParamBox::paramChanged();
+    }
+    
+    void paramChanged() override
+    {
+        ParamBox::paramChanged();
+        
+        // Get the current mode
+        const int mode = static_cast<int>(impulseTrainParams.mode->getProcValue());
+        
+        // Update parameter visibility based on mode
+        if (impulseLengthKnob)
+            impulseLengthKnob->setVisible(mode == 0); // IMPULSE mode
+        
+        if (staticDensityKnob)
+            staticDensityKnob->setVisible(mode == 1); // STATIC mode
+            
+        // Triangle mode doesn't have any special parameters in this implementation
     }
 
     SequenceExciterParams impulseTrainParams;
+    
+private:
+    gin::Select* modeSelect = nullptr;
+    gin::Knob* impulseLengthKnob = nullptr;
+    gin::Knob* staticDensityKnob = nullptr;
 };
 
 class SampleExciterParamBox : public gin::ParamBox
