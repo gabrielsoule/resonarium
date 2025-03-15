@@ -207,8 +207,113 @@ jobs:
           zip -r "../Resonarium-Effect-$VERSION-macOS-notarized.zip" .
           cd ..
       
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-packages
+          path: |
+            Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
+            Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
+
+  build-and-release-windows:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      
+      - name: Get version
+        id: get_version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            # From tag
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            # From manual input
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Install dependencies
+        shell: bash
+        run: |
+          choco install ninja cmake
+          # Install any other Windows-specific dependencies
+      
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.1
+      
+      - name: Build project
+        shell: bash
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build . --config Release -j 8
+      
+      - name: Create ZIP archives
+        shell: bash
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          
+          # Create separate ZIP archives for Instrument and Effect
+          INSTRUMENT_ZIP_NAME="Resonarium-Instrument-$VERSION-Windows.zip"
+          EFFECT_ZIP_NAME="Resonarium-Effect-$VERSION-Windows.zip"
+          
+          # Create directories for the plugins
+          mkdir -p instrument_package/VST3
+          mkdir -p instrument_package/Standalone
+          
+          mkdir -p effect_package/VST3
+          mkdir -p effect_package/Standalone
+          
+          # Copy the plugins to their respective directories
+          # Windows VST3 paths
+          cp -R "build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3" instrument_package/VST3/
+          cp -R "build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium.exe" instrument_package/Standalone/
+          
+          cp -R "build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3" effect_package/VST3/
+          cp -R "build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect.exe" effect_package/Standalone/
+          
+          # Create ZIP archives (using PowerShell for Windows)
+          powershell -Command "Compress-Archive -Path instrument_package\* -DestinationPath $INSTRUMENT_ZIP_NAME -Force"
+          powershell -Command "Compress-Archive -Path effect_package\* -DestinationPath $EFFECT_ZIP_NAME -Force"
+      
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-packages
+          path: |
+            Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-Windows.zip
+            Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Windows.zip
+
+  create-release:
+    needs: [build-and-release-macos, build-and-release-windows]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Get version
+        id: get_version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            # From tag
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            # From manual input
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        
       - name: Create GitHub Release
-        id: create_release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.get_version.outputs.VERSION }}
@@ -216,7 +321,9 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
-            Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
+            macos-packages/Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
+            macos-packages/Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
+            windows-packages/Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-Windows.zip
+            windows-packages/Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Windows.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
