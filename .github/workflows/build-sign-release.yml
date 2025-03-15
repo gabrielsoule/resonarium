@@ -19,7 +19,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Fetch all history for tags
           submodules: recursive  # Get all submodules if your project uses them
@@ -208,7 +208,7 @@ jobs:
           cd ..
       
       - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: macos-packages
           path: |
@@ -222,7 +222,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
@@ -246,7 +246,7 @@ jobs:
           # Install any other Windows-specific dependencies
       
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.1
+        uses: microsoft/setup-msbuild@v1.3
       
       - name: Build project
         shell: bash
@@ -285,7 +285,7 @@ jobs:
           powershell -Command "Compress-Archive -Path effect_package\* -DestinationPath $EFFECT_ZIP_NAME -Force"
       
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-packages
           path: |
@@ -311,7 +311,10 @@ jobs:
           fi
       
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*'
+          merge-multiple: false
         
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
