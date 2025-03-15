@@ -19,7 +19,7 @@ Many of the presets work best when used in conjunction with a MPE control device
 > When Resonarium's overflow protection engages, you will hear a sharp pop followed by silence. If this happens repeatedly, you have either created an unstable preset, or the plugin's internal state is somehow corrupted. Deleting and re-instantiating the plugin instance may resolve this issue. If the problem can be reliably reproduced, please submit an issue to this repository.
 
 ## Precompiled Binaries
-Pre-compiled MacOS binaries are uploaded irregularly to GitHub as releases. If you don't have CMake installed, these should suffice. Simply drag and drop the VST3 file into your computer's VST3 directory. However, compiling from source (below) is strongly recommended. MacOS makes running unsigned software difficult. This is particularly frustrating when DAWs try (and fail) to initialize unsigned plugins. 
+Pre-compiled binaries can be found in the Releases tab. They are signed and notarized, and, as such, should work right out of the box. Both .vst3 and standalone executables are included in these pre-compiled releases; however, other binary formats (e.g. AUv3) can be built from source if desired, as documented below.
 
 ## Building From Source
 
