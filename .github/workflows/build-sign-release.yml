@@ -240,49 +240,54 @@ jobs:
           fi
       
       - name: Install dependencies
-        shell: bash
+        shell: powershell
         run: |
-          choco install ninja cmake
-          # Install any other Windows-specific dependencies
+          choco install cmake ninja
+          # Visual Studio is already installed on Windows runners
       
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.3
       
+      - name: Setup Visual Studio
+        uses: ilammy/msvc-dev-cmd@v1
+          
       - name: Build project
-        shell: bash
+        shell: powershell
         run: |
           mkdir -p build
           cd build
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
-          cmake --build . --config Release -j 8
+          # Use Visual Studio generator instead of Ninja, and explicitly specify MSVC compiler
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+          cmake --build . --config Release --parallel 8
       
       - name: Create ZIP archives
-        shell: bash
+        shell: powershell
         run: |
-          VERSION=${{ steps.get_version.outputs.VERSION }}
+          $VERSION = "${{ steps.get_version.outputs.VERSION }}"
           
           # Create separate ZIP archives for Instrument and Effect
-          INSTRUMENT_ZIP_NAME="Resonarium-Instrument-$VERSION-Windows.zip"
-          EFFECT_ZIP_NAME="Resonarium-Effect-$VERSION-Windows.zip"
+          $INSTRUMENT_ZIP_NAME = "Resonarium-Instrument-$VERSION-Windows.zip"
+          $EFFECT_ZIP_NAME = "Resonarium-Effect-$VERSION-Windows.zip"
           
           # Create directories for the plugins
-          mkdir -p instrument_package/VST3
-          mkdir -p instrument_package/Standalone
+          mkdir -Force instrument_package/VST3
+          mkdir -Force instrument_package/Standalone
           
-          mkdir -p effect_package/VST3
-          mkdir -p effect_package/Standalone
+          mkdir -Force effect_package/VST3
+          mkdir -Force effect_package/Standalone
           
           # Copy the plugins to their respective directories
-          # Windows VST3 paths
-          cp -R "build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3" instrument_package/VST3/
-          cp -R "build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium.exe" instrument_package/Standalone/
+          # Visual Studio uses a different output structure compared to Ninja
+          # The paths below are adjusted for Visual Studio's output structure
+          Copy-Item -Path "build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3" -Destination "instrument_package/VST3/" -Recurse
+          Copy-Item -Path "build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium.exe" -Destination "instrument_package/Standalone/" -Recurse
           
-          cp -R "build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3" effect_package/VST3/
-          cp -R "build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect.exe" effect_package/Standalone/
+          Copy-Item -Path "build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3" -Destination "effect_package/VST3/" -Recurse
+          Copy-Item -Path "build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect.exe" -Destination "effect_package/Standalone/" -Recurse
           
-          # Create ZIP archives (using PowerShell for Windows)
-          powershell -Command "Compress-Archive -Path instrument_package\* -DestinationPath $INSTRUMENT_ZIP_NAME -Force"
-          powershell -Command "Compress-Archive -Path effect_package\* -DestinationPath $EFFECT_ZIP_NAME -Force"
+          # Create ZIP archives
+          Compress-Archive -Path "instrument_package/*" -DestinationPath $INSTRUMENT_ZIP_NAME -Force
+          Compress-Archive -Path "effect_package/*" -DestinationPath $EFFECT_ZIP_NAME -Force
       
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
