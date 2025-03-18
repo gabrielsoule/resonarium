@@ -9,10 +9,9 @@ ResonariumLookAndFeel::ResonariumLookAndFeel()
 {
     typeface = juce::Typeface::createSystemTypefaceFor(gin::Resources::BarlowThin_ttf,
                                                        gin::Resources::BarlowThin_ttfSize);
-    auto typefacePtr = juce::Typeface::createSystemTypefaceFor(BinaryData::Jost100Hairline_otf,
-                                                               BinaryData::Jost100Hairline_otfSize);
+    auto typefacePtr = juce::Typeface::createSystemTypefaceFor(BinaryData::Jost500Medium_otf,
+                                                               BinaryData::Jost500Medium_otfSize);
     auto font = juce::FontOptions{}.withName(typefacePtr->getName()).withStyle("Medium").withPointHeight(14);
-    DBG(typefacePtr->getName());
     setDefaultSansSerifTypeface(typefacePtr);
     defaultFont = font;
     juce::Array<juce::Font> fonts;
@@ -456,28 +455,21 @@ juce::PopupMenu::Options ResonariumLookAndFeel::getOptionsForComboBoxPopupMenu(j
 
 juce::Font ResonariumLookAndFeel::getTextButtonFont(juce::TextButton&, int buttonHeight)
 {
-    return juce::FontOptions{}.withName("Jost*").withStyle("Medium").withPointHeight(14);
+    return defaultFont.withPointHeight(14);
 
     // return juce::Font ("Futura", "Medium", 16.0f); // Change to your preferred font
 }
 
 juce::Font ResonariumLookAndFeel::getPopupMenuFont()
 {
-    return juce::FontOptions{}.withName("Jost*").withStyle("Medium").withPointHeight(14);
+    return defaultFont.withPointHeight(14);
 }
 
 // Override the font for Labels
 juce::Font ResonariumLookAndFeel::getLabelFont(juce::Label& label)
 {
-    if (true)
-    {
-        return defaultFont.withHeight(label.getFont().getHeight()).withKerningFactor(
-            label.getFont().getExtraKerningFactor());
-    }
-    else
-    {
-        return defaultFont.withHeight(14.5f);
-    }
+    return defaultFont.withHeight(label.getFont().getHeight()).withKerningFactor(
+        label.getFont().getExtraKerningFactor());
 }
 
 //==============================================================================
