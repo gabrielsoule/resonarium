@@ -5,6 +5,11 @@
 #include <cstring>
 #include <juce_core/juce_core.h>
 
+// Define M_PI for Windows builds
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #define VstInt32                int32_t
 #define AudioEffect             FXBase
 #define AudioEffectX            FXBase

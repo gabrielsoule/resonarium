@@ -1,5 +1,6 @@
 #include "ResonariumUtilities.h"
 #include <algorithm>
+#include <cmath>
 
 int ResonariumUtilities::calculateMPEPitchBendForFrequency(float targetFreq,
                                                           int currentNoteNumber,
@@ -11,8 +12,8 @@ int ResonariumUtilities::calculateMPEPitchBendForFrequency(float targetFreq,
     // Convert to pitch bend value (assuming ±48 semitone range)
     // Scale factor is (16383/96) since the full range is 96 semitones (-48 to +48)
     // and the full pitch bend range is 0 to 16383
-    int pitchBendValue = 8192 + static_cast<int>(std::round<float>(
-        semitonesDiff * (16383.0f / (pitchBendRange * 2.0f))));
+    int pitchBendValue = 8192 + static_cast<int>(
+        round(semitonesDiff * (16383.0f / (pitchBendRange * 2.0f))));
 
     // Clamp to valid range (0-16383)
     return std::clamp(pitchBendValue, 0, 16383);
