@@ -4,6 +4,11 @@
 //everyone's favorite header file... a list of magic numbers!
 //At least they're all in one place and not scattered throughout the codebase like rice at a wedding.
 
+// Define M_PI for Windows builds where it's not available
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #define NUM_SYNTH_VOICES 16
 
 //resonators
