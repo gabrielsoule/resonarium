@@ -6,7 +6,7 @@ Resonarium is a MPE-compatible expressive physical modeling synthesizer. It is d
 
 Many of the presets work best when used in conjunction with a MPE control device, such as a Ableton Push 3 or a Roli Seaboard.
 
-**This software is still in development.** The primary focus at present is stability and performance. Use at your own risk, and expect bugs or crashes. Some audio samples can be found [here](https://gabrielsoule.com/resonarium_samples.html).
+**This software is still in development.** The primary focus at present is stability and performance. Use at your own risk, and expect bugs or crashes. Some audio samples can be found [here](https://web.stanford.edu/~gns/resonarium_samples.html).
 
 # Installation
 
