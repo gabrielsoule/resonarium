@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<state name="Wooden Bells" author="" tags="">
+  <state>
+    <instance/>
+    <MODMATRIX>
+      <MODITEM srcId="vel" depth="1.0" enabled="1" dstId="impExciter0 level"
+               function="linear" biPolarMapping="0"/>
+    </MODMATRIX>
+    <MSEG1 startIndex="0" endIndex="2">
+      <PT t="0.0" v="0.0" c="5.5"/>
+      <PT t="0.5" v="1.0" c="5.5"/>
+      <PT t="1.0" v="0.0" c="5.5"/>
+    </MSEG1>
+    <MSEG2 startIndex="0" endIndex="2">
+      <PT t="0.0" v="0.0" c="5.5"/>
+      <PT t="0.5" v="1.0" c="5.5"/>
+      <PT t="1.0" v="0.0" c="5.5"/>
+    </MSEG2>
+    <MSEG3 startIndex="0" endIndex="2">
+      <PT t="0.0" v="0.0" c="5.5"/>
+      <PT t="0.5" v="1.0" c="5.5"/>
+      <PT t="1.0" v="0.0" c="5.5"/>
+    </MSEG3>
+    <MSEG4 startIndex="0" endIndex="2">
+      <PT t="0.0" v="0.0" c="5.5"/>
+      <PT t="0.5" v="1.0" c="5.5"/>
+      <PT t="1.0" v="0.0" c="5.5"/>
+    </MSEG4>
+    <samplePath path=""/>
+  </state>
+  <param uid="enabled wb0r0" val="1.0"/>
+  <param uid="pitch wb0r0" val="0.8600000143051147"/>
+  <param uid="decayTime wb0r0" val="1.850210905075073"/>
+  <param uid="dispersion wb0r0" val="100.0"/>
+  <param uid="decayFilterCutoff wb0r0" val="62.04331588745117"/>
+  <param uid="decayFilterPitch wb0r0" val="-1.490001320838928"/>
+  <param uid="decayFilterResonance wb0r0" val="1.406730575581605e-6"/>
+  <param uid="svfType wb0r0" val="2.0"/>
+  <param uid="enabled wb0r1" val="1.0"/>
+  <param uid="pitch wb0r1" val="1.5"/>
+  <param uid="decayTime wb0r1" val="5.571967124938965"/>
+  <param uid="dispersion wb0r1" val="100.0"/>
+  <param uid="decayFilterCutoff wb0r1" val="27.77396202087402"/>
+  <param uid="svfType wb0r1" val="2.0"/>
+  <param uid="enabled wb0r2" val="1.0"/>
+  <param uid="decayTime wb0r2" val="6.121071815490723"/>
+  <param uid="decayFilterCutoff wb0r2" val="1863.917846679688"/>
+  <param uid="enabled wb0r3" val="1.0"/>
+  <param uid="decayTime wb0r3" val="4.602123260498047"/>
+  <param uid="decayFilterCutoff wb0r3" val="11854.927734375"/>
+  <param uid="couplingMode wb0" val="1.0"/>
+  <param uid="decayTime wb1r0" val="0.0"/>
+  <param uid="postFilterPitch wb1r0" val="-12.00000095367432"/>
+  <param uid="postFilterResonance wb1r0" val="800.0"/>
+  <param uid="postFilterKeytrack wb1r0" val="1.0"/>
+  <param uid="decayTime wb1r1" val="0.0"/>
+  <param uid="postFilterPitch wb1r1" val="5.999998569488525"/>
+  <param uid="postFilterResonance wb1r1" val="800.0"/>
+  <param uid="postFilterKeytrack wb1r1" val="1.0"/>
+  <param uid="decayTime wb1r2" val="0.0"/>
+  <param uid="postFilterPitch wb1r2" val="10.99999809265137"/>
+  <param uid="postFilterResonance wb1r2" val="800.0"/>
+  <param uid="postFilterKeytrack wb1r2" val="1.0"/>
+  <param uid="outputGain wb1" val="-100.0"/>
+  <param uid="impExciter0 enabled" val="1.0"/>
+  <param uid="impExciter0 thickness" val="10.0"/>
+  <param uid="impExciter0 level" val="0.0"/>
+  <param uid="impTrainExciter0filterType" val="2.0"/>
+  <param uid="impTrainExciter0frequency" val="216.0236511230469"/>
+  <param uid="impTrainExciter0mode" val="2.0"/>
+  <param uid="impTrainExciter0rate" val="125.4699935913086"/>
+  <param uid="chorusRate" val="100.0"/>
+  <param uid="chorusDepth" val="0.2039687484502792"/>
+  <param uid="chorusDelay" val="0.08998750150203705"/>
+  <param uid="chorusFeedback" val="0.6047186851501465"/>
+  <param uid="chorusMix" val="0.2599999904632568"/>
+  <param uid="distPrePostFilter" val="2.0"/>
+  <param uid="phaserDepth" val="0.3100156188011169"/>
+  <param uid="phaserCentreFreq" val="4921.5517578125"/>
+  <param uid="phaserFeedback" val="0.6707812547683716"/>
+  <param uid="reverbEnable" val="1.0"/>
+  <param uid="reverbDampingFreq" val="0.5593125224113464"/>
+  <param uid="reverbBandwidthFreq" val="0.7648749947547913"/>
+  <param uid="reverbDecay" val="0.5500468611717224"/>
+  <param uid="reverbPredelay" val="0.2019374966621399"/>
+  <param uid="reverbSize" val="0.3222187459468842"/>
+  <param uid="reverbEarlyMix" val="0.2315624952316284"/>
+  <param uid="reverbMix" val="0.3899999856948853"/>
+  <param uid="uiActiveModWindow" val="1.0"/>
+</state>
