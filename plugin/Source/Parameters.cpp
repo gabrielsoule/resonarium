@@ -1000,7 +1000,7 @@ GlobalParams::GlobalParams(ResonariumProcessor& p)
                                      0.0f, "global.stereo", enableTextFunction);
 
     polyEffectChain = p.addIntParam("polyEffectChain", "Poly Effect Chain", "Poly FX", "",
-                                    {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                                    {0.0f, 1.0f, 1.0f, 1.0f}, 1.0f,
                                     0.0f, "global.polyfx", enableTextFunction);
 }
 
