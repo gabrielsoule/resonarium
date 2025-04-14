@@ -1,7 +1,7 @@
 [submodule "modules/juce"]
         path = modules/juce
         url = https://github.com/juce-framework/JUCE.git
-        branch = develop
+        branch = master
 [submodule "modules/gin"]
         path = modules/gin
         url = https://github.com/gabrielsoule/Gin.git
@@ -25,3 +25,4 @@
 [submodule "modules/pybind11"]
         path = modules/pybind11
         url = https://github.com/pybind/pybind11.git
+        branch = master
