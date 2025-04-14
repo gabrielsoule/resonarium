@@ -177,7 +177,7 @@ ADSRParams::ADSRParams(ResonariumProcessor& p, juce::String prefix, int index) :
 
     attack = p.addExtParam(prefix + "attack", prefix + " Attack", "A", "s",
                            {0.0f, 60.0f, 0.0f, 0.2f},
-                           0.1f, 0.0f);
+                           0.0f, 0.0f);
     decay = p.addExtParam(prefix + "decay", prefix + " Decay", "D", "s",
                           {0.0, 60.0f, 0.0f, 0.2f},
                           0.1f, 0.0f);
@@ -399,7 +399,7 @@ SequenceExciterParams::SequenceExciterParams(ResonariumProcessor& p, int index)
                                {0.0f, 1.0f, 0.01f, 1.0f}, 0.0f,
                                0.0f, "exciter.sequence.sync");
 
-    this->impulseLength = p.addExtParam(prefix + "impulseLength", prefix + " Impulse Length", "Length", "",
+    this->impulseLength = p.addExtParam(prefix + "impulseLength", prefix + " Impulse Length", "Thickness", "",
                                         {1.0f, 10.0f, 1.0f, 1.0f}, 1.0f,
                                         0.0f, "exciter.sequence.impulselength");
 

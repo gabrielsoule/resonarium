@@ -140,7 +140,6 @@ void SequenceExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::
 
     for (int i = 0; i < truncatedBlock.getNumSamples(); i++)
     {
-        //all per-sample processing that happens regardless of mode goes here
         float envelopeSample = gain * envelope.process();
         if (mode == IMPULSE)
         {
@@ -151,8 +150,9 @@ void SequenceExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::
 
             if (impulsesLeft > 0)
             {
-                truncatedBlock.setSample(0, i, envelopeSample);
-                truncatedBlock.setSample(1, i, envelopeSample);
+                float finalSample = envelopeSample / static_cast<float>(impulseLength);
+                truncatedBlock.setSample(0, i, finalSample);
+                truncatedBlock.setSample(1, i, finalSample);
                 impulsesLeft--;
             }
             else
@@ -236,8 +236,7 @@ void SequenceExciter::reset()
     filter.reset();
     samplesSinceLastImpulse = 0;
     rng.setSeedRandomly();
-    impulsesLeft = impulseLength;
-
+    impulsesLeft = 0;
     currentTriValue = 0.0f;
     targetTriValue = 0.0f;
     triPhase = 0.0f;
@@ -250,8 +249,9 @@ void SequenceExciter::reset()
 void SequenceExciter::noteStarted()
 {
     periodInSamples = static_cast<int>(std::round(sampleRate / voice.getValue(params.rate)));
-    // Initialize samplesSinceLastImpulse to ensure immediate first impulse for all modes
     samplesSinceLastImpulse = 0;
+    // For IMPULSE mode, ensure impulses start immediately
+    impulsesLeft = 0;
     envelope.noteOn();
 }
 
@@ -275,13 +275,12 @@ void SequenceExciter::updateParameters()
     //compute values for the different impulse train modes
     if (mode == IMPULSE)
     {
-        impulseLength = static_cast<int>(voice.getValue(params.impulseLength) * 15.0f);
+        impulseLength = static_cast<int>(voice.getValue(params.impulseLength));
         if (impulseLength <= 0) impulseLength = 1;
     }
     else if (mode == STATIC)
     {
-        staticProbability = (voice.getValue(params.staticDensity) / 3.0f);
-        staticProbability = staticProbability * staticProbability;
+        staticProbability = voice.getValue(params.staticDensity) / 2.0f;
     }
     else if (mode == TRIANGULAR)
     {

@@ -173,7 +173,7 @@ public:
 
     Mode mode = IMPULSE;
     int periodInSamples = -1;
-    int samplesSinceLastImpulse = -1;
+    int samplesSinceLastImpulse = 0;
     float staticProbability = 0.0f;
 
     //for the IMPULSE mode -- how long is the impulse, and how many impulses left to send out?
