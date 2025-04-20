@@ -10,7 +10,7 @@ cmake --build build --target Resonarium_Python
 
 You'll find the `.so` library file in the build directory. By default, the library is not installed system-wide. Only MacOS is supported as of writing.
 
-The bindings can be found in `ResonariumPy.cpp`. An LLM should be able to generate fantastic documentation given the `.cpp` file and the appropriate prompt. The simple script below demonstrates how to manipulate parameters, play MIDI, and record the result.
+The bindings can be found in `ResonariumPy.cpp`. An LLM should be able to generate documentation given the `.cpp` file and the appropriate prompt. The simple script below demonstrates how to manipulate parameters, play MIDI, and record the result.
 
 ```python
 import resonarium
