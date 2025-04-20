@@ -13,6 +13,7 @@ You'll find the `.so` library file in the build directory. By default, the libra
 The bindings can be found in `ResonariumPy.cpp`. An LLM should be able to generate documentation given the `.cpp` file and the appropriate prompt. The simple script below demonstrates how to manipulate parameters, play MIDI, and record the result.
 
 ```python
+
 import resonarium
 import numpy as np
 from scipy.io import wavfile  
@@ -22,8 +23,8 @@ synth = resonarium.Resonarium()
 
 # Let's see what parameters we can play with...
 for param in synth.get_all_params():
-    print(param.id + " : " + param.value)
-    print("     " + param.min + " to " + param.max)
+    print(f"{param.id}: {param.value}")
+    print(f"     Range: {param.min} to {param.max}")
 
 # Everything is disabled by default. Let's enable the impulse exciter and a single string model, with a bright loop filter
 # "wb0r0" corresponds to the first string model in the first waveguide bank -- indexing starts at zero. There are four waveguide banks, with eight string models apiece.
