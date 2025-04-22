@@ -2,6 +2,7 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include "PluginProcessor.h"
+#include "ResonatorVoice.h"
 
 namespace py = pybind11;
 
@@ -36,6 +37,190 @@ struct PyModSourceInfo
     std::string toString() const
     {
         return name + " [" + id + "]";
+    }
+};
+
+class ResonariumVoiceWrapper
+{
+private:
+    ResonatorVoice* wrappedVoice; // Raw pointer - ownership remains with the synth
+    juce::AudioBuffer<float> tempBuffer; // Buffer for processing
+    double sampleRate;
+    int blockSize;
+
+public:
+    ResonariumVoiceWrapper(ResonatorVoice* voice, double sampleRate = 44100.0, int blockSize = 512)
+        : wrappedVoice(voice), tempBuffer(2, blockSize), sampleRate(sampleRate), blockSize(blockSize)
+    {
+        tempBuffer.clear();
+    }
+
+    ~ResonariumVoiceWrapper()
+    {
+        // Voice is managed by the synth, so no need to delete it here
+    }
+
+    void reset()
+    {
+        if (wrappedVoice)
+        {
+            // Reset internal state
+            juce::dsp::ProcessSpec spec;
+            spec.sampleRate = sampleRate;
+            spec.maximumBlockSize = blockSize;
+            spec.numChannels = 2;
+            wrappedVoice->noteStopped(false);
+            wrappedVoice->prepare(spec);
+        }
+    }
+
+    void playNote(int noteNumber, int velocity)
+    {
+        if (wrappedVoice)
+        {
+            // Create a MIDI note using proper factory methods
+            juce::MPENote note(
+                1, // channel
+                noteNumber,
+                juce::MPEValue::fromUnsignedFloat(velocity / 127.0f), // velocity
+                juce::MPEValue::fromUnsignedFloat(0.0f), // pressure
+                juce::MPEValue::fromUnsignedFloat(0.0f), // timbre
+                juce::MPEValue::fromUnsignedFloat(0.5f), // pitchbend (centered)
+                juce::MPENote::keyDown // noteOnState
+            );
+
+            // Start the note
+            wrappedVoice->currentMidiNote = noteNumber;
+            wrappedVoice->noteReleased = false;
+            wrappedVoice->silenceCount = 0;
+            wrappedVoice->numBlocksSinceNoteOn = 0;
+
+            // Set the currently playing note and start it
+            wrappedVoice->setCurrentlyPlayingNote(note);
+            wrappedVoice->noteStarted();
+        }
+    }
+
+    void releaseNote()
+    {
+        if (wrappedVoice)
+        {
+            wrappedVoice->noteStopped(true); // Allow tail-off
+        }
+    }
+
+    bool isActive() const
+    {
+        return wrappedVoice && wrappedVoice->isVoiceActive();
+    }
+
+    py::array_t<float> processBlock(int numSamples = -1)
+    {
+        // Default to using blockSize if numSamples is not specified
+        if (numSamples <= 0)
+            numSamples = blockSize;
+
+        // Create output buffer for Python
+        auto result = py::array_t<float>({2, numSamples});
+        py::buffer_info buf = result.request();
+        float* ptr = static_cast<float*>(buf.ptr);
+
+        // Clear the result buffer
+        std::memset(ptr, 0, 2 * numSamples * sizeof(float));
+
+        if (wrappedVoice && wrappedVoice->isVoiceActive())
+        {
+            // Make sure tempBuffer is large enough
+            if (tempBuffer.getNumSamples() < numSamples)
+            {
+                tempBuffer.setSize(2, numSamples, false, true);
+            }
+
+            // Clear the buffer
+            tempBuffer.clear();
+
+            // Process the audio
+            wrappedVoice->renderNextBlock(tempBuffer, 0, numSamples);
+
+            // Copy to the output buffer
+            float* outL = ptr;
+            float* outR = ptr + numSamples;
+
+            std::memcpy(outL, tempBuffer.getReadPointer(0), numSamples * sizeof(float));
+            std::memcpy(outR, tempBuffer.getReadPointer(1), numSamples * sizeof(float));
+        }
+
+        return result;
+    }
+
+    /**
+     * Process multiple blocks at once, similar to the processor's processMultiBlock.
+     * Fills the provided buffer with audio from the voice.
+     */
+    void processMultiBlock(py::array_t<float>& buffer, int startBlock = 0, int numBlocks = -1)
+    {
+        py::buffer_info buf = buffer.request();
+
+        // Error checking
+        if (buf.ndim != 2)
+        {
+            throw std::runtime_error("Buffer must be 2-dimensional");
+        }
+
+        if (buf.shape[0] != 2)
+        {
+            throw std::runtime_error("Buffer must have 2 channels");
+        }
+
+        if (buf.shape[1] % blockSize != 0)
+        {
+            throw std::runtime_error(
+                "Buffer length (" + std::to_string(buf.shape[1]) + ") must be multiple of block size (" +
+                std::to_string(blockSize) + ")");
+        }
+
+        int maxBlocks = buf.shape[1] / blockSize;
+        if (startBlock >= maxBlocks)
+        {
+            throw std::runtime_error("Start block beyond buffer end");
+        }
+
+        int blocksToProcess = (numBlocks < 0) ? (maxBlocks - startBlock) : numBlocks;
+        if (startBlock + blocksToProcess > maxBlocks)
+        {
+            throw std::runtime_error("Requested blocks exceed buffer size");
+        }
+
+        // Nothing to do if the voice isn't active
+        if (!wrappedVoice || !wrappedVoice->isVoiceActive())
+            return;
+
+        // Get pointers to the buffer
+        float* outL = static_cast<float*>(buf.ptr) + startBlock * blockSize;
+        float* outR = outL + buf.shape[1];
+
+        // Make sure tempBuffer is large enough
+        if (tempBuffer.getNumSamples() < blockSize)
+        {
+            tempBuffer.setSize(2, blockSize, false, true);
+        }
+
+        // Process each block
+        for (int i = 0; i < blocksToProcess; ++i)
+        {
+            // Clear audio buffer
+            tempBuffer.clear();
+
+            // Process audio with the voice
+            wrappedVoice->renderNextBlock(tempBuffer, 0, blockSize);
+
+            // Copy to output buffer
+            std::memcpy(outL, tempBuffer.getReadPointer(0), blockSize * sizeof(float));
+            std::memcpy(outR, tempBuffer.getReadPointer(1), blockSize * sizeof(float));
+
+            outL += blockSize;
+            outR += blockSize;
+        }
     }
 };
 
@@ -150,7 +335,9 @@ public:
         if (value < param->getUserRangeStart() || value > param->getUserRangeEnd())
         {
             //throw an error whose message contains the start and end range
-            throw std::runtime_error("Parameter value " + std::to_string(value) + " is out of range; valid range is " + std::to_string(param->getUserRangeStart()) + " to " + std::to_string(param->getUserRangeEnd()));
+            throw std::runtime_error(
+                "Parameter value " + std::to_string(value) + " is out of range; valid range is " +
+                std::to_string(param->getUserRangeStart()) + " to " + std::to_string(param->getUserRangeEnd()));
         }
 
         param->setUserValueNotifingHost(value);
@@ -163,7 +350,7 @@ public:
     {
         std::vector<PyModSourceInfo> sources;
         auto& modMatrix = processor->globalState.modMatrix;
-        
+
         for (int i = 0; i < modMatrix.getNumModSources(); ++i)
         {
             gin::ModSrcId srcId(i);
@@ -174,28 +361,28 @@ public:
             info.isBipolar = modMatrix.getModSrcBipolar(srcId);
             sources.push_back(info);
         }
-        
+
         return sources;
     }
 
     /**
      * Connect a modulation source to a destination parameter
      */
-    void connectModulation(const std::string& sourceId, const std::string& destId, float depth, 
-                          const std::string& functionName = "linear", bool bipolarMapping = false)
+    void connectModulation(const std::string& sourceId, const std::string& destId, float depth,
+                           const std::string& functionName = "linear", bool bipolarMapping = false)
     {
         auto& modMatrix = processor->globalState.modMatrix;
         gin::Parameter* destParam = processor->getParameter(destId);
-        
+
         if (destParam == nullptr)
         {
             throw std::runtime_error("Destination parameter not found: " + destId);
         }
-        
+
         // Find the source ID
         gin::ModSrcId srcId;
         bool sourceFound = false;
-        
+
         for (int i = 0; i < modMatrix.getNumModSources(); ++i)
         {
             gin::ModSrcId testId(i);
@@ -206,19 +393,19 @@ public:
                 break;
             }
         }
-        
+
         if (!sourceFound)
         {
             throw std::runtime_error("Modulation source not found: " + sourceId);
         }
-        
+
         // Get the destination ID
         gin::ModDstId dstId(destParam->getModIndex());
         if (dstId.id < 0)
         {
             throw std::runtime_error("Parameter is not modulation-capable: " + destId);
         }
-        
+
         // Set modulation function if provided
         gin::ModMatrix::Function func = gin::ModMatrix::linear;
         if (!functionName.empty())
@@ -245,15 +432,15 @@ public:
             else if (functionName == "invExponentialOut") func = gin::ModMatrix::invExponentialOut;
             else throw std::runtime_error("Unknown modulation function: " + functionName);
         }
-        
+
         // Set the modulation depth
         modMatrix.setModDepth(srcId, dstId, depth);
-        
+
         // Set the mapping mode and function
         modMatrix.setModBipolarMapping(srcId, dstId, bipolarMapping);
         modMatrix.setModFunction(srcId, dstId, func);
     }
-    
+
     /**
      * Disconnect a modulation source from a destination parameter
      */
@@ -261,16 +448,16 @@ public:
     {
         auto& modMatrix = processor->globalState.modMatrix;
         gin::Parameter* destParam = processor->getParameter(destId);
-        
+
         if (destParam == nullptr)
         {
             throw std::runtime_error("Destination parameter not found: " + destId);
         }
-        
+
         // Find the source ID
         gin::ModSrcId srcId;
         bool sourceFound = false;
-        
+
         for (int i = 0; i < modMatrix.getNumModSources(); ++i)
         {
             gin::ModSrcId testId(i);
@@ -281,23 +468,23 @@ public:
                 break;
             }
         }
-        
+
         if (!sourceFound)
         {
             throw std::runtime_error("Modulation source not found: " + sourceId);
         }
-        
+
         // Get the destination ID
         gin::ModDstId dstId(destParam->getModIndex());
         if (dstId.id < 0)
         {
             throw std::runtime_error("Parameter is not modulation-capable: " + destId);
         }
-        
+
         // Clear the modulation connection
         modMatrix.clearModDepth(srcId, dstId);
     }
-    
+
     /**
      * Get all active modulation connections for a parameter
      */
@@ -305,28 +492,28 @@ public:
     {
         auto& modMatrix = processor->globalState.modMatrix;
         gin::Parameter* destParam = processor->getParameter(destId);
-        
+
         if (destParam == nullptr)
         {
             throw std::runtime_error("Parameter not found: " + destId);
         }
-        
+
         // Get the destination ID
         gin::ModDstId dstId(destParam->getModIndex());
         if (dstId.id < 0)
         {
             throw std::runtime_error("Parameter is not modulation-capable: " + destId);
         }
-        
+
         std::vector<std::tuple<std::string, float, std::string, bool>> connections;
         auto depths = modMatrix.getModDepths(dstId);
-        
+
         for (auto& [srcId, depth] : depths)
         {
             std::string sourceName = modMatrix.getModSrcName(srcId).toStdString();
             gin::ModMatrix::Function func = modMatrix.getModFunction(srcId, dstId);
             bool bipolar = modMatrix.getModBipolarMapping(srcId, dstId);
-            
+
             // Convert function to string
             std::string funcName = "linear";
             if (func == gin::ModMatrix::quadraticIn) funcName = "quadraticIn";
@@ -348,10 +535,10 @@ public:
             else if (func == gin::ModMatrix::invExponentialIn) funcName = "invExponentialIn";
             else if (func == gin::ModMatrix::invExponentialInOut) funcName = "invExponentialInOut";
             else if (func == gin::ModMatrix::invExponentialOut) funcName = "invExponentialOut";
-            
+
             connections.push_back(std::make_tuple(sourceName, depth, funcName, bipolar));
         }
-        
+
         return connections;
     }
 
@@ -431,7 +618,30 @@ public:
         // Clear MIDI buffer after processing all blocks
         midiBuffer.clear();
     }
+
+    // Acquire a voice wrapper
+    std::shared_ptr<ResonariumVoiceWrapper> getVoice(int index)
+    {
+        // Access the ResonariumProcessor's synth
+        auto* synth = processor->getSynth();
+        if (!synth)
+        {
+            throw std::runtime_error("Failed to get synthesizer");
+        }
+
+        // Find a free voice or steal the oldest one
+        auto* voicePtr = dynamic_cast<ResonatorVoice*>(synth->getVoice(index));
+        if (!voicePtr)
+        {
+            throw std::runtime_error("Failed to acquire a voice");
+        }
+
+        // Create and return a voice wrapper (we return a shared_ptr to the wrapper, but the voice itself is a raw pointer)
+        return std::make_shared<
+            ResonariumVoiceWrapper>(voicePtr, processor->getSampleRate(), processor->getBlockSize());
+    }
 };
+
 
 PYBIND11_MODULE(resonarium, m)
 {
@@ -445,7 +655,7 @@ PYBIND11_MODULE(resonarium, m)
         .def_readonly("min", &PyParameterInfo::minValue)
         .def_readonly("max", &PyParameterInfo::maxValue)
         .def("__repr__", &PyParameterInfo::toString);
-    
+
     py::class_<PyModSourceInfo>(m, "ModSourceInfo")
         .def_readonly("id", &PyModSourceInfo::id)
         .def_readonly("name", &PyModSourceInfo::name)
@@ -453,18 +663,34 @@ PYBIND11_MODULE(resonarium, m)
         .def_readonly("is_bipolar", &PyModSourceInfo::isBipolar)
         .def("__repr__", &PyModSourceInfo::toString);
 
+    // Register ResonatorVoiceWrapper class
+    py::class_<ResonariumVoiceWrapper, std::shared_ptr<ResonariumVoiceWrapper>>(m, "ResonatorVoice")
+        .def("reset", &ResonariumVoiceWrapper::reset)
+        .def("play_note", &ResonariumVoiceWrapper::playNote,
+             py::arg("note"),
+             py::arg("velocity") = 64)
+        .def("release_note", &ResonariumVoiceWrapper::releaseNote)
+        .def("is_active", &ResonariumVoiceWrapper::isActive)
+        .def("process_block", &ResonariumVoiceWrapper::processBlock,
+             py::arg("num_samples") = -1)
+        .def("process_multi_block", &ResonariumVoiceWrapper::processMultiBlock,
+             py::arg("buffer"),
+             py::arg("startBlock") = 0,
+             py::arg("numBlocks") = -1);
+
     py::class_<ResonariumWrapper>(m, "Resonarium")
         .def(py::init<double, int>(),
              py::arg("sampleRate") = 44100.0,
              py::arg("blockSize") = 512)
         .def("get_sample_rate", &ResonariumWrapper::getSampleRate)
+        .def("sample_rate", &ResonariumWrapper::getSampleRate)
         .def("get_block_size", &ResonariumWrapper::getBlockSize)
         .def("get_all_params", &ResonariumWrapper::getAllParams)
         .def("reset", &ResonariumWrapper::reset)
         .def("get_param", &ResonariumWrapper::getParamInfo,
-            py::arg("uid"))
+             py::arg("uid"))
         .def("set_param", &ResonariumWrapper::setParam,
-            py::arg("uid"), py::arg("value"))
+             py::arg("uid"), py::arg("value"))
         // Modulation methods
         .def("get_all_mod_sources", &ResonariumWrapper::getAllModSources)
         .def("connect_modulation", &ResonariumWrapper::connectModulation,
@@ -486,7 +712,9 @@ PYBIND11_MODULE(resonarium, m)
              py::arg("velocity") = 64)
         .def("release_note", &ResonariumWrapper::releaseNote,
              py::arg("channel"), py::arg("note"), py::arg("velocity") = 0)
-        .def("all_notes_off", &ResonariumWrapper::allNotesOff);
+        .def("all_notes_off", &ResonariumWrapper::allNotesOff)
+        // Voice management
+        .def("get_voice", &ResonariumWrapper::getVoice, py::arg("index") = 0);
 
     m.def("get_version", []() { return "0.1.0"; });
 }

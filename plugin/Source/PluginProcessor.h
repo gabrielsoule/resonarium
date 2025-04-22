@@ -26,6 +26,9 @@ public:
     bool supportsMPE() const override { return true; }
     void setupModMatrix();
     static gin::ProcessorOptions getOptions();
+    
+    // Get the synthesizer instance (needed for Python bindings)
+    ResonatorSynth* getSynth() { return &synth; }
 
     ResonatorSynth synth;
     UIParams uiParams;

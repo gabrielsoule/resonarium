@@ -70,10 +70,15 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
 {
     MPESynthesiserVoice::setCurrentSampleRate(spec.sampleRate);
     noteSmoother.setSampleRate(spec.sampleRate);
-    exciterBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
-    resonatorBankBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
-    tempBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
-    soloBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
+    
+    // Use setSize instead of creating new buffers - more efficient when 
+    // prepare() is called multiple times with the same specs
+    exciterBuffer.setSize(spec.numChannels, spec.maximumBlockSize, false, true, true);
+    resonatorBankBuffer.setSize(spec.numChannels, spec.maximumBlockSize, false, true, true);
+    tempBuffer.setSize(spec.numChannels, spec.maximumBlockSize, false, true, true);
+    soloBuffer.setSize(spec.numChannels, spec.maximumBlockSize, false, true, true);
+    
+    // Clear all buffers
     exciterBuffer.clear();
     resonatorBankBuffer.clear();
     tempBuffer.clear();
