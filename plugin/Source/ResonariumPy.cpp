@@ -301,7 +301,7 @@ public:
         info.currentValue = param->getUserValue();
         info.minValue = param->getUserRangeStart();
         info.maxValue = param->getUserRangeEnd();
-        info.defaultValue = param->getDefaultValue();
+        info.defaultValue = param->getUserDefaultValue();
 
         return info;
     }
