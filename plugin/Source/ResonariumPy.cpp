@@ -317,7 +317,7 @@ public:
             info.currentValue = param->getUserValue();
             info.minValue = param->getUserRangeStart();
             info.maxValue = param->getUserRangeEnd();
-            info.defaultValue = param->getDefaultValue();
+            info.defaultValue = param->getUserDefaultValue();
             params.push_back(info);
         }
 
@@ -652,6 +652,7 @@ PYBIND11_MODULE(resonarium, m)
         .def_readonly("name", &PyParameterInfo::name)
         .def_readonly("value", &PyParameterInfo::currentValue)
         .def_readonly("default_value", &PyParameterInfo::defaultValue)
+        .def_readonly("default", &PyParameterInfo::defaultValue)
         .def_readonly("min", &PyParameterInfo::minValue)
         .def_readonly("max", &PyParameterInfo::maxValue)
         .def("__repr__", &PyParameterInfo::toString);
