@@ -275,6 +275,7 @@ target_link_libraries(${PLUGIN_NAME}_Python PRIVATE
         juce::juce_gui_basics
         juce::juce_gui_extra
         juce::juce_recommended_config_flags
+        CURL::libcurl
 )
 
 target_compile_definitions(${PLUGIN_NAME}_Python PRIVATE
