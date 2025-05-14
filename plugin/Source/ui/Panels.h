@@ -248,6 +248,14 @@ public:
         addControl(inputGainKnob);
         inputMixKnob = new gin::Knob(bankParams.inputMix);
         addControl(inputMixKnob);
+        
+        // Add the new coupling cutoff knob
+        couplingCutoffKnob = new gin::Knob(bankParams.couplingCutoff);
+        addControl(couplingCutoffKnob);
+        // Hide it initially unless COUPLED_FLTR mode is active
+        couplingCutoffKnob->setVisible(static_cast<int>(bankParams.couplingMode->getProcValue()) == 3);
+        
+        // Cascade mode controls
         cascadeAmountKnob = new gin::Knob(bankParams.cascadeLevel);
         addControl(cascadeAmountKnob);
         cascadeFilterKnob = new gin::Knob(bankParams.cascadeFilterCutoff);
@@ -306,6 +314,7 @@ public:
         inputMixKnob->setBounds(bankControlsX + KNOB_W, bankControlsY, KNOB_W, KNOB_H);
         outputGainKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + KNOB_H, KNOB_W, KNOB_H);
         couplingModeKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + 2 * KNOB_H, KNOB_W, KNOB_H);
+        couplingCutoffKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + 3 * KNOB_H, KNOB_W, KNOB_H);
 
         cascadeAmountKnob->setBounds(bankControlsX, bankControlsY + 3.18 * (KNOB_H), KNOB_W, KNOB_H);
         cascadeFilterKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 3.18 * (KNOB_H), KNOB_W, KNOB_H);
@@ -342,7 +351,11 @@ public:
     void paramChanged() override
     {
         ParamBox::paramChanged();
-        bool showCascadeControls = static_cast<int>(bankParams.couplingMode->getProcValue()) == 2;
+        int currentMode = static_cast<int>(bankParams.couplingMode->getProcValue());
+        bool showCascadeControls = currentMode == 2; // CASCADE mode
+        bool showCouplingCutoffControl = currentMode == 3; // Only COUPLED_FLTR mode
+        
+        // Handle cascade mode controls
         if (cascadeAmountKnob != nullptr)
             cascadeAmountKnob->setVisible(showCascadeControls);
         if (cascadeFilterKnob != nullptr)
@@ -355,6 +368,10 @@ public:
             bottomControlBracket->setVisible(showCascadeControls);
         if (bottomControlBracketLabel != nullptr)
             bottomControlBracketLabel->setVisible(showCascadeControls);
+        
+        // Handle coupling cutoff control - only visible for COUPLED_FLTR mode
+        if (couplingCutoffKnob != nullptr)
+            couplingCutoffKnob->setVisible(showCouplingCutoffControl);
 
         for(auto* resonatorComponent : resonatorComponents)
         {
@@ -474,6 +491,7 @@ public:
     gin::Knob* inputGainKnob = nullptr;
     gin::Knob* outputGainKnob = nullptr;
     gin::Knob* cascadeAmountKnob = nullptr;
+    gin::Knob* couplingCutoffKnob = nullptr;
     gin::Knob* cascadeFilterKnob = nullptr;
     gin::Knob* cascadeFilterResonanceKnob = nullptr;
     gin::Knob* cascadeFilterModeKnob = nullptr;

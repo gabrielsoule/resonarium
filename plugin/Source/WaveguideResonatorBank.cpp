@@ -44,6 +44,12 @@ void WaveguideResonatorBank::reset()
     cascadeFilterR.reset();
     // testInterlinkedFilterL.reset();
     // testInterlinkedFilterR.reset();
+
+    for (int i = 0; i < NUM_RESONATORS; ++i)
+    {
+        crossoverL[i].reset();
+        crossoverR[i].reset();
+    }
 }
 
 void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
@@ -53,6 +59,24 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
     cascadeFilterR.prepare(spec);
     testInterlinkedFilterL.prepare(spec);
     testInterlinkedFilterR.prepare(spec);
+
+    // prepare complementary Linkwitz–Riley crossover -------------------------
+    // Initialize cutoff from parameter
+    couplingCutoffHz = voice.getValue(params.couplingCutoff);
+    
+    // Ensure cutoff doesn't exceed half the sample rate (Nyquist limit)
+    float nyquistLimit = sampleRate * 0.5f - 50;
+        couplingCutoffHz = nyquistLimit;
+        
+    for (int i = 0; i < NUM_RESONATORS; ++i)
+    {
+        crossoverL[i].reset();
+        crossoverR[i].reset();
+        crossoverL[i].prepare(spec);
+        crossoverR[i].prepare(spec);
+        crossoverL[i].setCutoffFrequency(couplingCutoffHz);
+        crossoverR[i].setCutoffFrequency(couplingCutoffHz);
+    }
 
     for (int i = 0; i < NUM_RESONATORS; i++)
     {
@@ -88,6 +112,28 @@ void WaveguideResonatorBank::updateParameters(float newFrequency, int numSamples
     previousResonatorBankMix *= 0.5f; //scale down a little to taste
     inputGain = voice.getValue(params.inputGain);
     outputGain = voice.getValue(params.outputGain);
+    
+    // Update coupling cutoff frequency ONLY if in COUPLED_FLTR mode
+    if (couplingMode == COUPLED_FLTR)
+    {
+        float newCutoff = voice.getValue(params.couplingCutoff);
+        
+        // Ensure cutoff doesn't exceed half the sample rate (Nyquist limit)
+        float nyquistLimit = sampleRate * 0.5f;
+        if (newCutoff > nyquistLimit)
+            newCutoff = nyquistLimit;
+            
+        if (newCutoff != couplingCutoffHz)
+        {
+            couplingCutoffHz = newCutoff;
+            for (int i = 0; i < NUM_RESONATORS; ++i)
+            {
+                crossoverL[i].setCutoffFrequency(couplingCutoffHz);
+                crossoverR[i].setCutoffFrequency(couplingCutoffHz);
+            }
+        }
+    }
+    
     for (auto* r : resonators)
     {
         r->updateParameters(newFrequency, numSamples);
@@ -158,7 +204,7 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
             previousResonatorBankBlock.setSample(1, i, outSampleR);
         }
     }
-    else if (couplingMode == INTERLINKED)
+    else if (couplingMode == COUPLED)
     {
         for (int i = 0; i < exciterBlock.getNumSamples(); i++)
         {
@@ -205,6 +251,66 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                     pushSample((feedbackSampleL + resonatorOutSamplesL[j]) * 1 + inSampleL, 0);
                 resonators[j]->
                     pushSample((feedbackSampleR + resonatorOutSamplesR[j]) * 1 + inSampleR, 1);
+            }
+
+            previousResonatorBankBlock.setSample(0, i, outSampleL * outputGain);
+            previousResonatorBankBlock.setSample(1, i, outSampleR * outputGain);
+        }
+    }
+    else if (couplingMode == COUPLED_FLTR)
+    {
+        for (int i = 0; i < exciterBlock.getNumSamples(); ++i)
+        {
+            float delayedOutL[NUM_RESONATORS]; // lp + hp  (time‑aligned)
+            float delayedOutR[NUM_RESONATORS];
+
+            float outSampleL = 0.0f, outSampleR = 0.0f;
+            float hpSumL = 0.0f, hpSumR = 0.0f;
+
+            /* -------------------------------------------------------------
+               pop each string, split into LP / HP, accumulate high‑pass sum
+               ------------------------------------------------------------- */
+            for (int j = 0; j < NUM_RESONATORS; ++j)
+            {
+                const float aL = resonators[j]->popSample(0);
+                const float aR = resonators[j]->popSample(1);
+
+                float lpL, hpL;
+                crossoverL[j].processSample(0, aL, lpL, hpL);
+
+                float lpR, hpR;
+                crossoverR[j].processSample(0, aR, lpR, hpR);
+
+                delayedOutL[j] = lpL + hpL; // exactly aL, but delayed by the filter
+                delayedOutR[j] = lpR + hpR;
+
+                hpSumL += hpL * (resonators[j]->resonators[0].gain / totalGainL);
+                hpSumR += hpR * (resonators[j]->resonators[1].gain / totalGainR);
+
+                outSampleL += resonators[j]->postProcess(aL, 0)
+                    * resonators[j]->resonators[0].gain;
+                outSampleR += resonators[j]->postProcess(aR, 1)
+                    * resonators[j]->resonators[1].gain;
+            }
+
+            /* -------------------- Householder reflection for HP band -------------------- */
+            const float feedbackL = -2.0f * hpSumL;
+            const float feedbackR = -2.0f * hpSumR;
+
+            /* -------------------- push back into every string --------------------------- */
+            for (int j = 0; j < NUM_RESONATORS; ++j)
+            {
+                const float inL = (exciterBlock.getSample(0, i) * exciterMix
+                    + previousResonatorBankBlock.getSample(0, i) * previousResonatorBankMix) * inputGain;
+
+                const float inR = (exciterBlock.getSample(1, i) * exciterMix
+                    + previousResonatorBankBlock.getSample(1, i) * previousResonatorBankMix) * inputGain;
+
+                const float nextL = delayedOutL[j] + feedbackL + inL;
+                const float nextR = delayedOutR[j] + feedbackR + inR;
+
+                resonators[j]->pushSample(nextL, 0);
+                resonators[j]->pushSample(nextR, 1);
             }
 
             previousResonatorBankBlock.setSample(0, i, outSampleL * outputGain);

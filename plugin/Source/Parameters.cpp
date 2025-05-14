@@ -38,8 +38,9 @@ static juce::String couplingModeTextFunction(const gin::Parameter&, float v)
     switch (int(v))
     {
     case 0: return "Parallel";
-    case 1: return "Interlinked";
+    case 1: return "Coupled";
     case 2: return "Cascade";
+    case 3: return "Coupled Fltr";
     default:
         jassertfalse;
         return {};
@@ -295,7 +296,7 @@ WaveguideResonatorBankParams::WaveguideResonatorBankParams(ResonariumProcessor& 
                                  0.0f, "resonatorbank.usesemitones");
 
     couplingMode = p.addExtParam("couplingMode" + suffix, "Coupling Mode" + suffix, "Coupling", "",
-                                 {0.0, 2.0, 1.0, 1.0f}, 0.0f,
+                                 {0.0, 3.0, 1.0, 1.0f}, 0.0f,
                                  gin::SmoothingType::linear, "resonatorbank.coupling", couplingModeTextFunction);
 
     inputGain = p.addExtParam("inputGain" + suffix, "Input Gain" + suffix, "Gain In", "dB",
@@ -331,6 +332,10 @@ WaveguideResonatorBankParams::WaveguideResonatorBankParams(ResonariumProcessor& 
     cascadeFilterMode = p.addExtParam("cascadeFilterMode" + suffix, "Cascade Filter Mode" + suffix, "Mode", "",
                                       {0.0f, 1.0f, 0.0, 1.0f}, 0.0f,
                                       0.0f, "resonatorbank.cascadefiltermode");
+                                      
+    couplingCutoff = p.addExtParam("couplingCutoff" + suffix, "Coupling Cutoff" + suffix, "Cutoff", "Hz",
+                                  {5.0f, 22050.0f, 0.0f, 0.2f}, 200.0f,
+                                  gin::SmoothingType::linear, "resonatorbank.couplingcutoff");
 }
 
 ImpulseExciterParams::ImpulseExciterParams(ResonariumProcessor& p, int index) :

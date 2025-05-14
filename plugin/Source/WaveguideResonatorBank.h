@@ -15,8 +15,9 @@ public:
     enum CouplingMode
     {
         PARALLEL,
-        INTERLINKED,
+        COUPLED,
         CASCADE,
+        COUPLED_FLTR,
     };
 
     WaveguideResonatorBank(GlobalState& state, ResonatorVoice& parentVoice, WaveguideResonatorBankParams params);
@@ -52,6 +53,11 @@ public:
 
     chowdsp::SVFMultiMode<float, NUM_RESONATORS, true> testInterlinkedFilterL;
     chowdsp::SVFMultiMode<float, NUM_RESONATORS, true> testInterlinkedFilterR;
+
+    // Complementary 4‑pole Linkwitz–Riley crossover for COUPLED modes
+    float couplingCutoffHz = 200.0f; // default value, will be updated from parameter
+    juce::dsp::LinkwitzRileyFilter<float> crossoverL[NUM_RESONATORS];
+    juce::dsp::LinkwitzRileyFilter<float> crossoverR[NUM_RESONATORS];
 };
 
 #endif //WAVEGUIDERESONATORBANK_H

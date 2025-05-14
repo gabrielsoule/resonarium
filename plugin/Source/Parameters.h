@@ -115,7 +115,8 @@ struct WaveguideResonatorBankParams
         cascadeLevel,
         cascadeFilterCutoff,
         cascadeFilterResonance,
-        cascadeFilterMode = nullptr;
+        cascadeFilterMode,
+        couplingCutoff = nullptr;
 
     WaveguideResonatorBankParams() = default;
     WaveguideResonatorBankParams(ResonariumProcessor& p, int index);
