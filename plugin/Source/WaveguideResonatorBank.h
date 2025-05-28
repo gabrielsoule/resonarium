@@ -4,6 +4,7 @@
 #include "GlobalState.h"
 #include "ResonatorBank.h"
 #include "StereoResonator.h"
+#include <chowdsp_filters/chowdsp_filters.h>
 
 class ResonatorVoice;
 /**
@@ -15,8 +16,9 @@ public:
     enum CouplingMode
     {
         PARALLEL,
-        INTERLINKED,
+        COUPLED,
         CASCADE,
+        COUPLED_FLTR,
     };
 
     WaveguideResonatorBank(GlobalState& state, ResonatorVoice& parentVoice, WaveguideResonatorBankParams params);
@@ -52,6 +54,9 @@ public:
 
     chowdsp::SVFMultiMode<float, NUM_RESONATORS, true> testInterlinkedFilterL;
     chowdsp::SVFMultiMode<float, NUM_RESONATORS, true> testInterlinkedFilterR;
+
+    std::array<chowdsp::LinkwitzRileyFilter<float, 2>, NUM_RESONATORS> crossoverFilters;
+    chowdsp::LinkwitzRileyFilter<float, 2> coupledCrossoverFilter;
 };
 
 #endif //WAVEGUIDERESONATORBANK_H

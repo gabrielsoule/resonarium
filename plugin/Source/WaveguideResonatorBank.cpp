@@ -44,6 +44,14 @@ void WaveguideResonatorBank::reset()
     cascadeFilterR.reset();
     // testInterlinkedFilterL.reset();
     // testInterlinkedFilterR.reset();
+
+    // COUPLED_FLTR: Reset crossover filters
+    for (int i = 0; i < NUM_RESONATORS; i++)
+    {
+        crossoverFilters[i].reset();
+    }
+
+    coupledCrossoverFilter.reset();
 }
 
 void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
@@ -53,6 +61,16 @@ void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
     cascadeFilterR.prepare(spec);
     testInterlinkedFilterL.prepare(spec);
     testInterlinkedFilterR.prepare(spec);
+
+    // COUPLED_FLTR: Prepare crossover filters
+    for (int i = 0; i < NUM_RESONATORS; i++)
+    {
+        crossoverFilters[i].prepare(spec);
+        crossoverFilters[i].setCrossoverFrequency(1000.0f);
+    }
+
+    coupledCrossoverFilter.prepare(spec);
+    coupledCrossoverFilter.setCrossoverFrequency(1000.0f);
 
     for (int i = 0; i < NUM_RESONATORS; i++)
     {
@@ -85,9 +103,21 @@ void WaveguideResonatorBank::updateParameters(float newFrequency, int numSamples
     couplingMode = static_cast<CouplingMode>(voice.getValue(params.couplingMode));
     previousResonatorBankMix = voice.getValue(params.inputMix);
     exciterMix = 1 - voice.getValue(params.inputMix);
+
     previousResonatorBankMix *= 0.5f; //scale down a little to taste
     inputGain = voice.getValue(params.inputGain);
     outputGain = voice.getValue(params.outputGain);
+
+    // Update crossover filter frequency from parameter
+    const float crossoverFrequency = voice.getValue(params.couplingFilterCutoff);
+    for (int i = 0; i < NUM_RESONATORS; i++)
+    {
+        crossoverFilters[i].setCrossoverFrequency(crossoverFrequency);
+    }
+
+    coupledCrossoverFilter.setCrossoverFrequency(crossoverFrequency);
+    coupledCrossoverFilter.setCrossoverFrequency(crossoverFrequency);
+
     for (auto* r : resonators)
     {
         r->updateParameters(newFrequency, numSamples);
@@ -158,7 +188,7 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
             previousResonatorBankBlock.setSample(1, i, outSampleR);
         }
     }
-    else if (couplingMode == INTERLINKED)
+    else if (couplingMode == COUPLED)
     {
         for (int i = 0; i < exciterBlock.getNumSamples(); i++)
         {
@@ -190,8 +220,8 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
             }
 
             //apply the bridge filter H(z) = -2 / totalGain. This is a necessary criterion for stability
-            feedbackSampleL = -2.0f * feedbackSampleL;
-            feedbackSampleR = -2.0f * feedbackSampleR;
+            feedbackSampleL = -1.9f * feedbackSampleL;
+            feedbackSampleR = -1.9f * feedbackSampleR;
             // feedbackSampleL = testInterlinkedFilterL.processSample(0, feedbackSampleL);
             // feedbackSampleR = testInterlinkedFilterR.processSample(0, feedbackSampleR);
 
@@ -265,6 +295,62 @@ void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
                         voice.soloBuffer.setSample(1, voice.currentBlockStartSample + i, soloOutSampleR);
                     }
                 }
+            }
+
+            previousResonatorBankBlock.setSample(0, i, outSampleL * outputGain);
+            previousResonatorBankBlock.setSample(1, i, outSampleR * outputGain);
+        }
+    }
+    else if (couplingMode == COUPLED_FLTR)
+    {
+        for (int i = 0; i < exciterBlock.getNumSamples(); i++)
+        {
+            float resonatorOutSamplesL[NUM_RESONATORS];
+            float resonatorOutSamplesR[NUM_RESONATORS];
+            float outSampleL = 0.0f;
+            float outSampleR = 0.0f;
+            float feedbackSampleL = 0.0f;
+            float feedbackSampleR = 0.0f;
+
+            for (int j = 0; j < NUM_RESONATORS; j++)
+            {
+                resonatorOutSamplesL[j] = resonators[j]->popSample(0);
+                resonatorOutSamplesR[j] = resonators[j]->popSample(1);
+                const std::pair<float, float> directFeedbackCrossoverOutL = crossoverFilters[j].processSample(0, resonatorOutSamplesL[j]);
+                const std::pair<float, float> directFeedbackCrossoverOutR = crossoverFilters[j].processSample(1, resonatorOutSamplesR[j]);
+                feedbackSampleL += directFeedbackCrossoverOutL.second * (resonators[j]->resonators[0].gain / totalGainL);
+                feedbackSampleR += directFeedbackCrossoverOutR.second * (resonators[j]->resonators[1].gain / totalGainR);
+                //apply a no-op filter to the direct feedback loop for each resonator
+                resonatorOutSamplesL[j] = directFeedbackCrossoverOutL.first + directFeedbackCrossoverOutL.second;
+                resonatorOutSamplesR[j] = directFeedbackCrossoverOutR.first + directFeedbackCrossoverOutR.second;
+                outSampleL += resonators[j]->postProcess(resonatorOutSamplesL[j], 0) * resonators[j]->resonators[0].
+                    gain;
+                outSampleR += resonators[j]->postProcess(resonatorOutSamplesR[j], 1) * resonators[j]->resonators[1].
+                    gain;
+            }
+
+            if (state.soloActive && state.soloBankIndex == index)
+            {
+                voice.soloBuffer.setSample(0, voice.currentBlockStartSample + i,
+                                           resonatorOutSamplesL[state.soloResonatorIndex]);
+                voice.soloBuffer.setSample(1, voice.currentBlockStartSample + i,
+                                           resonatorOutSamplesR[state.soloResonatorIndex]);
+            }
+
+            //apply the bridge filter H(z) = -2 / totalGain. This is a necessary criterion for stability
+            feedbackSampleL = -2.0f * feedbackSampleL;
+            feedbackSampleR = -2.0f * feedbackSampleR;
+
+            for (int j = 0; j < NUM_RESONATORS; j++)
+            {
+                const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.
+                    getSample(0, i) * previousResonatorBankMix) * inputGain;
+                const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.
+                    getSample(1, i) * previousResonatorBankMix) * inputGain;
+                resonators[j]->
+                    pushSample((feedbackSampleL + resonatorOutSamplesL[j]) * 1 + inSampleL, 0);
+                resonators[j]->
+                    pushSample((feedbackSampleR + resonatorOutSamplesR[j]) * 1 + inSampleR, 1);
             }
 
             previousResonatorBankBlock.setSample(0, i, outSampleL * outputGain);

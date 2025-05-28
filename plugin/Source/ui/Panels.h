@@ -256,6 +256,8 @@ public:
         addControl(cascadeFilterResonanceKnob);
         cascadeFilterModeKnob = new gin::Knob(bankParams.cascadeFilterMode);
         addControl(cascadeFilterModeKnob);
+        couplingFilterCutoffKnob = new gin::Knob(bankParams.couplingFilterCutoff);
+        addControl(couplingFilterCutoffKnob);
 
         topControlBracketLabel = new juce::Label("topControlBracketLabel", "WAVEGUIDE\nCONTROLS");
         topControlBracketLabel->setJustificationType(juce::Justification::centred);
@@ -306,11 +308,12 @@ public:
         inputMixKnob->setBounds(bankControlsX + KNOB_W, bankControlsY, KNOB_W, KNOB_H);
         outputGainKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + KNOB_H, KNOB_W, KNOB_H);
         couplingModeKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + 2 * KNOB_H, KNOB_W, KNOB_H);
+        couplingFilterCutoffKnob->setBounds(bankControlsX + KNOB_W * 0.5f, bankControlsY + 3 * KNOB_H, KNOB_W, KNOB_H);
 
-        cascadeAmountKnob->setBounds(bankControlsX, bankControlsY + 3.18 * (KNOB_H), KNOB_W, KNOB_H);
-        cascadeFilterKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 3.18 * (KNOB_H), KNOB_W, KNOB_H);
-        cascadeFilterResonanceKnob->setBounds(bankControlsX, bankControlsY + 4.18 * (KNOB_H), KNOB_W, KNOB_H);
-        cascadeFilterModeKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 4.18 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeAmountKnob->setBounds(bankControlsX, bankControlsY + 4.18 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeFilterKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 4.18 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeFilterResonanceKnob->setBounds(bankControlsX, bankControlsY + 5.18 * (KNOB_H), KNOB_W, KNOB_H);
+        cascadeFilterModeKnob->setBounds(bankControlsX + KNOB_W, bankControlsY + 5.18 * (KNOB_H), KNOB_W, KNOB_H);
 
         bottomControlBracket->setBounds(bankControlsX - 1, cascadeFilterModeKnob->getBounds().getBottom(),
                                         KNOB_W * 2 + 1, 10);
@@ -355,6 +358,10 @@ public:
             bottomControlBracket->setVisible(showCascadeControls);
         if (bottomControlBracketLabel != nullptr)
             bottomControlBracketLabel->setVisible(showCascadeControls);
+
+        bool showCouplingFilterControls = static_cast<int>(bankParams.couplingMode->getProcValue()) == 3; // COUPLED_FLTR
+        if (couplingFilterCutoffKnob != nullptr)
+            couplingFilterCutoffKnob->setVisible(showCouplingFilterControls);
 
         for(auto* resonatorComponent : resonatorComponents)
         {
@@ -477,6 +484,7 @@ public:
     gin::Knob* cascadeFilterKnob = nullptr;
     gin::Knob* cascadeFilterResonanceKnob = nullptr;
     gin::Knob* cascadeFilterModeKnob = nullptr;
+    gin::Knob* couplingFilterCutoffKnob = nullptr;
 
     SVGFilePluginButton* showSemitonesToggle = nullptr;
 
