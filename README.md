@@ -8,7 +8,7 @@ Many of the presets work best when used in conjunction with a MPE control device
 
 **This software is still in development.** The primary focus at present is stability and performance. Use at your own risk, and expect bugs or crashes. Some audio samples can be found [here](https://web.stanford.edu/~gns/resonarium_samples.html).
 
-Resonarium works well in Ableton and Bitwig. There are reported issues with Logic and FL studio. 
+Resonarium works well in Ableton and Bitwig. There are reported issues with Logic and FL Studio. 
 
 # Installation
 
