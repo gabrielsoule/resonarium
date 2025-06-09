@@ -299,7 +299,7 @@ WaveguideResonatorBankParams::WaveguideResonatorBankParams(ResonariumProcessor& 
                                  gin::SmoothingType::linear, "resonatorbank.coupling", couplingModeTextFunction);
 
     inputGain = p.addExtParam("inputGain" + suffix, "Input Gain" + suffix, "Gain In", "dB",
-                              {-100.0, 100.0, 0.0, 1.0f}, 0.0f,
+                              {-48, 48, 0.0, 1.0f}, 0.0f,
                               gin::SmoothingType::linear, "resonatorbank.inputgain");
     inputGain->conversionFunction = [](const float x) { return juce::Decibels::decibelsToGain(x); };
 
@@ -458,11 +458,14 @@ SampleExciterParams::SampleExciterParams(ResonariumProcessor& p)
                          0.0f, "exciter.sampler.loop", enableTextFunction);
 
     start = p.addExtParam("sampleStart", "Sample Start", "Start", "%",
-                          {0.0f, 1.0f, 0.0f, 1.0f}, 0.0f,
+                          {0.0f, 100.0f, 0.0f, 1.0f}, 0.0f,
                           0.0f, "exciter.sampler.start");
+    start->conversionFunction = [](const float in) { return in / 100.0f; };
+    
     end = p.addExtParam("sampleEnd", "Sample End", "End", "%",
-                        {0.0f, 1.0f, 0.0f, 1.0f}, 1.0f,
+                        {0.0f, 100.0f, 0.0f, 1.0f}, 100.0f,
                         0.0f, "exciter.sampler.end");
+    end->conversionFunction = [](const float in) { return in / 100.0f; };
 }
 
 LFOParams::LFOParams(ResonariumProcessor& p, int index) : index(index)
