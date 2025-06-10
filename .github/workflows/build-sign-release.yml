@@ -247,8 +247,6 @@ jobs:
       # ────────────────────────── vcpkg (classic mode) ───────────────────────
       - name: Bootstrap vcpkg
         uses: friendlyanon/setup-vcpkg@v1
-        with:
-          committish: 'latest'
 
       - name: Install third‑party libraries
         shell: powershell
