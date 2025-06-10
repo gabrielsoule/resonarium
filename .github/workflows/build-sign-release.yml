@@ -336,7 +336,7 @@ jobs:
             mesa-common-dev \
             libgl1-mesa-dev \
             libglu1-mesa-dev \
-            libwebkit2gtk-4.0-dev
+            libwebkit2gtk-4.1-dev
 
       - name: Build project
         run: |
