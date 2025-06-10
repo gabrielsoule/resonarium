@@ -297,8 +297,92 @@ jobs:
             Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-Windows.zip
             Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Windows.zip
 
+  build-and-release-linux:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Get version
+        id: get_version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            # From tag
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            # From manual input
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            libasound2-dev \
+            libcurl4-openssl-dev \
+            libfreetype6-dev \
+            libjack-jackd2-dev \
+            libx11-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxcursor-dev \
+            mesa-common-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libwebkit2gtk-4.0-dev
+
+      - name: Build project
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -GNinja
+          cmake --build . --config Release -j 8
+
+      - name: Create ZIP archives
+        shell: bash
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+
+          INSTRUMENT_ZIP_NAME="Resonarium-Instrument-$VERSION-Linux.zip"
+          EFFECT_ZIP_NAME="Resonarium-Effect-$VERSION-Linux.zip"
+
+          mkdir -p instrument_package/VST3
+          mkdir -p instrument_package/Standalone
+
+          mkdir -p effect_package/VST3
+          mkdir -p effect_package/Standalone
+
+          cp -R "build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3" instrument_package/VST3/
+          cp -R "build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium" instrument_package/Standalone/
+
+          cp -R "build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3" effect_package/VST3/
+          cp -R "build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect" effect_package/Standalone/
+
+          cd instrument_package
+          zip -r "../$INSTRUMENT_ZIP_NAME" .
+          cd ..
+
+          cd effect_package
+          zip -r "../$EFFECT_ZIP_NAME" .
+          cd ..
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-Linux.zip
+            Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Linux.zip
+
   create-release:
-    needs: [build-and-release-macos, build-and-release-windows]
+    needs: [build-and-release-macos, build-and-release-windows, build-and-release-linux]
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -333,5 +417,7 @@ jobs:
             macos-packages/Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
             windows-packages/Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-Windows.zip
             windows-packages/Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Windows.zip
+            linux-packages/Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-Linux.zip
+            linux-packages/Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
