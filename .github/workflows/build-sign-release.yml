@@ -248,8 +248,6 @@ jobs:
       - name: Bootstrap vcpkg
         uses: friendlyanon/setup-vcpkg@v1
         with:
-          triplet: x64-windows
-          runVcpkgInstall: false    # stay in classic mode — no vcpkg.json
           committish: 'latest'
 
       - name: Install third‑party libraries
