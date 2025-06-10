@@ -10,6 +10,8 @@ Many of the presets work best when used in conjunction with a MPE control device
 
 Resonarium works well in Ableton and Bitwig. There are reported issues with Logic and FL Studio. 
 
+While there isn't a user manual yet, most of the parameters have helpful pop-ups that manifest on hover. Have fun!
+
 # Installation
 
 > [!NOTE]
