@@ -221,83 +221,85 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # ────────────────────────── Source checkout ────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
 
-      # ────────────────────────── Version string ─────────────────────────────
       - name: Get version
         id: get_version
         shell: bash
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            # From tag
             echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
           else
+            # From manual input
             echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
           fi
 
-      # ────────────────────────── Build tools ────────────────────────────────
-      - name: Install Ninja
-        shell: powershell
-        run: choco install ninja -y
-
-      # ────────────────────────── vcpkg (classic mode) ───────────────────────
-      - name: Bootstrap vcpkg
-        uses: friendlyanon/setup-vcpkg@v1
-        with:
-          triplet: x64-windows          # <── new
-
-      - name: Install third‑party libraries
+      - name: Install dependencies
         shell: powershell
         run: |
-          vcpkg install curl:x64-windows --clean-after-build
+          choco install cmake ninja
+          # Visual Studio is already installed on Windows runners
 
-      # ────────────────────────── MSVC environment ───────────────────────────
+      - name: Install libcurl headers + import library
+        shell: powershell
+        run: |
+          choco install curl --yes --no-progress       # delivers lib + headers
+          # Tell CMake where to look so FindCURL can pick it up
+          $curlRoot   = Get-ChildItem "$env:ProgramData\chocolatey\lib\curl" `
+                        -Directory | Select-Object -First 1
+          echo "CMAKE_PREFIX_PATH=$($curlRoot.FullName)\tools" |
+               Out-File $Env:GITHUB_ENV -Append
+
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v1.3
 
       - name: Setup Visual Studio
         uses: ilammy/msvc-dev-cmd@v1
 
-      # ────────────────────────── Configure & build ──────────────────────────
       - name: Build project
         shell: powershell
         run: |
           mkdir -p build
           cd build
-          cmake .. `
-            -G "Visual Studio 17 2022" -A x64 `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
-            -DVCPKG_TARGET_TRIPLET=x64-windows 
+          # Use Visual Studio generator instead of Ninja, and explicitly specify MSVC compiler
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release `
+          -DCMAKE_PREFIX_PATH="$env:CMAKE_PREFIX_PATH"
           cmake --build . --config Release --parallel 8
 
-      # ────────────────────────── Package plugins ────────────────────────────
       - name: Create ZIP archives
         shell: powershell
         run: |
           $VERSION = "${{ steps.get_version.outputs.VERSION }}"
+          
+          # Create separate ZIP archives for Instrument and Effect
           $INSTRUMENT_ZIP_NAME = "Resonarium-Instrument-$VERSION-Windows.zip"
-          $EFFECT_ZIP_NAME     = "Resonarium-Effect-$VERSION-Windows.zip"
-
+          $EFFECT_ZIP_NAME = "Resonarium-Effect-$VERSION-Windows.zip"
+          
+          # Create directories for the plugins
           mkdir -Force instrument_package/VST3
           mkdir -Force instrument_package/Standalone
+          
           mkdir -Force effect_package/VST3
           mkdir -Force effect_package/Standalone
-
-          Copy-Item -Path "build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3"            -Destination "instrument_package/VST3/" -Recurse
-          Copy-Item -Path "build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium.exe"      -Destination "instrument_package/Standalone/" -Recurse
-
-          Copy-Item -Path "build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3"         -Destination "effect_package/VST3/" -Recurse
-          Copy-Item -Path "build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect.exe"   -Destination "effect_package/Standalone/" -Recurse
-
+          
+          # Copy the plugins to their respective directories
+          # Visual Studio uses a different output structure compared to Ninja
+          # The paths below are adjusted for Visual Studio's output structure
+          Copy-Item -Path "build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3" -Destination "instrument_package/VST3/" -Recurse
+          Copy-Item -Path "build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium.exe" -Destination "instrument_package/Standalone/" -Recurse
+          
+          Copy-Item -Path "build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3" -Destination "effect_package/VST3/" -Recurse
+          Copy-Item -Path "build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect.exe" -Destination "effect_package/Standalone/" -Recurse
+          
+          # Create ZIP archives
           Compress-Archive -Path "instrument_package/*" -DestinationPath $INSTRUMENT_ZIP_NAME -Force
-          Compress-Archive -Path "effect_package/*"     -DestinationPath $EFFECT_ZIP_NAME     -Force
+          Compress-Archive -Path "effect_package/*" -DestinationPath $EFFECT_ZIP_NAME -Force
 
-      # ────────────────────────── Publish artifacts ──────────────────────────
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -307,11 +309,11 @@ jobs:
             Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Windows.zip
 
   create-release:
-    needs: [build-and-release-macos, build-and-release-windows]
+    needs: [ build-and-release-macos, build-and-release-windows ]
     permissions:
       contents: write
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Get version
         id: get_version
