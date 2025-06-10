@@ -62,6 +62,10 @@ Resonarium can also be used as an audio effect with live external audio input, o
 > ```
 > If Resonarium doesn't show up, ensure that the `.vst3` file is copied to your system's plugin directory, and that AudioPluginHost is configured to look for plugins in that directory. You can use the copy of JUCE bundled with this project, in the `modules` subdirectory, or clone a standalone copy of the JUCE repository elsewhere.
 
+## Licensing
+
+Resonarium is licensed under a GPL license; therefore, any software that depends upon, modifies, or otherwise adapts Resonarium or any part(s) of Resonarium must also be licensed under a GPL license. Use of this work within closed-source commercial projects is prohibited. If you are interested in using Resonarium or parts of Resonarium in a commercial capacity, please email me directly to discuss licensing terms.
+
 ## Dependencies
 
 This project uses a modified fork of [Gin](https://github.com/FigBug/Gin), which includes several wonderful GUI widgets and backend utilities. Go check it out, it's great!
