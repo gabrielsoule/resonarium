@@ -247,6 +247,8 @@ jobs:
       # ────────────────────────── vcpkg (classic mode) ───────────────────────
       - name: Bootstrap vcpkg
         uses: friendlyanon/setup-vcpkg@v1
+        with:
+          triplet: x64-windows          # <── new
 
       - name: Install third‑party libraries
         shell: powershell
@@ -269,7 +271,8 @@ jobs:
           cmake .. `
             -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake"
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows 
           cmake --build . --config Release --parallel 8
 
       # ────────────────────────── Package plugins ────────────────────────────
