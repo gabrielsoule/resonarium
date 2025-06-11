@@ -431,5 +431,7 @@ jobs:
             macos-packages/Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
             windows-packages/Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-Windows.zip
             windows-packages/Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Windows.zip
+            linux-packages/Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-Linux.zip       
+            linux-packages/Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
