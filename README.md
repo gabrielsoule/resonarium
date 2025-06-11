@@ -27,11 +27,11 @@ While there isn't a user manual yet, most of the parameters have helpful pop-ups
 > When Resonarium's overflow protection engages, you will hear a sharp pop followed by silence. If this happens repeatedly, you have either created an unstable preset, or the plugin's internal state is somehow corrupted. Deleting and re-instantiating the plugin instance may resolve this issue. If the problem can be reliably reproduced, please submit an issue to this repository.
 
 ## Precompiled Binaries
-Pre-compiled binaries can be found in the Releases tab. The MacOS binaries are signed and notarized, and, as such, should work right out of the box. The Windows binaries are not signed nor notarized; as such, Windows Defener can get a little jumpy and falsely flag Resonarium precompiles as malicious. As such, building from source is recommended.
+Pre-compiled binaries can be found in the Releases tab. The MacOS binaries are signed and notarized, and, as such, should work right out of the box. The Windows binaries are neither signed nor notarized; as such, Windows Defender can get a little nervious and falsely flag Resonarium precompiles as malicious. As such, building from source is recommended.
 
 ## Building From Source
 
-Building from source is easy! This project is entirely self-contained, and bundles all its dependencies, including JUCE, as submodules. Resonarium uses the JUCE CMake API, so the Projucer is not needed: all you need is CMake. 
+Building from source is super easy! This project is entirely self-contained, and bundles all its dependencies, including JUCE, as submodules. Resonarium uses the JUCE CMake API, so the Projucer is not needed: all you need is CMake. 
 
 You'll first want to clone the repository to a location of your choice. Once this is done, you'll want to populate the submodules:
 ```
@@ -65,6 +65,12 @@ Resonarium can also be used as an audio effect with live external audio input, o
 > cmake --build cmake-build --target AudioPluginHost
 > ```
 > If Resonarium doesn't show up, ensure that the `.vst3` file is copied to your system's plugin directory, and that AudioPluginHost is configured to look for plugins in that directory. You can use the copy of JUCE bundled with this project, in the `modules` subdirectory, or clone a standalone copy of the JUCE repository elsewhere.
+> 
+
+
+> [!NOTE]
+> Since this repository is self-contained, all its dependencies (including JUCE) must be downloaded and built from scratch. This may take some time. Many C++ build tools support parallel compilation, the use of which is recommended.
+> 
 
 ## Licensing
 
@@ -75,7 +81,3 @@ Resonarium is licensed under a GPL license; therefore, any software that depends
 This project uses a modified fork of [Gin](https://github.com/FigBug/Gin), which includes several wonderful GUI widgets and backend utilities. Go check it out, it's great!
 
 This project uses a modified fork of [chowdsp-utils](https://github.com/Chowdhury-DSP/chowdsp_utils); in particular, we adapt and extend the state variable filter implementation. Go check it out, it's (also) great! 
-
-> [!NOTE]
-> Since this repository is self-contained, all its dependencies (including JUCE) must be downloaded and built from scratch. This may take some time. Many C++ build tools support parallel compilation, the use of which is recommended.
-> 
