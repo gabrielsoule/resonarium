@@ -252,7 +252,7 @@ jobs:
               libxrandr-dev libxcursor-dev libxi-dev      \
               libgl1-mesa-dev libasound2-dev              \
               libfreetype6-dev libfontconfig1-dev         \
-              libgtk-3-dev libwebkit2gtk-4.0-dev
+              libgtk-3-dev
           cmake --version
           ninja --version || true
       
@@ -396,7 +396,7 @@ jobs:
             Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Windows.zip
 
   create-release:
-    needs: [ build-and-release-macos, build-and-release-windows ]
+    needs: [ build-and-release-macos, build-and-release-windows, build-and-release-linux ]
     permissions:
       contents: write
     runs-on: ubuntu-latest
