@@ -245,17 +245,17 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update -qq
-          # Base toolchain
           sudo apt-get install -y --no-install-recommends \
-               build-essential cmake ninja-build zip curl \
-               libcurl4-openssl-dev                       \
-               libx11-dev libxext-dev libxinerama-dev      \
-               libxrandr-dev libxcursor-dev libxi-dev      \
-               libgl1-mesa-dev libasound2-dev              \
-               libfreetype6-dev
-          # Display what we got (handy for logs)
+              build-essential cmake ninja-build zip curl  \
+              libcurl4-openssl-dev                        \
+              libx11-dev libxext-dev libxinerama-dev      \
+              libxrandr-dev libxcursor-dev libxi-dev      \
+              libgl1-mesa-dev libasound2-dev              \
+              libfreetype6-dev libfontconfig1-dev         \
+              libgtk-3-dev libwebkit2gtk-4.0-dev
           cmake --version
           ninja --version || true
+      
 
       # ───────────── Configure & build ─────────────
       - name: Build project
