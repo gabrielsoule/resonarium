@@ -6,7 +6,11 @@ Resonarium is a MPE-compatible expressive physical modeling synthesizer. It is d
 
 Many of the presets work best when used in conjunction with a MPE control device, such as a Ableton Push 3 or a Roli Seaboard.
 
-**This software is still in development.** The primary focus at present is stability and performance. Use at your own risk, and expect bugs or crashes. Some audio samples can be found [here](https://web.stanford.edu/~gns/resonarium_samples.html).
+**This software is still in development.** The primary focus at present is stability and performance. Use at your own risk, and expect bugs or crashes. You'll probably need a beefy computer to run complex presets in the plugin's current state; performance optimizations such as SIMD processing are in the pipeline, but not ready to deploy just yet.
+
+But hey, it's free and open source, so no whining allowed. I welcome contributions. Want to add/change/improve something? Clone the repo, make some changes, and submit a pull request!
+
+Some audio samples can be found [here](https://ccrma.stanford.edu/~gns/resonarium_samples.html). They sound neat. Check them out!
 
 Resonarium works well in Ableton and Bitwig. There are reported issues with Logic and FL Studio. 
 
@@ -23,7 +27,7 @@ While there isn't a user manual yet, most of the parameters have helpful pop-ups
 > When Resonarium's overflow protection engages, you will hear a sharp pop followed by silence. If this happens repeatedly, you have either created an unstable preset, or the plugin's internal state is somehow corrupted. Deleting and re-instantiating the plugin instance may resolve this issue. If the problem can be reliably reproduced, please submit an issue to this repository.
 
 ## Precompiled Binaries
-Pre-compiled binaries can be found in the Releases tab. They are signed and notarized, and, as such, should work right out of the box. Both .vst3 and standalone executables are included in these pre-compiled releases; however, other binary formats (e.g. AUv3) can be built from source if desired, as documented below.
+Pre-compiled binaries can be found in the Releases tab. The MacOS binaries are signed and notarized, and, as such, should work right out of the box. The Windows binaries are not signed nor notarized; as such, Windows Defener can get a little jumpy and falsely flag Resonarium precompiles as malicious. As such, building from source is recommended.
 
 ## Building From Source
 
