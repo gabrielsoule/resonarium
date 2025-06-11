@@ -64,7 +64,7 @@ Resonarium can also be used as an audio effect with live external audio input, o
 
 ## Licensing
 
-Resonarium is licensed under a GPL license; therefore, any software that depends upon, modifies, or otherwise adapts Resonarium or any part(s) of Resonarium must also be licensed under a GPL license. Use of this work within closed-source commercial projects is prohibited. If you are interested in using Resonarium or parts of Resonarium in a commercial capacity, please email me directly to discuss licensing terms.
+Resonarium is licensed under a GPL license; therefore, any software that depends upon, modifies, or otherwise adapts Resonarium or any part(s) of Resonarium must also be licensed under a GPL license. If you are interested in using Resonarium or parts of Resonarium in a commercial capacity, please email me directly to discuss licensing terms. Unlicensed use of this work within a closed-source commercial application is prohibited.
 
 ## Dependencies
 
