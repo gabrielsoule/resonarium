@@ -210,7 +210,7 @@ public:
         juce::StringArray headerButtonNames;
         for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
         {
-            headerButtonNames.add("WAVEGUIDE " + juce::String(i + 1));
+            headerButtonNames.add("MODEL " + juce::String(i + 1));
         }
         addHeader(headerButtonNames, resonatorNum,
                   uiParams.resonatorBankSelect);
@@ -257,7 +257,7 @@ public:
         cascadeFilterModeKnob = new gin::Knob(bankParams.cascadeFilterMode);
         addControl(cascadeFilterModeKnob);
 
-        topControlBracketLabel = new juce::Label("topControlBracketLabel", "WAVEGUIDE\nCONTROLS");
+        topControlBracketLabel = new juce::Label("topControlBracketLabel", "MODEL\nCONTROLS");
         topControlBracketLabel->setJustificationType(juce::Justification::centred);
         topControlBracketLabel->setFont(topControlBracketLabel->getFont().withHeight(19).withExtraKerningFactor(0.06f));
         topControlBracketLabel->setEditable(false);
