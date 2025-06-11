@@ -2,13 +2,13 @@
 
 ![Image](https://private-user-images.githubusercontent.com/5464864/453700687-20c6069a-a1b5-4d5f-9105-db8428d7afe2.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk2MDQ5MzQsIm5iZiI6MTc0OTYwNDYzNCwicGF0aCI6Ii81NDY0ODY0LzQ1MzcwMDY4Ny0yMGM2MDY5YS1hMWI1LTRkNWYtOTEwNS1kYjg0MjhkN2FmZTIucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MDYxMSUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTA2MTFUMDExNzE0WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9N2U5MGE3ZDkzMTIxZmFjNmQxZDYwZjg0NTgyODZjOGM3ODkwZWUxYWFhOGVkZWUwYzcwOWIzNTA1YzViYjlmOCZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.bGbHaK361AFgPPhhRxdy3aFFIoUHjMpYomV8bCEtIJk)
 
-Resonarium is a MPE-compatible expressive physical modeling synthesizer. It is designed to encourage abstract sound design, exploration, and open-ended play. 
+Resonarium is a MPE-compatible physical modeling synthesizer, based on coupled string waveguide models. It is designed to encourage abstract sound design, exploration, and open-ended play. 
 
-Many of the presets work best when used in conjunction with a MPE control device, such as a Ableton Push 3 or a Roli Seaboard.
+Many of the presets work best when used in conjunction with a MPE control device, such as a Ableton Push 3 or a Roli Seaboard. Such presets expect MPE control signals such as pressure and timbre, and are therefore musically more interesting when these expressive dimensions are active.
 
-**This software is still in development.** The primary focus at present is stability and performance. Use at your own risk, and expect bugs or crashes. You'll probably need a beefy computer to run complex presets in the plugin's current state; performance optimizations such as SIMD processing are in the pipeline, but not ready to deploy just yet.
+**Resonarium is still in development.** The primary focus at present is stability and performance. Use at your own risk, and expect bugs or crashes. You might need a beefy computer to (polyphonically) run complex presets in the plugin's current state; performance optimizations such as SIMD processing are in the pipeline, but not ready to deploy just yet.
 
-But hey, it's free and open source, so no whining allowed. I welcome contributions. Want to add/change/improve something? Clone the repo, make some changes, and submit a pull request!
+But hey, it's free and open source. I welcome contributions. Want to add/change/improve something? Clone the repo, make some changes, and submit a pull request!
 
 Some audio samples can be found [here](https://ccrma.stanford.edu/~gns/resonarium_samples.html). They sound neat. Check them out!
 
@@ -57,7 +57,7 @@ When the standalone application is first run, you may need to configure your aud
 Resonarium can also be used as an audio effect with live external audio input, or as part of an effect chain in a DAW. Many DAWs require that plugins be _either_ instruments or effects; therefore, to compile the effect version of the software, replace "Instrument" with "Effect" in your build target (e.g `cmake --build build --target Resonarium_Effect_VST3`). The _effect_ version of the plugin is distinguished by a handsome green color scheme. Both versions of the software can be used in parallel, in the same hosted environment.
 
 > [!NOTE]
-> Resonarium is reasonably stable when run in a lightweight testing environment such as Juce's AudioPluginHost; however, smooth operation across most DAWs is not assured at this time. Ableton and Bitwig are known to be compatible; despite this, there are still some rare issues that pop up in specific DAWs. The AudioPluginHost host is recommended for a cleaner demo experience. 
+> Resonarium is reasonably stable when run in a lightweight testing environment such as Juce's AudioPluginHost; however, smooth operation across most DAWs is not assured at this time. Ableton and Bitwig are known to be compatible; despite this, there are still some rare issues that pop up in specific DAWs. As such, the AudioPluginHost host is recommended for a cleaner demo experience. 
 > To compile AudioPluginHost, do the following:
 > ```cd
 > cd /path/to/JUCE
