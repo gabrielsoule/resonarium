@@ -130,6 +130,8 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
 void ResonatorVoice::noteStarted()
 {
     startVoice();
+    // Reset the fastKill flag when starting a new note to fix voice counter bug after panic
+    fastKill = false;
     auto note = getCurrentlyPlayingNote();
     DBG(state.logPrefix + " Starting note on voice " + juce::String(id) + " with MIDI " + juce::String(note.initialNote)
         + " at Hz " + juce::String(note.getFrequencyInHertz()));
