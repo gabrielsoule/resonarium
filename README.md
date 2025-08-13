@@ -1,6 +1,9 @@
 # Resonarium
 
-![Image](https://private-user-images.githubusercontent.com/5464864/453700687-20c6069a-a1b5-4d5f-9105-db8428d7afe2.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NDk2MDQ5MzQsIm5iZiI6MTc0OTYwNDYzNCwicGF0aCI6Ii81NDY0ODY0LzQ1MzcwMDY4Ny0yMGM2MDY5YS1hMWI1LTRkNWYtOTEwNS1kYjg0MjhkN2FmZTIucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI1MDYxMSUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNTA2MTFUMDExNzE0WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9N2U5MGE3ZDkzMTIxZmFjNmQxZDYwZjg0NTgyODZjOGM3ODkwZWUxYWFhOGVkZWUwYzcwOWIzNTA1YzViYjlmOCZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.bGbHaK361AFgPPhhRxdy3aFFIoUHjMpYomV8bCEtIJk)
+![Image](https://ccrma.stanford.edu/~gns/resonarium.png)
+
+> [!NOTE]
+> As of late 2025, much of the feedback I recieve about this projet orbits issues of performance and CPU usage, particularly on older/Windows machines. I agree! It's not acceptable. I am working on a re-write of the physical modelling engine with an emphasis on better cache management and SIMD polyphony. This last point in particular necessitates a architectural redesign of most of my DSP (SIMD code looks very different than scalar processing code). I appreciate your patience with all of this: it will take some time, but it will be worth it. Until then, I encourage you to be gentle with the instrument in the meantime; practice frequent bouncing/freezing of tracks, and try not to face-roll the keyboard unless you really need to.
 
 Resonarium is a MPE-compatible physical modeling synthesizer, based on coupled string waveguide models. It is designed to encourage abstract sound design, exploration, and open-ended play. 
 
