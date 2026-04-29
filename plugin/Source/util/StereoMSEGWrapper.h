@@ -16,7 +16,7 @@ public:
     template <typename T>
     void updateParameters(T& source, float frequency)
     {
-        this->ginParams.frequency = source.getValue(params.rate);
+        this->ginParams.frequency = frequency;
         this->ginParams.phase = source.getValue(params.phase);
         this->ginParams.offset = source.getValue(params.offset);
         this->ginParams.depth = source.getValue(params.depth);

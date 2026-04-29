@@ -305,11 +305,11 @@ void ResonatorVoice::updateParameters(int numSamples)
         if (params.msegParams[i].enabled->isOn())
         {
             float freq = 0;
-            if (params.lfoParams[i].sync->getProcValue() > 0.0f)
-                freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.lfoParams[i].beat->getProcValue())].
+            if (params.msegParams[i].sync->getProcValue() > 0.0f)
+                freq = 1.0f / gin::NoteDuration::getNoteDurations()[size_t(params.msegParams[i].beat->getProcValue())].
                     toSeconds(state.playHead);
             else
-                freq = getValue(params.lfoParams[i].rate);
+                freq = getValue(params.msegParams[i].rate);
             polyMSEGs.getReference(i).updateParameters(*this, freq);
             polyMSEGs.getReference(i).process(numSamples);
             state.modMatrix.setPolyValue(*this, state.modSrcPolyMSEG[i], polyMSEGs.getReference(i).getOutput(0), 0);

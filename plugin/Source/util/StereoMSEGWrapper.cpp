@@ -17,6 +17,7 @@ void StereoMSEGWrapper::reset()
 void StereoMSEGWrapper::noteOn(float phase)
 {
     left.noteOn(phase);
+    right.noteOn(phase);
 }
 
 void StereoMSEGWrapper::process(int numSamples)
