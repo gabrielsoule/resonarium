@@ -28,6 +28,7 @@ WaveguideResonatorBank::~WaveguideResonatorBank()
     resonators.clear(true);
 }
 
+
 /**
  * Resets the internal state of the resonator bank and its resonators.
  * Use when playing a new note, for example.

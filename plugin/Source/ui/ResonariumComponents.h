@@ -132,6 +132,20 @@ public:
     juce::Colour colour;
 };
 
+class ClickableLabel : public juce::Label
+{
+public:
+    using juce::Label::Label;
+
+    std::function<void()> onClick;
+
+    void mouseDown(const juce::MouseEvent&) override
+    {
+        if (onClick)
+            onClick();
+    }
+};
+
 class ResonariumLogo : public juce::Component
 {
 public:
@@ -167,6 +181,13 @@ public:
         drawableSVG->paint(g);
     }
 
+    void mouseDown(const juce::MouseEvent&) override
+    {
+        if (onClick)
+            onClick();
+    }
+
+    std::function<void()> onClick;
     std::unique_ptr<juce::Drawable> drawableSVG;
 };
 

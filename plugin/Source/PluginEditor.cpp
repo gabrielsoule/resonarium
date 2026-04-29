@@ -5,7 +5,7 @@
 
 
 ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
-    : gin::ProcessorEditor(p), proc(p), uiParams(p.uiParams), settingsPanel(nullptr)
+    : gin::ProcessorEditor(p), proc(p), uiParams(p.uiParams)
 {
     setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
     setLookAndFeel(p.lf.get());
@@ -13,45 +13,41 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     titleBar.menuButton.setVisible(false);
     tooltipWindow.setMillisecondsBeforeTipAppears(500);
 
-    auto* blur = new TitleBarDropShadow();
-    blur->setBounds(0, 0, 400, 40);
-    addAndMakeVisible(blur);
+    titleBarDropShadow = std::make_unique<TitleBarDropShadow>();
+    titleBarDropShadow->setBounds(0, 0, 400, 40);
+    addAndMakeVisible(*titleBarDropShadow);
 
-    logo = new ResonariumLogo();
+    logo = std::make_unique<ResonariumLogo>();
     logo->setBounds(7, 2, 37, 37);
     logo->setInterceptsMouseClicks(true, false);
-    logo->addMouseListener(this, false);
+    logo->onClick = [this]() { showSettingsMenu(); };
 
-    logoText = new juce::Label();
+    logoText = std::make_unique<ClickableLabel>();
     logoText->setText("RESONARIUM", juce::dontSendNotification);
     logoText->setJustificationType(juce::Justification::centredLeft);
     logoText->setBounds(50, 0, 210, 40);
     logoText->setFont(logoText->getFont().withHeight(26.0f).withExtraKerningFactor(0.25f));
     logoText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.85f));
     logoText->setInterceptsMouseClicks(true, false);
-    logoText->addMouseListener(this, false);
+    logoText->onClick = [this]() { showSettingsMenu(); };
     logoText->setTooltip("Click for settings");
 
-    versionText = new juce::Label();
+    versionText = std::make_unique<juce::Label>();
     versionText->setText(proc.getOptions().pluginVersion, juce::dontSendNotification);
     versionText->setBounds(248, 0, 100, 40);
     versionText->setFont(versionText->getFont().withStyle(juce::Font::italic).withHeight(13.0f));
     versionText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.2f));
 
-    // // Create and setup the settings panel
-    // settingsPanel = new SettingsPanel(proc);
-    // addChildComponent(settingsPanel);
-
 #if ! JUCE_DEBUG //we use the navbar space for debugging controls when in a debug build, so don't show the logo
-    addAndMakeVisible(logo);
-    addAndMakeVisible(logoText);
-    addAndMakeVisible(versionText);
+    addAndMakeVisible(*logo);
+    addAndMakeVisible(*logoText);
+    addAndMakeVisible(*versionText);
 #endif
 
     addChildComponent(modOverview);
     modOverview.setBounds(350, 10, 150, 20);
 
-    scope = new gin::TriggeredScope(proc.scopeFifo);
+    scope = std::make_unique<gin::TriggeredScope>(proc.scopeFifo);
     scope->setName("scope");
     scope->setNumChannels(2);
     scope->setTriggerMode(gin::TriggeredScope::TriggerMode::Up);
@@ -61,14 +57,14 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                      findColour(gin::PluginLookAndFeel::accentColourId, true).withAlpha(0.7f));
     scope->setColour(gin::TriggeredScope::lineColourId, juce::Colours::transparentBlack);
     scope->setBounds(880, 5, 220, 30);
-    addAndMakeVisible(scope);
+    addAndMakeVisible(*scope);
 
     for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
-        auto* wrb = new WaveguideResonatorBankParamBox_V2(
-            "Waveguide Bank " + std::to_string(i + 1), proc, i, voiceParams.waveguideResonatorBankParams[i]);
+        auto& wrb = resonatorBankParamBoxes.emplace_back(std::make_unique<WaveguideResonatorBankParamBox_V2>(
+            "Waveguide Bank " + std::to_string(i + 1), proc, i, voiceParams.waveguideResonatorBankParams[i]));
         wrb->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
-        addAndMakeVisible(wrb);
+        addAndMakeVisible(*wrb);
     }
 
     juce::Rectangle<int> excitersColumn = juce::Rectangle<int>(0,
@@ -76,26 +72,26 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                                                           EXCITER_BOX_WIDTH,
                                                           WINDOW_HEIGHT * 2);
 
-    excitersViewportContentComponent = new juce::Component();
+    excitersViewportContentComponent = std::make_unique<juce::Component>();
     excitersViewportContentComponent->setBounds(excitersColumn);
 
     juce::Rectangle<int> excitersColumnLocal = juce::Rectangle<int>(0, 0, EXCITER_BOX_WIDTH, WINDOW_HEIGHT * 2);
 
-    impulseExciterParamBox = new ImpulseExciterParamBox("Impulse Exciter", proc, 0, voiceParams.impulseExciterParams[0]);
+    impulseExciterParamBox = std::make_unique<ImpulseExciterParamBox>("Impulse Exciter", proc, 0, voiceParams.impulseExciterParams[0]);
     impulseExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    excitersViewportContentComponent->addAndMakeVisible(impulseExciterParamBox);
+    excitersViewportContentComponent->addAndMakeVisible(*impulseExciterParamBox);
 
-    noiseExciterParamBox = new NoiseExciterParamBox("Noise Exciter", proc, 0, voiceParams.noiseExciterParams[0]);
+    noiseExciterParamBox = std::make_unique<NoiseExciterParamBox>("Noise Exciter", proc, 0, voiceParams.noiseExciterParams[0]);
     noiseExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    excitersViewportContentComponent->addAndMakeVisible(noiseExciterParamBox);
+    excitersViewportContentComponent->addAndMakeVisible(*noiseExciterParamBox);
 
-    impulseTrainExciterParamBox = new SequenceExciterParamBox("Sequence Exciter", proc, 0, voiceParams.impulseTrainExciterParams[0]);
+    impulseTrainExciterParamBox = std::make_unique<SequenceExciterParamBox>("Sequence Exciter", proc, 0, voiceParams.impulseTrainExciterParams[0]);
     impulseTrainExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_MEDIUM_HEIGHT));
-    excitersViewportContentComponent->addAndMakeVisible(impulseTrainExciterParamBox);
+    excitersViewportContentComponent->addAndMakeVisible(*impulseTrainExciterParamBox);
 
-    sampleExciterParamBox = new SampleExciterParamBox("Sampler", proc, voiceParams.sampleExciterParams);
+    sampleExciterParamBox = std::make_unique<SampleExciterParamBox>("Sampler", proc, voiceParams.sampleExciterParams);
     sampleExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_LARGE_HEIGHT));
-    excitersViewportContentComponent->addAndMakeVisible(sampleExciterParamBox);
+    excitersViewportContentComponent->addAndMakeVisible(*sampleExciterParamBox);
 
     if(proc.globalState.samplePath.isNotEmpty())
     {
@@ -107,39 +103,37 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
         DBG(proc.globalState.logPrefix + "Editor: No sample path found in preset, skipping");
     }
 
-    extInParamBox = new ExternalInputExciterParamBox("External In", proc, voiceParams.externalInputExciterParams);
+    extInParamBox = std::make_unique<ExternalInputExciterParamBox>("External In", proc, voiceParams.externalInputExciterParams);
     extInParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_MEDIUM_HEIGHT));
-    excitersViewportContentComponent->addAndMakeVisible(extInParamBox);
+    excitersViewportContentComponent->addAndMakeVisible(*extInParamBox);
 
     float scrollableAreaFinalHeight = excitersColumnLocal.getY();
     excitersViewportContentComponent->setBounds(excitersViewportContentComponent->getBounds().withHeight(scrollableAreaFinalHeight + PARAM_BOX_XSMALL_HEIGHT));
 
-    excitersViewport = new AnimatedScrollBarsViewport();
-    excitersViewport->setViewedComponent(excitersViewportContentComponent);
+    excitersViewport = std::make_unique<AnimatedScrollBarsViewport>();
+    excitersViewport->setViewedComponent(excitersViewportContentComponent.get(), false);
     excitersViewport->setScrollBarThickness(5);
     excitersViewport->setBounds(juce::Rectangle<int>(  0,
                                              40,
                                              EXCITER_BOX_WIDTH,
                                              WINDOW_HEIGHT));
-    addAndMakeVisible(excitersViewport);
+    addAndMakeVisible(*excitersViewport);
 
 
     for (int i = 0; i < NUM_ENVELOPES; i++)
     {
-        SafePointer<ADSRParamBox> ptr = new ADSRParamBox(
-            "ENV " + std::to_string(i + 1), proc, proc.synth.params.adsrParams[i]);
-        envelopeParamBoxes.push_back(ptr);
-        addAndMakeVisible(ptr);
+        auto& ptr = envelopeParamBoxes.emplace_back(std::make_unique<ADSRParamBox>(
+            "ENV " + std::to_string(i + 1), proc, proc.synth.params.adsrParams[i]));
+        addAndMakeVisible(*ptr);
         ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT, MODULATION_BOX_WIDTH,
                        PARAM_BOX_XSMALL_HEIGHT);
     }
 
     for (int i = 0; i < NUM_RANDOMS; i++)
     {
-        SafePointer<RandomLFOParamBox> ptr = new RandomLFOParamBox(
-            "RAND " + std::to_string(i + 1), proc, i, proc.synth.params.randomLfoParams[i]);
-        randomLfoParamBoxes.push_back(ptr);
-        addAndMakeVisible(ptr);
+        auto& ptr = randomLfoParamBoxes.emplace_back(std::make_unique<RandomLFOParamBox>(
+            "RAND " + std::to_string(i + 1), proc, i, proc.synth.params.randomLfoParams[i]));
+        addAndMakeVisible(*ptr);
         ptr->setBounds(
             EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
             MODULATION_BOX_WIDTH,
@@ -148,10 +142,9 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
     for (int i = 0; i < NUM_LFOS; i++)
     {
-        SafePointer<LFOParamBox> ptr = new LFOParamBox(
-            "LFO " + std::to_string(i + 1), proc, i, voiceParams.lfoParams[i]);
-        lfoParamBoxes.push_back(ptr);
-        addAndMakeVisible(ptr);
+        auto& ptr = lfoParamBoxes.emplace_back(std::make_unique<LFOParamBox>(
+            "LFO " + std::to_string(i + 1), proc, i, voiceParams.lfoParams[i]));
+        addAndMakeVisible(*ptr);
         ptr->setBounds(
             EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
             MODULATION_BOX_WIDTH, PARAM_BOX_XSMALL_HEIGHT);
@@ -159,29 +152,28 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
     for (int i = 0; i < NUM_MSEGS; i++)
     {
-        SafePointer<MSEGParamBox> ptr = new MSEGParamBox(
-            "MSEG " + std::to_string(i + 1), proc, proc.synth.params.msegParams[i]);
-        msegParamBoxes.push_back(ptr);
-        addAndMakeVisible(ptr);
+        auto& ptr = msegParamBoxes.emplace_back(std::make_unique<MSEGParamBox>(
+            "MSEG " + std::to_string(i + 1), proc, proc.synth.params.msegParams[i]));
+        addAndMakeVisible(*ptr);
         ptr->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT,
                        MODULATION_BOX_WIDTH - 1,
                        PARAM_BOX_XSMALL_HEIGHT * 1.5f);
     }
 
-    macroParamBox = new MacroParamBox("MACROS", proc, proc.synth.params.macroParams);
-    addAndMakeVisible(macroParamBox);
+    macroParamBox = std::make_unique<MacroParamBox>("MACROS", proc, proc.synth.params.macroParams);
+    addAndMakeVisible(*macroParamBox);
     macroParamBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
                          40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH - 1,
                          PARAM_BOX_XSMALL_HEIGHT * 1.5f);
 
-    matrixParamBox = new MatrixParamBox("MATRIX", proc);
-    addAndMakeVisible(matrixParamBox);
+    matrixParamBox = std::make_unique<MatrixParamBox>("MATRIX", proc);
+    addAndMakeVisible(*matrixParamBox);
     matrixParamBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
                          40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH - 1,
                          PARAM_BOX_XSMALL_HEIGHT * 1.5f);
 
-    modSourceParamBox = new ModSourceParamBox("SOURCES", proc);
-    addAndMakeVisible(modSourceParamBox);
+    modSourceParamBox = std::make_unique<ModSourceParamBox>("SOURCES", proc);
+    addAndMakeVisible(*modSourceParamBox);
     modSourceParamBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
                          40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH - 1,
                          PARAM_BOX_XSMALL_HEIGHT * 1.5f);
@@ -192,65 +184,65 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
                                                               EXCITER_BOX_WIDTH,
                                                               WINDOW_HEIGHT * 2); //some extra vertical space
 
-    effectsViewportContentComponent = new juce::Component();
+    effectsViewportContentComponent = std::make_unique<juce::Component>();
     effectsViewportContentComponent->setBounds(effectsColumn);
 
     juce::Rectangle<int> effectsColumnLocal = juce::Rectangle<int>(0, 0, EXCITER_BOX_WIDTH, WINDOW_HEIGHT * 2);
 
-    filter1ParamBox = new SVFParamBox("Filter 1", proc, proc.synth.params.effectChainParams.filterParams[0]);
+    filter1ParamBox = std::make_unique<SVFParamBox>("Filter 1", proc, proc.synth.params.effectChainParams.filterParams[0]);
     filter1ParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
-    effectsViewportContentComponent->addAndMakeVisible(filter1ParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(*filter1ParamBox);
 
-    chorusParamBox = new ChorusParamBox("Chorus", proc, proc.synth.params.effectChainParams.chorusParams);
+    chorusParamBox = std::make_unique<ChorusParamBox>("Chorus", proc, proc.synth.params.effectChainParams.chorusParams);
     chorusParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    effectsViewportContentComponent->addAndMakeVisible(chorusParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(*chorusParamBox);
 
-    phaserParamBox = new PhaserParamBox("Phaser", proc, proc.synth.params.effectChainParams.phaserParams);
+    phaserParamBox = std::make_unique<PhaserParamBox>("Phaser", proc, proc.synth.params.effectChainParams.phaserParams);
     phaserParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    effectsViewportContentComponent->addAndMakeVisible(phaserParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(*phaserParamBox);
 
-    distortionParamBox = new DistortionParamBox("Distortion", proc, proc.synth.params.effectChainParams.distortionParams);
+    distortionParamBox = std::make_unique<DistortionParamBox>("Distortion", proc, proc.synth.params.effectChainParams.distortionParams);
     distortionParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    effectsViewportContentComponent->addAndMakeVisible(distortionParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(*distortionParamBox);
 
-    multiAmpParamBox = new MultiAmpParamBox("Amp", proc, proc.synth.params.effectChainParams.multiAmpParams);
+    multiAmpParamBox = std::make_unique<MultiAmpParamBox>("Amp", proc, proc.synth.params.effectChainParams.multiAmpParams);
     multiAmpParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
-    effectsViewportContentComponent->addAndMakeVisible(multiAmpParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(*multiAmpParamBox);
 
-    delayParamBox = new DelayParamBox("Delay", proc, proc.synth.params.effectChainParams.delayParams);
+    delayParamBox = std::make_unique<DelayParamBox>("Delay", proc, proc.synth.params.effectChainParams.delayParams);
     delayParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    effectsViewportContentComponent->addAndMakeVisible(delayParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(*delayParamBox);
 
-    compressorParamBox = new CompressorParamBox("Compressor", proc, proc.synth.params.effectChainParams.compressorParams);
+    compressorParamBox = std::make_unique<CompressorParamBox>("Compressor", proc, proc.synth.params.effectChainParams.compressorParams);
     compressorParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
-    effectsViewportContentComponent->addAndMakeVisible(compressorParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(*compressorParamBox);
 
-    reverbParamBox = new ReverbParamBox("Reverb", proc, proc.synth.params.effectChainParams.reverbParams);
+    reverbParamBox = std::make_unique<ReverbParamBox>("Reverb", proc, proc.synth.params.effectChainParams.reverbParams);
     reverbParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_SMALL_HEIGHT));
-    effectsViewportContentComponent->addAndMakeVisible(reverbParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(*reverbParamBox);
 
-    filter2ParamBox = new SVFParamBox("Filter 2", proc, proc.synth.params.effectChainParams.filterParams[1]);
+    filter2ParamBox = std::make_unique<SVFParamBox>("Filter 2", proc, proc.synth.params.effectChainParams.filterParams[1]);
     filter2ParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
-    effectsViewportContentComponent->addAndMakeVisible(filter2ParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(*filter2ParamBox);
 
-    globalParamBox = new GlobalParamBox("Global", proc, proc.synth.params.globalParams);
+    globalParamBox = std::make_unique<GlobalParamBox>("Global", proc, proc.synth.params.globalParams);
     globalParamBox->setBounds(effectsColumnLocal.removeFromTop(PARAM_BOX_XSMALL_HEIGHT));
-    effectsViewportContentComponent->addAndMakeVisible(globalParamBox);
+    effectsViewportContentComponent->addAndMakeVisible(*globalParamBox);
 
     //compute a rectangle that is the size of all the components in the viewport
     scrollableAreaFinalHeight = effectsColumnLocal.getY();
     effectsViewportContentComponent->setBounds(effectsViewportContentComponent->getBounds().withHeight(scrollableAreaFinalHeight + PARAM_BOX_XSMALL_HEIGHT));
 
 
-    effectsViewport = new AnimatedScrollBarsViewport();
-    effectsViewport->setViewedComponent(effectsViewportContentComponent);
+    effectsViewport = std::make_unique<AnimatedScrollBarsViewport>();
+    effectsViewport->setViewedComponent(effectsViewportContentComponent.get(), false);
     // viewport->setScrollBarsShown(true, false, true, false);
     effectsViewport->setScrollBarThickness(5);
     effectsViewport->setBounds(juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
                                              40,
                                              EXCITER_BOX_WIDTH,
                                              WINDOW_HEIGHT));
-    addAndMakeVisible(effectsViewport);
+    addAndMakeVisible(*effectsViewport);
 
     usage.setBounds(WINDOW_WIDTH - 150, 10, 110, 20);
     addAndMakeVisible(usage);
@@ -350,15 +342,11 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
 ResonariumEditor::~ResonariumEditor()
 {
-    scope->stopTimer();
-    
-    // Clean up the settings panel if it exists
-    if (settingsPanel != nullptr)
-    {
-        delete settingsPanel;
-        settingsPanel = nullptr;
-    }
-    
+    if (scope != nullptr)
+        scope->stopTimer();
+
+    settingsPanel.reset();
+
     DBG("Deleting editor...");
 }
 
@@ -400,17 +388,16 @@ void ResonariumEditor::showOnboardingWarning()
 
 void ResonariumEditor::showSettingsMenu()
 {
-    // Create settings panel directly
+    // If already exists, just show it
     if (settingsPanel != nullptr)
     {
-        // If already exists, just show it
         settingsPanel->show();
         return;
     }
-    
+
     // Create a new settings panel
-    settingsPanel = new SettingsPanel(proc, this);
-    
+    settingsPanel = std::make_unique<SettingsPanel>(proc, this);
+
     // Set up the close button callback
     settingsPanel->onCloseButtonClick = [this]()
     {
@@ -419,7 +406,7 @@ void ResonariumEditor::showSettingsMenu()
             settingsPanel->hide();
         }
     };
-    
+
     // Show the panel
     settingsPanel->show();
 }
