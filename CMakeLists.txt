@@ -317,24 +317,43 @@ endif()
 if (APPLE)
     set_target_properties("juce_vst3_helper" PROPERTIES XCODE_ATTRIBUTE_CLANG_LINK_OBJC_RUNTIME NO)
 
-    foreach (t ${FORMATS} "All" "")
-        set(tgt ${CMAKE_PROJECT_NAME})
-        if (NOT t STREQUAL "")
-            set(tgt ${tgt}_${t})
-        endif ()
+    add_library(${PLUGIN_NAME}_AppleReleaseFlags INTERFACE)
+    target_compile_options(${PLUGIN_NAME}_AppleReleaseFlags INTERFACE
+            $<$<CONFIG:Release>:-O3 -ffast-math -fno-finite-math-only>
+            $<$<CONFIG:RelWithDebInfo>:-O3 -ffast-math -fno-finite-math-only>
+            $<$<CONFIG:MinSizeRel>:-O3 -ffast-math -fno-finite-math-only>
+    )
+
+    set(RESONARIUM_PLUGIN_TARGETS
+            ${PLUGIN_NAME}_Instrument
+            ${PLUGIN_NAME}_Effect
+    )
+
+    set(RESONARIUM_APPLE_TARGETS)
+    foreach (plugin_target IN LISTS RESONARIUM_PLUGIN_TARGETS)
+        list(APPEND RESONARIUM_APPLE_TARGETS
+                ${plugin_target}
+                ${plugin_target}_All
+        )
+        foreach (format IN LISTS FORMATS)
+            list(APPEND RESONARIUM_APPLE_TARGETS ${plugin_target}_${format})
+        endforeach ()
+    endforeach ()
+
+    foreach (tgt IN LISTS RESONARIUM_APPLE_TARGETS)
         if (TARGET ${tgt})
             set_target_properties(${tgt} PROPERTIES
                     XCODE_ATTRIBUTE_CLANG_LINK_OBJC_RUNTIME NO
                     XCODE_ATTRIBUTE_ONLY_ACTIVE_ARCH[variant=Debug] "YES"
             )
-            if (NOT t STREQUAL "All")
+            if (NOT tgt MATCHES "_All$")
                 target_compile_options(${tgt} PRIVATE
                         -Wall -Wstrict-aliasing -Wunused-parameter -Wconditional-uninitialized -Woverloaded-virtual -Wreorder -Wconstant-conversion -Wbool-conversion -Wextra-semi
                         -Wunreachable-code -Winconsistent-missing-destructor-override -Wshift-sign-overflow -Wnullable-to-nonnull-conversion -Wuninitialized -Wno-missing-field-initializers
                         -Wno-ignored-qualifiers -Wno-missing-braces -Wno-char-subscripts -Wno-unused-private-field -fno-aligned-allocation -Wunused-private-field -Wunreachable-code
                         -Wenum-compare -Wshadow -Wfloat-conversion -Wshadow-uncaptured-local -Wshadow-field -Wsign-compare -Wdeprecated-this-capture -Wimplicit-float-conversion -Wno-deprecated-declarations
-                        -ffast-math -fno-finite-math-only -Ofast
                 )
+                target_link_libraries(${tgt} PRIVATE ${PLUGIN_NAME}_AppleReleaseFlags)
             endif ()
         endif ()
     endforeach ()
