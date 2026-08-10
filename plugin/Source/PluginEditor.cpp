@@ -8,7 +8,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     : gin::ProcessorEditor(p), proc(p), uiParams(p.uiParams)
 {
     setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-    setLookAndFeel(p.lf.get());
+    setLookAndFeel(p.processorOptions.lookAndFeel.get());
     auto voiceParams = proc.synth.params.voiceParams;
     titleBar.menuButton.setVisible(false);
     tooltipWindow.setMillisecondsBeforeTipAppears(500);
@@ -33,7 +33,7 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     logoText->setTooltip("Click for settings");
 
     versionText = std::make_unique<juce::Label>();
-    versionText->setText(proc.getOptions().pluginVersion, juce::dontSendNotification);
+    versionText->setText(proc.processorOptions.pluginVersion, juce::dontSendNotification);
     versionText->setBounds(248, 0, 100, 40);
     versionText->setFont(versionText->getFont().withStyle(juce::Font::italic).withHeight(13.0f));
     versionText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.2f));

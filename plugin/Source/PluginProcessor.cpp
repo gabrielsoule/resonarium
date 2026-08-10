@@ -11,6 +11,7 @@ gin::ProcessorOptions ResonariumProcessor::getOptions()
     options.programmingCredits.clear();
     options.programmingCredits.add("Gabriel Soule");
     options.developer = "Gabriel Soule";
+    options.lookAndFeel = std::make_unique<ResonariumLookAndFeel>();
 #if RESONARIUM_IS_INSTRUMENT
     options.pluginVersion = "0.0.12 (INST) ALPHA";
 #endif
@@ -32,8 +33,6 @@ ResonariumProcessor::ResonariumProcessor() :
     DBG("Perfetto is ENABLED!");
     MelatoninPerfetto::get().beginSession();
 #endif
-
-    lf = std::make_unique<ResonariumLookAndFeel>();
 
     auto sz = 0;
     for (auto i = 0; i < BinaryData::namedResourceListSize; i++)

@@ -48,7 +48,7 @@ SettingsPanel::SettingsPanel(ResonariumProcessor& processor, juce::Component* pa
     addAndMakeVisible(closeButton);
     
     // Set look and feel from processor
-    setLookAndFeel(processor.lf.get());
+    setLookAndFeel(processor.processorOptions.lookAndFeel.get());
     
     // Set initial size
     setSize(350, 220);
