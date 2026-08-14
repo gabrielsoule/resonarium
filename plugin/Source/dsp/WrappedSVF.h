@@ -2,7 +2,7 @@
 #define WRAPPEDSVF_H
 
 #include "../Parameters.h"
-#include <chowdsp_filters/chowdsp_filters.h>
+#include "StateVariableFilter.h"
 /**
 * Wraps a state variable filter in a convenient class that contains its own parameters struct,
 * along with a simple method for updating the filter coefficients.
@@ -41,8 +41,8 @@ public:
         svfR.process(contextR);
     }
 
-    chowdsp::SVFMultiMode<float, 1, false> svfL;
-    chowdsp::SVFMultiMode<float, 1, false> svfR;
+    resonarium::StateVariableFilter<float, 1, false> svfL;
+    resonarium::StateVariableFilter<float, 1, false> svfR;
     SVFParams params;
 };
 

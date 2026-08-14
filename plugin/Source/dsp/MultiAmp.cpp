@@ -18,37 +18,38 @@ void MultiAmp::reset()
     fireAmp.reset();
     grindAmp.reset();
     leadAmp.reset();
+    cachedParametersValid.fill(false);
 }
 
 juce::String MultiAmp::getParameterName(Mode mode, int index)
 {
-    char* name = new char[32];
+    std::array<char, 32> name {};
 
     switch (mode)
     {
     case LEAD:
-        LeadAmp::getParameterName(index, name);
+        LeadAmp::getParameterName(index, name.data());
         break;
     case FIRE:
-        FireAmp::getParameterName(index, name);
+        FireAmp::getParameterName(index, name.data());
         break;
     case GRIND:
-        GrindAmp::getParameterName(index, name);
+        GrindAmp::getParameterName(index, name.data());
         break;
     case BIG:
-        BigAmp::getParameterName(index, name);
+        BigAmp::getParameterName(index, name.data());
         break;
     case DEREZ:
-        DeRez2::getParameterName(index, name);
+        DeRez2::getParameterName(index, name.data());
         break;
     case BASS:
-        BassAmp::getParameterName(index, name);
+        BassAmp::getParameterName(index, name.data());
         break;
     default:
         jassertfalse;
     }
 
-    return juce::String(name, 32);
+    return juce::String(name.data());
 }
 
 void MultiAmp::process(juce::dsp::ProcessContextReplacing<float> context)

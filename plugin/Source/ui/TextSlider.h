@@ -120,10 +120,7 @@ public:
         getSlider().setColour(juce::Slider::thumbColourId, textColour);
     }
 
-    ~TextSlider() override
-    {
-        gin::Knob::~Knob();
-    }
+    ~TextSlider() override = default;
 
     void mouseEnter(const juce::MouseEvent& event) override
     {

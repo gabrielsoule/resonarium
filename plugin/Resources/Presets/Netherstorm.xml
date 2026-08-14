@@ -196,7 +196,6 @@
   <param uid="extInGain" val="7.152557373046875e-7"/>
   <param uid="Samplefrequency" val="999.9998168945312"/>
   <param uid="masterGain" val="-0.3836278915405273"/>
-  <param uid="polyEffectChain" val="1.0"/>
   <param uid="chorusRate" val="1.930474519729614"/>
   <param uid="chorusDepth" val="0.7907500267028809"/>
   <param uid="chorusDelay" val="0.1000000014901161"/>

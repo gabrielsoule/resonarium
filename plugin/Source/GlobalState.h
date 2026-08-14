@@ -2,6 +2,7 @@
 #define GLOBALSTATE_H
 
 #include <gin_plugin/gin_plugin.h>
+#include "ExternalInputFrame.h"
 #include "defines.h"
 #include "dsp/Sampler.h"
 
@@ -34,15 +35,13 @@ public:
     std::array<gin::ModSrcId, 120> modSrcCC;
     std::array<gin::ModSrcId, NUM_MACROS> modSrcMacro;
     Sampler sampler;
-    juce::String samplePath = "";
     juce::String logPrefix = "";
     bool bypassResonators =  false;
     bool soloActive = false;
     int soloBankIndex = 0;
     int soloResonatorIndex = 0;
-    bool polyFX = false;
-    juce::AudioPlayHead* playHead;
-    juce::AudioBuffer<float> extInputBuffer;
+    juce::AudioPlayHead* playHead = nullptr;
+    const ExternalInputFrame* externalInputFrame = nullptr;
 };
 
 

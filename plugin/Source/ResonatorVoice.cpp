@@ -1,7 +1,11 @@
 #include "ResonatorVoice.h"
 
-ResonatorVoice::ResonatorVoice(GlobalState& state, VoiceParams params) : state(state), params(params),
-                                                                         effectChain(params.effectChainParams)
+#include <utility>
+
+ResonatorVoice::ResonatorVoice(GlobalState& state, VoiceParams params,
+                               WaveguideScratchArena& scratchArena)
+    : state(state), params(params), waveguideScratchArena(scratchArena),
+      exciterRack(state, *this, params)
 {
     frequency = 440.0f;
     this->disableSmoothing = true;
@@ -13,28 +17,11 @@ ResonatorVoice::ResonatorVoice(GlobalState& state, VoiceParams params) : state(s
 
     for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
     {
-        auto* waveguideBank = new WaveguideResonatorBank(state, *this, params.waveguideResonatorBankParams[i]);
+        auto* waveguideBank =
+            new WaveguideResonatorBank(state, *this, params.waveguideResonatorBankParams[i]);
         resonatorBanks.add(waveguideBank);
         dcBlockers[i].state = dcBlockerCoefficients;
     }
-
-    for (int i = 0; i < NUM_IMPULSE_EXCITERS; i++)
-    {
-        exciters.add(new ImpulseExciter(state, *this, params.impulseExciterParams[i]));
-    }
-
-    for (int i = 0; i < NUM_NOISE_EXCITERS; i++)
-    {
-        exciters.add(new NoiseExciter(state, *this, params.noiseExciterParams[i]));
-    }
-
-    for (int i = 0; i < NUM_IMPULSE_TRAIN_EXCITERS; i++)
-    {
-        exciters.add(new SequenceExciter(state, *this, params.impulseTrainExciterParams[i]));
-    }
-
-    exciters.add(new SampleExciter(state, *this, params.sampleExciterParams));
-    exciters.add(extInExciter = new ExternalInputExciter(state, *this, params.externalInputExciterParams));
 
     for (int i = 0; i < NUM_LFOS; i++)
     {
@@ -62,7 +49,6 @@ ResonatorVoice::ResonatorVoice(GlobalState& state, VoiceParams params) : state(s
 
 ResonatorVoice::~ResonatorVoice()
 {
-    exciters.clear(true);
     resonatorBanks.clear(true);
 }
 
@@ -74,20 +60,15 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
     // Use setSize instead of creating new buffers - more efficient when 
     // prepare() is called multiple times with the same specs
     exciterBuffer.setSize(spec.numChannels, spec.maximumBlockSize, false, true, true);
-    resonatorBankBuffer.setSize(spec.numChannels, spec.maximumBlockSize, false, true, true);
     tempBuffer.setSize(spec.numChannels, spec.maximumBlockSize, false, true, true);
     soloBuffer.setSize(spec.numChannels, spec.maximumBlockSize, false, true, true);
     
     // Clear all buffers
     exciterBuffer.clear();
-    resonatorBankBuffer.clear();
     tempBuffer.clear();
     soloBuffer.clear();
 
-    for (auto* exciter : exciters)
-    {
-        exciter->prepare(spec);
-    }
+    exciterRack.prepare(spec);
 
     for (auto* resonatorBank : resonatorBanks)
     {
@@ -124,22 +105,17 @@ void ResonatorVoice::prepare(const juce::dsp::ProcessSpec& spec)
         m.prepare(spec);
     }
 
-    effectChain.prepare(spec);
 }
 
 void ResonatorVoice::noteStarted()
 {
     startVoice();
-    // Reset the fastKill flag when starting a new note to fix voice counter bug after panic
-    fastKill = false;
     auto note = getCurrentlyPlayingNote();
-    DBG(state.logPrefix + " Starting note on voice " + juce::String(id) + " with MIDI " + juce::String(note.initialNote)
-        + " at Hz " + juce::String(note.getFrequencyInHertz()));
     if (glideInfo.fromNote >= 0 && (glideInfo.glissando || glideInfo.portamento))
     {
-        DBG("WARNING: Portamento and glissando are not yet implemented.");
-        stopVoice();
-        clearCurrentNote();
+        noteSmoother.setValueUnsmoothed(glideInfo.fromNote / 127.0f);
+        noteSmoother.setTime(juce::jmax(0.001, static_cast<double>(glideInfo.rate) * 0.001));
+        noteSmoother.setValue(note.initialNote / 127.0f);
     }
     else
     {
@@ -154,35 +130,31 @@ void ResonatorVoice::noteStarted()
     state.modMatrix.setPolyValue(*this, state.modSrcPressure, note.pressure.asUnsignedFloat(), 1);
 
     noteReleased = false;
-    silenceCount = 0;
+    quietTailSamples = 0;
     numBlocksSinceNoteOn = 0;
 
-    snapParams();
-    updateParameters(0);
-
-    for (auto* exciter : exciters)
-    {
-        exciter->reset();
-    }
+    // Invalidate the old assignment before the zero-sample control commit.
+    // The new note's initial delay then snaps immediately, while its first
+    // actual glide or bend is treated as a retune and crossfaded.
     for (auto* resonatorBank : resonatorBanks)
-    {
         resonatorBank->reset();
-    }
+
+    // A sample snapshot and deterministic random identity belong to the full
+    // assignment. Legato retargets intentionally do not pass this point.
+    exciterRack.beginAssignment(id, getVoiceGeneration());
+    updateParameters(0);
 
     for (auto& lfo : polyLFOs)
     {
         lfo.reset();
     }
 
-    for (auto* exciter : exciters)
-    {
-        exciter->noteStarted();
-    }
-
     for (int i = 0; i < NUM_LFOS; ++i)
     {
-        polyLFOs[i].noteOn(
-            params.lfoParams[i].retrig->getBoolValue() ? -1 : juce::Random::getSystemRandom().nextFloat());
+        const auto phase = params.lfoParams[i].retrig->getBoolValue()
+                               ? 0.0f
+                               : noteRandom.nextFloat() * static_cast<float>(gin::LFO::maxRandomPhase);
+        polyLFOs[i].noteOn(phase);
     }
 
     for (auto& envelope : polyEnvelopes)
@@ -202,33 +174,34 @@ void ResonatorVoice::noteStarted()
         dcBlocker.reset();
     }
 
-    effectChain.reset();
-    testForSilenceBlockCount = 0;
 }
 
 void ResonatorVoice::noteRetriggered()
 {
-    DBG("Retriggered note");
+    const auto note = getCurrentlyPlayingNote();
+    if (glideInfo.fromNote >= 0 && (glideInfo.glissando || glideInfo.portamento))
+    {
+        noteSmoother.setTime(juce::jmax(0.001, static_cast<double>(glideInfo.rate) * 0.001));
+        noteSmoother.setValue(note.initialNote / 127.0f);
+    }
+    else
+    {
+        noteSmoother.setValueUnsmoothed(note.initialNote / 127.0f);
+    }
+
+    state.modMatrix.setPolyValue(*this, state.modSrcVelocity, note.noteOnVelocity.asUnsignedFloat(), 0);
+    state.modMatrix.setPolyValue(*this, state.modSrcVelocity, note.noteOnVelocity.asUnsignedFloat(), 1);
+    state.modMatrix.setPolyValue(*this, state.modSrcTimbre, note.initialTimbre.asUnsignedFloat(), 0);
+    state.modMatrix.setPolyValue(*this, state.modSrcTimbre, note.initialTimbre.asUnsignedFloat(), 1);
+    state.modMatrix.setPolyValue(*this, state.modSrcPressure, note.pressure.asUnsignedFloat(), 0);
+    state.modMatrix.setPolyValue(*this, state.modSrcPressure, note.pressure.asUnsignedFloat(), 1);
 }
 
 void ResonatorVoice::noteStopped(bool allowTailOff)
 {
     noteReleased = true;
-    if (!allowTailOff)
-    {
-        DBG(state.logPrefix + " Forcefully stopping note " + juce::String(id));
-        clearCurrentNote();
-        stopVoice();
-    }
-    else
-    {
-        DBG(state.logPrefix + " Released note " + juce::String(id));
-    }
 
-    for (auto* exciter : exciters)
-    {
-        exciter->noteStopped(allowTailOff);
-    }
+    exciterRack.noteStopped(allowTailOff);
 
     for (int i = 0; i < NUM_ENVELOPES; i++)
     {
@@ -238,13 +211,14 @@ void ResonatorVoice::noteStopped(bool allowTailOff)
 
 bool ResonatorVoice::isVoiceActive()
 {
-    return isActive();
+    return getManagerVoiceState() != gin::VoiceState::idle;
 }
 
 void ResonatorVoice::updateParameters(int numSamples)
 {
     auto note = getCurrentlyPlayingNote();
     state.modMatrix.setPolyValue(*this, state.modSrcNote, note.initialNote / 127.0f);
+    noteSmoother.process(numSamples);
     currentMidiNote = noteSmoother.getCurrentValue() * 127.0f;
     currentMidiNote += static_cast<float>(note.totalPitchbendInSemitones);
     frequency = gin::getMidiNoteInHertz(currentMidiNote);
@@ -263,7 +237,7 @@ void ResonatorVoice::updateParameters(int numSamples)
                 freq = getValue(params.lfoParams[i].rate);
             polyLFOs[i].updateParameters(*this, freq);
             polyLFOs[i].process(numSamples);
-            //TODO optimize this call to avoid two searches to getreference
+            // TODO: avoid the duplicate parameter lookup.
             state.modMatrix.setPolyValue(*this, state.modSrcPolyLFO[i], polyLFOs[i].getOutput(0), 0);
             state.modMatrix.setPolyValue(*this, state.modSrcPolyLFO[i], polyLFOs[i].getOutput(1), 1);
         }
@@ -327,12 +301,8 @@ void ResonatorVoice::updateParameters(int numSamples)
         resonatorBank->updateParameters(frequency, numSamples);
     }
 
-    for (auto* exciter : exciters)
-    {
-        exciter->updateParameters();
-    }
+    exciterRack.updateParameters();
 
-    effectChain.updateParameters(*this, state.playHead);
     bypassResonators = state.bypassResonators;
     gain = getValue(params.masterGain);
 }
@@ -350,85 +320,109 @@ void ResonatorVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int
     juce::dsp::AudioBlock<float> outputBlock = juce::dsp::AudioBlock<float>(outputBuffer)
         .getSubBlock(startSample, numSamples);
 
-    juce::dsp::AudioBlock<float> previousBankBlock = juce::dsp::AudioBlock<float>(resonatorBankBuffer)
-        .getSubBlock(startSample, numSamples);
-    previousBankBlock.clear();
-
     //the output of all banks is summed into this block, which is sent to the effect chain
     juce::dsp::AudioBlock<float> tempOutputBlock = juce::dsp::AudioBlock<float>(tempBuffer)
         .getSubBlock(startSample, numSamples);
     tempOutputBlock.clear();
 
-    for (auto* exciter : exciters)
-    {
-        exciter->process(exciterBlock, tempOutputBlock);
-    }
+    juce::dsp::AudioBlock<float> soloOutputBlock = juce::dsp::AudioBlock<float>(soloBuffer)
+        .getSubBlock(startSample, numSamples);
+    soloOutputBlock.clear();
+
+    exciterRack.process(exciterBlock, tempOutputBlock,
+                        { state.externalInputFrame, currentSourceStartSample });
 
     if (!bypassResonators)
     {
-        for (int i = 0; i < resonatorBanks.size(); i++)
+        jassert(waveguideScratchArena.isPrepared());
+        if (waveguideScratchArena.isPrepared())
         {
-            auto* resonatorBank = resonatorBanks[i];
+            auto previousRoutedBlock = waveguideScratchArena.getBlock(
+                WaveguideScratchArena::Region::previousBank, numSamples);
+            auto routedOutputBlock = waveguideScratchArena.getBlock(
+                WaveguideScratchArena::Region::outputBank, numSamples);
+            previousRoutedBlock.clear();
 
-            resonatorBank->process(exciterBlock, previousBankBlock);
-            dcBlockers[i].process(juce::dsp::ProcessContextReplacing<float>(previousBankBlock));
-            tempOutputBlock.add(previousBankBlock);
-        }
-
-        if (!state.soloActive)
-        {
-            if (state.polyFX)
+            for (int i = 0; i < resonatorBanks.size(); ++i)
             {
-                effectChain.process(tempOutputBlock);
-            }
-            outputBlock.add(tempOutputBlock);
-        }
-        else //if a solo is active, discard the full output and just send out the solo block
-        {
-            juce::dsp::AudioBlock<float> soloOutputBlock = juce::dsp::AudioBlock<float>(soloBuffer)
-                .getSubBlock(startSample, numSamples);
-            outputBlock.add(soloOutputBlock);
-        }
-    }
-    else
-    {
-        outputBlock.add(exciterBlock);
-        DBG("Bypasing");
-        DBG(outputBlock.findMinAndMax().getEnd());
-    }
-
-    outputBlock.multiplyBy(gain);
-
-    //Silence detection code
-    testForSilenceBlockCount++;
-    if (testForSilenceBlockCount > testForSilenceBlockPeriod && noteReleased && numBlocksSinceNoteOn > 10)
-    {
-        testForSilenceBlockCount = 0;
-        float maxAmplitude = outputBuffer.getMagnitude(startSample, numSamples);
-        if (maxAmplitude < 0.001f)
-        {
-            silenceCount += 1;
-            if (silenceCount > silenceCountThreshold)
-            {
-                DBG("Silence detected, stopping note " + juce::String(id));
-                stopVoice();
-                clearCurrentNote();
+                routedOutputBlock.clear();
+                if (!resonatorBanks[i]->isEmptyForRouting())
+                {
+                    resonatorBanks[i]->processRouted(exciterBlock, previousRoutedBlock,
+                                                     routedOutputBlock);
+                    dcBlockers[i].process(juce::dsp::ProcessContextReplacing<float>(routedOutputBlock));
+                    tempOutputBlock.add(routedOutputBlock);
+                }
+                std::swap(previousRoutedBlock, routedOutputBlock);
             }
         }
-        else if (maxAmplitude > 100.0f)
+    }
+
+    // Tail retirement is based only on this voice's post-gain signal. Never
+    // inspect the shared synth bus: a different voice must not keep this one
+    // alive. The quiet window covers the longest unprocessed waveguide period,
+    // and is independent of the single global effect chain.
+    auto& privateBlock = bypassResonators ? exciterBlock : (state.soloActive ? soloOutputBlock : tempOutputBlock);
+    privateBlock.multiplyBy(gain);
+
+    float maxMagnitude = 0.0f;
+    bool invalid = false;
+    for (size_t channel = 0; channel < privateBlock.getNumChannels(); ++channel)
+    {
+        const auto* samples = privateBlock.getChannelPointer(channel);
+        for (size_t sample = 0; sample < privateBlock.getNumSamples(); ++sample)
         {
-            DBG("Amplitude overflow detected in silence detection code, stopping note " + juce::String(id));
-            stopVoice();
-            clearCurrentNote();
+            const auto value = samples[sample];
+            if (!std::isfinite(value) || std::abs(value) > 100.0f)
+            {
+                invalid = true;
+                break;
+            }
+            maxMagnitude = juce::jmax(maxMagnitude, std::abs(value));
         }
+        if (invalid)
+            break;
+    }
+
+    if (invalid)
+    {
+        // Gin owns sanitisation and retirement. Preserve the invalid sample in
+        // its private scratch so it can retire this assignment with the
+        // correct reason before anything reaches the shared mix.
+    }
+    else if (noteReleased)
+    {
+        constexpr float tailThreshold = 0.0000316227766f; // -90 dBFS
+        if (maxMagnitude < tailThreshold)
+            quietTailSamples += numSamples;
         else
-        {
-            silenceCount = 0;
-        }
+            quietTailSamples = 0;
+
+        constexpr double quietSeconds = 0.5;
+        const auto requiredQuietSamples = static_cast<int64_t>(std::ceil(getSampleRate() * quietSeconds));
+        if (quietTailSamples >= requiredQuietSamples)
+            finishTail();
     }
+
+    outputBlock.add(privateBlock);
     numBlocksSinceNoteOn++;
 
     finishBlock(numSamples);
+}
+
+void ResonatorVoice::renderVoice(gin::VoiceRenderContext& context)
+{
+    currentSourceStartSample = context.sourceStartSample;
+    renderNextBlock(context.buffer, context.startSample, context.numSamples);
+}
+
+void ResonatorVoice::voiceRetired(gin::VoiceEndReason)
+{
+    exciterRack.voiceRetired();
+    stopVoice();
+    noteReleased = false;
+    quietTailSamples = 0;
+    numBlocksSinceNoteOn = 0;
 }
 
 void ResonatorVoice::notePressureChanged()
@@ -453,7 +447,6 @@ void ResonatorVoice::notePitchbendChanged()
 
 void ResonatorVoice::noteKeyStateChanged()
 {
-    DBG("Key state changed; NYI");
 }
 
 float ResonatorVoice::getCurrentNote()

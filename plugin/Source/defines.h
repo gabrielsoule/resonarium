@@ -10,6 +10,9 @@
 #endif
 
 #define NUM_SYNTH_VOICES 16
+#define NUM_STEAL_VOICES 2
+#define NUM_PHYSICAL_VOICES (NUM_SYNTH_VOICES + NUM_STEAL_VOICES)
+#define VOICE_FAST_FADE_MS 3.0f
 
 //resonators
 #define NUM_RESONATORS 8

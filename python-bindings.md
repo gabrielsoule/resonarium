@@ -2,6 +2,13 @@
 
 Resonarium supports basic Python bindings. They are a work in progress. At the moment, the bindings support getting/setting synth parameters, playing MIDI notes, modulating parameters, and recording audio to memory.
 
+Voice assignments are deliberately manager-owned. The binding does not expose
+raw pooled voices: drive notes through `play_note()` or `queue_midi()`, render
+through `process_multi_block()`, and inspect the block-coherent lifecycle state
+with `get_voice_telemetry()`. Resonarium accepts lower-zone MPE note events on
+MIDI channels 2–16 only; the Python `play_note()` channel argument is zero-based,
+so use values 1–15.
+
 To compile the Python library, build the `Resonarium_Python` CMake target, e.g.:
 
 ```bash
@@ -43,8 +50,9 @@ blocks_needed = int(np.ceil((sample_rate * seconds) / block_size))
 # Allocate the corresponding memory
 audio_buffer = synth.create_multi_block(blocks_needed)
 
-# Play a MIDI note (middle C = 60) with velocity 100
-synth.play_note(0, 60, 100)
+# Play a MIDI note on lower-zone MPE member channel 2. The Python channel
+# argument is zero-based, so 1 maps to MIDI channel 2.
+synth.play_note(1, 60, 100)
 
 # Process audio. This will fill the buffer with audio, and stop when the buffer is full.
 # We allocated about 4 seconds worth of audio blocks, so we should get a 4 second sample back.
@@ -71,6 +79,8 @@ audio_data_16bit = (audio_data * 32767).astype(np.int16)
 wavfile.write('resonarium_output.wav', int(sample_rate), audio_data_16bit)
 print("All done! :)")
 ```
+
+The Python processor uses the same DSP implementation as the plugin.
 
 ## Parameter IDs
 At the moment, there are no higher-level Python structures (e.g. LFOs, MSEGs, etc) that map directly to their internal C++ counterparts. Instead, Resonarium's internal state is manipulated through direct access to internal and external parameters. The parameter ID naming scheme is somewhat inconsistent; this will be changed eventually. 

@@ -1,8 +1,11 @@
 #include "MultiDelay.h"
 
+#include <cmath>
+
 MultiDelay::MultiDelay(float maxDelayInSeconds) :
     maxDelayInSeconds(maxDelayInSeconds),
-    delayLine(48000 * maxDelayInSeconds)
+    delayLineL(static_cast<int>(std::ceil(48000.0 * static_cast<double>(maxDelayInSeconds)))),
+    delayLineR(static_cast<int>(std::ceil(48000.0 * static_cast<double>(maxDelayInSeconds))))
 {
     // Initialize default values
     pingPongEnabled = false;
@@ -19,8 +22,18 @@ MultiDelay::MultiDelay(float maxDelayInSeconds) :
 
 void MultiDelay::prepare(const juce::dsp::ProcessSpec& spec)
 {
-    delayLine.prepare(spec);
-    sampleRate = spec.sampleRate;
+    const auto maximumDelayInSamples = static_cast<int>(
+        std::ceil(spec.sampleRate * static_cast<double>(maxDelayInSeconds)));
+    jassert(maximumDelayInSamples > 0);
+
+    // Capacity depends on the host rate. Reconstructing here is safe because
+    // prepare() is non-realtime and guarantees that every advertised delay time
+    // remains valid at 44.1--96 kHz (and at other host rates).
+    delayLineL = decltype(delayLineL)(maximumDelayInSamples);
+    delayLineR = decltype(delayLineR)(maximumDelayInSamples);
+    delayLineL.prepare(1);
+    delayLineR.prepare(1);
+    sampleRate = static_cast<float>(spec.sampleRate);
     
     // Update smoothers with correct sample rate
     delayTimeSmoothL.reset(sampleRate, smoothingTimeInSeconds);
@@ -33,7 +46,8 @@ void MultiDelay::prepare(const juce::dsp::ProcessSpec& spec)
 
 void MultiDelay::reset()
 {
-    delayLine.reset();
+    delayLineL.reset();
+    delayLineR.reset();
     
     // Reset smoothers to current delay times
     delayTimeSmoothL.setCurrentAndTargetValue(timeL);
@@ -62,6 +76,7 @@ void MultiDelay::setFeedback(int channel, float newFeedback)
 void MultiDelay::setDelayTime(int channel, float time)
 {
     jassert(channel == 0 || channel == 1);
+    time = juce::jlimit(0.0f, maxDelayInSeconds, time);
     if (channel == 0)
     {
         // Set the target value for smooth transitions

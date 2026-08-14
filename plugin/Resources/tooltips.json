@@ -22,7 +22,7 @@
       "end": "Choose where playback should end. A value of 0 corresponds to the beginning of the sample, and a value of 1 corresponds to the end of the sample."
     },
     "external": {
-      "gain": "Control the gain of the external input signal, in decibels.",
+      "gain": "Control the gain of the external input signal, in decibels. The Instrument LV2 exposes no audio input; use the Effect LV2 for live input in that format.",
       "constantnote": "If enabled, a constant MIDI note will be supplied to the instrument at all times, allowing Resonarium to be used as an audio effect without complex MIDI routing. MIDI input from the host will still be processed and played as normal while this parameter is engaged.",
       "constantnotefrequency": "Set the frequency of the constant MIDI note. This is implemented via a MIDI MPE pitch bend signal; therefore, the frequency range is limited by the MPE pitch bend range. At a default value of +-48 semitones, this parameter is bounded between ~10 Hz and ~3000 Hz. Values exceeding this range are clamped appropriately."
     }
@@ -154,8 +154,7 @@
   },
   "global": {
     "gain": "Set the gain of the output signal. This parameter is always polyphonic, and can be used by an envelope or LFO to modulate the output level.",
-    "polyfx": "Choose whether to use polyphonic effect chains. If enabled, each note will have its own effect chain. If disabled, all notes will share a single effect chain. Disabling improves performance, but effect parameters will no longer be polyphonically modulable.",
-    "numvoices": "Set the number of voices in the synthesizer. Each voice has its own effect chain and modulation sources. Increasing the number of voices will increase the CPU load.",
+    "numvoices": "Set the number of voices in the synthesizer. Each voice has independent resonators and modulation sources; all voices feed the single global effect chain. Increasing the number of voices increases CPU load.",
     "stereo": "Choose whether to enable stereo resonators. If enabled, resonators will maintain a different internal state for the left and right channels, and will support stereo modulation. Disabling will improve performance, but disable stereo effects from the resonators."
   }
 }

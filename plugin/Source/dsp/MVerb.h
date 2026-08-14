@@ -38,8 +38,8 @@ private:
 	StaticDelayLine<T, 96000> predelay;
 	StaticDelayLineFourTap<T, 96000> staticDelayLine[4];
 	StaticDelayLineEightTap<T, 96000> earlyReflectionsDelayLine[2];
-	T SampleRate, DampingFreq, Density1, Density2, BandwidthFreq, PreDelayTime, Decay, Gain, Mix, EarlyMix, Size;
-	T MixSmooth, EarlyLateSmooth, BandwidthSmooth, DampingSmooth, PredelaySmooth, SizeSmooth, DensitySmooth, DecaySmooth;
+	T SampleRate, DampingFreq, Density1, Density2, BandwidthFreq, PreDelayTime, Decay, Mix, EarlyMix, Size;
+	T MixSmooth, BandwidthSmooth, DampingSmooth, PredelaySmooth, DecaySmooth;
 	T PreviousLeftTank, PreviousRightTank;
 	int ControlRate, ControlRateCounter;
 
@@ -64,14 +64,15 @@ public:
 		BandwidthFreq = 0.9;
 		SampleRate = 44100.;
 		Decay = 0.5;
-		Gain = 1.;
+		Density1 = 0.5;
+		Density2 = 0.5;
 		Mix = 1.;
 		Size = 1.;
 		EarlyMix = 1.;
 		PreviousLeftTank = 0.;
 		PreviousRightTank = 0.;
 		PreDelayTime = 100 * (SampleRate / 1000);
-		MixSmooth = EarlyLateSmooth = BandwidthSmooth = DampingSmooth = PredelaySmooth = SizeSmooth = DecaySmooth = DensitySmooth = 0.;
+		MixSmooth = BandwidthSmooth = DampingSmooth = PredelaySmooth = DecaySmooth = 0.;
 		ControlRate = SampleRate / 1000;
 		ControlRateCounter = 0;
 		reset();
@@ -79,28 +80,25 @@ public:
 
 	void process (T **inputs, T **outputs, int sampleFrames)
 	{
+		if (sampleFrames <= 0)
+			return;
+
 		T OneOverSampleFrames = 1. / sampleFrames;
 		T MixDelta	= (Mix - MixSmooth) * OneOverSampleFrames;
-		T EarlyLateDelta = (EarlyMix - EarlyLateSmooth) * OneOverSampleFrames;
 		T BandwidthDelta = (((BandwidthFreq * 18400.) + 100.) - BandwidthSmooth) * OneOverSampleFrames;
 		T DampingDelta = (((DampingFreq * 18400.) + 100.) - DampingSmooth) * OneOverSampleFrames;
 		T PredelayDelta = ((PreDelayTime * 200 * (SampleRate / 1000)) - PredelaySmooth) * OneOverSampleFrames;
-		T SizeDelta	= (Size - SizeSmooth) * OneOverSampleFrames;
 		T DecayDelta = (((0.7995f * Decay) + 0.005) - DecaySmooth) * OneOverSampleFrames;
-		T DensityDelta = (((0.7995f * Density1) + 0.005) - DensitySmooth) * OneOverSampleFrames;
 
 		for (int i = 0; i < sampleFrames; ++i)
 		{
 			T left = inputs[0][i];
 			T right = inputs[1][i];
 			MixSmooth += MixDelta;
-			EarlyLateSmooth += EarlyLateDelta;
 			BandwidthSmooth += BandwidthDelta;
 			DampingSmooth += DampingDelta;
 			PredelaySmooth += PredelayDelta;
-			SizeSmooth += SizeDelta;
 			DecaySmooth += DecayDelta;
-			DensitySmooth += DensityDelta;
 			if (ControlRateCounter >= ControlRate){
 				ControlRateCounter = 0;
 				bandwidthFilter[0].Frequency(BandwidthSmooth);
@@ -169,8 +167,8 @@ public:
 			-(0.6*staticDelayLine[3].GetIndex(2));
 			accumulatorL = ((accumulatorL * EarlyMix) + ((1 - EarlyMix) * earlyReflectionsL));
 			accumulatorR = ((accumulatorR * EarlyMix) + ((1 - EarlyMix) * earlyReflectionsR));
-			left = ( left + MixSmooth * ( accumulatorL - left ) ) * Gain;
-			right = ( right + MixSmooth * ( accumulatorR - right ) ) * Gain;
+			left = left + MixSmooth * ( accumulatorL - left );
+			right = right + MixSmooth * ( accumulatorR - right );
 			outputs[0][i] = left;
 			outputs[1][i] = right;
 		}
@@ -179,6 +177,7 @@ public:
 	void reset()
 	{
 		ControlRateCounter = 0;
+		PreviousLeftTank = PreviousRightTank = 0;
 		bandwidthFilter[0].SetSampleRate (SampleRate );
 		bandwidthFilter[1].SetSampleRate (SampleRate );
 		bandwidthFilter[0].Reset();
@@ -259,6 +258,7 @@ public:
 				if (std::abs (newSize - Size) > 0.0001)
 				{
 					Size = newSize;
+					PreviousLeftTank = PreviousRightTank = 0;
 					allpassFourTap[0].Clear();
 					allpassFourTap[1].Clear();
 					allpassFourTap[2].Clear();
@@ -288,7 +288,7 @@ public:
 				Decay = value;
 				break;
 			case GAIN:
-				Gain = value;
+				// Resonarium's effect chain has always fixed this legacy control at unity.
 				break;
 			case MIX:
 				Mix = value;
@@ -316,7 +316,7 @@ public:
 			case DECAY:
 				return Decay * 100.f;
 			case GAIN:
-				return Gain * 100.f;
+				return 100.f;
 			case MIX:
 				return Mix * 100.f;
 			case EARLYMIX:
@@ -342,14 +342,15 @@ class Allpass
 private:
 	T buffer[maxLength];
 	int index;
-	int Length;
+	int Length = 0;
 	T Feedback;
+	int validSamples;
 
 public:
 	Allpass()
 	{
-		SetLength ( maxLength - 1 );
 		Clear();
+		SetLength ( maxLength - 1 );
 		Feedback = 0.5;
 	}
 
@@ -357,23 +358,24 @@ public:
 	{
 		T output;
 		T bufout;
-		bufout = buffer[index];
+		bufout = validSamples >= Length ? buffer[index] : T {};
 		T temp = input * -Feedback;
 		output = bufout + temp;
 		buffer[index] = input + ((bufout+temp)*Feedback);
 		if(++index>=Length) index = 0;
+		if (validSamples < Length) ++validSamples;
 		return output;
 
 	}
 
-	void SetLength (int Length)
+	void SetLength (int newLength)
 	{
-		if( Length >= maxLength )
-			Length = maxLength;
-		if( Length < 0 )
-			Length = 0;
-
-		this->Length = Length;
+		const auto clampedLength = juce::jlimit (1, maxLength, newLength);
+		if (clampedLength == Length)
+			return;
+		Length = clampedLength;
+		index %= Length;
+		validSamples = juce::jmin (validSamples, Length);
 	}
 
 	void SetFeedback(T feedback)
@@ -383,8 +385,8 @@ public:
 
 	void Clear()
 	{
-		memset(buffer, 0, sizeof(buffer));
 		index = 0;
+		validSamples = 0;
 	}
 
 	int GetLength() const
@@ -399,14 +401,29 @@ class StaticAllpassFourTap
 private:
 	T buffer[maxLength];
 	int index1, index2, index3, index4;
-	int Length;
+	int Length = 0;
 	T Feedback;
+	int validSamples;
+
+	[[nodiscard]] int normaliseIndex (int index) const
+	{
+		return ((index % Length) + Length) % Length;
+	}
+
+	[[nodiscard]] bool isValidIndex (int index) const
+	{
+		if (validSamples >= Length)
+			return true;
+
+		const auto distanceBehindWriteHead = (index1 - index + Length) % Length;
+		return distanceBehindWriteHead > 0 && distanceBehindWriteHead <= validSamples;
+	}
 
 public:
 	StaticAllpassFourTap()
 	{
-		SetLength ( maxLength - 1 );
 		Clear();
+		SetLength ( maxLength - 1 );
 		Feedback = 0.5;
 	}
 
@@ -415,7 +432,7 @@ public:
 		T output;
 		T bufout;
 
-		bufout = buffer[index1];
+		bufout = validSamples >= Length ? buffer[index1] : T {};
 		T temp = input * -Feedback;
 		output = bufout + temp;
 		buffer[index1] = input + ((bufout+temp)*Feedback);
@@ -428,6 +445,7 @@ public:
 			index3 = 0;
 		if(++index4 >= Length)
 			index4 = 0;
+		if (validSamples < Length) ++validSamples;
 
 		return output;
 
@@ -435,49 +453,52 @@ public:
 
 	void SetIndex (int Index1, int Index2, int Index3, int Index4)
 	{
-		index1 = Index1;
-		index2 = Index2;
-		index3 = Index3;
-		index4 = Index4;
+		index1 = normaliseIndex (Index1);
+		index2 = normaliseIndex (Index2);
+		index3 = normaliseIndex (Index3);
+		index4 = normaliseIndex (Index4);
 	}
 
 	T GetIndex (int Index)
 	{
+		int selectedIndex = index1;
 		switch (Index)
 		{
 			case 0:
-				return buffer[index1];
+				selectedIndex = index1;
 				break;
 			case 1:
-				return buffer[index2];
+				selectedIndex = index2;
 				break;
 			case 2:
-				return buffer[index3];
+				selectedIndex = index3;
 				break;
 			case 3:
-				return buffer[index4];
+				selectedIndex = index4;
 				break;
-			default:
-				return buffer[index1];
-				break;
+			default: break;
 		}
+		return isValidIndex (selectedIndex) ? buffer[selectedIndex] : T {};
 	}
 
-	void SetLength (int Length)
+	void SetLength (int newLength)
 	{
-		if( Length >= maxLength )
-			Length = maxLength;
-		if( Length < 0 )
-			Length = 0;
-
-		this->Length = Length;
+		const auto clampedLength = juce::jlimit (1, maxLength, newLength);
+		if (clampedLength == Length)
+			return;
+		Length = clampedLength;
+		index1 %= Length;
+		index2 %= Length;
+		index3 %= Length;
+		index4 %= Length;
+		validSamples = juce::jmin (validSamples, Length);
 	}
 
 
 	void Clear()
 	{
-		memset(buffer, 0, sizeof(buffer));
 		index1 = index2  = index3 = index4 = 0;
+		validSamples = 0;
 	}
 
 	void SetFeedback(T feedback)
@@ -498,40 +519,42 @@ class StaticDelayLine
 private:
 	T buffer[maxLength];
 	int index;
-	int Length;
+	int Length = 0;
 	T Feedback;
+	int validSamples;
 
 public:
 	StaticDelayLine()
 	{
-		SetLength ( maxLength - 1 );
 		Clear();
+		SetLength ( maxLength - 1 );
 	}
 
 	T operator()(T input)
 	{
-		T output = buffer[index];
+		T output = validSamples >= Length ? buffer[index] : T {};
 		buffer[index++] = input;
 		if(index >= Length)
 			index = 0;
+		if (validSamples < Length) ++validSamples;
 		return output;
 
 	}
 
-	void SetLength (int Length)
+	void SetLength (int newLength)
 	{
-		if( Length >= maxLength )
-			Length = maxLength;
-		if( Length < 0 )
-			Length = 0;
-
-		this->Length = Length;
+		const auto clampedLength = juce::jlimit (1, maxLength, newLength);
+		if (clampedLength == Length)
+			return;
+		Length = clampedLength;
+		index %= Length;
+		validSamples = juce::jmin (validSamples, Length);
 	}
 
 	void Clear()
 	{
-		memset(buffer, 0, sizeof(buffer));
 		index = 0;
+		validSamples = 0;
 	}
 
 	int GetLength() const
@@ -546,20 +569,35 @@ class StaticDelayLineFourTap
 private:
 	T buffer[maxLength];
 	int index1, index2, index3, index4;
-	int Length;
+	int Length = 0;
 	T Feedback;
+	int validSamples;
+
+	[[nodiscard]] int normaliseIndex (int index) const
+	{
+		return ((index % Length) + Length) % Length;
+	}
+
+	[[nodiscard]] bool isValidIndex (int index) const
+	{
+		if (validSamples >= Length)
+			return true;
+
+		const auto distanceBehindWriteHead = (index1 - index + Length) % Length;
+		return distanceBehindWriteHead > 0 && distanceBehindWriteHead <= validSamples;
+	}
 
 public:
 	StaticDelayLineFourTap()
 	{
-		SetLength ( maxLength - 1 );
 		Clear();
+		SetLength ( maxLength - 1 );
 	}
 
 	//get ouput and iterate
 	T operator()(T input)
 	{
-		T output = buffer[index1];
+		T output = validSamples >= Length ? buffer[index1] : T {};
 		buffer[index1++] = input;
 		if(index1 >= Length)
 			index1 = 0;
@@ -569,57 +607,61 @@ public:
 			index3 = 0;
 		if(++index4 >= Length)
 			index4 = 0;
+		if (validSamples < Length) ++validSamples;
 		return output;
 
 	}
 
 	void SetIndex (int Index1, int Index2, int Index3, int Index4)
 	{
-		index1 = Index1;
-		index2 = Index2;
-		index3 = Index3;
-		index4 = Index4;
+		index1 = normaliseIndex (Index1);
+		index2 = normaliseIndex (Index2);
+		index3 = normaliseIndex (Index3);
+		index4 = normaliseIndex (Index4);
 	}
 
 
 	T GetIndex (int Index)
 	{
+		int selectedIndex = index1;
 		switch (Index)
 		{
 			case 0:
-				return buffer[index1];
+				selectedIndex = index1;
 				break;
 			case 1:
-				return buffer[index2];
+				selectedIndex = index2;
 				break;
 			case 2:
-				return buffer[index3];
+				selectedIndex = index3;
 				break;
 			case 3:
-				return buffer[index4];
+				selectedIndex = index4;
 				break;
-			default:
-				return buffer[index1];
-				break;
+			default: break;
 		}
+		return isValidIndex (selectedIndex) ? buffer[selectedIndex] : T {};
 	}
 
 
-	void SetLength (int Length)
+	void SetLength (int newLength)
 	{
-		if( Length >= maxLength )
-			Length = maxLength;
-		if( Length < 0 )
-			Length = 0;
-
-		this->Length = Length;
+		const auto clampedLength = juce::jlimit (1, maxLength, newLength);
+		if (clampedLength == Length)
+			return;
+		Length = clampedLength;
+		index1 %= Length;
+		index2 %= Length;
+		index3 %= Length;
+		index4 %= Length;
+		validSamples = juce::jmin (validSamples, Length);
 	}
 
 
 	void Clear()
 	{
-		memset(buffer, 0, sizeof(buffer));
 		index1 = index2  = index3 = index4 = 0;
+		validSamples = 0;
 	}
 
 
@@ -635,20 +677,35 @@ class StaticDelayLineEightTap
 private:
 	T buffer[maxLength];
 	int index1, index2, index3, index4, index5, index6, index7, index8;
-	int Length;
+	int Length = 0;
 	T Feedback;
+	int validSamples;
+
+	[[nodiscard]] int normaliseIndex (int index) const
+	{
+		return ((index % Length) + Length) % Length;
+	}
+
+	[[nodiscard]] bool isValidIndex (int index) const
+	{
+		if (validSamples >= Length)
+			return true;
+
+		const auto distanceBehindWriteHead = (index1 - index + Length) % Length;
+		return distanceBehindWriteHead > 0 && distanceBehindWriteHead <= validSamples;
+	}
 
 public:
 	StaticDelayLineEightTap()
 	{
-		SetLength ( maxLength - 1 );
 		Clear();
+		SetLength ( maxLength - 1 );
 	}
 
 	//get ouput and iterate
 	T operator()(T input)
 	{
-		T output = buffer[index1];
+		T output = validSamples >= Length ? buffer[index1] : T {};
 		buffer[index1++] = input;
 		if(index1 >= Length)
 			index1 = 0;
@@ -666,73 +723,81 @@ public:
 			index7 = 0;
 		if(++index8 >= Length)
 			index8 = 0;
+		if (validSamples < Length) ++validSamples;
 		return output;
 
 	}
 
 	void SetIndex (int Index1, int Index2, int Index3, int Index4, int Index5, int Index6, int Index7, int Index8)
 	{
-		index1 = Index1;
-		index2 = Index2;
-		index3 = Index3;
-		index4 = Index4;
-		index5 = Index5;
-		index6 = Index6;
-		index7 = Index7;
-		index8 = Index8;
+		index1 = normaliseIndex (Index1);
+		index2 = normaliseIndex (Index2);
+		index3 = normaliseIndex (Index3);
+		index4 = normaliseIndex (Index4);
+		index5 = normaliseIndex (Index5);
+		index6 = normaliseIndex (Index6);
+		index7 = normaliseIndex (Index7);
+		index8 = normaliseIndex (Index8);
 	}
 
 
 	T GetIndex (int Index)
 	{
+		int selectedIndex = index1;
 		switch (Index)
 		{
 			case 0:
-				return buffer[index1];
+				selectedIndex = index1;
 				break;
 			case 1:
-				return buffer[index2];
+				selectedIndex = index2;
 				break;
 			case 2:
-				return buffer[index3];
+				selectedIndex = index3;
 				break;
 			case 3:
-				return buffer[index4];
+				selectedIndex = index4;
 				break;
 			case 4:
-				return buffer[index5];
+				selectedIndex = index5;
 				break;
 			case 5:
-				return buffer[index6];
+				selectedIndex = index6;
 				break;
 			case 6:
-				return buffer[index7];
+				selectedIndex = index7;
 				break;
 			case 7:
-				return buffer[index8];
+				selectedIndex = index8;
 				break;
-			default:
-				return buffer[index1];
-				break;
+			default: break;
 		}
+		return isValidIndex (selectedIndex) ? buffer[selectedIndex] : T {};
 	}
 
 
-	void SetLength (int Length)
+	void SetLength (int newLength)
 	{
-		if( Length >= maxLength )
-			Length = maxLength;
-		if( Length < 0 )
-			Length = 0;
-
-		this->Length = Length;
+		const auto clampedLength = juce::jlimit (1, maxLength, newLength);
+		if (clampedLength == Length)
+			return;
+		Length = clampedLength;
+		index1 %= Length;
+		index2 %= Length;
+		index3 %= Length;
+		index4 %= Length;
+		index5 %= Length;
+		index6 %= Length;
+		index7 %= Length;
+		index8 %= Length;
+		validSamples = juce::jmin (validSamples, Length);
 	}
 
 
 	void Clear()
 	{
-		memset(buffer, 0, sizeof(buffer));
 		index1 = index2  = index3 = index4 = index5 = index6 = index7 = index8 = 0;
+		validSamples = 0;
 	}
 
 

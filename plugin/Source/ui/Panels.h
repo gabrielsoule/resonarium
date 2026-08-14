@@ -225,8 +225,8 @@ public:
 
         textColour = juce::Colours::white.withAlpha(0.5f);
 
-        addAndMakeVisible(loopFilterLabel = new juce::Label("loopFilterLabel", "LOOP FILTER"));
-        addAndMakeVisible(postFilterLabel = new juce::Label("postFilterLabel", "POST FILTER"));
+        addControl(this, loopFilterLabel = new juce::Label("loopFilterLabel", "LOOP FILTER"));
+        addControl(this, postFilterLabel = new juce::Label("postFilterLabel", "POST FILTER"));
         loopFilterLabel->setJustificationType(juce::Justification::centred);
         postFilterLabel->setJustificationType(juce::Justification::centred);
         loopFilterLabel->setFont(loopFilterLabel->getFont().withHeight(20).withExtraKerningFactor(0.06f));
@@ -262,20 +262,20 @@ public:
         topControlBracketLabel->setFont(topControlBracketLabel->getFont().withHeight(19).withExtraKerningFactor(0.06f));
         topControlBracketLabel->setEditable(false);
         topControlBracketLabel->setColour(juce::Label::textColourId, textColour);
-        addAndMakeVisible(topControlBracketLabel);
+        addControl(this, topControlBracketLabel);
         topControlBracket = new BracketComponent(BracketComponent::Orientation::top);
-        addAndMakeVisible(topControlBracket);
+        addControl(this, topControlBracket);
         bottomControlBracket = new BracketComponent(BracketComponent::Orientation::bottom);
-        addAndMakeVisible(bottomControlBracket);
+        addControl(this, bottomControlBracket);
         bottomControlBracketLabel = new juce::Label("bottomControlBracketLabel", "CASCADE\nCONTROLS");
         bottomControlBracketLabel->setJustificationType(juce::Justification::centred);
         bottomControlBracketLabel->setFont(
             bottomControlBracketLabel->getFont().withHeight(19).withExtraKerningFactor(0.06f));
         bottomControlBracketLabel->setEditable(false);
         bottomControlBracketLabel->setColour(juce::Label::textColourId, textColour);
-        addAndMakeVisible(bottomControlBracketLabel);
+        addControl(this, bottomControlBracketLabel);
         controlAreaGlow = new GlowComponent();
-        addAndMakeVisible(controlAreaGlow);
+        addControl(this, controlAreaGlow);
         controlAreaGlow->toBack();
 
         watchParam(bankParams.couplingMode);
@@ -490,8 +490,9 @@ public:
 class ADSRParamBox : public gin::ParamBox
 {
 public:
-    ADSRParamBox(const juce::String& name, ResonariumProcessor& proc, ADSRParams adsrParams) :
-        gin::ParamBox(name), proc(proc), adsrParams(adsrParams)
+    ADSRParamBox(const juce::String& name, ResonariumProcessor& proc, ADSRParams adsrParams,
+                 const ResonatorSynth::VisualSnapshot& visualSnapshot) :
+        gin::ParamBox(name), proc(proc), visualSnapshot(visualSnapshot), adsrParams(adsrParams)
     {
         setName("Envelope Box " + juce::String(adsrParams.index + 1));
         addEnable(adsrParams.enabled);
@@ -512,24 +513,18 @@ public:
 
         visualizer = new gin::ADSRComponent();
         visualizer->setParams(adsrParams.attack, adsrParams.decay, adsrParams.sustain, adsrParams.release);
-        visualizer->phaseCallback = [this, adsrParams]
+        visualizer->phaseCallback = [this, adsrParams](std::span<std::pair<int, float>> destination)
         {
-            std::vector<std::pair<int, float>> res;
-
-            if (adsrParams.enabled->isOn())
-            {
-                for (auto v : this->proc.synth.getActiveVoices())
-                    if (auto rv = dynamic_cast<ResonatorVoice*>(v))
-                        res.push_back(rv->polyEnvelopes[adsrParams.index].internalADSR.getCurrentPhase());
-            }
-
-            return res;
+            return adsrParams.enabled->isOn()
+                ? this->visualSnapshot.copyEnvelopePhases(adsrParams.index, destination)
+                : size_t { 0 };
         };
         // addControl(g, 4, 0, 4, 1);
         addControl(visualizer);
     }
 
     ResonariumProcessor& proc;
+    const ResonatorSynth::VisualSnapshot& visualSnapshot;
     gin::ADSRComponent* visualizer;
     ADSRParams adsrParams;
 
@@ -544,8 +539,9 @@ public:
 class LFOParamBox : public gin::ParamBox
 {
 public:
-    LFOParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum, LFOParams lfoParams) :
-        gin::ParamBox(name), proc(proc), lfoParams(lfoParams)
+    LFOParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum, LFOParams lfoParams,
+                const ResonatorSynth::VisualSnapshot& visualSnapshot) :
+        gin::ParamBox(name), proc(proc), visualSnapshot(visualSnapshot), lfoParams(lfoParams)
     {
         jassert(lfoParams.index != -1);
         setName("LFO Box " + juce::String(lfoParams.index + 1));
@@ -579,26 +575,18 @@ public:
                               lfoParams.offset,
                               lfoParams.phase, lfoParams.enabled, lfoParams.stereo);
         jassert(lfoParams.enabled != nullptr);
-        visualizer->phaseCallback = [this, lfoParams]
+        visualizer->phaseCallback = [this, lfoParams](std::span<float> destination)
         {
-            std::vector<float> res;
-
-            if (lfoParams.enabled->isOn())
-            {
-                res.push_back(this->proc.synth.monoLFOs[lfoParams.index].getCurrentPhase(0));
-
-                for (auto v : this->proc.synth.getActiveVoices())
-                    if (auto voice = dynamic_cast<ResonatorVoice*>(v))
-                        res.push_back(voice->polyLFOs[lfoParams.index].getCurrentPhase(0));
-            }
-
-            return res;
+            return lfoParams.enabled->isOn()
+                ? this->visualSnapshot.copyLFOPhases(lfoParams.index, destination)
+                : size_t { 0 };
         };
         addControl(visualizer);
         watchParam(lfoParams.sync);
     }
 
     ResonariumProcessor& proc;
+    const ResonatorSynth::VisualSnapshot& visualSnapshot;
     gin::LFOComponent* visualizer;
     LFOParams lfoParams;
     gin::ParamComponent::Ptr r = nullptr;
@@ -627,8 +615,9 @@ class RandomLFOParamBox : public gin::ParamBox
 {
 public:
     RandomLFOParamBox(const juce::String& name, ResonariumProcessor& proc, int resonatorNum,
-                      RandomLFOParams randomLfoParams) :
-        gin::ParamBox(name), proc(proc), randomLfoParams(randomLfoParams)
+                      RandomLFOParams randomLfoParams,
+                      const ResonatorSynth::VisualSnapshot& visualSnapshot) :
+        gin::ParamBox(name), proc(proc), visualSnapshot(visualSnapshot), randomLfoParams(randomLfoParams)
     {
         setName("Random Box " + juce::String(randomLfoParams.index + 1));
         addEnable(randomLfoParams.enabled);
@@ -653,9 +642,9 @@ public:
 
         visualizer = new RandomLFOComponent(randomLfoParams);
         addControl(visualizer);
-        visualizer->stateCallback = [this, randomLfoParams]
+        visualizer->valueCallback = [this, randomLfoParams]
         {
-            return this->proc.synth.monoRandomLFOs[randomLfoParams.index].centerState.atomicState.load(std::memory_order_relaxed);
+            return this->visualSnapshot.getMonoRandomValue(randomLfoParams.index);
         };
 
         watchParam(randomLfoParams.sync);
@@ -680,17 +669,20 @@ public:
     }
 
     ResonariumProcessor& proc;
+    const ResonatorSynth::VisualSnapshot& visualSnapshot;
     RandomLFOParams randomLfoParams;
     gin::ParamComponent::Ptr r = nullptr;
     gin::ParamComponent::Ptr b = nullptr;
     RandomLFOComponent* visualizer;
 };
 
-class MSEGParamBox : public gin::ParamBox
+class MSEGParamBox : public gin::ParamBox,
+                     private MSEGDataStore::Listener
 {
 public:
-    MSEGParamBox(const juce::String& name, ResonariumProcessor& proc, MSEGParams msegParams) :
-        gin::ParamBox(name), proc(proc), msegParams(msegParams)
+    MSEGParamBox(const juce::String& name, ResonariumProcessor& proc, MSEGParams msegParams,
+                 const ResonatorSynth::VisualSnapshot& visualSnapshot) :
+        gin::ParamBox(name), proc(proc), visualSnapshot(visualSnapshot), msegParams(msegParams)
     {
         setName("MSEG Box " + juce::String(msegParams.index + 1));
 
@@ -714,28 +706,30 @@ public:
         addControl(new gin::Knob(msegParams.ygrid, true), 9, 1);
 
 
-        msegComponent = new gin::MSEGComponent(*proc.synth.monoMSEGs.getReference(msegParams.index).dataPointer);
+        msegParams.msegData->synchroniseEditorData();
+        msegComponent = new gin::MSEGComponent(msegParams.msegData->getEditorData());
         msegComponent->setParams(msegParams.sync, msegParams.rate, msegParams.beat, msegParams.depth, msegParams.offset,
                                  msegParams.phase, msegParams.enabled, msegParams.xgrid, msegParams.ygrid,
                                  msegParams.loop);
-        msegComponent->phaseCallback = [this, msegParams]
+        msegComponent->dataChangedCallback = [dataStore = msegParams.msegData]
         {
-            std::vector<float> res;
-
-            if (msegParams.enabled->isOn())
-            {
-                res.push_back(this->proc.synth.monoMSEGs.getReference(msegParams.index).getCurrentPhase(0));
-
-                for (auto v : this->proc.synth.getActiveVoices())
-                    if (auto voice = dynamic_cast<ResonatorVoice*>(v))
-                        res.push_back(voice->polyMSEGs.getReference(msegParams.index).getCurrentPhase(0));
-            }
-
-            return res;
+            dataStore->commitEditorData();
+        };
+        msegComponent->phaseCallback = [this, msegParams](std::span<float> destination)
+        {
+            return msegParams.enabled->isOn()
+                ? this->visualSnapshot.copyMSEGPhases(msegParams.index, destination)
+                : size_t { 0 };
         };
         addControl(msegComponent);
         msegComponent->setEditable(true);
+        msegParams.msegData->addListener(this);
         watchParam(msegParams.sync);
+    }
+
+    ~MSEGParamBox() override
+    {
+        msegParams.msegData->removeListener(this);
     }
 
     void resized() override
@@ -766,7 +760,13 @@ public:
         }
     }
 
+    void msegEditorDataChanged() override
+    {
+        msegComponent->markDirty();
+    }
+
     ResonariumProcessor& proc;
+    const ResonatorSynth::VisualSnapshot& visualSnapshot;
     MSEGParams msegParams;
     gin::MSEGComponent* msegComponent;
     gin::ParamComponent::Ptr r = nullptr;
@@ -1209,16 +1209,14 @@ public:
     {
         setName("Global Params Box");
         addControl(masterGainKnob = new gin::Knob(globalParams.gain), 0, 0);
-        addControl(polyFXSwitch = new gin::Switch(globalParams.polyEffectChain), 1, 0);
-        addControl(stereoResonatorsSwitch = new gin::Switch(globalParams.stereoResonators), 2, 0);
-        addControl(numVoicesKnob = new gin::Knob(globalParams.numVoices), 3, 0);
+        addControl(stereoResonatorsSwitch = new gin::Switch(globalParams.stereoResonators), 1, 0);
+        addControl(numVoicesKnob = new gin::Knob(globalParams.numVoices), 2, 0);
     }
 
     ResonariumProcessor& proc;
     GlobalParams globalParams;
 
     gin::Knob* masterGainKnob = nullptr;
-    gin::Switch* polyFXSwitch = nullptr;
     gin::Switch* stereoResonatorsSwitch = nullptr;
     gin::Knob* numVoicesKnob = nullptr;
 };

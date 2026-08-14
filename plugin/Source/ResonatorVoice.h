@@ -5,7 +5,6 @@
 
 #include "Exciters.h"
 #include "WaveguideResonatorBank.h"
-#include "dsp/ResonariumEffectChain.h"
 #include "util/RandomLFO.h"
 #include "util/StereoLFOWrapper.h"
 #include "util/StereoMSEGWrapper.h"
@@ -17,7 +16,8 @@ class ResonariumProcessor;
 class ResonatorVoice : public gin::SynthesiserVoice, public gin::ModVoice
 {
 public:
-    ResonatorVoice(GlobalState& state, VoiceParams params);
+    ResonatorVoice(GlobalState& state, VoiceParams params,
+                   WaveguideScratchArena& scratchArena);
     ~ResonatorVoice() override;
     void noteStarted() override;
     void noteStopped(bool allowTailOff) override;
@@ -30,10 +30,16 @@ public:
     void prepare(const juce::dsp::ProcessSpec& spec);
     void updateParameters(int numSamples);
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
+    void renderVoice(gin::VoiceRenderContext& context) override;
+    void voiceRetired(gin::VoiceEndReason reason) override;
     bool isVoiceActive() override;
+
+    [[nodiscard]] VoiceExciterRack& getExciterRackForTesting() noexcept { return exciterRack; }
+    [[nodiscard]] const VoiceExciterRack& getExciterRackForTesting() const noexcept { return exciterRack; }
 
     GlobalState& state;
     VoiceParams params;
+    WaveguideScratchArena& waveguideScratchArena;
     float frequency = 440.0f;
     gin::EasedValueSmoother<float> noteSmoother;
     float currentMidiNote = 64;
@@ -42,25 +48,20 @@ public:
     float gain = 1.0f;
 
     int currentBlockStartSample = 0; //start sample of the current block
+    int currentSourceStartSample = 0; //matching offset in the host/input block
     int currentBlockNumSamples = 64; //num samples in the current block
 
     bool noteReleased = false;
-    int silenceCount = 0;
-    int silenceCountThreshold = 2; //how many quiet samples before we stop the voice?
+    int64_t quietTailSamples = 0;
     int numBlocksSinceNoteOn = 0; // what it says on the tin.
 
-    int testForSilenceBlockPeriod = 15;
-    int testForSilenceBlockCount = 0;
-
     juce::AudioBuffer<float> exciterBuffer; // buffer for exciters to write to, is routed to resonator banks
-    juce::AudioBuffer<float> resonatorBankBuffer; // buffer for resonator banks to write to, is routed to output
     juce::AudioBuffer<float> tempBuffer; // temporary buffer for processing
     juce::AudioBuffer<float> soloBuffer; // if a resonator's solo button is toggled, that resonator's output is routed here
 
     juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> dcBlockers[NUM_RESONATORS];
 
-    juce::OwnedArray<Exciter> exciters;
-    ExternalInputExciter* extInExciter; //alias for the external input exciter which requires some special treatment
+    VoiceExciterRack exciterRack;
 
     std::array<StereoLFOWrapper, NUM_LFOS> polyLFOs;
     std::array<RandomLFO, NUM_RANDOMS> polyRandomLFOs;
@@ -68,7 +69,9 @@ public:
     juce::Array<StereoMSEGWrapper> polyMSEGs; //have to use heap array since mseg has no default constructor,
     juce::NormalisableRange<float> skewedFrequencyRange; //required to appropriately skew the frequency modulation src
 
-    ResonariumEffectChain effectChain;
+    // Constructed/seeding happens off the audio thread. Note starts only
+    // advance this local generator; they never access JUCE's system RNG.
+    juce::Random noteRandom;
 
     bool bypassResonators = false;
 };

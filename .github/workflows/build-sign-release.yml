@@ -9,7 +9,7 @@ on:
       version:
         description: 'Version number (without v prefix)'
         required: true
-        default: '1.0.0'
+        default: '0.1.0'
 
 jobs:
   build-and-release-macos:
@@ -79,12 +79,21 @@ jobs:
           # Instrument plugins
           INSTRUMENT_VST3_PATH="build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3"
           INSTRUMENT_AU_PATH="build/Resonarium_Instrument_artefacts/Release/AU/Resonarium.component"
+          INSTRUMENT_LV2_PATH="build/Resonarium_Instrument_artefacts/Release/LV2/Resonarium.lv2"
+          INSTRUMENT_LV2_BINARY="$INSTRUMENT_LV2_PATH/libResonarium.so"
           INSTRUMENT_STANDALONE_PATH="build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium.app"
           
           # Effect plugins
           EFFECT_VST3_PATH="build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3"
           EFFECT_AU_PATH="build/Resonarium_Effect_artefacts/Release/AU/Resonarium Effect.component"
+          EFFECT_LV2_PATH="build/Resonarium_Effect_artefacts/Release/LV2/Resonarium Effect.lv2"
+          EFFECT_LV2_BINARY="$EFFECT_LV2_PATH/libResonarium Effect.so"
           EFFECT_STANDALONE_PATH="build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect.app"
+
+          test -d "$INSTRUMENT_LV2_PATH"
+          test -d "$EFFECT_LV2_PATH"
+          test -f "$INSTRUMENT_LV2_BINARY"
+          test -f "$EFFECT_LV2_BINARY"
           
           # Sign all formats with the same options
           echo "Signing Instrument VST3..."
@@ -92,6 +101,9 @@ jobs:
           
           echo "Signing Instrument AU..."
           codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$INSTRUMENT_AU_PATH" --deep --strict --options=runtime --timestamp
+
+          echo "Signing Instrument LV2..."
+          codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$INSTRUMENT_LV2_BINARY" --strict --options=runtime --timestamp
           
           echo "Signing Instrument Standalone..."
           codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$INSTRUMENT_STANDALONE_PATH" --deep --strict --options=runtime --timestamp
@@ -101,6 +113,9 @@ jobs:
           
           echo "Signing Effect AU..."
           codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$EFFECT_AU_PATH" --deep --strict --options=runtime --timestamp
+
+          echo "Signing Effect LV2..."
+          codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$EFFECT_LV2_BINARY" --strict --options=runtime --timestamp
           
           echo "Signing Effect Standalone..."
           codesign --force -s "Developer ID Application: Gabriel Soule (K2AXHVS6MZ)" -v "$EFFECT_STANDALONE_PATH" --deep --strict --options=runtime --timestamp
@@ -111,6 +126,9 @@ jobs:
           
           echo "Verifying Instrument AU..."
           codesign --verify --verbose "$INSTRUMENT_AU_PATH"
+
+          echo "Verifying Instrument LV2..."
+          codesign --verify --verbose "$INSTRUMENT_LV2_BINARY"
           
           echo "Verifying Instrument Standalone..."
           codesign --verify --verbose "$INSTRUMENT_STANDALONE_PATH"
@@ -120,12 +138,16 @@ jobs:
           
           echo "Verifying Effect AU..."
           codesign --verify --verbose "$EFFECT_AU_PATH"
+
+          echo "Verifying Effect LV2..."
+          codesign --verify --verbose "$EFFECT_LV2_BINARY"
           
           echo "Verifying Effect Standalone..."
           codesign --verify --verbose "$EFFECT_STANDALONE_PATH"
 
       - name: Create ZIP archives
         run: |
+          set -euo pipefail
           VERSION=${{ steps.get_version.outputs.VERSION }}
           
           # Create separate ZIP archives for Instrument and Effect
@@ -135,19 +157,26 @@ jobs:
           # Create directories for the plugins
           mkdir -p instrument_package/VST3
           mkdir -p instrument_package/Components
+          mkdir -p instrument_package/LV2
           mkdir -p instrument_package/Standalone
           
           mkdir -p effect_package/VST3
           mkdir -p effect_package/Components
+          mkdir -p effect_package/LV2
           mkdir -p effect_package/Standalone
+
+          test -d "build/Resonarium_Instrument_artefacts/Release/LV2/Resonarium.lv2"
+          test -d "build/Resonarium_Effect_artefacts/Release/LV2/Resonarium Effect.lv2"
           
           # Copy the plugins to their respective directories
           cp -R "build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3" instrument_package/VST3/
           cp -R "build/Resonarium_Instrument_artefacts/Release/AU/Resonarium.component" instrument_package/Components/
+          cp -R "build/Resonarium_Instrument_artefacts/Release/LV2/Resonarium.lv2" instrument_package/LV2/
           cp -R "build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium.app" instrument_package/Standalone/
           
           cp -R "build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3" effect_package/VST3/
           cp -R "build/Resonarium_Effect_artefacts/Release/AU/Resonarium Effect.component" effect_package/Components/
+          cp -R "build/Resonarium_Effect_artefacts/Release/LV2/Resonarium Effect.lv2" effect_package/LV2/
           cp -R "build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect.app" effect_package/Standalone/
           
           # Create ZIP archives
@@ -270,6 +299,7 @@ jobs:
       - name: Create ZIP archives
         shell: bash
         run: |
+          set -euo pipefail
           VERSION="${{ steps.get_version.outputs.VERSION }}"
 
           # File names
@@ -277,14 +307,19 @@ jobs:
           EFFECT_ZIP_NAME="Resonarium-Effect-${VERSION}-Linux.zip"
 
           # Staging folders
-          mkdir -p instrument_package/VST3 instrument_package/Standalone
-          mkdir -p effect_package/VST3     effect_package/Standalone
+          mkdir -p instrument_package/VST3 instrument_package/LV2 instrument_package/Standalone
+          mkdir -p effect_package/VST3     effect_package/LV2     effect_package/Standalone
+
+          test -d "build/Resonarium_Instrument_artefacts/Release/LV2/Resonarium.lv2"
+          test -d "build/Resonarium_Effect_artefacts/Release/LV2/Resonarium Effect.lv2"
 
           # Copy build artefacts (adjust paths if they ever change)
           cp -R "build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3"              instrument_package/VST3/
+          cp -R "build/Resonarium_Instrument_artefacts/Release/LV2/Resonarium.lv2"                instrument_package/LV2/
           cp    "build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium"             instrument_package/Standalone/
 
           cp -R "build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3"           effect_package/VST3/
+          cp -R "build/Resonarium_Effect_artefacts/Release/LV2/Resonarium Effect.lv2"             effect_package/LV2/
           cp    "build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect"          effect_package/Standalone/
 
           # Compress
@@ -299,8 +334,8 @@ jobs:
           path: |
             Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-Linux.zip
             Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Linux.zip
-  
-  
+
+
 
   build-and-release-windows:
     permissions:
@@ -364,6 +399,7 @@ jobs:
       - name: Create ZIP archives
         shell: powershell
         run: |
+          $ErrorActionPreference = "Stop"
           $VERSION = "${{ steps.get_version.outputs.VERSION }}"
           
           # File names
@@ -372,14 +408,27 @@ jobs:
           
           # Staging folders
           mkdir -Force instrument_package/VST3
+          mkdir -Force instrument_package/LV2
           mkdir -Force instrument_package/Standalone
           mkdir -Force effect_package/VST3
+          mkdir -Force effect_package/LV2
           mkdir -Force effect_package/Standalone
+
+          $instrumentLv2 = "build/Resonarium_Instrument_artefacts/Release/LV2/Resonarium.lv2"
+          $effectLv2 = "build/Resonarium_Effect_artefacts/Release/LV2/Resonarium Effect.lv2"
+          if (-not (Test-Path -LiteralPath $instrumentLv2 -PathType Container)) {
+            throw "Instrument LV2 bundle was not found at $instrumentLv2"
+          }
+          if (-not (Test-Path -LiteralPath $effectLv2 -PathType Container)) {
+            throw "Effect LV2 bundle was not found at $effectLv2"
+          }
           
           # Copy build artefacts (adjust paths if needed)
           Copy-Item -Path "build/Resonarium_Instrument_artefacts/Release/VST3/Resonarium.vst3"             -Destination "instrument_package/VST3/"      -Recurse
+          Copy-Item -LiteralPath $instrumentLv2                                                          -Destination "instrument_package/LV2/"       -Recurse
           Copy-Item -Path "build/Resonarium_Instrument_artefacts/Release/Standalone/Resonarium.exe"        -Destination "instrument_package/Standalone" -Recurse
           Copy-Item -Path "build/Resonarium_Effect_artefacts/Release/VST3/Resonarium Effect.vst3"           -Destination "effect_package/VST3/"         -Recurse
+          Copy-Item -LiteralPath $effectLv2                                                              -Destination "effect_package/LV2/"          -Recurse
           Copy-Item -Path "build/Resonarium_Effect_artefacts/Release/Standalone/Resonarium Effect.exe"     -Destination "effect_package/Standalone"    -Recurse
           
           # Compress
@@ -420,12 +469,12 @@ jobs:
           merge-multiple: false
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.get_version.outputs.VERSION }}
-          name: Resonarium ${{ steps.get_version.outputs.VERSION }}
+          name: Resonarium ${{ steps.get_version.outputs.VERSION }} Beta
           draft: false
-          prerelease: false
+          prerelease: true
           files: |
             macos-packages/Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
             macos-packages/Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-macOS-notarized.zip
@@ -433,5 +482,6 @@ jobs:
             windows-packages/Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Windows.zip
             linux-packages/Resonarium-Instrument-${{ steps.get_version.outputs.VERSION }}-Linux.zip       
             linux-packages/Resonarium-Effect-${{ steps.get_version.outputs.VERSION }}-Linux.zip
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

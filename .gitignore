@@ -31,9 +31,16 @@
 *.out
 *.app
 
+# Python caches
+__pycache__/
+*.py[cod]
+
 .DS_Store
 
 Builds
+build/
+build-*/
+.cache/
 cmake-build-debug
 .idea/
 

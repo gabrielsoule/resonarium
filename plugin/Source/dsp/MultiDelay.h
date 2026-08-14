@@ -1,7 +1,9 @@
 #ifndef MULTIDELAY_H
 #define MULTIDELAY_H
 
-#include <chowdsp_dsp_utils/chowdsp_dsp_utils.h>
+#include "DelayLine.h"
+
+#include <juce_dsp/juce_dsp.h>
 /**
 * A delay effect with a continuous blend between stereo and ping-pong modes.
 * Supports smooth delay time modulation with high-quality interpolation.
@@ -25,79 +27,35 @@ public:
     template <typename ProcessContext>
     void process(ProcessContext& context) noexcept
     {
-        // For debugging, forceWy ping-pong onOkay
-        // pingPongEnabled = true;
-        
         auto& inputBlock = context.getInputBlock();
         auto& outputBlock = context.getOutputBlock();
-        auto numChannels = inputBlock.getNumChannels();
-        auto numSamples = inputBlock.getNumSamples();
+        jassert(inputBlock.getNumChannels() == 2);
+        jassert(outputBlock.getNumChannels() == 2);
 
-        jassert(numChannels == 2);
+        const auto numSamples = inputBlock.getNumSamples();
+        const auto* inputL = inputBlock.getChannelPointer(0);
+        const auto* inputR = inputBlock.getChannelPointer(1);
+        auto* outputL = outputBlock.getChannelPointer(0);
+        auto* outputR = outputBlock.getChannelPointer(1);
+        const bool stationary = !delayTimeSmoothL.isSmoothing() && !delayTimeSmoothR.isSmoothing();
 
-        for (size_t i = 0; i < numSamples; ++i)
-        {            
-            // Update smoothed delay times
-            const float smoothedTimeL = delayTimeSmoothL.getNextValue();
-            const float smoothedTimeR = delayTimeSmoothR.getNextValue();
-            
-            // Get input samples
-            const float leftIn = inputBlock.getSample(0, i);
-            const float rightIn = inputBlock.getSample(1, i);
-
-            // Read from delay line - use smooth modulation
-            const float leftDelay = delayLine.popSample(0, smoothedTimeL * sampleRate, true);
-            const float rightDelay = delayLine.popSample(1, smoothedTimeR * sampleRate, true);
-
-            float leftDelayInput, rightDelayInput;
-            
-            if (pingPongEnabled)
-            {
-                // The simple ping-pong implementation:
-                
-                // 1. Convert input to mono
-                const float monoInput = (leftIn + rightIn) * 0.5f;
-                
-                // 2. Send mono input to the LEFT channel only
-                // (We could choose either channel, but let's use left as the starting point)
-                
-                // 3. Cross-feedback: swap the channels in the feedback path
-                const float leftFeedback = rightDelay * feedbackL;  // Left gets feedback from RIGHT
-                const float rightFeedback = leftDelay * feedbackR;  // Right gets feedback from LEFT
-                
-                // 4. Apply input to left channel only, both channels get cross-feedback
-                leftDelayInput = monoInput + leftFeedback;   // Left gets mono input + right's feedback
-                rightDelayInput = rightFeedback;             // Right only gets feedback from left
-            }
+        if (pingPongEnabled)
+        {
+            if (stationary)
+                processSamples<true, true>(inputL, inputR, outputL, outputR, numSamples);
             else
-            {
-                // Normal stereo delay (no ping-pong)
-                const float leftFeedback = leftDelay * feedbackL;
-                const float rightFeedback = rightDelay * feedbackR;
-                
-                leftDelayInput = leftIn + leftFeedback;
-                rightDelayInput = rightIn + rightFeedback;
-            }
-            
-            // Push new samples to delay line
-            delayLine.pushSample(0, leftDelayInput);
-            delayLine.pushSample(1, rightDelayInput);
-
-            // Use the original delayed signals for wet output
-            const float leftWet = leftDelay;
-            const float rightWet = rightDelay;
-            
-            // Mix dry and wet signals
-            const float leftOut = leftIn * (1.0f - mixL) + leftWet * mixL;
-            const float rightOut = rightIn * (1.0f - mixR) + rightWet * mixR;
-
-            // Write output
-            outputBlock.setSample(0, i, leftOut);
-            outputBlock.setSample(1, i, rightOut);
+                processSamples<true, false>(inputL, inputR, outputL, outputR, numSamples);
+        }
+        else
+        {
+            if (stationary)
+                processSamples<false, true>(inputL, inputR, outputL, outputR, numSamples);
+            else
+                processSamples<false, false>(inputL, inputR, outputL, outputR, numSamples);
         }
     }
 
-    float sampleRate;
+    float sampleRate = 44100.0f;
     float maxDelayInSeconds;
     bool pingPongEnabled;
     float feedbackL;
@@ -108,8 +66,62 @@ public:
     float mixR;
 
 private:
-    // Use higher quality interpolation (5th order Lagrange) for better results during modulation
-    chowdsp::DelayLine<float, chowdsp::DelayLineInterpolationTypes::Lagrange5th> delayLine;
+    template <bool PingPong, bool Stationary>
+    void processSamples(const float* inputL, const float* inputR,
+                        float* outputL, float* outputR, size_t numSamples) noexcept
+    {
+        const auto dryL = 1.0f - mixL;
+        const auto dryR = 1.0f - mixR;
+
+        if constexpr (Stationary)
+        {
+            delayLineL.setDelay(delayTimeSmoothL.getTargetValue() * sampleRate);
+            delayLineR.setDelay(delayTimeSmoothR.getTargetValue() * sampleRate);
+        }
+
+        for (size_t i = 0; i < numSamples; ++i)
+        {
+            float leftDelay = 0.0f;
+            float rightDelay = 0.0f;
+            if constexpr (Stationary)
+            {
+                leftDelay = delayLineL.popSample(0);
+                rightDelay = delayLineR.popSample(0);
+            }
+            else
+            {
+                leftDelay = delayLineL.popSample(0, delayTimeSmoothL.getNextValue() * sampleRate, true);
+                rightDelay = delayLineR.popSample(0, delayTimeSmoothR.getNextValue() * sampleRate, true);
+            }
+
+            const auto leftIn = inputL[i];
+            const auto rightIn = inputR[i];
+            float leftDelayInput = 0.0f;
+            float rightDelayInput = 0.0f;
+
+            if constexpr (PingPong)
+            {
+                const auto monoInput = (leftIn + rightIn) * 0.5f;
+                leftDelayInput = monoInput + rightDelay * feedbackL;
+                rightDelayInput = leftDelay * feedbackR;
+            }
+            else
+            {
+                leftDelayInput = leftIn + leftDelay * feedbackL;
+                rightDelayInput = rightIn + rightDelay * feedbackR;
+            }
+
+            delayLineL.pushSample(0, leftDelayInput);
+            delayLineR.pushSample(0, rightDelayInput);
+            outputL[i] = leftIn * dryL + leftDelay * mixL;
+            outputR[i] = rightIn * dryR + rightDelay * mixR;
+        }
+    }
+
+    // Preserve the original fifth-order interpolation used for smooth
+    // effect-delay modulation. Resonator waveguides use the default third order.
+    resonarium::DelayLine<float, resonarium::DelayInterpolation::lagrange5th> delayLineL;
+    resonarium::DelayLine<float, resonarium::DelayInterpolation::lagrange5th> delayLineR;
     
     // Use juce::SmoothedValue to smooth delay time changes
     juce::SmoothedValue<float> delayTimeSmoothL;

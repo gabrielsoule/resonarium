@@ -9,9 +9,14 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 {
     setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
     setLookAndFeel(p.processorOptions.lookAndFeel.get());
-    auto voiceParams = proc.synth.params.voiceParams;
     titleBar.menuButton.setVisible(false);
     tooltipWindow.setMillisecondsBeforeTipAppears(500);
+
+    // The scheduler must exist before any tab page is built: page factories
+    // register their visualizers with it as they run.
+    createUIUpdateScheduler();
+
+    auto voiceParams = proc.synth.params.voiceParams;
 
     titleBarDropShadow = std::make_unique<TitleBarDropShadow>();
     titleBarDropShadow->setBounds(0, 0, 400, 40);
@@ -59,13 +64,10 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     scope->setBounds(880, 5, 220, 30);
     addAndMakeVisible(*scope);
 
-    for (int i = 0; i < NUM_RESONATOR_BANKS; i++)
-    {
-        auto& wrb = resonatorBankParamBoxes.emplace_back(std::make_unique<WaveguideResonatorBankParamBox_V2>(
-            "Waveguide Bank " + std::to_string(i + 1), proc, i, voiceParams.waveguideResonatorBankParams[i]));
-        wrb->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
-        addAndMakeVisible(*wrb);
-    }
+    resonatorBankPages = std::make_unique<LazyTabbedPages>(
+        *this, uiParams.resonatorBankSelect,
+        [this](int index) { return createResonatorBankPage(index); },
+        [this](std::unique_ptr<juce::Component> page) { disposeTabPage(std::move(page)); });
 
     juce::Rectangle<int> excitersColumn = juce::Rectangle<int>(0,
                                                           40,
@@ -93,19 +95,18 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     sampleExciterParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_LARGE_HEIGHT));
     excitersViewportContentComponent->addAndMakeVisible(*sampleExciterParamBox);
 
-    if(proc.globalState.samplePath.isNotEmpty())
-    {
-        DBG(proc.globalState.logPrefix + "Editor: Loading preset sample from " + proc.globalState.samplePath);
-        juce::File file = juce::File(proc.globalState.samplePath);
-        sampleExciterParamBox->sampleDropper->loadFile(file);
-    } else
-    {
-        DBG(proc.globalState.logPrefix + "Editor: No sample path found in preset, skipping");
-    }
-
-    extInParamBox = std::make_unique<ExternalInputExciterParamBox>("External In", proc, voiceParams.externalInputExciterParams);
+    const bool instrumentLv2HasNoInput = proc.wrapperType == juce::AudioProcessor::wrapperType_LV2
+                                         && proc.getMainBusNumInputChannels() == 0;
+    const auto externalInputTitle = instrumentLv2HasNoInput
+                                        ? "External In (unavailable in Instrument LV2)"
+                                        : "External In";
+    extInParamBox = std::make_unique<ExternalInputExciterParamBox>(externalInputTitle, proc, voiceParams.externalInputExciterParams);
     extInParamBox->setBounds(excitersColumnLocal.removeFromTop(PARAM_BOX_MEDIUM_HEIGHT));
     excitersViewportContentComponent->addAndMakeVisible(*extInParamBox);
+    if (instrumentLv2HasNoInput)
+    {
+        extInParamBox->setEnabled(false);
+    }
 
     float scrollableAreaFinalHeight = excitersColumnLocal.getY();
     excitersViewportContentComponent->setBounds(excitersViewportContentComponent->getBounds().withHeight(scrollableAreaFinalHeight + PARAM_BOX_XSMALL_HEIGHT));
@@ -120,63 +121,30 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     addAndMakeVisible(*excitersViewport);
 
 
-    for (int i = 0; i < NUM_ENVELOPES; i++)
+    auto makeDisposer = [this]
     {
-        auto& ptr = envelopeParamBoxes.emplace_back(std::make_unique<ADSRParamBox>(
-            "ENV " + std::to_string(i + 1), proc, proc.synth.params.adsrParams[i]));
-        addAndMakeVisible(*ptr);
-        ptr->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT, MODULATION_BOX_WIDTH,
-                       PARAM_BOX_XSMALL_HEIGHT);
-    }
+        return [this](std::unique_ptr<juce::Component> page) { disposeTabPage(std::move(page)); };
+    };
 
-    for (int i = 0; i < NUM_RANDOMS; i++)
-    {
-        auto& ptr = randomLfoParamBoxes.emplace_back(std::make_unique<RandomLFOParamBox>(
-            "RAND " + std::to_string(i + 1), proc, i, proc.synth.params.randomLfoParams[i]));
-        addAndMakeVisible(*ptr);
-        ptr->setBounds(
-            EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
-            MODULATION_BOX_WIDTH,
-            PARAM_BOX_XSMALL_HEIGHT);
-    }
+    envelopePages = std::make_unique<LazyTabbedPages>(
+        *this, uiParams.adsrSelect,
+        [this](int index) { return createEnvelopePage(index); }, makeDisposer());
 
-    for (int i = 0; i < NUM_LFOS; i++)
-    {
-        auto& ptr = lfoParamBoxes.emplace_back(std::make_unique<LFOParamBox>(
-            "LFO " + std::to_string(i + 1), proc, i, voiceParams.lfoParams[i]));
-        addAndMakeVisible(*ptr);
-        ptr->setBounds(
-            EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
-            MODULATION_BOX_WIDTH, PARAM_BOX_XSMALL_HEIGHT);
-    }
+    randomLfoPages = std::make_unique<LazyTabbedPages>(
+        *this, uiParams.randomLfoSelect,
+        [this](int index) { return createRandomLfoPage(index); }, makeDisposer());
 
-    for (int i = 0; i < NUM_MSEGS; i++)
-    {
-        auto& ptr = msegParamBoxes.emplace_back(std::make_unique<MSEGParamBox>(
-            "MSEG " + std::to_string(i + 1), proc, proc.synth.params.msegParams[i]));
-        addAndMakeVisible(*ptr);
-        ptr->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT,
-                       MODULATION_BOX_WIDTH - 1,
-                       PARAM_BOX_XSMALL_HEIGHT * 1.5f);
-    }
+    lfoPages = std::make_unique<LazyTabbedPages>(
+        *this, uiParams.lfoSelect,
+        [this](int index) { return createLfoPage(index); }, makeDisposer());
 
-    macroParamBox = std::make_unique<MacroParamBox>("MACROS", proc, proc.synth.params.macroParams);
-    addAndMakeVisible(*macroParamBox);
-    macroParamBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
-                         40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH - 1,
-                         PARAM_BOX_XSMALL_HEIGHT * 1.5f);
+    msegPages = std::make_unique<LazyTabbedPages>(
+        *this, uiParams.msegSelect,
+        [this](int index) { return createMsegPage(index); }, makeDisposer());
 
-    matrixParamBox = std::make_unique<MatrixParamBox>("MATRIX", proc);
-    addAndMakeVisible(*matrixParamBox);
-    matrixParamBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
-                         40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH - 1,
-                         PARAM_BOX_XSMALL_HEIGHT * 1.5f);
-
-    modSourceParamBox = std::make_unique<ModSourceParamBox>("SOURCES", proc);
-    addAndMakeVisible(*modSourceParamBox);
-    modSourceParamBox->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
-                         40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f, MODULATION_BOX_WIDTH - 1,
-                         PARAM_BOX_XSMALL_HEIGHT * 1.5f);
+    modWindowPages = std::make_unique<LazyTabbedPages>(
+        *this, uiParams.modWindowSelect,
+        [this](int index) { return createModWindowPage(index); }, makeDisposer());
 
     //Set up the scrollable effects column
     juce::Rectangle<int> effectsColumn = juce::Rectangle<int>(EXCITER_BOX_WIDTH + 1 + RESONATOR_BANK_BOX_WIDTH + 1,
@@ -273,14 +241,10 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
         if (!uiParams.bypassResonators->isOn())
         {
             uiParams.bypassResonators->setValue(1.0f);
-            proc.globalState.bypassResonators = true;
-            DBG("Bypassing resonators!");
         }
         else
         {
             uiParams.bypassResonators->setValue(0.0f);
-            proc.globalState.bypassResonators = false;
-            DBG("No longer bypassing resonators!");
         }
     };
     addAndMakeVisible(captureButton);
@@ -336,18 +300,182 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
     this->ResonariumEditor::resized();
 #endif
 
-    juce::Timer::callAfterDelay(300, [this] {showOnboardingWarning();});
+    juce::Timer::callAfterDelay(300, [safeThis = juce::Component::SafePointer<ResonariumEditor>(this)]
+    {
+        if (safeThis != nullptr)
+            safeThis->showOnboardingWarning();
+    });
+
+    configureFixedUIUpdates();
     DBG("Done setting up ResonariumEditor!");
 }
 
 ResonariumEditor::~ResonariumEditor()
 {
-    if (scope != nullptr)
-        scope->stopTimer();
+    uiUpdates.reset();
+    setVisualConsumersActive(false);
 
     settingsPanel.reset();
 
     DBG("Deleting editor...");
+}
+
+void ResonariumEditor::setVisualConsumersActive(bool active) noexcept
+{
+    if (active == visualConsumersActive)
+        return;
+
+    visualConsumersActive = active;
+    if (active)
+    {
+        proc.synth.acquireVisualConsumer();
+        proc.acquireScopeConsumer();
+    }
+    else
+    {
+        proc.releaseScopeConsumer();
+        proc.synth.releaseVisualConsumer();
+    }
+}
+
+void ResonariumEditor::createUIUpdateScheduler()
+{
+    uiUpdates = std::make_unique<UIUpdateScheduler>(*this);
+    uiUpdates->setOwnerVisibilityCallback([this](bool visible)
+    {
+        setVisualConsumersActive(visible);
+    });
+    uiUpdates->setFrameBeginCallback([this]
+    {
+        static_cast<void>(proc.synth.copyVisualSnapshot(visualSnapshot));
+        proc.globalState.modMatrix.publishLiveValuesFrame();
+    });
+}
+
+void ResonariumEditor::configureFixedUIUpdates()
+{
+    usage.setInternalTimerEnabled(false);
+    modOverview.setInternalTimerEnabled(false);
+    titleBar.setInternalTimerEnabled(false);
+    scope->setInternalTimerEnabled(false);
+
+    uiUpdates->add(usage, UIUpdateScheduler::Rate::hz4, [this]
+    {
+        usage.updateFromSnapshot(visualSnapshot.getVoiceTelemetry(), visualSnapshot.getCpuUsage());
+    });
+    uiUpdates->add(modOverview, UIUpdateScheduler::Rate::hz60,
+                   [this] { modOverview.updateFromTimer(); });
+    uiUpdates->add(titleBar, UIUpdateScheduler::Rate::hz30,
+                   [this] { titleBar.updateFromTimer(); });
+    uiUpdates->add(*scope, UIUpdateScheduler::Rate::hz30,
+                   [this] { scope->updateFromTimer(); });
+    uiUpdates->add(*sampleExciterParamBox->sampleDropper, UIUpdateScheduler::Rate::hz10,
+                   [this] { sampleExciterParamBox->sampleDropper->updateFromTimer(); });
+}
+
+std::unique_ptr<juce::Component> ResonariumEditor::createResonatorBankPage(int index)
+{
+    auto box = std::make_unique<WaveguideResonatorBankParamBox_V2>(
+        "Waveguide Bank " + std::to_string(index + 1), proc, index,
+        proc.synth.params.voiceParams.waveguideResonatorBankParams[index]);
+    box->setBounds(EXCITER_BOX_WIDTH + 1, 40, RESONATOR_BANK_BOX_WIDTH, RESONATOR_BANK_BOX_HEIGHT);
+    return box;
+}
+
+std::unique_ptr<juce::Component> ResonariumEditor::createEnvelopePage(int index)
+{
+    auto box = std::make_unique<ADSRParamBox>(
+        "ENV " + std::to_string(index + 1), proc, proc.synth.params.adsrParams[index], visualSnapshot);
+    box->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT, MODULATION_BOX_WIDTH,
+                   PARAM_BOX_XSMALL_HEIGHT);
+
+    box->visualizer->setInternalTimerEnabled(false);
+    uiUpdates->add(*box->visualizer, UIUpdateScheduler::Rate::hz30,
+                   [visualizer = box->visualizer] { visualizer->updateFromTimer(); });
+    return box;
+}
+
+std::unique_ptr<juce::Component> ResonariumEditor::createRandomLfoPage(int index)
+{
+    auto box = std::make_unique<RandomLFOParamBox>(
+        "RAND " + std::to_string(index + 1), proc, index, proc.synth.params.randomLfoParams[index], visualSnapshot);
+    box->setBounds(EXCITER_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
+                   MODULATION_BOX_WIDTH, PARAM_BOX_XSMALL_HEIGHT);
+
+    uiUpdates->add(*box->visualizer, UIUpdateScheduler::Rate::hz30,
+                   [visualizer = box->visualizer] { visualizer->updateFromTimer(); });
+    return box;
+}
+
+std::unique_ptr<juce::Component> ResonariumEditor::createLfoPage(int index)
+{
+    auto box = std::make_unique<LFOParamBox>(
+        "LFO " + std::to_string(index + 1), proc, index, proc.synth.params.voiceParams.lfoParams[index],
+        visualSnapshot);
+    box->setBounds(EXCITER_BOX_WIDTH + 1,
+                   40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT + PARAM_BOX_XSMALL_HEIGHT,
+                   MODULATION_BOX_WIDTH, PARAM_BOX_XSMALL_HEIGHT);
+
+    box->visualizer->setInternalTimerEnabled(false);
+    uiUpdates->add(*box->visualizer, UIUpdateScheduler::Rate::hz30,
+                   [visualizer = box->visualizer] { visualizer->updateFromTimer(); });
+    return box;
+}
+
+std::unique_ptr<juce::Component> ResonariumEditor::createMsegPage(int index)
+{
+    auto box = std::make_unique<MSEGParamBox>(
+        "MSEG " + std::to_string(index + 1), proc, proc.synth.params.msegParams[index], visualSnapshot);
+    box->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1, 40 + RESONATOR_BANK_BOX_HEIGHT,
+                   MODULATION_BOX_WIDTH - 1, PARAM_BOX_XSMALL_HEIGHT * 1.5f);
+
+    box->msegComponent->setInternalTimerEnabled(false);
+    uiUpdates->add(*box->msegComponent, UIUpdateScheduler::Rate::hz30,
+                   [visualizer = box->msegComponent] { visualizer->updateFromTimer(); });
+    return box;
+}
+
+std::unique_ptr<juce::Component> ResonariumEditor::createModWindowPage(int index)
+{
+    std::unique_ptr<gin::ParamBox> box;
+    if (index == 0)
+        box = std::make_unique<MacroParamBox>("MACROS", proc, proc.synth.params.macroParams);
+    else if (index == 1)
+        box = std::make_unique<ModSourceParamBox>("SOURCES", proc);
+    else
+        box = std::make_unique<MatrixParamBox>("MATRIX", proc);
+
+    box->setBounds(EXCITER_BOX_WIDTH + 1 + MODULATION_BOX_WIDTH + 1,
+                   40 + RESONATOR_BANK_BOX_HEIGHT + PARAM_BOX_XSMALL_HEIGHT * 1.5f,
+                   MODULATION_BOX_WIDTH - 1, PARAM_BOX_XSMALL_HEIGHT * 1.5f);
+    return box;
+}
+
+void ResonariumEditor::disposeTabPage(std::unique_ptr<juce::Component> page)
+{
+    if (page == nullptr)
+        return;
+
+    if (isDragAndDropActive())
+        retiredTabPages.push_back(std::move(page));
+    else
+        page.reset();
+}
+
+void ResonariumEditor::dragOperationEnded(const juce::DragAndDropTarget::SourceDetails& details)
+{
+    juce::DragAndDropContainer::dragOperationEnded(details);
+
+    if (retiredTabPages.empty())
+        return;
+
+    // The drag source's mouse-up is still on the call stack; free the parked
+    // pages once it has fully unwound.
+    juce::MessageManager::callAsync([safeThis = juce::Component::SafePointer<ResonariumEditor>(this)]
+    {
+        if (safeThis != nullptr)
+            safeThis->retiredTabPages.clear();
+    });
 }
 
 void ResonariumEditor::paint(juce::Graphics& g)
@@ -391,6 +519,8 @@ void ResonariumEditor::showSettingsMenu()
     // If already exists, just show it
     if (settingsPanel != nullptr)
     {
+        if (uiUpdates != nullptr)
+            uiUpdates->setSuspended(true);
         settingsPanel->show();
         return;
     }
@@ -404,9 +534,13 @@ void ResonariumEditor::showSettingsMenu()
         if (settingsPanel != nullptr)
         {
             settingsPanel->hide();
+            if (uiUpdates != nullptr)
+                uiUpdates->setSuspended(false);
         }
     };
 
     // Show the panel
+    if (uiUpdates != nullptr)
+        uiUpdates->setSuspended(true);
     settingsPanel->show();
 }

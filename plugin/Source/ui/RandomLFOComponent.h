@@ -2,35 +2,32 @@
 
 #include "../Parameters.h"
 
-class RandomLFOComponent : public juce::Component, private juce::Timer
+#include <array>
+
+class RandomLFOComponent : public juce::Component
 {
 public:
     RandomLFOComponent(RandomLFOParams params);
-    ~RandomLFOComponent() override;
+    ~RandomLFOComponent() override = default;
 
     void resized() override;
     void paint(juce::Graphics& g) override;
+    void updateFromTimer();
 
-    std::function<float()> stateCallback;
+    std::function<float()> valueCallback;
 
 private:
-    // Timer callback for updating the curve
-    void timerCallback() override;
-
-    // Generates a random value between -1 and 1
-    float generateRandomValue();
-
     // Converts a value in the range [-1, 1] to a Y-coordinate
     float valueToY(float value);
 
     // Creates the path for the waveform using the curve buffer
     void createPath();
 
-    std::vector<float> curveBuffer;
+    static constexpr size_t maxCurvePoints = 2048;
+    std::array<float, maxCurvePoints> curveBuffer {};
     size_t bufferIndex = 0;
     size_t bufferSize = 0;
     juce::Path path;
-    juce::Random random;
     RandomLFOParams params;
 
     int scalingFactor = 2;

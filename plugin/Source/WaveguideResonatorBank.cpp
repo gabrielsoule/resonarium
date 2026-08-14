@@ -1,285 +1,264 @@
 #include "WaveguideResonatorBank.h"
 #include "ResonatorVoice.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+
+void WaveguideScratchArena::prepare(const juce::dsp::ProcessSpec& spec)
+{
+    maximumBlockSamples = static_cast<int>(spec.maximumBlockSize);
+    jassert(static_cast<int>(spec.numChannels) >= channelCount);
+    jassert(maximumBlockSamples > 0);
+
+    if (static_cast<int>(spec.numChannels) < channelCount || maximumBlockSamples <= 0)
+    {
+        storage.clear();
+        regionChannels = {};
+        maximumBlockSamples = 0;
+        channelStrideSamples = 0;
+        prepared = false;
+        return;
+    }
+
+    constexpr int alignmentSamples = static_cast<int>(storageAlignment / sizeof(float));
+    static_assert(storageAlignment % sizeof(float) == 0);
+    static_assert((alignmentSamples & (alignmentSamples - 1)) == 0);
+    channelStrideSamples = (maximumBlockSamples + alignmentSamples - 1) & ~(alignmentSamples - 1);
+    storage.assign(static_cast<std::size_t>(regionCount * channelCount * channelStrideSamples), 0.0f);
+
+    for (int region = 0; region < regionCount; ++region)
+    {
+        for (int channel = 0; channel < channelCount; ++channel)
+        {
+            const auto offset = static_cast<std::size_t>((region * channelCount + channel)
+                                                         * channelStrideSamples);
+            regionChannels[static_cast<std::size_t>(region)][static_cast<std::size_t>(channel)] =
+                storage.data() + offset;
+        }
+    }
+
+    prepared = true;
+    jassert(isStorageAligned());
+}
+
+bool WaveguideScratchArena::isStorageAligned() const noexcept
+{
+    if (!prepared || storage.empty())
+        return false;
+
+    for (const auto& region : regionChannels)
+    {
+        for (const auto* channel : region)
+        {
+            if (channel == nullptr
+                || reinterpret_cast<std::uintptr_t>(channel) % storageAlignment != 0)
+                return false;
+        }
+    }
+    return true;
+}
+
+juce::dsp::AudioBlock<float> WaveguideScratchArena::getBlock(Region region, int numSamples) noexcept
+{
+    jassert(prepared);
+    jassert(numSamples >= 0 && numSamples <= maximumBlockSamples);
+    auto& channels = regionChannels[regionIndex(region)];
+    return { channels.data(), channels.size(), static_cast<std::size_t>(numSamples) };
+}
+
 WaveguideResonatorBank::WaveguideResonatorBank(GlobalState& state, ResonatorVoice& parentVoice,
                                                WaveguideResonatorBankParams params) :
     state(state),
     voice(parentVoice),
-    params(params)
+    params(params),
+    index(params.index)
 {
-    dcBlockerCoefficients =
-        new juce::dsp::IIR::Coefficients<float>(1, -1, 1, -0.995f);
-    for (int i = 0; i < NUM_RESONATORS; i++)
-    {
-        resonators.add(new StereoResonator(parentVoice, params.resonatorParams[i]));
-        dcBlockersL[i] = juce::dsp::IIR::Filter<float>(dcBlockerCoefficients);
-        dcBlockersR[i] = juce::dsp::IIR::Filter<float>(dcBlockerCoefficients);
-        dcBlockersL[i].coefficients = dcBlockerCoefficients;
-        dcBlockersR[i].coefficients = dcBlockerCoefficients;
-    }
-    index = params.index;
-    couplingMode = PARALLEL;
-    frequency = -1;
-    sampleRate = -1;
 }
 
-WaveguideResonatorBank::~WaveguideResonatorBank()
+void WaveguideResonatorBank::processRouted(juce::dsp::AudioBlock<float>& exciterBlock,
+                                          juce::dsp::AudioBlock<float>& previousResonatorBankBlock,
+                                          juce::dsp::AudioBlock<float>& outputBlock)
 {
-    resonators.clear(true);
+    jassert(exciterBlock.getNumSamples() == previousResonatorBankBlock.getNumSamples());
+    jassert(previousResonatorBankBlock.getNumSamples() == outputBlock.getNumSamples());
+    jassert(exciterBlock.getNumChannels() == previousResonatorBankBlock.getNumChannels());
+    jassert(previousResonatorBankBlock.getNumChannels() == outputBlock.getNumChannels());
+    processKernel(exciterBlock, previousResonatorBankBlock, outputBlock);
 }
 
+bool WaveguideResonatorBank::isEmptyForRouting() const noexcept
+{
+    const auto& cache = kernel.getControlCache();
+    return cache.enabledCount == 0 || cache.totalGain[0] == 0.0f || cache.totalGain[1] == 0.0f;
+}
 
-/**
- * Resets the internal state of the resonator bank and its resonators.
- * Use when playing a new note, for example.
- */
 void WaveguideResonatorBank::reset()
 {
-    for (int i = 0; i < NUM_RESONATORS; i++)
-    {
-        resonators[i]->reset();
-        dcBlockersL[i].reset();
-        dcBlockersR[i].reset();
-    }
-    cascadeFilterL.reset();
-    cascadeFilterR.reset();
-    // testInterlinkedFilterL.reset();
-    // testInterlinkedFilterR.reset();
+    kernel.reset();
 }
 
 void WaveguideResonatorBank::prepare(const juce::dsp::ProcessSpec& spec)
 {
-    sampleRate = spec.sampleRate;
-    cascadeFilterL.prepare(spec);
-    cascadeFilterR.prepare(spec);
-    testInterlinkedFilterL.prepare(spec);
-    testInterlinkedFilterR.prepare(spec);
+    const auto prepared = kernel.prepare(spec.sampleRate, static_cast<int>(spec.maximumBlockSize));
+    jassert(prepared);
+    if (!prepared)
+        return;
 
-    for (int i = 0; i < NUM_RESONATORS; i++)
-    {
-        jassert(resonators[i]->params.resonatorIndex == i); //ensure that parameters have been correctly distributed
-        resonators[i]->prepare(spec);
-        dcBlockersL[i].coefficients = dcBlockerCoefficients;
-        dcBlockersR[i].coefficients = dcBlockerCoefficients;
-        dcBlockersL[i].reset();
-        dcBlockersR[i].reset();
-        dcBlockersL[i].prepare(spec);
-        dcBlockersR[i].prepare(spec);
-    }
-
-    testInterlinkedFilterL.updateParameters(1000, 1 / std::sqrt(2), 1, false);
-    testInterlinkedFilterR.updateParameters(1000, 1 / std::sqrt(2), 1, false);
-
-
-    reset();
-    updateParameters(440.0f, 0);
+    updateControlFrame(440.0f, 0);
+    kernel.reset();
 }
 
-/**
- * Updates all internal parameters based on the state of the VST parameters corresponding to this WaveguideResonatorBank.
- * Child Resonators are also updated.
- * Frequency is passed as an argument since frequency comes from the MIDI note, not the VST parameters.
- */
 void WaveguideResonatorBank::updateParameters(float newFrequency, int numSamples)
 {
-    frequency = newFrequency;
     couplingMode = static_cast<CouplingMode>(voice.getValue(params.couplingMode));
-    previousResonatorBankMix = voice.getValue(params.inputMix);
-    exciterMix = 1 - voice.getValue(params.inputMix);
-    previousResonatorBankMix *= 0.5f; //scale down a little to taste
+    inputMix = voice.getValue(params.inputMix);
     inputGain = voice.getValue(params.inputGain);
     outputGain = voice.getValue(params.outputGain);
-    for (auto* r : resonators)
-    {
-        r->updateParameters(newFrequency, numSamples);
-    }
+    updateControlFrame(newFrequency, numSamples);
 }
 
-//TODO: with the addition of stereo resonators, we should rewrite this whole function to support stereo processing without all the code duplication
-/**
- * READS FROM the exciter block and CONSUMES the previous resonator bank block.
- * The output is (over) written to the previous resonator bank block.
- * @param exciterBlock
- * @param previousResonatorBankBlock
- */
-void WaveguideResonatorBank::process(juce::dsp::AudioBlock<float>& exciterBlock,
-                                     juce::dsp::AudioBlock<float>& previousResonatorBankBlock)
+void WaveguideResonatorBank::updateControlFrame(float newFrequency, int numSamples) noexcept
 {
-    //reminder: the outputBlock may already have samples inside...
-    jassert(exciterBlock.getNumSamples() == previousResonatorBankBlock.getNumSamples());
-    jassert(exciterBlock.getNumChannels() == previousResonatorBankBlock.getNumChannels());
+    using namespace resonarium::waveguide;
 
-    //compute the total gain so that the output can be normalized,
-    //used by all resonator bank processing modes
-    float totalGainL = 0.0f;
-    float totalGainR = 0.0f;
-    for (const auto* r : resonators)
+    switch (couplingMode)
     {
-        totalGainL = totalGainL + r->resonators[0].gain;
-        totalGainR = totalGainR + r->resonators[1].gain;
+        case PARALLEL:
+            controlFrame.couplingMode = WaveguideCouplingMode::parallel;
+            break;
+        case INTERLINKED:
+            controlFrame.couplingMode = WaveguideCouplingMode::interlinked;
+            break;
+        case CASCADE:
+            controlFrame.couplingMode = WaveguideCouplingMode::cascade;
+            break;
+        default:
+            jassertfalse;
+            controlFrame.couplingMode = WaveguideCouplingMode::parallel;
+            break;
     }
 
-    if (totalGainL == 0.0f || totalGainR == 0.0f) return;
+    controlFrame.inputMix = inputMix;
+    controlFrame.inputGain = inputGain;
+    controlFrame.outputGain = outputGain;
+    controlFrame.soloResonator = state.soloActive && state.soloBankIndex == index
+                                     ? state.soloResonatorIndex
+                                     : -1;
 
-    if (couplingMode == PARALLEL)
+    for (int channel = 0; channel < WaveguideControlFrame::channelCount; ++channel)
     {
-        for (int i = 0; i < exciterBlock.getNumSamples(); i++)
+        controlFrame.cascadeAmount[static_cast<std::size_t>(channel)] =
+            voice.getValue(params.cascadeLevel, channel);
+        auto& filter = controlFrame.cascadeFilter[static_cast<std::size_t>(channel)];
+        filter.frequencyHz = voice.getValue(params.cascadeFilterCutoff, channel);
+        filter.resonance = voice.getValue(params.cascadeFilterResonance, channel);
+        filter.mode = voice.getValue(params.cascadeFilterMode, channel);
+        filter.frequencyIsPeak = false;
+    }
+
+    constexpr float semitonesToOctaves = 1.0f / 12.0f;
+    constexpr float minimumFrequency = WaveguideKernel::minimumSupportedFrequencyHz;
+
+    for (int resonator = 0; resonator < WaveguideControlFrame::resonatorCount; ++resonator)
+    {
+        const auto& resonatorParams = params.resonatorParams[static_cast<std::size_t>(resonator)];
+        const bool enabled = resonatorParams.enabled->isOn();
+        const float gain = voice.getValue(resonatorParams.gain);
+
+        const bool resonatorKeytrack = resonatorParams.resonatorKeytrack->isOn();
+        const float resonatorPitchRatio = resonatorKeytrack ? voice.getValue(resonatorParams.pitch) : 1.0f;
+        const bool loopFilterKeytrack = resonatorParams.loopFilterKeytrack->isOn();
+        const bool postFilterKeytrack = resonatorParams.postFilterKeytrack->isOn();
+        const float loopFilterMode = resonatorParams.loopFilterType->getProcValue() * 0.5f;
+
+        for (int channel = 0; channel < WaveguideControlFrame::channelCount; ++channel)
         {
-            float outSampleL = 0.0f;
-            float outSampleR = 0.0f;
-            for (int j = 0; j < NUM_RESONATORS; j++)
+            const auto laneIndex = WaveguideKernel::laneIndex(resonator, channel);
+            auto& lane = controlFrame.lanes[static_cast<std::size_t>(laneIndex)];
+            lane.enabled = enabled;
+            lane.gain = gain;
+            if (!enabled)
+                continue;
+
+            const auto requestedFrequency = resonatorKeytrack
+                                                ? resonatorPitchRatio * newFrequency
+                                                : voice.getValue(resonatorParams.frequency, channel);
+            lane.frequencyHz = std::max(minimumFrequency, requestedFrequency);
+            lane.decaySeconds = voice.getValue(resonatorParams.decayTime, channel);
+            lane.dispersion = voice.getValue(resonatorParams.dispersion, channel);
+
+            auto& ratio = pitchRatioCache[static_cast<std::size_t>(laneIndex)];
+            float loopFilterRatio = 1.0f;
+            if (loopFilterKeytrack)
             {
-                if (resonators[j]->enabled)
+                const auto semitones = voice.getValue(resonatorParams.loopFilterPitchInSemis, channel);
+                if (!ratio.loopInitialised || semitones != ratio.loopSemitones)
                 {
-                    const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.
-                        getSample(0, i) * previousResonatorBankMix) * inputGain;
-                    const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.
-                        getSample(1, i) * previousResonatorBankMix) * inputGain;
-                    const float soloOutSampleL = resonators[j]->left.postProcess(
-                        resonators[j]->left.processSample(inSampleL)) * resonators[j]->left.gain;
-                    const float soloOutSampleR = resonators[j]->right.postProcess(
-                        resonators[j]->right.processSample(inSampleR)) * resonators[j]->right.gain;
-                    outSampleL += soloOutSampleL;
-                    outSampleR += soloOutSampleR;
-
-                    if (state.soloActive &&
-                        state.soloBankIndex == index &&
-                        state.soloResonatorIndex == resonators[j]->resonatorIndex)
-                    {
-                        voice.soloBuffer.setSample(0, voice.currentBlockStartSample + i, soloOutSampleL);
-                        voice.soloBuffer.setSample(1, voice.currentBlockStartSample + i, soloOutSampleR);
-                    }
+                    ratio.loopSemitones = semitones;
+                    ratio.loopRatio = std::pow(2.0f, semitones * semitonesToOctaves);
+                    ratio.loopInitialised = true;
                 }
+                loopFilterRatio = ratio.loopRatio;
             }
-            outSampleL = (outSampleL / totalGainL) * outputGain;
-            outSampleR = (outSampleR / totalGainR) * outputGain;
+            lane.loopFilter.frequencyHz = loopFilterKeytrack
+                                              ? lane.frequencyHz * loopFilterRatio
+                                              : voice.getValue(resonatorParams.loopFilterCutoff, channel);
+            lane.loopFilter.resonance = voice.getValue(resonatorParams.loopFilterResonance, channel) + 0.001f;
+            lane.loopFilter.mode = loopFilterMode;
+            lane.loopFilter.frequencyIsPeak = loopFilterKeytrack;
 
-
-            previousResonatorBankBlock.setSample(0, i, outSampleL);
-            previousResonatorBankBlock.setSample(1, i, outSampleR);
-        }
-    }
-    else if (couplingMode == INTERLINKED)
-    {
-        for (int i = 0; i < exciterBlock.getNumSamples(); i++)
-        {
-            float resonatorOutSamplesL[NUM_RESONATORS];
-            float resonatorOutSamplesR[NUM_RESONATORS];
-            float outSampleL = 0.0f;
-            float outSampleR = 0.0f;
-            float feedbackSampleL = 0.0f;
-            float feedbackSampleR = 0.0f;
-
-            for (int j = 0; j < NUM_RESONATORS; j++)
+            float postFilterRatio = 1.0f;
+            if (postFilterKeytrack)
             {
-                resonatorOutSamplesL[j] = resonators[j]->popSample(0);
-                resonatorOutSamplesR[j] = resonators[j]->popSample(1);
-                feedbackSampleL += resonatorOutSamplesL[j] * (resonators[j]->resonators[0].gain / totalGainL);
-                feedbackSampleR += resonatorOutSamplesR[j] * (resonators[j]->resonators[1].gain / totalGainR);
-                outSampleL += resonators[j]->postProcess(resonatorOutSamplesL[j], 0) * resonators[j]->resonators[0].
-                    gain;
-                outSampleR += resonators[j]->postProcess(resonatorOutSamplesL[j], 1) * resonators[j]->resonators[1].
-                    gain;
-            }
-
-            if (state.soloActive && state.soloBankIndex == index)
-            {
-                voice.soloBuffer.setSample(0, voice.currentBlockStartSample + i,
-                                           resonatorOutSamplesL[state.soloResonatorIndex]);
-                voice.soloBuffer.setSample(1, voice.currentBlockStartSample + i,
-                                           resonatorOutSamplesR[state.soloResonatorIndex]);
-            }
-
-            //apply the bridge filter H(z) = -2 / totalGain. This is a necessary criterion for stability
-            feedbackSampleL = -2.0f * feedbackSampleL;
-            feedbackSampleR = -2.0f * feedbackSampleR;
-            // feedbackSampleL = testInterlinkedFilterL.processSample(0, feedbackSampleL);
-            // feedbackSampleR = testInterlinkedFilterR.processSample(0, feedbackSampleR);
-
-            for (int j = 0; j < NUM_RESONATORS; j++)
-            {
-                const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.
-                    getSample(0, i) * previousResonatorBankMix) * inputGain;
-                const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.
-                    getSample(1, i) * previousResonatorBankMix) * inputGain;
-                resonators[j]->
-                    pushSample((feedbackSampleL + resonatorOutSamplesL[j]) * 1 + inSampleL, 0);
-                resonators[j]->
-                    pushSample((feedbackSampleR + resonatorOutSamplesR[j]) * 1 + inSampleR, 1);
-            }
-
-            previousResonatorBankBlock.setSample(0, i, outSampleL * outputGain);
-            previousResonatorBankBlock.setSample(1, i, outSampleR * outputGain);
-        }
-    }
-    else if (couplingMode == CASCADE)
-    {
-        const float cascadeAmountL = voice.getValue(params.cascadeLevel, 0);
-        const float cascadeAmountR = voice.getValue(params.cascadeLevel, 1);
-
-        const float newCutoffL = voice.getValue(params.cascadeFilterCutoff, 0);
-        const float newResonanceL = voice.getValue(params.cascadeFilterResonance, 0);
-        const float newModeL = voice.getValue(params.cascadeFilterMode, 0);
-        cascadeFilterL.updateParameters(newCutoffL, newResonanceL, newModeL);
-
-        const float newCutoffR = voice.getValue(params.cascadeFilterCutoff, 1);
-        const float newResonanceR = voice.getValue(params.cascadeFilterResonance, 1);
-        const float newModeR = voice.getValue(params.cascadeFilterMode, 1);
-        cascadeFilterR.updateParameters(newCutoffR, newResonanceR, newModeR);
-
-        for (int i = 0; i < exciterBlock.getNumSamples(); i++)
-        {
-            float previousResonatorSampleL = 0.0f;
-            float previousResonatorSampleR = 0.0f;
-            float outSampleL = 0.0f;
-            float outSampleR = 0.0f;
-            for (int j = 0; j < NUM_RESONATORS; j++)
-            {
-                if (resonators[j]->enabled)
+                const auto semitones = voice.getValue(resonatorParams.postFilterPitchInSemis, channel);
+                if (!ratio.postInitialised || semitones != ratio.postSemitones)
                 {
-                    const float resonatorOutSampleL = resonators[j]->popSample(0);
-                    const float resonatorOutSampleR = resonators[j]->popSample(1);
-                    const float processedFwdSampleL = cascadeFilterL.processSample(
-                        j, dcBlockersL[j].processSample(previousResonatorSampleL) * cascadeAmountL);
-                    const float processedFwdSampleR = cascadeFilterR.processSample(
-                        j, dcBlockersR[j].processSample(previousResonatorSampleR) * cascadeAmountR);
-                    const float inSampleL = (exciterBlock.getSample(0, i) * exciterMix + previousResonatorBankBlock.
-                        getSample(0, i) * previousResonatorBankMix) * inputGain;
-                    const float inSampleR = (exciterBlock.getSample(1, i) * exciterMix + previousResonatorBankBlock.
-                        getSample(1, i) * previousResonatorBankMix) * inputGain;
-                    resonators[j]->pushSample(resonatorOutSampleL + processedFwdSampleL + inSampleL, 0);
-                    resonators[j]->pushSample(resonatorOutSampleR + processedFwdSampleR + inSampleR, 1);
-                    previousResonatorSampleL = resonatorOutSampleL;
-                    previousResonatorSampleR = resonatorOutSampleR;
-                    const float soloOutSampleL =
-                        resonators[j]->postProcess(resonatorOutSampleL, 0) * resonators[j]->resonators[0].gain;
-                    const float soloOutSampleR =
-                        resonators[j]->postProcess(resonatorOutSampleR, 1) * resonators[j]->resonators[1].gain;
-                    outSampleR += soloOutSampleR;
-                    outSampleL += soloOutSampleL;
-
-                    if (state.soloActive &&
-                        state.soloBankIndex == index &&
-                        state.soloResonatorIndex == resonators[j]->resonatorIndex)
-                    {
-                        voice.soloBuffer.setSample(0, voice.currentBlockStartSample + i, soloOutSampleL);
-                        voice.soloBuffer.setSample(1, voice.currentBlockStartSample + i, soloOutSampleR);
-                    }
+                    ratio.postSemitones = semitones;
+                    ratio.postRatio = std::pow(2.0f, semitones * semitonesToOctaves);
+                    ratio.postInitialised = true;
                 }
+                postFilterRatio = ratio.postRatio;
             }
-
-            previousResonatorBankBlock.setSample(0, i, outSampleL * outputGain);
-            previousResonatorBankBlock.setSample(1, i, outSampleR * outputGain);
+            lane.postFilter.frequencyHz = postFilterKeytrack
+                                              ? lane.frequencyHz * postFilterRatio
+                                              : voice.getValue(resonatorParams.postFilterCutoff, channel);
+            lane.postFilter.resonance = voice.getValue(resonatorParams.postFilterResonance, channel);
+            lane.postFilter.mode = voice.getValue(resonatorParams.postFilterMode, channel);
+            lane.postFilter.frequencyIsPeak = false;
         }
     }
-    else
-    {
-        DBG("Invalid feedback mode!");
-        jassertfalse;
-    }
+
+    kernel.update(controlFrame, numSamples, WaveguideRetuneMode::crossfade);
 }
 
-void WaveguideResonatorBank::setFeedbackMode(CouplingMode newMode)
+void WaveguideResonatorBank::processKernel(juce::dsp::AudioBlock<float>& exciterBlock,
+                                          juce::dsp::AudioBlock<float>& previousResonatorBankBlock,
+                                          juce::dsp::AudioBlock<float>& outputBlock) noexcept
 {
-    this->couplingMode = newMode;
+    using namespace resonarium::waveguide;
+
+    jassert(voice.waveguideScratchArena.isPrepared());
+    if (!voice.waveguideScratchArena.isPrepared())
+    {
+        outputBlock.clear();
+        return;
+    }
+
+    auto bankInputBlock = voice.waveguideScratchArena.getBlock(
+        WaveguideScratchArena::Region::bankInput, static_cast<int>(outputBlock.getNumSamples()));
+    WaveguideProcessView view;
+    view.numSamples = static_cast<int>(outputBlock.getNumSamples());
+    for (int channel = 0; channel < WaveguideControlFrame::channelCount; ++channel)
+    {
+        const auto channelIndex = static_cast<std::size_t>(channel);
+        view.exciter[channelIndex] = exciterBlock.getChannelPointer(channelIndex);
+        view.previousBank[channelIndex] = previousResonatorBankBlock.getChannelPointer(channelIndex);
+        view.bankInput[channelIndex] = bankInputBlock.getChannelPointer(channelIndex);
+        view.output[channelIndex] = outputBlock.getChannelPointer(channelIndex);
+        view.solo[channelIndex] = controlFrame.soloResonator >= 0
+                                      ? voice.soloBuffer.getWritePointer(channel, voice.currentBlockStartSample)
+                                      : nullptr;
+    }
+    kernel.process(view);
 }

@@ -9,6 +9,8 @@
 #include "airwindows/LeadAmp.h"
 #include "../Parameters.h"
 
+#include <array>
+
 struct MultiAmpParams;
 /**
 * A distortion multi-effect that wraps several amp simulation algorithms,
@@ -35,43 +37,45 @@ public:
     void updateParameters(T& source)
     {
         mode = static_cast<Mode>(params.mode->getProcValue());
+        const std::array<float, 4> values {
+            source.getValue(params.paramA),
+            source.getValue(params.paramB),
+            source.getValue(params.paramC),
+            source.getValue(params.paramD),
+        };
+
+        const auto updateAmp = [this, &values] (auto& amp)
+        {
+            const auto modeIndex = static_cast<size_t>(mode);
+            auto& cached = cachedParameters[modeIndex];
+            for (size_t index = 0; index < values.size(); ++index)
+            {
+                if (!cachedParametersValid[modeIndex] || values[index] != cached[index])
+                    amp.setParameter(static_cast<int>(index), values[index]);
+            }
+            cached = values;
+            cachedParametersValid[modeIndex] = true;
+        };
+
         switch (mode)
         {
         case BASS:
-            bassAmp.setParameter(0, source.getValue(params.paramA));
-            bassAmp.setParameter(1, source.getValue(params.paramB));
-            bassAmp.setParameter(2, source.getValue(params.paramC));
-            bassAmp.setParameter(3, source.getValue(params.paramD));
+            updateAmp(bassAmp);
             break;
         case BIG:
-            bigAmp.setParameter(0, source.getValue(params.paramA));
-            bigAmp.setParameter(1, source.getValue(params.paramB));
-            bigAmp.setParameter(2, source.getValue(params.paramC));
-            bigAmp.setParameter(3, source.getValue(params.paramD));
+            updateAmp(bigAmp);
             break;
         case DEREZ:
-            deRez2.setParameter(0, source.getValue(params.paramA));
-            deRez2.setParameter(1, source.getValue(params.paramB));
-            deRez2.setParameter(2, source.getValue(params.paramC));
-            deRez2.setParameter(3, source.getValue(params.paramD));
+            updateAmp(deRez2);
             break;
         case FIRE:
-            fireAmp.setParameter(0, source.getValue(params.paramA));
-            fireAmp.setParameter(1, source.getValue(params.paramB));
-            fireAmp.setParameter(2, source.getValue(params.paramC));
-            fireAmp.setParameter(3, source.getValue(params.paramD));
+            updateAmp(fireAmp);
             break;
         case GRIND:
-            grindAmp.setParameter(0, source.getValue(params.paramA));
-            grindAmp.setParameter(1, source.getValue(params.paramB));
-            grindAmp.setParameter(2, source.getValue(params.paramC));
-            grindAmp.setParameter(3, source.getValue(params.paramD));
+            updateAmp(grindAmp);
             break;
         case LEAD:
-            leadAmp.setParameter(0, source.getValue(params.paramA));
-            leadAmp.setParameter(1, source.getValue(params.paramB));
-            leadAmp.setParameter(2, source.getValue(params.paramC));
-            leadAmp.setParameter(3, source.getValue(params.paramD));
+            updateAmp(leadAmp);
             break;
         default:
             jassertfalse;
@@ -91,7 +95,11 @@ public:
     GrindAmp grindAmp;
     LeadAmp leadAmp;
 
-    Mode mode;
+    Mode mode = LEAD;
+
+private:
+    std::array<std::array<float, 4>, 6> cachedParameters {};
+    std::array<bool, 6> cachedParametersValid {};
 };
 
 

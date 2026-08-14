@@ -464,10 +464,10 @@ public:
     explicit WaveguideResonatorComponent_V2(WaveguideResonatorBankParams enclosingBankParams, ResonatorParams resonatorParams, juce::Colour colour) :
         resonatorParams(resonatorParams), colour(colour)
     {
-        enableButton = new gin::SVGPluginButton(resonatorParams.enabled, gin::Assets::power);
+        enableButton = ownChild(new gin::SVGPluginButton(resonatorParams.enabled, gin::Assets::power));
         enableButton->setColour(juce::TextButton::buttonOnColourId, colour);
         enableButton->setColour(juce::TextButton::buttonColourId, colour);
-        soloButton = new SVGFilePluginButton(enclosingBankParams.soloResonator, BinaryData::letter_s_svg, BinaryData::letter_s_svg);
+        soloButton = ownChild(new SVGFilePluginButton(enclosingBankParams.soloResonator, BinaryData::letter_s_svg, BinaryData::letter_s_svg));
         // soloButton->setColour(juce::TextButton::buttonOnColourId, juce::Colours::red);
         // soloButton->setColour(juce::TextButton::buttonColourId, juce::Colours::blue);
         soloButton->onClick = [param = enclosingBankParams.soloResonator, bankIndex = enclosingBankParams.index, resonatorIndex = resonatorParams.resonatorIndex]() {
@@ -501,9 +501,9 @@ public:
                 soloButton->setToggleState(false, juce::dontSendNotification);
             }
         };
-        gainKnob = new gin::Knob(resonatorParams.gain);
+        gainKnob = ownChild(new gin::Knob(resonatorParams.gain));
         gainKnob->getSlider().setColour(juce::Slider::rotarySliderFillColourId, colour);
-        pitchKnob = new TextSlider(resonatorParams.pitch, colour);
+        pitchKnob = ownChild(new TextSlider(resonatorParams.pitch, colour));
         pitchKnob->setReadoutDecimals(2);
         pitchKnob->mainReadout.textToParamConversionFunction = [enclosingBankParams](float value) {
             if(enclosingBankParams.useSemitones->isOn())
@@ -525,33 +525,33 @@ public:
                 return value;
             }
         };
-        resonatorFrequencyKnob = new TextSlider(resonatorParams.frequency, colour);
+        resonatorFrequencyKnob = ownChild(new TextSlider(resonatorParams.frequency, colour));
         resonatorFrequencyKnob->setReadoutDecimals(0);
-        decayTimeKnob = new TextSlider(resonatorParams.decayTime, colour);
+        decayTimeKnob = ownChild(new TextSlider(resonatorParams.decayTime, colour));
         decayTimeKnob->setReadoutDecimals(2);
-        dispersionKnob = new TextSlider(resonatorParams.dispersion, colour);
+        dispersionKnob = ownChild(new TextSlider(resonatorParams.dispersion, colour));
         dispersionKnob->setReadoutDecimals(0);
-        loopFilterCutoffKnob = new TextSlider(resonatorParams.loopFilterCutoff, colour);
+        loopFilterCutoffKnob = ownChild(new TextSlider(resonatorParams.loopFilterCutoff, colour));
         loopFilterCutoffKnob->setReadoutDecimals(0);
-        loopFilterPitchKnob = new TextSlider(resonatorParams.loopFilterPitchInSemis, colour);
+        loopFilterPitchKnob = ownChild(new TextSlider(resonatorParams.loopFilterPitchInSemis, colour));
         loopFilterPitchKnob->setReadoutDecimals(2);
-        loopFilterResonanceKnob = new TextSlider(resonatorParams.loopFilterResonance, colour);
+        loopFilterResonanceKnob = ownChild(new TextSlider(resonatorParams.loopFilterResonance, colour));
         loopFilterResonanceKnob->setReadoutDecimals(2);
         // loopFilterModeKnob = new TextSlider(resonatorParams.loopFilterMode, colour);
         // loopFilterModeKnob->setReadoutDecimals(2);
-        loopFilterTypeKnob = new ClickThruSelect(resonatorParams.loopFilterType, colour);
-        postFilterCutoffKnob = new TextSlider(resonatorParams.postFilterCutoff, colour);
+        loopFilterTypeKnob = ownChild(new ClickThruSelect(resonatorParams.loopFilterType, colour));
+        postFilterCutoffKnob = ownChild(new TextSlider(resonatorParams.postFilterCutoff, colour));
         postFilterCutoffKnob->setReadoutDecimals(0);
-        postFilterPitchKnob = new TextSlider(resonatorParams.postFilterPitchInSemis, colour);
+        postFilterPitchKnob = ownChild(new TextSlider(resonatorParams.postFilterPitchInSemis, colour));
         postFilterPitchKnob->setReadoutDecimals(2);
-        postFilterResonanceKnob = new TextSlider(resonatorParams.postFilterResonance, colour);
+        postFilterResonanceKnob = ownChild(new TextSlider(resonatorParams.postFilterResonance, colour));
         postFilterResonanceKnob->setReadoutDecimals(2);
-        postFilterModeKnob = new TextSlider(resonatorParams.postFilterMode, colour);
+        postFilterModeKnob = ownChild(new TextSlider(resonatorParams.postFilterMode, colour));
         postFilterModeKnob->setReadoutDecimals(2);
 
-        resonatorKeytrack = new CircleEnableButton(resonatorParams.resonatorKeytrack, colour);
-        postFilterKeytrack = new CircleEnableButton(resonatorParams.postFilterKeytrack, colour);
-        loopFilterKeytrack = new CircleEnableButton(resonatorParams.loopFilterKeytrack, colour);
+        resonatorKeytrack = ownChild(new CircleEnableButton(resonatorParams.resonatorKeytrack, colour));
+        postFilterKeytrack = ownChild(new CircleEnableButton(resonatorParams.postFilterKeytrack, colour));
+        loopFilterKeytrack = ownChild(new CircleEnableButton(resonatorParams.loopFilterKeytrack, colour));
 
 
         addAndMakeVisible(enableButton);
@@ -674,6 +674,16 @@ public:
     juce::Colour colour;
 
     int backgroundRectangleStartY;
+
+private:
+    template <typename ComponentType>
+    ComponentType* ownChild(ComponentType* child)
+    {
+        ownedChildren.add(child);
+        return child;
+    }
+
+    juce::OwnedArray<juce::Component> ownedChildren;
 };
 
 #endif //RESONARIUMCOMPONENTS_H

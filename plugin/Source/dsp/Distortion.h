@@ -1,7 +1,7 @@
 #ifndef DISTORTION_H
 #define DISTORTION_H
 #include "../Parameters.h"
-#include <chowdsp_filters/chowdsp_filters.h>
+#include "StateVariableFilter.h"
 
 class Distortion
 {
@@ -34,10 +34,23 @@ public:
     void updateParameters(T& source)
     {
         distortionMode = static_cast<DistortionMode>(params.distortionMode->getProcValue());
-        drive[0] = source.getValue(params.drive, 0);
-        drive[1] = source.getValue(params.drive, 1);
-        outputGain[0] = source.getValue(params.outputGain, 0);
-        outputGain[1] = source.getValue(params.outputGain, 1);
+        for (int channel = 0; channel < 2; ++channel)
+        {
+            const auto nextDrive = source.getValue(params.drive, channel);
+            if (!controlsInitialised || nextDrive != drive[channel])
+            {
+                drive[channel] = nextDrive;
+                scaledDrive[channel] = std::pow(10.0f, nextDrive / 20.0f);
+            }
+
+            const auto nextOutputGain = source.getValue(params.outputGain, channel);
+            if (!controlsInitialised || nextOutputGain != outputGain[channel])
+            {
+                outputGain[channel] = nextOutputGain;
+                scaledOutputGain[channel] = std::pow(10.0f, nextOutputGain / 20.0f);
+            }
+        }
+        controlsInitialised = true;
         filterMode = static_cast<FilterMode>(params.filterMode->getProcValue());
         filter.updateParameters(source.getValue(params.cutoff), source.getValue(params.resonance),
                                 source.getValue(params.filterMode));
@@ -51,8 +64,11 @@ private:
     DistortionMode distortionMode;
     float drive[2] = {1.0f, 1.0f};
     float outputGain[2] = {1.0f, 1.0f};
+    float scaledDrive[2] = {1.0f, 1.0f};
+    float scaledOutputGain[2] = {1.0f, 1.0f};
+    bool controlsInitialised = false;
     FilterMode filterMode = disabled;
-    chowdsp::SVFMultiMode<float, 2> filter;
+    resonarium::StateVariableFilter<float, 2, false> filter;
 
     // State variables for downsampling
     float lastDownSampleValue = 0.0f;

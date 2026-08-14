@@ -180,29 +180,22 @@ void ResonariumLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
             }
         }
 
-        if (slider.getProperties().contains("modValues") && slider.isEnabled())
+        if (auto* pluginSlider = dynamic_cast<gin::PluginSlider*>(&slider);
+            pluginSlider != nullptr && slider.isEnabled())
         {
             // g.setColour (findColour (GinLookAndFeel::whiteColourId).withAlpha (0.9f));
             g.setColour(juce::Colours::palevioletred.withLightness(0.7f).withAlpha(1.0f));
-            auto varArray = slider.getProperties()["modValues"];
-            if (varArray.isArray())
+            for (const auto value : pluginSlider->getLiveModulationValues(0))
             {
-                for (auto value : *varArray.getArray())
-                {
-                    float circleX = x + 3 + static_cast<int>(juce::jmap<float>(value, 0.0f, width - 3.0f));
-                    g.fillEllipse(circleX - 2, y + 17, 4.0f, 4.0f);
-                }
+                float circleX = x + 3 + static_cast<int>(juce::jmap<float>(value, 0.0f, width - 3.0f));
+                g.fillEllipse(circleX - 2, y + 17, 4.0f, 4.0f);
             }
 
             g.setColour(juce::Colours::teal.withLightness(0.7f).withAlpha(1.0f));
-            varArray = slider.getProperties()["modValuesR"];
-            if (varArray.isArray())
+            for (const auto value : pluginSlider->getLiveModulationValues(1))
             {
-                for (auto value : *varArray.getArray())
-                {
-                    float circleX = x + 3 + static_cast<int>(juce::jmap<float>(value, 0.0f, width - 3.0f));
-                    g.fillEllipse(circleX - 2, y + 17, 4.0f, 4.0f);
-                }
+                float circleX = x + 3 + static_cast<int>(juce::jmap<float>(value, 0.0f, width - 3.0f));
+                g.fillEllipse(circleX - 2, y + 17, 4.0f, 4.0f);
             }
         }
 
@@ -304,37 +297,30 @@ void ResonariumLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
         g.fillPath(filledArc);
     }
 
-    if (slider.getProperties().contains("modValues") && slider.isEnabled())
+    if (auto* pluginSlider = dynamic_cast<gin::PluginSlider*>(&slider);
+        pluginSlider != nullptr && slider.isEnabled())
     {
         // g.setColour (findColour (GinLookAndFeel::whiteColourId).withAlpha (0.9f));
         g.setColour(juce::Colours::palevioletred.withLightness(0.7f).withAlpha(1.0f));
-        auto varArray = slider.getProperties()["modValues"];
-        if (varArray.isArray())
+        for (const auto value : pluginSlider->getLiveModulationValues(0))
         {
-            for (auto value : *varArray.getArray())
-            {
-                float modAngle = float(value) * (rotaryEndAngle - rotaryStartAngle) + rotaryStartAngle;
+            float modAngle = value * (rotaryEndAngle - rotaryStartAngle) + rotaryStartAngle;
 
-                float modX = centreX + std::sin(modAngle) * radius;
-                float modY = centreY - std::cos(modAngle) * radius;
+            float modX = centreX + std::sin(modAngle) * radius;
+            float modY = centreY - std::cos(modAngle) * radius;
 
-                g.fillEllipse(modX - 2, modY - 2, 4.0f, 4.0f);
-            }
+            g.fillEllipse(modX - 2, modY - 2, 4.0f, 4.0f);
         }
 
         g.setColour(juce::Colours::teal.withLightness(0.8f).withAlpha(1.0f));
-        varArray = slider.getProperties()["modValuesR"];
-        if (varArray.isArray())
+        for (const auto value : pluginSlider->getLiveModulationValues(1))
         {
-            for (auto value : *varArray.getArray())
-            {
-                float modAngle = float(value) * (rotaryEndAngle - rotaryStartAngle) + rotaryStartAngle;
+            float modAngle = value * (rotaryEndAngle - rotaryStartAngle) + rotaryStartAngle;
 
-                float modX = centreX + std::sin(modAngle) * radius;
-                float modY = centreY - std::cos(modAngle) * radius;
+            float modX = centreX + std::sin(modAngle) * radius;
+            float modY = centreY - std::cos(modAngle) * radius;
 
-                g.fillEllipse(modX - 2, modY - 2, 4.0f, 4.0f);
-            }
+            g.fillEllipse(modX - 2, modY - 2, 4.0f, 4.0f);
         }
     }
 }

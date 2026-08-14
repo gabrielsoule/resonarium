@@ -41,8 +41,9 @@ blocks_needed = int(np.ceil((sample_rate * seconds) / block_size))
 # Allocate the corresponding memory
 audio_buffer = synth.create_multi_block(blocks_needed)
 
-# Play a MIDI note (middle C = 60) with velocity 100
-synth.play_note(0, 60, 100)
+# Play middle C on lower-zone MPE member channel 2. Python channels are
+# zero-based, so channel 1 maps to MIDI channel 2.
+synth.play_note(1, 60, 100)
 
 # Process audio. This will fill the buffer with audio, and stop when the buffer is full.
 synth.process_multi_block(audio_buffer)
@@ -53,26 +54,4 @@ synth.process_multi_block(audio_buffer)
 # e.g.: synth.process_multi_block(audio_buffer, start_block, end_block)
 
 write_to_wav(audio_buffer, "processor_example.wav")
-
-# In this example we directly manipulate and read audio from a single voice
-audio_buffer.fill(0.0)
-synth = resonarium.Resonarium()
-synth.set_param("impExciter0 enabled", 1.0)
-synth.set_param("enabled wb0r0", 1.0)
-synth.set_param("decayFilterCutoff wb0r0", 7000)
-
-# Get the 0th voice in the voices array. The voices array, in theory, should not be modified after instantiation...
-# therefore, this should always return a pointer to the same voice object in memory (if you always use the same index)
-voice = synth.get_voice(0)
-
-# Make the voice play a note
-voice.play_note(60, 100) # notice
-voice.process_multi_block(audio_buffer)
-voice.release_note()
-voice.reset()
-
-# You can now have the voice generate more data into a new buffer by repeating the above four lines
-# just make sure to start, stop, and reset the voice, and make sure the buffer is cleared each time
-
-write_to_wav(audio_buffer, "voice_example.wav")
 print("Done! :)")

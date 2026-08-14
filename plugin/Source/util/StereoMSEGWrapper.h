@@ -6,10 +6,7 @@
 class StereoMSEGWrapper
 {
 public:
-    StereoMSEGWrapper(MSEGParams params) : dataPointer(params.msegData), left(*dataPointer), right(*dataPointer), params(params)
-    {
-
-    }
+    explicit StereoMSEGWrapper(MSEGParams params);
 
     void prepare(const juce::dsp::ProcessSpec& spec);
 
@@ -35,7 +32,8 @@ public:
     float getOutputUnclamped(int channel);
     float getCurrentPhase(int channel);
 
-    std::shared_ptr<gin::MSEG::Data> dataPointer;
+    std::shared_ptr<MSEGDataStore> dataStore;
+    std::shared_ptr<gin::MSEG::Data> audioData;
     gin::MSEG left;
     gin::MSEG right;
     MSEGParams params;
@@ -47,6 +45,11 @@ public:
     float delay = 0.0f;
     float fade = 0.0f;
     float stereo = 0.0f;
+
+private:
+    void syncDataSnapshot() noexcept;
+
+    std::uint64_t dataVersion = 0;
 };
 
 

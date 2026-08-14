@@ -1,467 +1,948 @@
 #include "Exciters.h"
 
-#include "PluginProcessor.h"
-#include "ResonatorVoice.h"
+#include <algorithm>
+#include <cmath>
 
-void ImpulseExciter::prepare(const juce::dsp::ProcessSpec& spec)
+namespace
 {
-    Exciter::prepare(spec);
-    filter.prepare(spec);
-    filter.normalize = false;
-    scratchBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
-    scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
-    reset();
+constexpr std::uint64_t exciterProjectSeed = UINT64_C(0xd1b54a32d192ed03);
+constexpr float minimumExciterFilterFrequency = 10.0f;
+constexpr float minimumExciterFilterResonance = 0.01f;
+
+[[nodiscard]] float sanitizeExciterFilterFrequency(float frequency,
+                                                    float sampleRate) noexcept
+{
+    const auto nyquistSafeMaximum = std::max(1.0f, sampleRate * 0.5f - 1.0f);
+    const auto minimumFrequency =
+        std::min(minimumExciterFilterFrequency, nyquistSafeMaximum);
+    if (!std::isfinite(frequency))
+        return minimumFrequency;
+    return std::clamp(frequency, minimumFrequency, nyquistSafeMaximum);
 }
 
-void ImpulseExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
+[[nodiscard]] float sanitizeExciterFilterResonance(float resonance) noexcept
 {
-    jassert(exciterBlock.getNumChannels() == 2);
-    if (!params.enabled->isOn()) return;
-
-    juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)exciterBlock.getNumSamples());
-    truncatedBlock.clear();
-    auto adjustedGain = level / static_cast<float>(thickness);
-    const int impulsesThisBlock = juce::jmin<int>(truncatedBlock.getNumSamples(), impulsesRemaining);
-    for (int i = 0; i < impulsesThisBlock; i++)
-    {
-        auto sample = (polarityFlag) ? adjustedGain : -adjustedGain;
-        truncatedBlock.setSample(0, i, sample);
-        truncatedBlock.setSample(1, i, sample);
-    }
-
-    impulsesRemaining -= impulsesThisBlock;
-
-    filter.process(truncatedBlock);
-    //TODO Add proper multi channel support here
-    exciterBlock.add(truncatedBlock);
+    if (!std::isfinite(resonance))
+        return minimumExciterFilterResonance;
+    return std::max(resonance, minimumExciterFilterResonance);
 }
 
-void ImpulseExciter::reset()
+[[nodiscard]] std::uint64_t splitMix64(std::uint64_t& state) noexcept
 {
-    filter.reset();
-    impulsesRemaining = voice.getValue(params.thickness);
+    std::uint64_t value = (state += UINT64_C(0x9e3779b97f4a7c15));
+    value = (value ^ (value >> 30u)) * UINT64_C(0xbf58476d1ce4e5b9);
+    value = (value ^ (value >> 27u)) * UINT64_C(0x94d049bb133111eb);
+    return value ^ (value >> 31u);
 }
 
-void ImpulseExciter::noteStarted()
+[[nodiscard]] float safeRate(float rate) noexcept
 {
-    impulsesRemaining = thickness;
+    return std::isfinite(rate) && rate > 0.0f ? rate : 1.0f;
 }
 
-void ImpulseExciter::noteStopped(bool avoidTailOff)
+[[nodiscard]] ExciterAdsrControl resolveAdsrControl(gin::ModVoice& voice,
+                                                    const ADSRParams& params) noexcept
 {
+    return {
+        voice.getValue(params.attack),
+        voice.getValue(params.decay),
+        voice.getValue(params.sustain),
+        voice.getValue(params.release),
+    };
 }
 
-void ImpulseExciter::updateParameters()
+void applyAdsrControl(gin::AnalogADSR& envelope,
+                      const ExciterAdsrControl& control) noexcept
 {
-    if (!params.enabled->isOn()) return;
-    thickness = static_cast<int>(voice.getValue(params.thickness));
-    if (thickness < 1) thickness = 1;
-    level = voice.getValue(params.level);
-    filter.updateParameters();
+    envelope.setAttack(control.attack);
+    envelope.setDecay(control.decay);
+    envelope.setSustainLevel(control.sustain);
+    envelope.setRelease(control.release);
 }
 
-void NoiseExciter::prepare(const juce::dsp::ProcessSpec& spec)
+[[nodiscard]] ExciterFilterControl resolveFilterControl(
+    gin::ModVoice& voice, const MultiFilterParams& params,
+    bool normalization) noexcept
 {
-    Exciter::prepare(spec);
-    filter.prepare(spec);
-    scratchBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
-    scratchBuffer.clear();
-    scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
-    reset();
+    ExciterFilterControl control;
+    control.type = params.type != nullptr
+                       ? static_cast<std::uint8_t>(static_cast<int>(params.type->getProcValue()))
+                       : 0;
+    control.frequency = params.frequency != nullptr
+                            ? voice.getValue(params.frequency)
+                            : 2000.0f;
+    control.resonance = params.resonance != nullptr
+                            ? voice.getValue(params.resonance)
+                            : 0.707f;
+    control.normalization = normalization;
+    return control;
+}
 }
 
-void NoiseExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
-{
-    jassert(exciterBlock.getNumChannels() == 2);
-    if (!params.enabled->isOn()) return;
 
-    juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)exciterBlock.getNumSamples());
-    auto gainL = voice.getValue(params.level, 0);
-    auto gainR = voice.getValue(params.level, 1);
-    for (int i = 0; i < truncatedBlock.getNumSamples(); i++)
-    {
-        const float envSample = envelope.process();
-        const float noiseSample = noise.nextValue() * 0.1;
-        const float sampleL = noiseSample * gainL * envSample;
-        const float sampleR = noiseSample * gainR * envSample;
-        truncatedBlock.setSample(0, i, sampleL);
-        truncatedBlock.setSample(1, i, sampleR);
-    }
-    filter.process(truncatedBlock);
-    exciterBlock.add(truncatedBlock);
+void VoiceExciterRack::Xoshiro128PlusPlus::seed(std::uint64_t projectSeed, int voiceIndex,
+                                                std::uint64_t generation, ExciterKind kind,
+                                                std::uint32_t substream) noexcept
+{
+    std::uint64_t seedState = projectSeed;
+    seedState ^= static_cast<std::uint64_t>(static_cast<std::uint32_t>(voiceIndex))
+                 * UINT64_C(0x9e3779b97f4a7c15);
+    seedState ^= generation * UINT64_C(0xd2b74407b1ce6e93);
+    seedState ^= static_cast<std::uint64_t>(static_cast<std::uint8_t>(kind) + 1u)
+                 * UINT64_C(0xca5a826395121157);
+    seedState ^= static_cast<std::uint64_t>(substream + 1u) * UINT64_C(0xa24baed4963ee407);
+
+    for (auto& word : words)
+        word = static_cast<std::uint32_t>(splitMix64(seedState));
+
+    if ((words[0] | words[1] | words[2] | words[3]) == 0u)
+        words[0] = 1u;
 }
 
-void NoiseExciter::reset()
+std::uint32_t VoiceExciterRack::Xoshiro128PlusPlus::nextUInt() noexcept
 {
-    noise.reset();
-    envelope.reset();
-    filter.reset();
+    const auto result = std::rotl(words[0] + words[3], 7) + words[0];
+    const auto temporary = words[1] << 9u;
+
+    words[2] ^= words[0];
+    words[3] ^= words[1];
+    words[1] ^= words[2];
+    words[0] ^= words[3];
+    words[2] ^= temporary;
+    words[3] = std::rotl(words[3], 11);
+    return result;
 }
 
-void NoiseExciter::noteStarted()
+float VoiceExciterRack::Xoshiro128PlusPlus::nextUnitFloat() noexcept
 {
-    envelope.noteOn();
+    // The top 24 bits have an exactly specified, cross-platform float mapping.
+    return static_cast<float>(nextUInt() >> 8u) * 0x1.0p-24f;
 }
 
-void NoiseExciter::noteStopped(bool avoidTailOff)
+#if defined(RESONARIUM_TEST_INSTRUMENTATION)
+void VoiceExciterRack::renderPrngSequenceForTesting(int voiceId, std::uint64_t generation,
+                                                     ExciterKind kind, std::uint32_t substream,
+                                                     std::span<float> destination) noexcept
 {
-    envelope.noteOff();
+    Xoshiro128PlusPlus generator;
+    generator.seed(exciterProjectSeed, voiceId, generation, kind, substream);
+    for (auto& value : destination)
+        value = generator.nextUnitFloat();
+}
+#endif
+
+void VoiceExciterRack::CachedStereoFilter::prepare(const juce::dsp::ProcessSpec& spec)
+{
+    sampleRate = static_cast<float>(spec.sampleRate);
+    frequency = sanitizeExciterFilterFrequency(frequency, sampleRate);
+    resonance = sanitizeExciterFilterResonance(resonance);
+    coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(
+        sampleRate, frequency, resonance);
+    *filterL.coefficients = coefficients;
+    *filterR.coefficients = coefficients;
+    const juce::dsp::ProcessSpec monoSpec { spec.sampleRate, spec.maximumBlockSize, 1 };
+    filterL.prepare(monoSpec);
+    filterR.prepare(monoSpec);
+    hasTuple = false;
 }
 
-void NoiseExciter::updateParameters()
+std::array<float, 6> VoiceExciterRack::CachedStereoFilter::makeHighGainBandpass(
+    float currentSampleRate, float currentFrequency, float q) noexcept
 {
-    if (!params.enabled->isOn()) return;
-
-    envelope.setAttack(voice.getValue(params.adsrParams.attack));
-    envelope.setDecay(voice.getValue(params.adsrParams.decay));
-    envelope.setSustainLevel(voice.getValue(params.adsrParams.sustain));
-    envelope.setRelease(voice.getValue(params.adsrParams.release));
-    filter.updateParameters();
+    const auto n = 1.0f / std::tan(juce::MathConstants<float>::pi * currentFrequency
+                                  / currentSampleRate);
+    const auto nSquared = n * n;
+    const auto inverseQ = 1.0f / q;
+    const auto coefficient = 1.0f / (1.0f + inverseQ * n + nSquared);
+    return { coefficient * n, 0.0f, -coefficient * n, 1.0f,
+             coefficient * 2.0f * (1.0f - nSquared),
+             coefficient * (1.0f - inverseQ * n + nSquared) };
 }
 
-void SequenceExciter::prepare(const juce::dsp::ProcessSpec& spec)
+void VoiceExciterRack::CachedStereoFilter::update(const ExciterFilterControl& control,
+                                                   ExciterTelemetry& counters) noexcept
 {
-    Exciter::prepare(spec);
-    filter.prepare(spec);
-    filter.normalize = false;
-    scratchBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
-    scratchBuffer.clear();
-    scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
-    sampleRate = spec.sampleRate;
-    reset();
-}
+    const auto nextType = static_cast<Type>(control.type);
+    const auto nextFrequency = sanitizeExciterFilterFrequency(control.frequency, sampleRate);
+    const auto nextResonance = sanitizeExciterFilterResonance(control.resonance);
+    const auto nextNormalization = control.normalization;
 
-void SequenceExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
-{
-    if (!params.enabled->isOn()) return;
-
-    juce::dsp::AudioBlock<float> truncatedBlock = scratchBlock.getSubBlock(0, (size_t)exciterBlock.getNumSamples());
-    auto gain = voice.getValue(params.level);
-
-    for (int i = 0; i < truncatedBlock.getNumSamples(); i++)
-    {
-        float envelopeSample = gain * envelope.process();
-        if (mode == IMPULSE)
-        {
-            if (samplesSinceLastImpulse == 0)
-            {
-                impulsesLeft = impulseLength;
-            }
-
-            if (impulsesLeft > 0)
-            {
-                float finalSample = envelopeSample / static_cast<float>(impulseLength);
-                truncatedBlock.setSample(0, i, finalSample);
-                truncatedBlock.setSample(1, i, finalSample);
-                impulsesLeft--;
-            }
-            else
-            {
-                truncatedBlock.setSample(0, i, 0.0f);
-                truncatedBlock.setSample(1, i, 0.0f);
-            }
-
-            samplesSinceLastImpulse--;
-            if (samplesSinceLastImpulse < 0)
-            {
-                samplesSinceLastImpulse = periodInSamples - 1;
-            }
-        }
-        else if (mode == STATIC)
-        {
-            // Use periodInSamples to control when noise is generated based on the rate parameter
-            if (samplesSinceLastImpulse == 0)
-            {
-                // Time to generate a new noise impulse based on rate
-                // Use staticProbability to determine if this cycle will generate noise
-                float r = rng.nextFloat();
-                if (r < staticProbability)
-                {
-                    const float sample = noise.nextValue() * envelopeSample;
-                    truncatedBlock.setSample(0, i, sample);
-                    truncatedBlock.setSample(1, i, sample);
-                }
-                else
-                {
-                    truncatedBlock.setSample(0, i, 0.0f);
-                    truncatedBlock.setSample(1, i, 0.0f);
-                }
-                
-                // Reset counter
-                samplesSinceLastImpulse = periodInSamples - 1;
-            }
-            else
-            {
-                // No noise between cycles
-                truncatedBlock.setSample(0, i, 0.0f);
-                truncatedBlock.setSample(1, i, 0.0f);
-                samplesSinceLastImpulse--;
-            }
-        }
-        else if (mode == TRIANGULAR)
-        {
-            const float value = currentTriValue +
-                               (targetTriValue - currentTriValue) * triPhase;
-
-            const float sample = (value * 2 - 1.0f) * envelopeSample;
-
-            truncatedBlock.setSample(0, i, sample);
-            truncatedBlock.setSample(1, i, sample);
-
-            triPhase += triPhaseInc;
-
-            if (triPhase >= 1.0f)
-            {
-                currentTriValue = targetTriValue;
-                targetTriValue = rng.nextFloat() * (triAmpMax - triAmpMin) + triAmpMin;
-                triPhase -= 1.0f;
-                DBG("Setting target to" + juce::String(targetTriValue));
-            }
-        } else
-        {
-            jassertfalse;
-        }
-
-    }
-
-    filter.process(truncatedBlock);
-
-    exciterBlock.add(truncatedBlock);
-}
-
-void SequenceExciter::reset()
-{
-    noise.reset();
-    envelope.reset();
-    filter.reset();
-    samplesSinceLastImpulse = 0;
-    rng.setSeedRandomly();
-    impulsesLeft = 0;
-    currentTriValue = 0.0f;
-    targetTriValue = 0.0f;
-    triPhase = 0.0f;
-    triPhaseInc = 0.0f;
-    triAmpMin = 0.0f;
-    triAmpMax = 1.0f;
-    prevPeriodInSamples = -1;
-}
-
-void SequenceExciter::noteStarted()
-{
-    periodInSamples = static_cast<int>(std::round(sampleRate / voice.getValue(params.rate)));
-    samplesSinceLastImpulse = 0;
-    // For IMPULSE mode, ensure impulses start immediately
-    impulsesLeft = 0;
-    envelope.noteOn();
-}
-
-void SequenceExciter::noteStopped(bool avoidTailOff)
-{
-    envelope.noteOff();
-}
-
-void SequenceExciter::updateParameters()
-{
-    if (!params.enabled->isOn()) return;
-
-    envelope.setAttack(voice.getValue(params.adsrParams.attack));
-    envelope.setDecay(voice.getValue(params.adsrParams.decay));
-    envelope.setSustainLevel(voice.getValue(params.adsrParams.sustain));
-    envelope.setRelease(voice.getValue(params.adsrParams.release));
-    filter.updateParameters();
-    mode = static_cast<Mode>(voice.getValue(params.mode));
-    const float newPeriod = static_cast<int>(std::round(sampleRate / voice.getValue(params.rate)));
-
-    //compute values for the different impulse train modes
-    if (mode == IMPULSE)
-    {
-        impulseLength = static_cast<int>(voice.getValue(params.impulseLength));
-        if (impulseLength <= 0) impulseLength = 1;
-    }
-    else if (mode == STATIC)
-    {
-        staticProbability = voice.getValue(params.staticDensity) / 2.0f;
-    }
-    else if (mode == TRIANGULAR)
-    {
-        // Handle period changes and phase continuity
-        if (newPeriod != periodInSamples)
-        {
-            const float periodRatio = static_cast<float>(periodInSamples) / newPeriod;
-            triPhase *= periodRatio;
-
-            // Handle phase overflow from period decreases
-            while (triPhase >= 1.0f)
-            {
-                triPhase -= 1.0f;
-                currentTriValue = targetTriValue;
-                targetTriValue = rng.nextFloat() * (triAmpMax - triAmpMin) + triAmpMin;
-            }
-        }
-
-        triPhaseInc = 1.0f / newPeriod;
-        triAmpMin = 0.0f; // Hardcoded to 0
-        triAmpMax = 1.0f; // Hardcoded to 1
-    }
-
-    periodInSamples = newPeriod;
-    jassert(periodInSamples > 0);
-}
-
-void SampleExciter::prepare(const juce::dsp::ProcessSpec& spec)
-{
-    Exciter::prepare(spec);
-    filter.prepare(spec);
-    scratchBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
-    scratchBuffer.clear();
-    scratchBlock = juce::dsp::AudioBlock<float>(scratchBuffer);
-}
-
-void SampleExciter::process(juce::dsp::AudioBlock<float>& exciterBlock, juce::dsp::AudioBlock<float>& outputBlock)
-{
-    if (!params.enabled->isOn() || !state.sampler.isLoaded() || !isPlaying)
+    if (hasTuple && nextType == type && nextFrequency == frequency
+        && nextResonance == resonance && nextNormalization == normalization)
         return;
 
-    const int numSamples = exciterBlock.getNumSamples();
-    const int loopLength = endSample - startSample;
-    int remainingSamples = numSamples;
-    int blockOffset = 0;
+    type = nextType;
+    frequency = nextFrequency;
+    resonance = nextResonance;
+    normalization = nextNormalization;
+    hasTuple = true;
 
-    while (remainingSamples > 0)
+    if (type == Type::none)
+        return;
+
+    switch (type)
     {
-        // Check if we've hit the end point
-        if (currentSample >= endSample)
+        case Type::lowpass:
+            coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeLowPass(
+                sampleRate, frequency, resonance);
+            break;
+        case Type::highpass:
+            coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeHighPass(
+                sampleRate, frequency, resonance);
+            break;
+        case Type::bandpass:
+            coefficients = normalization
+                               ? juce::dsp::IIR::ArrayCoefficients<float>::makeBandPass(
+                                     sampleRate, frequency, resonance)
+                               : makeHighGainBandpass(sampleRate, frequency, resonance);
+            break;
+        case Type::notch:
+            coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeNotch(
+                sampleRate, frequency, resonance);
+            break;
+        case Type::allpass:
+            coefficients = juce::dsp::IIR::ArrayCoefficients<float>::makeAllPass(
+                sampleRate, frequency, resonance);
+            break;
+        case Type::none: break;
+    }
+
+    *filterL.coefficients = coefficients;
+    *filterR.coefficients = coefficients;
+    ++counters.filterCoefficientRebuilds;
+}
+
+void VoiceExciterRack::CachedStereoFilter::process(float inputL, float inputR,
+                                                    float& outputL, float& outputR) noexcept
+{
+    if (type == Type::none)
+    {
+        outputL = inputL;
+        outputR = inputR;
+        return;
+    }
+
+    outputL = filterL.processSample(inputL);
+    outputR = filterR.processSample(inputR);
+}
+
+VoiceExciterRack::VoiceExciterRack(GlobalState& state, gin::ModVoice& voice,
+                                   const VoiceParams& params)
+    : state(state), voice(voice)
+{
+    static_assert(NUM_IMPULSE_EXCITERS == 1);
+    static_assert(NUM_NOISE_EXCITERS == 1);
+    static_assert(NUM_IMPULSE_TRAIN_EXCITERS == 1);
+
+    impulse.params = params.impulseExciterParams[0];
+    noise.params = params.noiseExciterParams[0];
+    sequence.params = params.impulseTrainExciterParams[0];
+    sample.params = params.sampleExciterParams;
+    externalInput.params = params.externalInputExciterParams;
+}
+
+VoiceExciterRack::~VoiceExciterRack()
+{
+    if (sample.snapshot)
+        state.sampler.releaseFromVoice(sample.snapshot);
+}
+
+void VoiceExciterRack::prepare(const juce::dsp::ProcessSpec& spec)
+{
+    jassert(spec.numChannels == 2);
+    sampleRate = spec.sampleRate;
+    impulse.filter.prepare(spec);
+    noise.filter.prepare(spec);
+    sequence.filter.prepare(spec);
+    sample.filter.prepare(spec);
+
+    // Exciter AnalogADSR timing is intentionally fixed at 44.1 kHz.
+    impulse.filter.reset();
+    noise.filter.reset();
+    sequence.filter.reset();
+    sample.filter.reset();
+    noise.envelope.reset();
+    sequence.envelope.reset();
+    sample.envelope.reset();
+    externalInput.envelope.reset();
+}
+
+void VoiceExciterRack::beginAssignment(int newPhysicalVoiceId,
+                                       std::uint64_t newAssignmentGeneration) noexcept
+{
+    if (sample.snapshot)
+    {
+        state.sampler.releaseFromVoice(sample.snapshot);
+        ++telemetry.snapshotReleases;
+    }
+
+    sample.snapshot = state.sampler.acquireForVoice();
+    if (sample.snapshot)
+        ++telemetry.snapshotAcquires;
+
+    physicalVoiceId = newPhysicalVoiceId;
+    assignmentGeneration = newAssignmentGeneration;
+    assignmentActive = true;
+    gateHeld = true;
+    enabledMask = 0;
+    controlFrame.enabledMask = 0;
+    previousEnabledMask = 0;
+    initializedMask = 0;
+    pendingResetMask = allSourcesMask;
+    ++telemetry.assignments;
+}
+
+void VoiceExciterRack::noteStopped(bool allowTailOff) noexcept
+{
+    juce::ignoreUnused(allowTailOff);
+    gateHeld = false;
+
+    if (sourceEnabled(ExciterKind::noise)
+        && (initializedMask & sourceBit(ExciterKind::noise)) != 0)
+        noise.envelope.noteOff();
+    if (sourceEnabled(ExciterKind::sequence)
+        && (initializedMask & sourceBit(ExciterKind::sequence)) != 0)
+        sequence.envelope.noteOff();
+    if (sourceEnabled(ExciterKind::sample)
+        && (initializedMask & sourceBit(ExciterKind::sample)) != 0)
+        sample.envelope.noteOff();
+    if (sourceEnabled(ExciterKind::externalInput)
+        && (initializedMask & sourceBit(ExciterKind::externalInput)) != 0)
+        externalInput.envelope.noteOff();
+}
+
+void VoiceExciterRack::voiceRetired() noexcept
+{
+    if (sample.snapshot)
+    {
+        state.sampler.releaseFromVoice(sample.snapshot);
+        ++telemetry.snapshotReleases;
+    }
+    sample.snapshot = {};
+    sample.isPlaying = false;
+    assignmentActive = false;
+    gateHeld = false;
+    enabledMask = 0;
+    controlFrame.enabledMask = 0;
+    previousEnabledMask = 0;
+    initializedMask = 0;
+    pendingResetMask = allSourcesMask;
+    telemetry.enabledMask = enabledMask;
+    telemetry.initializedMask = initializedMask;
+    telemetry.pendingResetMask = pendingResetMask;
+}
+
+void VoiceExciterRack::clearTelemetry() noexcept
+{
+    telemetry = {};
+    telemetry.enabledMask = enabledMask;
+    telemetry.initializedMask = initializedMask;
+    telemetry.pendingResetMask = pendingResetMask;
+}
+
+void VoiceExciterRack::updateParameters() noexcept
+{
+    if (!assignmentActive)
+        return;
+
+    std::uint8_t nextEnabledMask = 0;
+    if (impulse.params.enabled->isOn())
+        nextEnabledMask |= sourceBit(ExciterKind::impulse);
+    if (noise.params.enabled->isOn())
+        nextEnabledMask |= sourceBit(ExciterKind::noise);
+    if (sequence.params.enabled->isOn())
+        nextEnabledMask |= sourceBit(ExciterKind::sequence);
+    if (sample.params.enabled->isOn())
+        nextEnabledMask |= sourceBit(ExciterKind::sample);
+    if (externalInput.params.enabled->isOn())
+        nextEnabledMask |= sourceBit(ExciterKind::externalInput);
+    enabledMask = nextEnabledMask;
+    controlFrame.enabledMask = nextEnabledMask;
+
+    if (sourceEnabled(ExciterKind::impulse))
+    {
+        controlFrame.impulseThickness = juce::jmax(
+            1, static_cast<int>(voice.getValue(impulse.params.thickness)));
+        controlFrame.impulseLevel = voice.getValue(impulse.params.level);
+        controlFrame.impulseFilter = resolveFilterControl(
+            voice, impulse.params.filterParams, false);
+        impulse.filter.update(controlFrame.impulseFilter, telemetry);
+        initializePendingSource(ExciterKind::impulse);
+    }
+
+    if (sourceEnabled(ExciterKind::noise))
+    {
+        controlFrame.noiseLevelL = voice.getValue(noise.params.level, 0);
+        controlFrame.noiseLevelR = voice.getValue(noise.params.level, 1);
+        controlFrame.noiseEnvelope = resolveAdsrControl(voice, noise.params.adsrParams);
+        controlFrame.noiseFilter = resolveFilterControl(voice, noise.params.filterParams, false);
+        applyAdsrControl(noise.envelope, controlFrame.noiseEnvelope);
+        noise.filter.update(controlFrame.noiseFilter, telemetry);
+        initializePendingSource(ExciterKind::noise);
+    }
+
+    if (sourceEnabled(ExciterKind::sequence))
+    {
+        const auto oldPeriod = sequence.periodInSamples;
+        const auto rawMode = static_cast<int>(voice.getValue(sequence.params.mode));
+        sequence.mode = rawMode == 1 ? SequenceState::Mode::staticNoise
+                                    : (rawMode == 2 ? SequenceState::Mode::triangular
+                                                    : SequenceState::Mode::impulse);
+        controlFrame.sequenceLevel = voice.getValue(sequence.params.level);
+        controlFrame.sequenceMode = static_cast<std::uint8_t>(sequence.mode);
+        controlFrame.sequenceEnvelope = resolveAdsrControl(voice, sequence.params.adsrParams);
+        controlFrame.sequenceFilter = resolveFilterControl(
+            voice, sequence.params.filterParams, false);
+        applyAdsrControl(sequence.envelope, controlFrame.sequenceEnvelope);
+        sequence.filter.update(controlFrame.sequenceFilter, telemetry);
+
+        const auto newPeriod = juce::jmax(1, static_cast<int>(std::round(
+            sampleRate / static_cast<double>(safeRate(voice.getValue(sequence.params.rate))))));
+        if (sequence.mode == SequenceState::Mode::impulse)
+            controlFrame.sequenceImpulseLength = juce::jmax(
+                1, static_cast<int>(voice.getValue(sequence.params.impulseLength)));
+        else if (sequence.mode == SequenceState::Mode::staticNoise)
+            controlFrame.sequenceStaticProbability =
+                voice.getValue(sequence.params.staticDensity) * 0.5f;
+        else
         {
-            if (params.loop->isOn())
+            if (oldPeriod != newPeriod && oldPeriod > 0)
             {
-                // Wrap back to start point
-                currentSample = startSample + (currentSample - endSample) % loopLength;
+                sequence.triPhase *= static_cast<float>(oldPeriod) / static_cast<float>(newPeriod);
+                while (sequence.triPhase >= 1.0f)
+                {
+                    sequence.triPhase -= 1.0f;
+                    sequence.currentTriValue = sequence.targetTriValue;
+                    sequence.targetTriValue = sequence.valueRandom.nextUnitFloat();
+                }
             }
-            else
-            {
-                isPlaying = false;
-                break;
-            }
+            sequence.triPhaseInc = 1.0f / static_cast<float>(newPeriod);
         }
+        sequence.periodInSamples = newPeriod;
+        controlFrame.sequencePeriodInSamples = sequence.periodInSamples;
+        initializePendingSource(ExciterKind::sequence);
+    }
 
-        // Calculate available samples until end point
-        const int samplesAvailable = endSample - currentSample;
-        const int samplesToProcess = std::min(remainingSamples, samplesAvailable);
+    if (sourceEnabled(ExciterKind::sample))
+    {
+        controlFrame.sampleMixL = voice.getValue(sample.params.mix, 0);
+        controlFrame.sampleMixR = voice.getValue(sample.params.mix, 1);
+        controlFrame.sampleLevel = voice.getValue(sample.params.level, 0);
+        controlFrame.sampleLoop = sample.params.loop->isOn();
+        controlFrame.sampleEnvelope = resolveAdsrControl(voice, sample.params.adsrParams);
+        controlFrame.sampleFilter = resolveFilterControl(voice, sample.params.filterParams, false);
+        applyAdsrControl(sample.envelope, controlFrame.sampleEnvelope);
+        sample.filter.update(controlFrame.sampleFilter, telemetry);
+        initializePendingSource(ExciterKind::sample);
+    }
 
-        // Get the raw sample data
-        auto sampleBlock = state.sampler.getSubBlock(currentSample, samplesToProcess);
+    if (sourceEnabled(ExciterKind::externalInput))
+    {
+        const auto wet = std::sin(voice.getValue(externalInput.params.mix)
+                                  * juce::MathConstants<float>::halfPi);
+        controlFrame.externalGainL = voice.getValue(externalInput.params.gain, 0) * wet;
+        controlFrame.externalGainR = voice.getValue(externalInput.params.gain, 1) * wet;
+        controlFrame.externalEnvelope = resolveAdsrControl(
+            voice, externalInput.params.adsrParams);
+        controlFrame.externalFilter = resolveFilterControl(
+            voice, externalInput.params.filterParams, false);
+        applyAdsrControl(externalInput.envelope, controlFrame.externalEnvelope);
+        // The external filter controls intentionally remain compatibility no-ops.
+        initializePendingSource(ExciterKind::externalInput);
+    }
 
-        // Copy to our scratch buffer
-        juce::dsp::AudioBlock<float> tempBlock = scratchBlock.getSubBlock(0, samplesToProcess);
-        tempBlock.copyFrom(sampleBlock);
+    const auto newlyEnabled = static_cast<std::uint8_t>(enabledMask & ~previousEnabledMask);
+    if (!gateHeld)
+    {
+        if ((newlyEnabled & sourceBit(ExciterKind::noise)) != 0
+            && (initializedMask & sourceBit(ExciterKind::noise)) != 0)
+            noise.envelope.noteOff();
+        if ((newlyEnabled & sourceBit(ExciterKind::sequence)) != 0
+            && (initializedMask & sourceBit(ExciterKind::sequence)) != 0)
+            sequence.envelope.noteOff();
+        if ((newlyEnabled & sourceBit(ExciterKind::sample)) != 0
+            && (initializedMask & sourceBit(ExciterKind::sample)) != 0)
+            sample.envelope.noteOff();
+        if ((newlyEnabled & sourceBit(ExciterKind::externalInput)) != 0
+            && (initializedMask & sourceBit(ExciterKind::externalInput)) != 0)
+            externalInput.envelope.noteOff();
+    }
 
-        // Filter the scratch buffer
-        filter.process(tempBlock);
-        envelope.processMultiplying(scratchBuffer, 0, samplesToProcess);
+    previousEnabledMask = enabledMask;
+    telemetry.enabledMask = enabledMask;
+    telemetry.initializedMask = initializedMask;
+    telemetry.pendingResetMask = pendingResetMask;
+}
 
-        // Now get the output blocks
-        auto exciterSubBlock = exciterBlock.getSubBlock(blockOffset, samplesToProcess);
-        auto outBlock = outputBlock.getSubBlock(blockOffset, samplesToProcess);
+void VoiceExciterRack::initializePendingSource(ExciterKind kind) noexcept
+{
+    const auto bit = sourceBit(kind);
+    if ((pendingResetMask & bit) == 0)
+        return;
 
-        // Add the filtered signal to both outputs with appropriate scaling
-        exciterSubBlock.addProductOf(tempBlock, level * mixL);
-        outBlock.addProductOf(tempBlock, level * (1.0f - mixL));
+    seedSource(kind);
+    switch (kind)
+    {
+        case ExciterKind::impulse: resetImpulse(); break;
+        case ExciterKind::noise: resetNoise(); break;
+        case ExciterKind::sequence: resetSequence(); break;
+        case ExciterKind::sample: resetSample(); break;
+        case ExciterKind::externalInput: resetExternal(); break;
+        case ExciterKind::count: jassertfalse; break;
+    }
 
-        currentSample += samplesToProcess;
-        remainingSamples -= samplesToProcess;
-        blockOffset += samplesToProcess;
+    // A lazily initialized source must enter the assignment at its note-on
+    // state. If the key was already released, transition immediately
+    // to release rather than leaving the envelope idle. The impulse is the
+    // intentional exception: noteStopped() never cancels it.
+    if (!gateHeld)
+    {
+        if (kind == ExciterKind::noise)
+            noise.envelope.noteOff();
+        else if (kind == ExciterKind::sequence)
+            sequence.envelope.noteOff();
+        else if (kind == ExciterKind::sample)
+            sample.envelope.noteOff();
+        else if (kind == ExciterKind::externalInput)
+            externalInput.envelope.noteOff();
+    }
 
-        if (envelope.getState() == gin::AnalogADSR::State::idle)
+    pendingResetMask &= static_cast<std::uint8_t>(~bit);
+    initializedMask |= bit;
+}
+
+void VoiceExciterRack::seedSource(ExciterKind kind) noexcept
+{
+    if (kind == ExciterKind::noise)
+        noise.random.seed(exciterProjectSeed, physicalVoiceId, assignmentGeneration, kind, 0);
+    else if (kind == ExciterKind::sequence)
+    {
+        sequence.triggerRandom.seed(exciterProjectSeed, physicalVoiceId,
+                                    assignmentGeneration, kind, 0);
+        sequence.valueRandom.seed(exciterProjectSeed, physicalVoiceId,
+                                  assignmentGeneration, kind, 1);
+    }
+}
+
+void VoiceExciterRack::resetImpulse() noexcept
+{
+    impulse.filter.reset();
+    impulse.impulsesRemaining = controlFrame.impulseThickness;
+}
+
+void VoiceExciterRack::resetNoise() noexcept
+{
+    noise.envelope.reset();
+    noise.filter.reset();
+    noise.envelope.noteOn();
+}
+
+void VoiceExciterRack::resetSequence() noexcept
+{
+    sequence.envelope.reset();
+    sequence.filter.reset();
+    sequence.samplesSinceLastImpulse = 0;
+    sequence.impulsesLeft = 0;
+    sequence.currentTriValue = 0.0f;
+    sequence.targetTriValue = 0.0f;
+    sequence.triPhase = 0.0f;
+    sequence.envelope.noteOn();
+}
+
+void VoiceExciterRack::resetSample() noexcept
+{
+    sample.envelope.reset();
+    sample.filter.reset();
+    const auto sampleLength = sample.snapshot.getNumSamples();
+    sample.startSample = juce::jlimit(0, sampleLength,
+                                      static_cast<int>(sampleLength * voice.getValue(sample.params.start)));
+    sample.endSample = juce::jlimit(0, sampleLength,
+                                    static_cast<int>(sampleLength * voice.getValue(sample.params.end)));
+    // Playback begins at frame zero; startSample is consulted only after
+    // reaching endSample and looping.
+    sample.currentSample = 0;
+    sample.isPlaying = sample.snapshot && sample.endSample > sample.startSample;
+    if (sample.isPlaying)
+        sample.envelope.noteOn();
+}
+
+void VoiceExciterRack::resetExternal() noexcept
+{
+    externalInput.envelope.reset();
+    externalInput.envelope.noteOn();
+}
+
+void VoiceExciterRack::process(juce::dsp::AudioBlock<float>& excitation,
+                               juce::dsp::AudioBlock<float>& directOutput,
+                               const ExciterRenderContext& context) noexcept
+{
+    jassert(excitation.getNumChannels() == 2 && directOutput.getNumChannels() == 2);
+    jassert(excitation.getNumSamples() == directOutput.getNumSamples());
+    const auto frameMask = controlFrame.enabledMask;
+    if ((frameMask & sourceBit(ExciterKind::impulse)) != 0)
+        processImpulse(excitation);
+    if ((frameMask & sourceBit(ExciterKind::noise)) != 0)
+        processNoise(excitation);
+    if ((frameMask & sourceBit(ExciterKind::sequence)) != 0)
+        processSequence(excitation);
+    if ((frameMask & sourceBit(ExciterKind::sample)) != 0)
+        processSample(excitation, directOutput);
+    if ((frameMask & sourceBit(ExciterKind::externalInput)) != 0)
+        processExternal(excitation, context);
+}
+
+void VoiceExciterRack::processImpulse(juce::dsp::AudioBlock<float>& excitation) noexcept
+{
+    auto* left = excitation.getChannelPointer(0);
+    auto* right = excitation.getChannelPointer(1);
+    const auto count = static_cast<int>(excitation.getNumSamples());
+    const auto adjustedGain = controlFrame.impulseLevel
+                              / static_cast<float>(controlFrame.impulseThickness);
+    if (impulse.filter.isBypassed())
+    {
+        const auto impulseCount = std::min(count, impulse.impulsesRemaining);
+        if (impulseCount > 0)
         {
-            isPlaying = false;
+            juce::FloatVectorOperations::add(left, -adjustedGain, impulseCount);
+            juce::FloatVectorOperations::add(right, -adjustedGain, impulseCount);
+            impulse.impulsesRemaining -= impulseCount;
+        }
+        telemetry.sourceSamplesGenerated[static_cast<std::size_t>(ExciterKind::impulse)] +=
+            static_cast<std::uint64_t>(count);
+        return;
+    }
+
+    for (int index = 0; index < count; ++index)
+    {
+        const auto mono = impulse.impulsesRemaining > 0 ? -adjustedGain : 0.0f;
+        impulse.impulsesRemaining -= impulse.impulsesRemaining > 0 ? 1 : 0;
+        float filteredL = 0.0f;
+        float filteredR = 0.0f;
+        impulse.filter.process(mono, mono, filteredL, filteredR);
+        left[index] += filteredL;
+        right[index] += filteredR;
+    }
+    telemetry.sourceSamplesGenerated[static_cast<std::size_t>(ExciterKind::impulse)] +=
+        static_cast<std::uint64_t>(count);
+}
+
+void VoiceExciterRack::processNoise(juce::dsp::AudioBlock<float>& excitation) noexcept
+{
+    auto* left = excitation.getChannelPointer(0);
+    auto* right = excitation.getChannelPointer(1);
+    const auto count = static_cast<int>(excitation.getNumSamples());
+    const auto envelopeState = noise.envelope.getState();
+    const auto constantEnvelope = envelopeState == gin::AnalogADSR::State::sustain
+                                  || envelopeState == gin::AnalogADSR::State::idle;
+    const auto constantEnvelopeValue = noise.envelope.getOutput();
+    const auto bypassed = noise.filter.isBypassed();
+    for (int index = 0; index < count; ++index)
+    {
+        const auto envelopeValue = constantEnvelope ? constantEnvelopeValue
+                                                    : noise.envelope.process();
+        const auto randomSample = noise.random.nextBipolarFloat();
+        const auto mono = randomSample * 0.1f;
+        const auto sampleL = mono * controlFrame.noiseLevelL * envelopeValue;
+        const auto sampleR = mono * controlFrame.noiseLevelR * envelopeValue;
+        if (bypassed)
+        {
+            left[index] += sampleL;
+            right[index] += sampleR;
+        }
+        else
+        {
+            float filteredL = 0.0f;
+            float filteredR = 0.0f;
+            noise.filter.process(sampleL, sampleR, filteredL, filteredR);
+            left[index] += filteredL;
+            right[index] += filteredR;
+        }
+    }
+    telemetry.sourceSamplesGenerated[static_cast<std::size_t>(ExciterKind::noise)] +=
+        static_cast<std::uint64_t>(count);
+}
+
+void VoiceExciterRack::processSequence(juce::dsp::AudioBlock<float>& excitation) noexcept
+{
+    switch (static_cast<SequenceState::Mode>(controlFrame.sequenceMode))
+    {
+        case SequenceState::Mode::impulse: processImpulseSequence(excitation); break;
+        case SequenceState::Mode::staticNoise: processStaticSequence(excitation); break;
+        case SequenceState::Mode::triangular: processTriangularSequence(excitation); break;
+    }
+    telemetry.sourceSamplesGenerated[static_cast<std::size_t>(ExciterKind::sequence)] +=
+        static_cast<std::uint64_t>(excitation.getNumSamples());
+}
+
+void VoiceExciterRack::processImpulseSequence(juce::dsp::AudioBlock<float>& excitation) noexcept
+{
+    auto* left = excitation.getChannelPointer(0);
+    auto* right = excitation.getChannelPointer(1);
+    const auto count = static_cast<int>(excitation.getNumSamples());
+    const auto envelopeState = sequence.envelope.getState();
+    const auto constantEnvelope = envelopeState == gin::AnalogADSR::State::sustain
+                                  || envelopeState == gin::AnalogADSR::State::idle;
+    const auto constantEnvelopeValue = sequence.envelope.getOutput();
+    const auto bypassed = sequence.filter.isBypassed();
+    for (int index = 0; index < count; ++index)
+    {
+        const auto envelopeValue = constantEnvelope ? constantEnvelopeValue
+                                                    : sequence.envelope.process();
+        const auto envelopeSample = controlFrame.sequenceLevel * envelopeValue;
+        if (sequence.samplesSinceLastImpulse == 0)
+            sequence.impulsesLeft = controlFrame.sequenceImpulseLength;
+        const auto mono = sequence.impulsesLeft > 0
+                              ? envelopeSample / static_cast<float>(controlFrame.sequenceImpulseLength)
+                              : 0.0f;
+        sequence.impulsesLeft -= sequence.impulsesLeft > 0 ? 1 : 0;
+        if (--sequence.samplesSinceLastImpulse < 0)
+            sequence.samplesSinceLastImpulse = controlFrame.sequencePeriodInSamples - 1;
+        if (bypassed)
+        {
+            left[index] += mono;
+            right[index] += mono;
+        }
+        else
+        {
+            float filteredL = 0.0f;
+            float filteredR = 0.0f;
+            sequence.filter.process(mono, mono, filteredL, filteredR);
+            left[index] += filteredL;
+            right[index] += filteredR;
         }
     }
 }
 
-void SampleExciter::reset()
+void VoiceExciterRack::processStaticSequence(juce::dsp::AudioBlock<float>& excitation) noexcept
 {
-    currentSample = 0;
-    envelope.reset();
-    filter.reset();
-    scratchBlock.clear();
+    auto* left = excitation.getChannelPointer(0);
+    auto* right = excitation.getChannelPointer(1);
+    const auto count = static_cast<int>(excitation.getNumSamples());
+    const auto envelopeState = sequence.envelope.getState();
+    const auto constantEnvelope = envelopeState == gin::AnalogADSR::State::sustain
+                                  || envelopeState == gin::AnalogADSR::State::idle;
+    const auto constantEnvelopeValue = sequence.envelope.getOutput();
+    const auto bypassed = sequence.filter.isBypassed();
+    for (int index = 0; index < count; ++index)
+    {
+        const auto envelopeValue = constantEnvelope ? constantEnvelopeValue
+                                                    : sequence.envelope.process();
+        const auto envelopeSample = controlFrame.sequenceLevel * envelopeValue;
+        float mono = 0.0f;
+        if (sequence.samplesSinceLastImpulse == 0)
+        {
+            if (sequence.triggerRandom.nextUnitFloat() < controlFrame.sequenceStaticProbability)
+                mono = sequence.valueRandom.nextBipolarFloat() * envelopeSample;
+            sequence.samplesSinceLastImpulse = controlFrame.sequencePeriodInSamples - 1;
+        }
+        else
+        {
+            --sequence.samplesSinceLastImpulse;
+        }
+        if (bypassed)
+        {
+            left[index] += mono;
+            right[index] += mono;
+        }
+        else
+        {
+            float filteredL = 0.0f;
+            float filteredR = 0.0f;
+            sequence.filter.process(mono, mono, filteredL, filteredR);
+            left[index] += filteredL;
+            right[index] += filteredR;
+        }
+    }
 }
 
-void SampleExciter::noteStarted()
+void VoiceExciterRack::processTriangularSequence(juce::dsp::AudioBlock<float>& excitation) noexcept
 {
-    isPlaying = true;
-    envelope.noteOn();
-    startSample = static_cast<int>(state.sampler.getNumSamples() * voice.getValue(params.start));
-    endSample = static_cast<int>(state.sampler.getNumSamples() * voice.getValue(params.end));
+    auto* left = excitation.getChannelPointer(0);
+    auto* right = excitation.getChannelPointer(1);
+    const auto count = static_cast<int>(excitation.getNumSamples());
+    const auto envelopeState = sequence.envelope.getState();
+    const auto constantEnvelope = envelopeState == gin::AnalogADSR::State::sustain
+                                  || envelopeState == gin::AnalogADSR::State::idle;
+    const auto constantEnvelopeValue = sequence.envelope.getOutput();
+    const auto bypassed = sequence.filter.isBypassed();
+    for (int index = 0; index < count; ++index)
+    {
+        const auto envelopeValue = constantEnvelope ? constantEnvelopeValue
+                                                    : sequence.envelope.process();
+        const auto envelopeSample = controlFrame.sequenceLevel * envelopeValue;
+        const auto value = sequence.currentTriValue
+                           + (sequence.targetTriValue - sequence.currentTriValue) * sequence.triPhase;
+        const auto mono = (value * 2.0f - 1.0f) * envelopeSample;
+        sequence.triPhase += sequence.triPhaseInc;
+        if (sequence.triPhase >= 1.0f)
+        {
+            sequence.currentTriValue = sequence.targetTriValue;
+            sequence.targetTriValue = sequence.valueRandom.nextUnitFloat();
+            sequence.triPhase -= 1.0f;
+        }
+        if (bypassed)
+        {
+            left[index] += mono;
+            right[index] += mono;
+        }
+        else
+        {
+            float filteredL = 0.0f;
+            float filteredR = 0.0f;
+            sequence.filter.process(mono, mono, filteredL, filteredR);
+            left[index] += filteredL;
+            right[index] += filteredR;
+        }
+    }
 }
 
-void SampleExciter::noteStopped(bool avoidTailOff)
+void VoiceExciterRack::processSample(juce::dsp::AudioBlock<float>& excitation,
+                                     juce::dsp::AudioBlock<float>& directOutput) noexcept
 {
-    envelope.noteOff();
+    if (!sample.isPlaying || !sample.snapshot)
+        return;
+
+    auto* excitationL = excitation.getChannelPointer(0);
+    auto* excitationR = excitation.getChannelPointer(1);
+    auto* directL = directOutput.getChannelPointer(0);
+    auto* directR = directOutput.getChannelPointer(1);
+    const auto* sourceL = sample.snapshot.getReadPointer(0);
+    const auto* sourceR = sample.snapshot.getReadPointer(1);
+    const auto count = static_cast<int>(excitation.getNumSamples());
+    const auto loopLength = sample.endSample - sample.startSample;
+    if (sourceL == nullptr || sourceR == nullptr || loopLength <= 0)
+    {
+        sample.isPlaying = false;
+        return;
+    }
+
+    const auto excitationGainL = controlFrame.sampleLevel * controlFrame.sampleMixL;
+    const auto excitationGainR = controlFrame.sampleLevel * controlFrame.sampleMixR;
+    const auto directGainL = controlFrame.sampleLevel * (1.0f - controlFrame.sampleMixL);
+    const auto directGainR = controlFrame.sampleLevel * (1.0f - controlFrame.sampleMixR);
+    int generated = 0;
+
+    // Once the envelope is stationary and the filter is bypassed, process
+    // contiguous sample runs with JUCE's platform vector kernels. Loop wraps
+    // are deliberately retained as chunk boundaries, so this has precisely
+    // the same cursor and first-cycle behaviour as the scalar path.
+    const auto envelopeState = sample.envelope.getState();
+    if (sample.filter.isBypassed()
+        && envelopeState == gin::AnalogADSR::State::sustain)
+    {
+        const auto envelopeValue = sample.envelope.getOutput();
+        int outputOffset = 0;
+        while (outputOffset < count)
+        {
+            if (sample.currentSample >= sample.endSample)
+            {
+                if (!controlFrame.sampleLoop)
+                {
+                    sample.isPlaying = false;
+                    break;
+                }
+                sample.currentSample = sample.startSample
+                                       + (sample.currentSample - sample.endSample) % loopLength;
+            }
+
+            const auto chunk = std::min(count - outputOffset,
+                                        sample.endSample - sample.currentSample);
+            const auto* chunkL = sourceL + sample.currentSample;
+            const auto* chunkR = sourceR + sample.currentSample;
+            juce::FloatVectorOperations::addWithMultiply(
+                excitationL + outputOffset, chunkL, excitationGainL * envelopeValue, chunk);
+            juce::FloatVectorOperations::addWithMultiply(
+                excitationR + outputOffset, chunkR, excitationGainR * envelopeValue, chunk);
+            juce::FloatVectorOperations::addWithMultiply(
+                directL + outputOffset, chunkL, directGainL * envelopeValue, chunk);
+            juce::FloatVectorOperations::addWithMultiply(
+                directR + outputOffset, chunkR, directGainR * envelopeValue, chunk);
+            sample.currentSample += chunk;
+            outputOffset += chunk;
+            generated += chunk;
+        }
+        telemetry.sourceSamplesGenerated[static_cast<std::size_t>(ExciterKind::sample)] +=
+            static_cast<std::uint64_t>(generated);
+        return;
+    }
+
+    for (int index = 0; index < count; ++index)
+    {
+        if (sample.currentSample >= sample.endSample)
+        {
+            if (!controlFrame.sampleLoop)
+            {
+                sample.isPlaying = false;
+                break;
+            }
+            sample.currentSample = sample.startSample
+                                   + (sample.currentSample - sample.endSample) % loopLength;
+        }
+
+        float filteredL = 0.0f;
+        float filteredR = 0.0f;
+        sample.filter.process(sourceL[sample.currentSample], sourceR[sample.currentSample],
+                              filteredL, filteredR);
+        const auto envelopeValue = sample.envelope.process();
+        const auto left = filteredL * envelopeValue;
+        const auto right = filteredR * envelopeValue;
+        excitationL[index] += left * excitationGainL;
+        excitationR[index] += right * excitationGainR;
+        directL[index] += left * directGainL;
+        directR[index] += right * directGainR;
+        ++sample.currentSample;
+        ++generated;
+
+        if (sample.envelope.getState() == gin::AnalogADSR::State::idle)
+        {
+            sample.isPlaying = false;
+            break;
+        }
+    }
+    telemetry.sourceSamplesGenerated[static_cast<std::size_t>(ExciterKind::sample)] +=
+        static_cast<std::uint64_t>(generated);
 }
 
-void SampleExciter::updateParameters()
+void VoiceExciterRack::processExternal(juce::dsp::AudioBlock<float>& excitation,
+                                       const ExciterRenderContext& context) noexcept
 {
-    mixL = voice.getValue(params.mix, 0);
-    mixR = voice.getValue(params.mix, 1);
-    level = voice.getValue(params.level, 0);
+    auto* destinationL = excitation.getChannelPointer(0);
+    auto* destinationR = excitation.getChannelPointer(1);
+    const auto count = static_cast<int>(excitation.getNumSamples());
+    const auto* frame = context.externalInput;
+    const bool valid = frame != nullptr && frame->isValid()
+                       && context.sourceStartSample >= 0
+                       && context.sourceStartSample + count <= frame->getNumSamples();
+    const auto* sourceL = valid ? frame->getReadPointer(0) + context.sourceStartSample : nullptr;
+    const auto* sourceR = valid ? frame->getReadPointer(1) + context.sourceStartSample : nullptr;
+    if (valid)
+        ++telemetry.externalVoiceReads;
 
-    filter.updateParameters();
-    envelope.setAttack(voice.getValue(params.adsrParams.attack));
-    envelope.setDecay(voice.getValue(params.adsrParams.decay));
-    envelope.setSustainLevel(voice.getValue(params.adsrParams.sustain));
-    envelope.setRelease(voice.getValue(params.adsrParams.release));
-}
+    const auto envelopeState = externalInput.envelope.getState();
+    if (envelopeState == gin::AnalogADSR::State::sustain
+        || envelopeState == gin::AnalogADSR::State::idle)
+    {
+        if (valid)
+        {
+            const auto envelopeValue = externalInput.envelope.getOutput();
+            juce::FloatVectorOperations::addWithMultiply(
+                destinationL, sourceL, controlFrame.externalGainL * envelopeValue, count);
+            juce::FloatVectorOperations::addWithMultiply(
+                destinationR, sourceR, controlFrame.externalGainR * envelopeValue, count);
+        }
+        telemetry.sourceSamplesGenerated[static_cast<std::size_t>(ExciterKind::externalInput)] +=
+            static_cast<std::uint64_t>(count);
+        return;
+    }
 
-void ExternalInputExciter::prepare(const juce::dsp::ProcessSpec& spec)
-{
-    Exciter::prepare(spec);
-    this->extInBuffer = juce::AudioBuffer<float>(spec.numChannels, spec.maximumBlockSize);
-    extInBuffer.clear();
-    this->extInBlock = juce::dsp::AudioBlock<float>(extInBuffer);
-    reset();
-}
-
-void ExternalInputExciter::process(juce::dsp::AudioBlock<float>& exciterBlock,
-                                   juce::dsp::AudioBlock<float>& outputBlock)
-{
-    if (!params.enabled->isOn()) return;
-
-    const auto& v = dynamic_cast<ResonatorVoice&>(this->voice);
-    const float mix = std::sin(voice.getValue(params.mix) * juce::MathConstants<float>::halfPi);
-    const float gainL = voice.getValue(params.gain, 0) * mix;
-    const float gainR = voice.getValue(params.gain, 1) * mix;
-    extInBuffer.copyFrom(0, v.currentBlockStartSample, state.extInputBuffer.getReadPointer(0), v.currentBlockNumSamples,
-                         gainL);
-    extInBuffer.copyFrom(1, v.currentBlockStartSample, state.extInputBuffer.getReadPointer(1), v.currentBlockNumSamples,
-                         gainR);
-    juce::dsp::AudioBlock<float> extInBlock = juce::dsp::AudioBlock<float>(extInBuffer, v.currentBlockStartSample);
-    // filter.process(extInBlock);
-    envelope.processMultiplying(extInBuffer, v.currentBlockStartSample, v.currentBlockNumSamples);
-    exciterBlock.add(extInBlock);
-}
-
-void ExternalInputExciter::reset()
-{
-    filter.reset();
-    envelope.reset();
-}
-
-void ExternalInputExciter::noteStarted()
-{
-    envelope.noteOn();
-}
-
-void ExternalInputExciter::noteStopped(bool avoidTailOff)
-{
-    envelope.noteOff();
-}
-
-void ExternalInputExciter::updateParameters()
-{
-    if (!params.enabled->isOn()) return;
-
-    envelope.setAttack(voice.getValue(params.adsrParams.attack));
-    envelope.setDecay(voice.getValue(params.adsrParams.decay));
-    envelope.setSustainLevel(voice.getValue(params.adsrParams.sustain));
-    envelope.setRelease(voice.getValue(params.adsrParams.release));
+    for (int index = 0; index < count; ++index)
+    {
+        const auto envelopeValue = externalInput.envelope.process();
+        const auto left = sourceL != nullptr ? sourceL[index] : 0.0f;
+        const auto right = sourceR != nullptr ? sourceR[index] : 0.0f;
+        destinationL[index] += left * controlFrame.externalGainL * envelopeValue;
+        destinationR[index] += right * controlFrame.externalGainR * envelopeValue;
+    }
+    telemetry.sourceSamplesGenerated[static_cast<std::size_t>(ExciterKind::externalInput)] +=
+        static_cast<std::uint64_t>(count);
 }

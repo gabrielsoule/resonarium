@@ -578,9 +578,7 @@ RandomLFOParams::RandomLFOParams(ResonariumProcessor& p, int index) : index(inde
 MSEGParams::MSEGParams(ResonariumProcessor& p, int index) : index(index)
 {
     juce::String prefix = "mseg" + std::to_string(index);
-    msegData = std::make_shared<gin::MSEG::Data>();
-    msegData->reset();
-    //TODO load the msegData from disk once we figure out how that works...
+    msegData = std::make_shared<MSEGDataStore>();
     enabled = p.addExtParam(prefix + "enable", "MSEG" + std::to_string(index) + "Enable", "Enable", "",
                             {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
                             0.0f, "", enableTextFunction);
@@ -944,7 +942,6 @@ SynthParams::SynthParams(ResonariumProcessor& p)
     //pointer over here
     globalParams.gain = voiceParams.masterGain;
     effectChainParams = EffectChainParams(p);
-    voiceParams.effectChainParams = effectChainParams;
     for (int i = 0; i < NUM_LFOS; i++)
     {
         lfoParams[i] = LFOParams(p, i);
@@ -1002,9 +999,12 @@ GlobalParams::GlobalParams(ResonariumProcessor& p)
                                      {0.0f, 1.0f, 1.0f, 1.0f}, 1.0f,
                                      0.0f, "global.stereo", enableTextFunction);
 
-    polyEffectChain = p.addIntParam("polyEffectChain", "Poly Effect Chain", "Poly FX", "",
-                                    {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
-                                    0.0f, "global.polyfx", enableTextFunction);
+    // State-compatibility tombstone. Polyphonic effect chains were removed,
+    // but retaining this internal UID lets existing sessions and user presets
+    // round-trip without an unknown-parameter warning. Both values are no-ops.
+    legacyPolyEffectChain = p.addIntParam("polyEffectChain", "Legacy Poly Effect Chain", "", "",
+                                          {0.0f, 1.0f, 1.0f, 1.0f}, 0.0f,
+                                          0.0f, enableTextFunction);
 }
 
 UIParams::UIParams(ResonariumProcessor& p)

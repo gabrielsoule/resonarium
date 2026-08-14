@@ -22,6 +22,11 @@ public:
 
     }
 
+    ~ClickThruSelect() override
+    {
+        parameter->removeListener(this);
+    }
+
     void resized() override
     {
         label.setBounds(this->getLocalBounds());
@@ -34,12 +39,11 @@ public:
         if(!customColor) label.setColour(juce::Label::textColourId, getLookAndFeel().findColour(ResonariumLookAndFeel::accentColourId));
     }
 
-    void mouseDown(const juce::MouseEvent& event) override
+    void mouseDown(const juce::MouseEvent&) override
     {
         int newValue = (static_cast<int>(parameter->getUserValue()) + 1) % static_cast<int>(parameter->getUserRangeEnd() + 1);
+        parameter->setUserValueAsUserAction(static_cast<float>(newValue));
         label.setText(parameter->getUserValueText(), juce::dontSendNotification);
-        parameter->setUserValue(newValue);
-
     }
 
     void enablementChanged() override

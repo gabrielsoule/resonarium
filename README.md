@@ -2,20 +2,17 @@
 
 ![Image](https://ccrma.stanford.edu/~gns/resonarium.png)
 
-> [!NOTE]
-> As of late 2025, much of the feedback I recieve about this projet orbits issues of performance and CPU usage, particularly on older/Windows machines. I agree! It's not acceptable. I am working on a re-write of the physical modelling engine with an emphasis on better cache management and SIMD polyphony. This last point in particular necessitates a architectural redesign of most of my DSP (SIMD code looks very different than scalar processing code). I appreciate your patience with all of this: it will take some time, but it will be worth it. Until then, I encourage you to be gentle with the instrument in the meantime; practice frequent bouncing/freezing of tracks, and try not to face-roll the keyboard unless you really need to.
-
 Resonarium is a MPE-compatible physical modeling synthesizer, based on coupled string waveguide models. It is designed to encourage abstract sound design, exploration, and open-ended play. 
 
 Many of the presets work best when used in conjunction with a MPE control device, such as a Ableton Push 3 or a Roli Seaboard. Such presets expect MPE control signals such as pressure and timbre, and are therefore musically more interesting when these expressive dimensions are active.
 
-**Resonarium is still in development.** The primary focus at present is stability and performance. Use at your own risk, and expect bugs or crashes. You might need a beefy computer to (polyphonically) run complex presets in the plugin's current state; performance optimizations such as SIMD processing are in the pipeline, but not ready to deploy just yet.
-
-But hey, it's free and open source. I welcome contributions. Want to add/change/improve something? Clone the repo, make some changes, and submit a pull request!
+**Resonarium is feature-complete and no longer in active development**. I'm not planning to add any new features; the codebase is pretty clunky at this point and I'd rather spend my time dreaming up my next instrument (coming soon). However, I welcome PRs from the community.
 
 Some audio samples can be found [here](https://ccrma.stanford.edu/~gns/resonarium_samples.html). They sound neat. Check them out!
 
-Resonarium works well in Ableton and Bitwig. There are reported issues with Logic and FL Studio. 
+Resonarium works well in Ableton and Bitwig. There are reported issues with Logic and FL Studio.
+
+Resonarium's DSP kernels are optimized for efficient polyphonic performance.
 
 While there isn't a user manual yet, most of the parameters have helpful pop-ups that manifest on hover. Have fun!
 
@@ -82,5 +79,3 @@ Resonarium is licensed under a GPL license; therefore, any software that depends
 ## Dependencies
 
 This project uses a modified fork of [Gin](https://github.com/FigBug/Gin), which includes several wonderful GUI widgets and backend utilities. Go check it out, it's great!
-
-This project uses a modified fork of [chowdsp-utils](https://github.com/Chowdhury-DSP/chowdsp_utils); in particular, we adapt and extend the state variable filter implementation. Go check it out, it's (also) great! 

@@ -2,21 +2,17 @@
 
 RandomLFOComponent::RandomLFOComponent(RandomLFOParams params) : params(params)
 {
-    startTimerHz(20);
-}
-
-RandomLFOComponent::~RandomLFOComponent()
-{
-    stopTimer();
 }
 
 void RandomLFOComponent::resized()
 {
     auto area = getLocalBounds().reduced(2);
-    bufferSize = area.getWidth() / scalingFactor;
-    curveBuffer.resize(bufferSize, valueToY(0.0f));
+    bufferSize = std::min(maxCurvePoints,
+                          static_cast<size_t>(std::max(0, area.getWidth() / scalingFactor)));
+    std::fill_n(curveBuffer.begin(), bufferSize, valueToY(0.0f));
 
     bufferIndex = 0;
+    path.preallocateSpace(static_cast<int>(bufferSize * 3));
     createPath();
 }
 
@@ -29,21 +25,16 @@ void RandomLFOComponent::paint(juce::Graphics& g)
     g.strokePath(path, juce::PathStrokeType(2.0f));
 }
 
-void RandomLFOComponent::timerCallback()
+void RandomLFOComponent::updateFromTimer()
 {
-    if(params.enabled->isOn() && stateCallback)
+    if (params.enabled->isOn() && valueCallback && bufferSize >= 2)
     {
-        const float value = stateCallback() * 2.0f - 1.0f;
+        const float value = valueCallback() * 2.0f - 1.0f;
         curveBuffer[bufferIndex] = valueToY(value);
         bufferIndex = (bufferIndex + 1) % bufferSize;
         createPath();
         repaint();
     }
-}
-
-float RandomLFOComponent::generateRandomValue()
-{
-    return random.nextFloat() * 2.0f - 1.0f;
 }
 
 float RandomLFOComponent::valueToY(float value)
@@ -56,11 +47,11 @@ void RandomLFOComponent::createPath()
 {
     path.clear();
 
-    if (curveBuffer.empty())
+    if (bufferSize < 2)
         return;
 
     auto area = getLocalBounds().reduced(2);
-    size_t numPoints = curveBuffer.size();
+    const auto numPoints = bufferSize;
 
     float xScale = static_cast<float>(area.getWidth()) / static_cast<float>(numPoints - 1);
 

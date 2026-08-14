@@ -2,6 +2,8 @@
 #define PARAMETERS_H
 
 #include "defines.h"
+#include "util/MSEGDataStore.h"
+
 #include <juce_core/juce_core.h>
 #include <gin_plugin/gin_plugin.h>
 
@@ -21,7 +23,6 @@
 */
 
 class ResonariumProcessor;
-
 
 /**
  * Parameters for a multi-mode filter.
@@ -247,10 +248,7 @@ struct RandomLFOParams
 struct MSEGParams
 {
     int index = -1;
-    //the msegData is loaded from disk;
-    //furthermore, it needs to be shared between the UI and audio threads
-    //good candidate for being shoved into a parameter struct
-    std::shared_ptr<gin::MSEG::Data> msegData;
+    std::shared_ptr<MSEGDataStore> msegData;
     gin::Parameter::Ptr
         enabled,
         sync,
@@ -436,7 +434,6 @@ struct VoiceParams
     std::array<ADSRParams, NUM_ENVELOPES> adsrParams;
     std::array<MSEGParams, NUM_MSEGS> msegParams;
 
-    EffectChainParams effectChainParams;
     gin::Parameter::Ptr masterGain;
 
     VoiceParams() = default;
@@ -447,7 +444,7 @@ struct GlobalParams
 {
     gin::Parameter::Ptr numVoices,
                         stereoResonators,
-                        polyEffectChain,
+                        legacyPolyEffectChain,
                         gain;
 
     GlobalParams() = default;
