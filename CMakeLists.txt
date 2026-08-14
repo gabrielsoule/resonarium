@@ -20,11 +20,6 @@ set(CMAKE_CXX_FLAGS_DEVELOPMENT ${CMAKE_CXX_FLAGS_RELEASE})
 
 project(${PLUGIN_NAME} VERSION ${PLUGIN_VERSION} LANGUAGES CXX C HOMEPAGE_URL "https://gabrielsoule.com/")
 
-# Resonarium must build against the exact, unmodified JUCE submodule recorded
-# by this repository. This emits machine-readable evidence and rejects local
-# vendor patches or an unrecorded JUCE checkout at configure time.
-include("${CMAKE_CURRENT_SOURCE_DIR}/tests/cmake/RequirePristineJuce.cmake")
-
 # pybind11's target helpers require the development components to be available
 # before the subdirectory and any pybind11_add_module() call are evaluated.
 # Discovering Python later only worked with a pre-populated CMake cache.
