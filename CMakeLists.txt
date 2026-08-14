@@ -66,6 +66,16 @@ else ()
     set(FORMATS Standalone VST3 LV2)
 endif ()
 
+# On Windows, juce_vst3_helper (Steinberg's moduleinfotool) can deadlock while
+# unloading the plugin DLL, hanging the build indefinitely (observed on the
+# GitHub windows-2025-vs2026 runners). moduleinfo.json is optional metadata,
+# so skip generating it there.
+if (WIN32)
+    set(VST3_MANIFEST FALSE)
+else ()
+    set(VST3_MANIFEST TRUE)
+endif ()
+
 set_property(GLOBAL PROPERTY USE_FOLDERS YES)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER utility)
 set_property(GLOBAL PROPERTY REPORT_UNDEFINED_PROPERTIES "${CMAKE_BINARY_DIR}/undefined_properties.log")
@@ -130,6 +140,7 @@ juce_add_plugin(${PLUGIN_NAME}_Instrument
         AU_EXPORT_PREFIX ${AU_ID}Ins
         AU_SANDBOX_SAFE FALSE
         LV2URI ${LV2_URI}
+        VST3_AUTO_MANIFEST ${VST3_MANIFEST}
         COPY_PLUGIN_AFTER_BUILD TRUE
 )
 
@@ -196,6 +207,7 @@ juce_add_plugin(${PLUGIN_NAME}_Effect
         AU_EXPORT_PREFIX ${AU_ID}Fx
         AU_SANDBOX_SAFE FALSE
         LV2URI ${LV2_URI}/effect
+        VST3_AUTO_MANIFEST ${VST3_MANIFEST}
         COPY_PLUGIN_AFTER_BUILD TRUE
 )
 
