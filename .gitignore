@@ -46,3 +46,4 @@ cmake-build-debug
 
 # Claude.md file for Claude Code AI helpers
 CLAUDE.md
+AGENTS.md
