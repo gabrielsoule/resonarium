@@ -12,8 +12,6 @@ Some audio samples can be found [here](https://ccrma.stanford.edu/~gns/resonariu
 
 Resonarium works well in Ableton and Bitwig. There are reported issues with Logic and FL Studio.
 
-Resonarium's DSP kernels are optimized for efficient polyphonic performance.
-
 While there isn't a user manual yet, most of the parameters have helpful pop-ups that manifest on hover. Have fun!
 
 # Installation
