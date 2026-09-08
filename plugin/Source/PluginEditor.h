@@ -6,7 +6,6 @@
 #include "ui/ResonariumComponents.h"
 #include "ui/LazyTabbedPages.h"
 #include "ui/Panels.h"
-#include "ui/SettingsPanel.h"
 #include "ui/UIUpdateScheduler.h"
 
 class ResonariumEditor : public gin::ProcessorEditor,
@@ -20,7 +19,6 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
     void showOnboardingWarning();
-    void showSettingsMenu();  // Method to show settings menu
 
 private:
     void createUIUpdateScheduler();
@@ -54,7 +52,7 @@ public:
     juce::ScopedMessageBox loudnessWarningBox;
 
     std::unique_ptr<TitleBarDropShadow> titleBarDropShadow;
-    std::unique_ptr<ClickableLabel> logoText;
+    std::unique_ptr<juce::Label> logoText;
     std::unique_ptr<ResonariumLogo> logo;
     std::unique_ptr<juce::Label> versionText;
     std::unique_ptr<gin::TriggeredScope> scope;
@@ -98,8 +96,6 @@ public:
     juce::TextButton inspectButton{"INSPECT UI"};
     juce::TextButton bypassResonatorsButton{"BYPASS RESONATORS"};
     juce::TextButton captureButton{"CAPTURE"};
-    juce::TextButton settingsButton{"SETTINGS"};
-    std::unique_ptr<SettingsPanel> settingsPanel;
 
 private:
     std::unique_ptr<UIUpdateScheduler> uiUpdates;

@@ -98,8 +98,8 @@ private:
         jassert(page != nullptr);
 
         // Tab pages never overlap their always-alive siblings, so they join
-        // the back of the z-order and overlays such as the settings panel
-        // stay above pages created mid-session.
+        // the back of the z-order and existing overlays stay above pages
+        // created mid-session.
         parent.addChildComponent(page.get(), 0);
 
         // JUCE only delivers lookAndFeelChanged() through an explicit

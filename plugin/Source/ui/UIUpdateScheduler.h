@@ -50,27 +50,6 @@ public:
         ownerVisibilityCallback = std::move(callback);
     }
 
-    void setSuspended(bool shouldBeSuspended)
-    {
-        if (suspended == shouldBeSuspended)
-            return;
-
-        suspended = shouldBeSuspended;
-        frameCounter = 0;
-
-        if (suspended)
-        {
-            stopTimer();
-            if (previousOwnerVisibility && ownerVisibilityCallback)
-                ownerVisibilityCallback(false);
-            previousOwnerVisibility = false;
-        }
-        else
-        {
-            startTimerHz(60);
-        }
-    }
-
     void add(juce::Component& component, Rate rate, Callback callback)
     {
         jassert(callback != nullptr);
@@ -196,7 +175,6 @@ private:
     std::function<void(bool)> ownerVisibilityCallback;
     std::uint64_t frameCounter = 0;
     bool previousOwnerVisibility = false;
-    bool suspended = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(UIUpdateScheduler)
 };

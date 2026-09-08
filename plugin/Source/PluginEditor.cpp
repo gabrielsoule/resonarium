@@ -24,18 +24,15 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
     logo = std::make_unique<ResonariumLogo>();
     logo->setBounds(7, 2, 37, 37);
-    logo->setInterceptsMouseClicks(true, false);
-    logo->onClick = [this]() { showSettingsMenu(); };
+    logo->setInterceptsMouseClicks(false, false);
 
-    logoText = std::make_unique<ClickableLabel>();
+    logoText = std::make_unique<juce::Label>();
     logoText->setText("RESONARIUM", juce::dontSendNotification);
     logoText->setJustificationType(juce::Justification::centredLeft);
     logoText->setBounds(50, 0, 210, 40);
     logoText->setFont(logoText->getFont().withHeight(26.0f).withExtraKerningFactor(0.25f));
     logoText->setColour(juce::Label::textColourId, juce::Colours::white.withAlpha(0.85f));
-    logoText->setInterceptsMouseClicks(true, false);
-    logoText->onClick = [this]() { showSettingsMenu(); };
-    logoText->setTooltip("Click for settings");
+    logoText->setInterceptsMouseClicks(false, false);
 
     versionText = std::make_unique<juce::Label>();
     versionText->setText(proc.processorOptions.pluginVersion, juce::dontSendNotification);
@@ -280,12 +277,6 @@ ResonariumEditor::ResonariumEditor(ResonariumProcessor& p)
 
         DBG("Done capturing UI components!");
     };
-    addAndMakeVisible(settingsButton);
-    settingsButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
-    settingsButton.onClick = [&]
-    {
-        showSettingsMenu();
-    };
 #endif
 
 #ifndef JUCE_DEBUG
@@ -314,8 +305,6 @@ ResonariumEditor::~ResonariumEditor()
 {
     uiUpdates.reset();
     setVisualConsumersActive(false);
-
-    settingsPanel.reset();
 
     DBG("Deleting editor...");
 }
@@ -491,7 +480,6 @@ void ResonariumEditor::resized()
     inspectButton.setBounds(10, 0, 100, 40);
     bypassResonatorsButton.setBounds(120, 0, 150, 40);
     captureButton.setBounds(120 + 150 + 20, 0, 100, 40);
-    settingsButton.setBounds(120 + 150 + 20 + 110, 0, 100, 40);
 #endif
     ProcessorEditor::resized();
     for (auto* c : this->getChildren())
@@ -512,35 +500,4 @@ void ResonariumEditor::showOnboardingWarning()
     // {
     //     w->setVisible (false);
     // });
-}
-
-void ResonariumEditor::showSettingsMenu()
-{
-    // If already exists, just show it
-    if (settingsPanel != nullptr)
-    {
-        if (uiUpdates != nullptr)
-            uiUpdates->setSuspended(true);
-        settingsPanel->show();
-        return;
-    }
-
-    // Create a new settings panel
-    settingsPanel = std::make_unique<SettingsPanel>(proc, this);
-
-    // Set up the close button callback
-    settingsPanel->onCloseButtonClick = [this]()
-    {
-        if (settingsPanel != nullptr)
-        {
-            settingsPanel->hide();
-            if (uiUpdates != nullptr)
-                uiUpdates->setSuspended(false);
-        }
-    };
-
-    // Show the panel
-    if (uiUpdates != nullptr)
-        uiUpdates->setSuspended(true);
-    settingsPanel->show();
 }
