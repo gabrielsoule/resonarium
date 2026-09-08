@@ -35,6 +35,14 @@ The tests currently compile only the production DSP sources they exercise. As th
 audio engine is separated from the plugin shell, the test executable can link the
 resulting engine library directly, as Applause does.
 
+The MIDI compatibility check renders the production Python processor with raw
+MIDI messages on every channel, including channel 1 (GitHub issue #39):
+
+```sh
+cmake --build build --target Resonarium_MidiCompatibility
+ctest --test-dir build -R '^Resonarium\.MidiCompatibility$' --output-on-failure
+```
+
 The production exciter rack has two deterministic Python checks. The audio
 contract covers its PRNG streams, sample snapshots, and shared external input;
 the rack contract covers source masks, control caching, additivity, MIDI
