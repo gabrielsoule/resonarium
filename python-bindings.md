@@ -5,9 +5,9 @@ Resonarium supports basic Python bindings. They are a work in progress. At the m
 Voice assignments are deliberately manager-owned. The binding does not expose
 raw pooled voices: drive notes through `play_note()` or `queue_midi()`, render
 through `process_multi_block()`, and inspect the block-coherent lifecycle state
-with `get_voice_telemetry()`. Resonarium accepts lower-zone MPE note events on
-MIDI channels 2–16 only; the Python `play_note()` channel argument is zero-based,
-so use values 1–15.
+with `get_voice_telemetry()`. Resonarium uses legacy MIDI mode with a
+48-semitone pitch-bend range and accepts notes on MIDI channels 1–16. The Python
+`play_note()` channel argument is zero-based, so use values 0–15.
 
 To compile the Python library, build the `Resonarium_Python` CMake target, e.g.:
 
@@ -50,9 +50,8 @@ blocks_needed = int(np.ceil((sample_rate * seconds) / block_size))
 # Allocate the corresponding memory
 audio_buffer = synth.create_multi_block(blocks_needed)
 
-# Play a MIDI note on lower-zone MPE member channel 2. The Python channel
-# argument is zero-based, so 1 maps to MIDI channel 2.
-synth.play_note(1, 60, 100)
+# Play a MIDI note on channel 1. The Python channel argument is zero-based.
+synth.play_note(0, 60, 100)
 
 # Process audio. This will fill the buffer with audio, and stop when the buffer is full.
 # We allocated about 4 seconds worth of audio blocks, so we should get a 4 second sample back.

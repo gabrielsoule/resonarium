@@ -410,6 +410,24 @@ if(BUILD_TESTING)
             TIMEOUT 60
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
+    add_test(NAME Resonarium.MidiCompatibility
+            COMMAND "${RESONARIUM_TEST_PYTHON}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/midi_compatibility.py"
+                    --module "$<TARGET_FILE:${PLUGIN_NAME}_Python>")
+    set_tests_properties(Resonarium.MidiCompatibility PROPERTIES
+            LABELS "resonarium;midi;python"
+            TIMEOUT 60
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+
+    add_custom_target(${PLUGIN_NAME}_MidiCompatibility
+            COMMAND "${RESONARIUM_TEST_PYTHON}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/tests/midi_compatibility.py"
+                    --module "$<TARGET_FILE:${PLUGIN_NAME}_Python>"
+            DEPENDS ${PLUGIN_NAME}_Python
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+            USES_TERMINAL
+            VERBATIM)
+
     add_custom_target(${PLUGIN_NAME}_PresetSweep
             COMMAND "${RESONARIUM_TEST_PYTHON}"
                     "${RESONARIUM_PRESET_SWEEP_SCRIPT}"

@@ -68,6 +68,7 @@ ResonariumProcessor::ResonariumProcessor() :
     }
 
     synth.setMPE(true);
+    synth.enableLegacyMode(48);
     synth.setVoiceStealingEnabled(true);
     const bool voicePoolInitialised = synth.initialiseVoicePool([this](int index) -> gin::SynthesiserVoice*
     {

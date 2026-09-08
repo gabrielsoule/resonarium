@@ -2,7 +2,7 @@
 """Exercise the fixed voice manager through the public processor API.
 
 Voice assignments are owned by Gin's audio-thread manager. This example checks
-bounded voice stealing using lower-zone MPE member channels.
+bounded voice stealing using all 16 MIDI channels.
 """
 
 import numpy as np
@@ -28,14 +28,14 @@ synth.set_param("enabled wb0r0", 1.0)
 # Establish four rendered assignments first, so replacements use the two
 # bounded 3 ms overlap slots rather than simply reusing unrendered voices.
 for index, note in enumerate((60, 64, 67, 71)):
-    member_channel = 1 + index  # Python is zero-based: 1 -> MIDI channel 2.
-    synth.play_note(member_channel, note, 100, 0)
+    channel = index  # Python is zero-based: 0 -> MIDI channel 1.
+    synth.play_note(channel, note, 100, 0)
 process_one_block(synth)
 
 # Queue a deliberately abusive same-sample face-roll. Every valid note-on must
 # start even though CPU and memory remain bounded by N + 2 voices.
 for index in range(128):
-    status = 0x91 + (index % 15)  # MIDI channels 2..16.
+    status = 0x90 + (index % 16)  # MIDI channels 1..16.
     synth.queue_midi(bytes((status, 36 + (index % 84), 100)), 0)
 
 audio = process_one_block(synth)

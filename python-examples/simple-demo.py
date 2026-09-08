@@ -41,9 +41,8 @@ blocks_needed = int(np.ceil((sample_rate * seconds) / block_size))
 # Allocate the corresponding memory
 audio_buffer = synth.create_multi_block(blocks_needed)
 
-# Play middle C on lower-zone MPE member channel 2. Python channels are
-# zero-based, so channel 1 maps to MIDI channel 2.
-synth.play_note(1, 60, 100)
+# Play middle C on MIDI channel 1. Python channels are zero-based.
+synth.play_note(0, 60, 100)
 
 # Process audio. This will fill the buffer with audio, and stop when the buffer is full.
 synth.process_multi_block(audio_buffer)
