@@ -818,6 +818,24 @@ public:
     std::array<gin::Parameter::Ptr, NUM_MACROS> macroParams;
 };
 
+// Gin's mod source list with a faint tint on every other row, so the eye can follow
+// a source's name across to its modulation button. The row components are
+// transparent, so the tint painted here shows through behind them.
+class StripedModSrcListBox : public gin::ModSrcListBox
+{
+public:
+    using gin::ModSrcListBox::ModSrcListBox;
+
+    void paintListBoxItem(int row, juce::Graphics& g, int, int, bool) override
+    {
+        if (row % 2 == 1)
+            g.fillAll(juce::Colours::white.withAlpha(stripeAlpha));
+    }
+
+private:
+    static constexpr float stripeAlpha = 0.03f;
+};
+
 class ModSourceParamBox : public gin::ParamBox
 {
 public:
@@ -828,7 +846,7 @@ public:
 
         addHeader({"MACROS", "SOURCES", "MATRIX"}, 1, proc.uiParams.modWindowSelect);
         headerTabButtonWidth = 100;
-        addControl(modSrcListComponent = new gin::ModSrcListBox(proc.globalState.modMatrix));
+        addControl(modSrcListComponent = new StripedModSrcListBox(proc.globalState.modMatrix));
     }
 
     void resized() override
