@@ -833,7 +833,7 @@ public:
     }
 
 private:
-    static constexpr float stripeAlpha = 0.03f;
+    static constexpr float stripeAlpha = 0.025f;
 };
 
 class ModSourceParamBox : public gin::ParamBox
