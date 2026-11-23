@@ -25,6 +25,9 @@ To address this, I have hard-forked a ["low-background steel" version of Resonar
 
 More discussion on this topic can be found [here](https://github.com/gabrielsoule/resonarium/issues/41). I welcome further thoughts on this topic from the community.
 
+> [!NOTE]
+> Want to make audio plugins? Check out my plugin framework, [Applause](https://github.com/gabrielsoule/applause)!
+
 # Installation
 
 > [!NOTE]
