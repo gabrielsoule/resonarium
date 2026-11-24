@@ -16,6 +16,10 @@ Resonarium works well in Ableton and Bitwig. There are reported issues with Logi
 
 While there isn't a user manual yet, most of the parameters have helpful pop-ups that manifest on hover. Have fun!
 
+> [!NOTE]
+> Want to make audio plugins? Check out my plugin framework, [Applause](https://github.com/gabrielsoule/applause)! It has 60FPS GPU-accelerated UI and is explicitly modular for performance, if you're the kind of person who likes that kind of thing.
+
+
 # A Note on LLMs
 This project was primarily developed during 2023 and 2024. As such, its code was originally written by hand, without the assistance of programming agents. In the summer of 2026 an LLM (5.6 Sol) was used to fix a number of outstanding bugs and architectural issues that I did not have the time to address. As such, a non-negligible portion of the DSP backend code was reorganized and refactored by inhuman hands. 
 
@@ -24,9 +28,6 @@ The LLM was able to notably improve the performance and stability of Resonarium;
 To address this, I have hard-forked a ["low-background steel" version of Resonarium](https://github.com/gabrielsoule/low-background-resonarium) **immediately before any LLM fixes** were applied. It's a little jankier than the current version, but there's something scarce and nostalgic about it. 
 
 More discussion on this topic can be found [here](https://github.com/gabrielsoule/resonarium/issues/41). I welcome further thoughts on this topic from the community.
-
-> [!NOTE]
-> Want to make audio plugins? Check out my plugin framework, [Applause](https://github.com/gabrielsoule/applause)!
 
 # Installation
 
