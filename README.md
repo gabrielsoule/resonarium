@@ -17,7 +17,7 @@ Resonarium works well in Ableton and Bitwig. There are reported issues with Logi
 While there isn't a user manual yet, most of the parameters have helpful pop-ups that manifest on hover. Have fun!
 
 > [!NOTE]
-> Want to make audio plugins? Check out my plugin framework, [Applause](https://github.com/gabrielsoule/applause)! It has 60FPS GPU-accelerated UI and is explicitly modular for performance, if you're the kind of person who likes that kind of thing.
+> Want to make audio plugins? Check out my plugin framework, [Applause](https://github.com/gabrielsoule/applause)!
 
 
 # A Note on LLMs
